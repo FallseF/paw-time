@@ -55,6 +55,12 @@ const CRAFTS := {
 	"lure": {"register": 2, "dish": 2},
 	"double": {"stock": 2, "hall": 1},
 	"akari": {"kitchen": 2, "rainbow": 1},
+	# 色のポイ（働かない日でも、かけらから作れる）
+	"receipt": {"register": 3},
+	"bubble": {"dish": 3},
+	"tray": {"hall": 3},
+	"pan": {"kitchen": 3},
+	"box": {"stock": 3},
 }
 ## 休憩室のかざり（かけらの使い道。見た目だけ）
 const DECOR := {

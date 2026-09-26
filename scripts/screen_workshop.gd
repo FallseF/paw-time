@@ -85,6 +85,11 @@ func _build() -> void:
 	ckeys.sort_custom(func(a, b): return GameState.can_pay(GameState.CRAFTS[a]) and not GameState.can_pay(GameState.CRAFTS[b]))
 	for pid in ckeys:
 		col.add_child(_margin(_craft_card(pid)))
+	col.add_child(_section("色のポイ（その色の玉を寄せて、軽くすくえる）"))
+	var tkeys := ["bubble", "tray", "receipt", "pan", "box"]
+	tkeys.sort_custom(func(a, b): return GameState.can_pay(GameState.CRAFTS[a]) and not GameState.can_pay(GameState.CRAFTS[b]))
+	for pid in tkeys:
+		col.add_child(_margin(_craft_card(pid)))
 	# かざり
 	col.add_child(_section("休憩室のかざり（見た目だけ）"))
 	var dg := VBoxContainer.new()
