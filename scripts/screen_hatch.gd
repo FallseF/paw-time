@@ -315,10 +315,13 @@ func _next() -> void:
 	card_desc.text = sp.desc
 	if not u.is_empty():
 		card_desc.text += "\n戦いでは：" + (u.skill if u.has("skill") else "%s。%s" % [u.role, u.line])
-	card.position.y = 430
+	card.size = Vector2(312, 0)
+	await get_tree().process_frame
+	var final_y: float = 566.0 - card.get_combined_minimum_size().y
+	card.position.y = final_y + 30
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
-	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw4.tween_property(card, "position:y", final_y, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	index += 1
 	next_btn.text = "つぎの玉" if index < orbs.size() else "今日をはじめる"
 	next_btn.disabled = false
