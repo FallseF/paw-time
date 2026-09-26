@@ -325,7 +325,10 @@ func _show_detail(r: Dictionary) -> void:
 	var g := _text("レア ・ " + r.group, 13, Color(r.look.c2).darkened(0.2))
 	g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(g)
-	var d := _text(r.desc if found else "ヒント：" + r.hint, 15, Color("4a3f52"))
+	var dtext: String = r.desc if found else "ヒント：" + r.hint
+	if found and DefData.RARE_UNITS.has(r.id):
+		dtext += "\n\n戦いでは：" + DefData.RARE_UNITS[r.id].skill
+	var d := _text(dtext, 15, Color("4a3f52"))
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
