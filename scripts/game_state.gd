@@ -662,6 +662,8 @@ const TITLES := [
 	{"name": "一人前", "total": 60, "combo": 5, "rainbow": 1},
 	{"name": "名人", "total": 150, "combo": 8, "rainbow": 4},
 	{"name": "達人", "total": 300, "combo": 12, "rainbow": 10},
+	{"name": "名手", "total": 600, "combo": 16, "rainbow": 20},
+	{"name": "川の主", "total": 1000, "combo": 20, "rainbow": 35},
 ]
 
 
