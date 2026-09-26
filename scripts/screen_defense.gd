@@ -80,6 +80,8 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	Kit.music("c_battle_loop")
+	speed = int(GameState.get_meta("speed", 1)) if not demo else 1
+	speed_btn.text = "×%d" % speed
 	Kit.make_portraits(GameState.deck.duplicate())
 	_intro()
 
@@ -693,7 +695,7 @@ func _slot_button(i: int) -> Button:
 	cost.size = Vector2(81, 18)
 	cost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(cost)
-	var lv := Kit.text("Lv%d" % sim.slots[i].lv, 10, Kit.SUB, true)
+	var lv := Kit.text(("★Lv%d" if sim.slots[i].lv >= DefData.VETERAN_LV else "Lv%d") % sim.slots[i].lv, 10, Color("e8792f") if sim.slots[i].lv >= DefData.VETERAN_LV else Kit.SUB, true)
 	lv.position = Vector2(6, 2)
 	lv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(lv)
@@ -804,6 +806,8 @@ func _unhandled_input(ev: InputEvent) -> void:
 			_cannon()
 		elif k == KEY_W:
 			_wallet()
+		elif k == KEY_ESCAPE and not paused:
+			_pause()
 
 
 func _show_hint(key: String, text: String, target: Control, once := true) -> void:
@@ -941,6 +945,7 @@ func _popup_ui(t: String, near: Control) -> void:
 func _toggle_speed() -> void:
 	speed = 2 if speed == 1 else 1
 	speed_btn.text = "×%d" % speed
+	GameState.set_meta("speed", speed)
 
 
 func _pause() -> void:

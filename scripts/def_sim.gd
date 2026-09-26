@@ -150,7 +150,7 @@ func _new_entity(side: int, id: String) -> Dictionary:
 func _spawn_ally(id: String, lv: int) -> Dictionary:
 	var u: Dictionary = DefData.unit(id)
 	var e := _new_entity(0, id)
-	var m := DefData.level_mult(lv) * (0.8 if not DefData.UNITS.has(id) else 1.0)
+	var m := DefData.unit_mult(lv) * (0.8 if not DefData.UNITS.has(id) else 1.0)
 	var job: String = u.get("job", "")
 	var jm: float = job_buff.get(job, 1.0) if job != "" else 1.0
 	e.lv = lv

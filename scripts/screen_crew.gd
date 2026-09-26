@@ -143,7 +143,9 @@ func _card(o: Dictionary) -> Control:
 	tag.add_child(Kit.text(tag_text, 10, Color.WHITE, true))
 	nr.add_child(tag)
 	v.add_child(nr)
-	var mult := DefData.level_mult(o.level)
+	var mult := DefData.unit_mult(o.level)
+	if o.level >= DefData.VETERAN_LV:
+		nr.add_child(Kit.text("ベテラン", 11, Color("e8792f"), true))
 	v.add_child(Kit.text("Lv%d　体力 %d　攻撃 %d　やる気 %d" % [o.level, int(u.hp * mult), int(u.atk * mult), u.cost], 11, Kit.SUB))
 	var line := Kit.text(u.get("skill", u.get("line", "")), 11, Kit.INK)
 	line.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
@@ -155,7 +157,10 @@ func _card(o: Dictionary) -> Control:
 	xb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	xb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	xr.add_child(xb)
-	xr.add_child(Kit.text("寝て育った %d/%d" % [o.xp, need], 9, Color("8b7bff")))
+	var xt := "寝て育った %d/%d" % [o.xp, need]
+	if o.level < DefData.VETERAN_LV:
+		xt += "　Lv%dでベテラン" % DefData.VETERAN_LV
+	xr.add_child(Kit.text(xt, 9, Color("8b7bff")))
 	v.add_child(xr)
 	var br := HBoxContainer.new()
 	br.add_theme_constant_override("separation", 6)

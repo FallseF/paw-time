@@ -188,6 +188,14 @@ static func level_mult(lv: int) -> float:
 	return 1.0 + 0.2 * (lv - 1)
 
 
+## Lv10 で「ベテラン」：さらに 1.15 倍。育てる目標のひとつ
+const VETERAN_LV := 10
+
+
+static func unit_mult(lv: int) -> float:
+	return level_mult(lv) * (1.15 if lv >= VETERAN_LV else 1.0)
+
+
 ## 次の Lv までの経験値
 static func xp_need(lv: int) -> int:
 	return 40 * lv
