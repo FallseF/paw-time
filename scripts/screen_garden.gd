@@ -100,10 +100,10 @@ func _build_world() -> void:
 	cam.fov = 52
 	cam.v_offset = -1.6
 	world.add_child(cam)
-	# 小島ができたら、少し右へ寄せて引き、ふたつの島を入れる
-	var shift := Vector3(1.5, 0, 0) if IslandKit.stage_for(_L()) >= 2 and ResourceLoader.exists(IslandProps.GLB % "terrain_s2") else Vector3.ZERO
-	cam.position = cam.position * (1.12 if shift != Vector3.ZERO else 1.0) + shift
-	cam.look_at(Vector3(0, 0.0, -0.4) + shift)
+	# 小島・広げた陸まで入るよう、寄り先をずらして引く
+	var fit := _land_fit()
+	cam.position = cam.position * float(fit.scale) + fit.shift
+	cam.look_at(Vector3(0, 0.0, -0.4) + fit.shift)
 	cam_home = cam.transform
 
 	var L: int = _L()
@@ -159,6 +159,7 @@ func _build_world() -> void:
 	# 島の置き物キット（買って置いた物。おでかけ中は、コードに入っていた物）
 	for pl in (V.get("kit", []) if _vis() else IslandKit.placed):
 		_build_kit(pl)
+	_park_vehicle()
 
 	# 夜の灯り（ほたる）
 	fireflies = CPUParticles3D.new()
@@ -519,6 +520,8 @@ func _build_land(L: int, ground_c: Color) -> void:
 		for c in world.get_children():
 			if c is MeshInstance3D and c != sea_mesh and c.position.z < -4.0:
 				c.visible = false
+		for id in _expansion_list():
+			_build_expansion(id, false)
 		return
 	# 波打ちぎわの白い輪
 	for i in 40:
@@ -590,10 +593,11 @@ func _island_r(L: int) -> float:
 
 
 func _inside(p: Vector3, margin := 0.3) -> bool:
-	if terrain and IslandKit.stage_for(_L()) >= 2:
-		var c := IslandKit.ISLET
-		if Vector2(p.x - c.x, p.z - c.y).length() < c.z - margin:
-			return true
+	if terrain:
+		# 段 2 の小島・広げた陸と小島も、島の中
+		for c in IslandKit.land_circles(IslandKit.stage_for(_L()), _expansion_list()).slice(1):
+			if Vector2(p.x - c.x, p.z - c.y).length() < c.z - margin:
+				return true
 	return Vector2(p.x, p.z).length() < _island_r(_L()) - margin or p.z < -2.4
 
 
@@ -615,6 +619,96 @@ func _build_terrain(L: int) -> bool:
 	terrain.mesh = mesh
 	terrain_stage = st
 	return true
+
+
+# ---------- プレイヤーが広げた陸・小島 ----------
+
+var exp_nodes := {}
+
+
+func _expansion_list() -> Array:
+	return V.get("expansions", []) if _vis() else IslandKit.expansions()
+
+
+## 広げた陸（または小島と橋）を置く。animate なら海からせり上がり、おばけがよろこぶ
+func _build_expansion(id: String, animate: bool) -> void:
+	var R: float = IslandKit.STAGES[IslandKit.stage_for(_L())].radius
+	var sh := IslandKit.expansion_shape(id, R)
+	if sh.is_empty() or terrain == null:
+		return
+	var g := Node3D.new()
+	g.name = "exp_" + id
+	world.add_child(g)
+	exp_nodes[id] = g
+	var land := MeshInstance3D.new()
+	land.mesh = IslandProps.land_lobe(sh.r, IslandKit.EXPANSIONS.find(IslandKit.expansion(id)))
+	land.material_override = terrain.material_override
+	land.position = Vector3(sh.center.x, -0.004, sh.center.z)
+	g.add_child(land)
+	if sh.has("bridge_from"):
+		var from: Vector3 = sh.bridge_from
+		var to: Vector3 = sh.bridge_to
+		var br := IslandProps.build("bridge_islet")
+		br.position = (from + to) * 0.5
+		br.rotation.y = -atan2(to.z - from.z, to.x - from.x)
+		br.scale = Vector3(from.distance_to(to) / 2.4, 1, 1)
+		g.add_child(br)
+	# 小さな飾り：陸のふちに岩と草
+	var r2 := RandomNumberGenerator.new()
+	r2.seed = hash(id)
+	for k in 3:
+		var a := r2.randf() * TAU
+		var rk := MeshInstance3D.new()
+		rk.mesh = IslandProps.glb("rock")
+		rk.material_override = Obake3D.prop(Color("b9b3ad").darkened(r2.randf() * 0.15))
+		rk.position = Vector3(sh.center.x + cos(a) * (sh.r + 0.1), -0.1, sh.center.z + sin(a) * (sh.r + 0.1))
+		rk.scale = Vector3.ONE * r2.randf_range(0.2, 0.32)
+		g.add_child(rk)
+	if not animate:
+		return
+	g.position.y = -0.9
+	var tw := create_tween()
+	tw.tween_property(g, "position:y", 0.0, 1.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	burst.position = Vector3(sh.center.x, 0.2, sh.center.z)
+	burst.amount = 40
+	burst.restart()
+	burst.emitting = true
+	Kit.play(self, "chime", 0.9)
+	# 近くのおばけ（あるじも）が跳ねてよろこぶ
+	var cheer: Array = walkers.map(func(w): return w.o)
+	if host_node:
+		cheer.append(host_node)
+	for ob in cheer:
+		if not is_instance_valid(ob):
+			continue
+		var t2 := create_tween()
+		t2.tween_interval(randf_range(0.3, 0.8))
+		t2.tween_property(ob, "position:y", 0.45, 0.16)
+		t2.tween_property(ob, "position:y", 0.0, 0.3).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+		var l := Kit.label3d("♪", 40, Color("fff6a8"))
+		l.position = Vector3(0.3, 1.6, 0)
+		ob.add_child(l)
+		var t3 := l.create_tween()
+		t3.tween_interval(1.6)
+		t3.tween_property(l, "modulate:a", 0.0, 0.5)
+		t3.tween_callback(l.queue_free)
+
+
+## 島全体（地形の段・小島・広げた陸）が入るよう、カメラの寄り先と引き具合を決める {shift, scale}
+func _land_fit() -> Dictionary:
+	if not ResourceLoader.exists(IslandProps.GLB % "terrain_s0"):
+		return {"shift": Vector3.ZERO, "scale": 1.0}
+	var st := IslandKit.stage_for(_L())
+	var mn := Vector2(1e9, 1e9)
+	var mx := Vector2(-1e9, -1e9)
+	for c in IslandKit.land_circles(st, _expansion_list()):
+		mn = Vector2(minf(mn.x, c.x - c.z), minf(mn.y, c.y - c.z))
+		mx = Vector2(maxf(mx.x, c.x + c.z), maxf(mx.y, c.y + c.z))
+	var w := mx.x - mn.x
+	var front := mx.y
+	var shift := Vector3((mn.x + mx.x) * 0.5, 0, 0)
+	var scale := maxf(1.0, maxf(w / 9.6, (front + 3.0) / 8.0))
+	return {"shift": shift, "scale": scale}
 
 
 ## 段が上がるほど、ひと目で分かる変化：道の灯り（段の数だけ）・生け垣・野の花・夜空の色
@@ -1197,6 +1291,9 @@ func _process(delta: float) -> void:
 	for sp in kit_spinners:
 		if is_instance_valid(sp):
 			sp.rotation.z += delta * float(sp.get_meta("spin"))
+	if parked and is_instance_valid(parked) and parked.name != "helicopter":
+		parked.position.y = float(parked.get_meta("base_y")) + sin(_t * 1.6) * 0.025
+		parked.rotation.z = sin(_t * 1.1) * 0.03
 	for w in walkers:
 		var ob: Obake3D = w.o
 		if not is_instance_valid(ob):
@@ -2144,9 +2241,9 @@ func _enter_edit() -> void:
 	goals_btn.visible = false
 	meters.visible = false
 	var to := cam_home
-	var sh := Vector3(1.6, 0, 0) if terrain and IslandKit.stage_for(_L()) >= 2 else Vector3.ZERO
-	to.origin = Vector3(0, 10.5, 5.2) * (1.15 if sh != Vector3.ZERO else 1.0) + sh
-	to = to.looking_at(Vector3(0, 0, 0.1) + sh, Vector3.UP)
+	var fit := _land_fit()
+	to.origin = Vector3(0, 10.5, 5.2) * float(fit.scale) + fit.shift
+	to = to.looking_at(Vector3(0, 0, 0.1) + fit.shift, Vector3.UP)
 	var tw := create_tween().set_parallel()
 	tw.tween_property(cam, "transform", to, 0.6).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(cam, "v_offset", -0.6, 0.6)
@@ -2158,6 +2255,7 @@ func _enter_edit() -> void:
 	sel_ring.material_override = Kit.glow(Color("ffe27a"), 1.5)
 	sel_ring.visible = false
 	world.add_child(sel_ring)
+	_build_exp_markers()
 	_build_edit_ui()
 	if not GameState.tut.has("edit"):
 		GameState.tut["edit"] = true
@@ -2234,6 +2332,11 @@ func _edit_input(event: InputEvent) -> void:
 		if event.pressed:
 			if pos.y > 460 or pos.y < 60:
 				return
+			# 岸の「＋」（島を広げる）
+			for mk in exp_markers:
+				if is_instance_valid(mk.node) and cam.unproject_position(mk.node.global_position).distance_to(pos) < 34.0:
+					_expand_card(mk.id)
+					return
 			var best := ""
 			var bd := 56.0
 			for k in _movable_keys():
@@ -2359,6 +2462,110 @@ func _exit_edit() -> void:
 	main.go("garden")
 
 
+# ---------- 島を広げる（岸の「＋」） ----------
+
+var exp_markers: Array = [] # {id, node}
+
+
+func _build_exp_markers() -> void:
+	for mk in exp_markers:
+		if is_instance_valid(mk.node):
+			mk.node.queue_free()
+	exp_markers = []
+	if terrain == null or _vis() or IslandKit.expansions().size() >= IslandKit.MAX_EXPANSIONS:
+		return
+	var R: float = IslandKit.STAGES[IslandKit.stage_for(_L())].radius
+	for e in IslandKit.EXPANSIONS:
+		if not IslandKit.can_expand(e.id):
+			continue
+		var a := deg_to_rad(float(e.angle))
+		var dir := Vector3(cos(a), 0, sin(a))
+		var n := Node3D.new()
+		n.position = dir * (R + (0.75 if e.kind == "plot" else 2.0)) + Vector3(0, 0.08, 0)
+		var ring := MeshInstance3D.new()
+		var t := TorusMesh.new()
+		t.inner_radius = 0.26
+		t.outer_radius = 0.34
+		ring.mesh = t
+		ring.material_override = Kit.glow(Color("fff2a8") if e.kind == "plot" else Color("a8e8ff"), 1.6)
+		n.add_child(ring)
+		var l := Kit.label3d("+", 64, Color("fffaf2"))
+		l.position = Vector3(0, 0.35, 0)
+		l.no_depth_test = true
+		l.render_priority = 10
+		n.add_child(l)
+		world.add_child(n)
+		exp_markers.append({"id": e.id, "node": n})
+
+
+## 値段のカード → 決めると、海から陸がせり上がる
+func _expand_card(id: String) -> void:
+	var e := IslandKit.expansion(id)
+	var body := tr("KIT_UI_EXPAND_ISLET") if e.kind == "islet" else tr("KIT_UI_EXPAND_PLOT")
+	var v := _popup(tr("KIT_UI_EXPAND"), body, "")
+	var c := IslandKit.expansion_cost(id)
+	var miss := IslandKit.expansion_missing(id)
+	var row := HFlowContainer.new()
+	row.alignment = FlowContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("h_separation", 10)
+	row.add_child(Kit.text("🐾 %d/%d" % [Wallet.balance(), int(c.coins)], 14, Color("c0473b") if miss.has("coins") else Color("b0643a"), true))
+	for k in c.mats:
+		row.add_child(Kit.text("%s %d/%d" % [IslandKit.MATERIALS[k].icon, IslandKit.count(k), int(c.mats[k])], 14, Color("c0473b") if miss.has(k) else Color("3f7d4f"), true))
+	v.add_child(row)
+	v.add_child(Kit.text(tr("KIT_UI_EXPANSIONS") % [IslandKit.expansions().size(), IslandKit.MAX_EXPANSIONS], 11, Color("8a7a88"), false, HORIZONTAL_ALIGNMENT_CENTER))
+	var go := Kit.button(tr("KIT_UI_EXPAND_GO"), Color("ff8a5b") if miss.is_empty() else Color("eee6dd"), func(): _do_expand(id), Color.WHITE if miss.is_empty() else Color("a89ea6"))
+	go.disabled = not miss.is_empty()
+	v.add_child(go)
+	v.add_child(Kit.button(tr("KIT_UI_CLOSE"), Color(1, 1, 1, 0.95), func(): share_ui.queue_free(), Color("6a5f70"), 40, 14))
+
+
+func _do_expand(id: String) -> void:
+	if not IslandKit.expand(id):
+		return
+	if share_ui and is_instance_valid(share_ui):
+		share_ui.queue_free()
+	_build_expansion(id, true)
+	_build_exp_markers()
+	_toast(tr("KIT_UI_EXPAND"), tr("KIT_UI_EXPAND_DONE"))
+	# 広がった島が入るよう、カメラを引きなおす
+	await get_tree().create_timer(1.2).timeout
+	var fit := _land_fit()
+	var to := cam.transform
+	to.origin = Vector3(0, 10.5, 5.2) * float(fit.scale) + fit.shift
+	to = to.looking_at(Vector3(0, 0, 0.1) + fit.shift, Vector3.UP)
+	create_tween().tween_property(cam, "transform", to, 0.8).set_trans(Tween.TRANS_SINE)
+
+
+# ---------- 桟橋にとめた乗り物 ----------
+
+var parked: Node3D
+
+
+func _park_vehicle() -> void:
+	if terrain == null:
+		return
+	var id: String = V.get("vehicle", "raft") if _vis() else Vehicles.current()
+	parked = VehicleProps.build_vehicle(id)
+	parked.scale = Vector3.ONE * 0.62
+	var L := _L()
+	var R: float = IslandKit.STAGES[IslandKit.stage_for(L)].radius
+	var dir := Vector3(0.93, 0, 0.36).normalized()
+	if Vehicles.info(id).get("fly", false) and id == "helicopter":
+		# ヘリはうしろの丘の上に
+		parked.position = Vector3(-4.6, 0.0, -3.4)
+		parked.rotation.y = 0.4
+	elif L >= 4:
+		# 桟橋の先の横に、横づけ
+		var side := Vector3(-dir.z, 0, dir.x)
+		parked.position = dir * (_island_r(L) + 1.8) + side * 0.75 + Vector3(0, -0.1, 0)
+		parked.rotation.y = -atan2(dir.z, dir.x)
+	else:
+		parked.position = Vector3(-2.4, -0.1, R + 1.1)
+		parked.rotation.y = 0.3
+	parked.set_meta("base_y", parked.position.y)
+	world.add_child(parked)
+
+
 ## しまってある物を島のまんなか近くに出して、選ぶ
 func _place_from_stock(id: String) -> void:
 	var at := _free_spot()
@@ -2399,7 +2606,7 @@ var catalog_ui: Control
 
 
 ## カタログ：肉球コインと材料を見せ、買える物は「買う」、足りない分は赤で出す
-func _open_catalog() -> void:
+func _open_catalog(tab := "items") -> void:
 	if catalog_ui and is_instance_valid(catalog_ui):
 		catalog_ui.queue_free()
 	catalog_ui = Control.new()
@@ -2427,6 +2634,16 @@ func _open_catalog() -> void:
 	close.custom_minimum_size.x = 40
 	head.add_child(close)
 	v.add_child(head)
+	# 置き物 / 船着き場（乗り物）
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	for t in [["items", tr("KIT_UI_SHOP")], ["dock", tr("KIT_UI_GARAGE")]]:
+		var key: String = t[0]
+		var on := key == tab
+		var b := Kit.button(t[1], Color("ff8a5b") if on else Color("f3ecff"), func(): _open_catalog(key), Color.WHITE if on else Color("6a5bd6"), 34, 13)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tabs.add_child(b)
+	v.add_child(tabs)
 	# 材料（持っている数）
 	var mrow := HFlowContainer.new()
 	mrow.add_theme_constant_override("h_separation", 8)
@@ -2441,6 +2658,9 @@ func _open_catalog() -> void:
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 4)
 	scroll.add_child(list)
+	if tab == "dock":
+		_dock_list(list)
+		return
 	var stage := IslandKit.stage_for(_L())
 	for cat in IslandKit.CATS:
 		list.add_child(Kit.text(tr("KIT_CAT_" + cat), 13, Color("8a7a88"), true))
@@ -2449,6 +2669,72 @@ func _open_catalog() -> void:
 		for it in IslandKit.ITEMS:
 			if it.cat == cat:
 				list.add_child(_catalog_row(it, stage))
+
+
+## 船着き場：乗り物を選ぶ・作る。見た目だけ（速さ・もらえる物は同じ）。有料は見本のストア
+func _dock_list(list: VBoxContainer) -> void:
+	list.add_child(Kit.wrap(Kit.text(tr("KIT_UI_VEH_NOTE"), 11, Color("6a5f70"))))
+	for vd in Vehicles.LIST:
+		var id: String = vd.id
+		var row := PanelContainer.new()
+		row.add_theme_stylebox_override("panel", Kit.pill(Color("f3ecff") if vd.get("premium", false) else Color.WHITE, 14, 0.0, Vector2(8, 6)))
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 8)
+		row.add_child(h)
+		var icon := TextureRect.new()
+		var ip := "res://assets/gen/vehicles/%s.png" % id
+		if ResourceLoader.exists(ip):
+			icon.texture = load(ip)
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.custom_minimum_size = Vector2(64, 56)
+		h.add_child(icon)
+		var info := VBoxContainer.new()
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		h.add_child(info)
+		info.add_child(Kit.text(Vehicles.name_of(id), 14, Color("2a2233"), true))
+		if vd.get("premium", false):
+			info.add_child(Kit.text("¥%d · %s" % [int(vd.yen), tr("KIT_UI_MOCK")], 10, Color("8a5bd6")))
+			h.add_child(Kit.button(tr("KIT_UI_BUY"), Color("e9e2ff"), func(): _toast(Vehicles.name_of(id), tr("KIT_UI_MOCK")), Color("6a5bd6"), 34, 13))
+		elif Vehicles.owned().has(id):
+			var riding := Vehicles.current() == id
+			info.add_child(Kit.text(tr("KIT_UI_RIDING") if riding else "", 11, Color("3f7d4f"), true))
+			var rb := Kit.button(tr("KIT_UI_RIDE"), Color("ff8a5b") if not riding else Color("e2f3e6"), func(): _ride(id), Color.WHITE if not riding else Color("3f7d4f"), 34, 13)
+			rb.disabled = riding
+			h.add_child(rb)
+		else:
+			var miss := Vehicles.missing(id)
+			var cost := HFlowContainer.new()
+			cost.add_theme_constant_override("h_separation", 6)
+			cost.add_child(Kit.text("🐾%d" % int(vd.price), 11, Color("c0473b") if miss.has("coins") else Color("b0643a")))
+			for k in vd.mats:
+				cost.add_child(Kit.text("%s%d/%d" % [IslandKit.MATERIALS[k].icon, IslandKit.count(k), int(vd.mats[k])], 11, Color("c0473b") if miss.has(k) else Color("3f7d4f")))
+			info.add_child(cost)
+			var can := miss.is_empty()
+			var mb := Kit.button(tr("KIT_UI_MAKE"), Color("ff8a5b") if can else Color("eee6dd"), func(): _make_vehicle(id), Color.WHITE if can else Color("a89ea6"), 34, 13)
+			mb.disabled = not can
+			h.add_child(mb)
+		list.add_child(row)
+
+
+func _ride(id: String) -> void:
+	Vehicles.set_current(id)
+	_repark()
+	_open_catalog("dock")
+
+
+func _make_vehicle(id: String) -> void:
+	if Vehicles.buy(id):
+		Kit.play(self, "chime", 1.2)
+		_repark()
+		_open_catalog("dock")
+
+
+func _repark() -> void:
+	if parked and is_instance_valid(parked):
+		parked.queue_free()
+	_park_vehicle()
 
 
 func _catalog_row(it: Dictionary, stage: int) -> Control:
@@ -2727,3 +3013,29 @@ func demo_catalog() -> void:
 	_enter_edit()
 	await get_tree().create_timer(0.7).timeout
 	_open_catalog()
+
+
+
+## 確認用：島をつくる → 岸の「＋」のカード（右手前の陸）
+func demo_expand_card() -> void:
+	_enter_edit()
+	await get_tree().create_timer(0.7).timeout
+	for e in IslandKit.EXPANSIONS:
+		if IslandKit.can_expand(e.id):
+			_expand_card(e.id)
+			return
+
+
+## 確認用：カードの「陸をあげる」を押したところ
+func demo_do_expand() -> void:
+	for e in IslandKit.EXPANSIONS:
+		if IslandKit.can_expand(e.id):
+			_do_expand(e.id)
+			return
+
+
+## 確認用：船着き場のタブ
+func demo_dock() -> void:
+	_enter_edit()
+	await get_tree().create_timer(0.7).timeout
+	_open_catalog("dock")

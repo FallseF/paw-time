@@ -201,13 +201,150 @@ static func buy(id: String) -> bool:
 	# 有料の見本（premium）は、ここでは買えない（見本のストア。お金の処理は無い）
 	if it.is_empty() or it.get("premium", false) or not missing(id).is_empty():
 		return false
-	if not Wallet.spend(int(it.price), "island:" + id):
+	if not spend(int(it.price), it.mats, "island:" + id):
 		return false
-	for k in it.mats:
-		mats[k] = count(k) - int(it.mats[k])
 	stock[id] = int(stock.get(id, 0)) + 1
 	_save()
 	return true
+
+
+## コインと材料をまとめて払う。どちらか足りなければ false（何も減らさない）
+static func spend(coins: int, need: Dictionary, why := "") -> bool:
+	_ensure()
+	for k in need:
+		if count(k) < int(need[k]):
+			return false
+	if Wallet.balance() < coins or not Wallet.spend(coins, why):
+		return false
+	for k in need:
+		mats[k] = count(k) - int(need[k])
+	_save()
+	return true
+
+
+# ---------------------------------------------------------------- 島を広げる（プレイヤーが選ぶ）
+# 岸の「＋」をタップ → 値段のカード → 決める → 海から陸がせり上がる。
+# 場所は決まった 7 か所（向き・陸か小島か）。広げた順に保存し、シェアのコード（版4）にも入る。
+
+const EXPANSIONS := [
+	{"id": "plot_front_right", "kind": "plot", "angle": 55.0},
+	{"id": "plot_front_left", "kind": "plot", "angle": 125.0},
+	{"id": "plot_left", "kind": "plot", "angle": 172.0},
+	{"id": "plot_back_left", "kind": "plot", "angle": 212.0},
+	{"id": "plot_back_right", "kind": "plot", "angle": -30.0},
+	{"id": "islet_front", "kind": "islet", "angle": 92.0},
+	{"id": "islet_left", "kind": "islet", "angle": 196.0},
+]
+const MAX_EXPANSIONS := 7
+const PLOT_R := 1.45
+const ISLET_R := 1.15
+
+static var expanded: Array = [] # 広げた場所の id（順番どおり）
+
+
+## 広げた場所（mainline 用）
+static func expansions() -> Array:
+	_ensure()
+	return expanded.duplicate()
+
+
+static func expansion(id: String) -> Dictionary:
+	for e in EXPANSIONS:
+		if e.id == id:
+			return e
+	return {}
+
+
+## n 回目（0 から）の広げる値段。小島は貝がらと木材が多め。はじめの 1〜2 回はやさしく
+static func expansion_cost(id: String, n := -1) -> Dictionary:
+	if n < 0:
+		n = expanded.size()
+	var e := expansion(id)
+	var c := {"coins": 30 + 25 * n, "mats": {"wood": 2 + n, "stone": 2 + n}}
+	if e.get("kind", "") == "islet":
+		c.coins += 30
+		c.mats.wood += 3
+		c.mats["shell"] = 1 + n / 2
+	return c
+
+
+static func expansion_missing(id: String) -> Dictionary:
+	var c := expansion_cost(id)
+	var out := {}
+	if Wallet.balance() < int(c.coins):
+		out["coins"] = int(c.coins) - Wallet.balance()
+	for k in c.mats:
+		if count(k) < int(c.mats[k]):
+			out[k] = int(c.mats[k]) - count(k)
+	return out
+
+
+static func can_expand(id: String) -> bool:
+	_ensure()
+	return not expansion(id).is_empty() and not expanded.has(id) and expanded.size() < MAX_EXPANSIONS
+
+
+static func expand(id: String) -> bool:
+	if not can_expand(id):
+		return false
+	var c := expansion_cost(id)
+	if not spend(int(c.coins), c.mats, "expand:" + id):
+		return false
+	expanded.append(id)
+	_save()
+	return true
+
+
+## 広げた陸の円（中心 x, z と半径）。島の半径 R（地形の段）に合わせて外へ置く。小島は橋の両端も返す
+static func expansion_shape(id: String, R: float) -> Dictionary:
+	var e := expansion(id)
+	var a := deg_to_rad(float(e.angle))
+	var dir := Vector3(cos(a), 0, sin(a))
+	if e.kind == "islet":
+		var c := dir * (R + 2.9)
+		return {"center": c, "r": ISLET_R, "dir": dir, "bridge_from": dir * (R - 0.25), "bridge_to": c - dir * (ISLET_R - 0.25)}
+	return {"center": dir * (R + 0.55), "r": PLOT_R, "dir": dir}
+
+
+## 陸の円の一覧 [Vector3(x, z, r)]：段 2 の小島と、広げた陸・小島（list を渡すと、その並び）
+static func land_circles(stage: int, list = null) -> Array:
+	var R: float = STAGES[stage].radius
+	var out: Array = [Vector3(0, 0, R)]
+	if stage >= 2:
+		out.append(ISLET)
+	for id in (list if list != null else expansions()):
+		var sh := expansion_shape(id, R)
+		if not sh.is_empty():
+			out.append(Vector3(sh.center.x, sh.center.z, sh.r))
+	return out
+
+
+static func encode_expansions(list: Array) -> PackedByteArray:
+	var b := PackedByteArray()
+	var idx: Array = []
+	for id in list:
+		for i in EXPANSIONS.size():
+			if EXPANSIONS[i].id == id:
+				idx.append(i)
+	b.append(idx.size())
+	for i in idx:
+		b.append(i)
+	return b
+
+
+static func decode_expansions(b: PackedByteArray, i: int) -> Dictionary:
+	if i >= b.size():
+		return {"list": [], "next": i}
+	var n: int = b[i]
+	i += 1
+	var out: Array = []
+	for k in n:
+		if i >= b.size():
+			return {"list": [], "next": i}
+		if b[i] < EXPANSIONS.size():
+			out.append(EXPANSIONS[b[i]].id)
+		i += 1
+	return {"list": out, "next": i}
 
 
 # ---------------------------------------------------------------- 置く・しまう
@@ -298,12 +435,14 @@ static func _ensure() -> void:
 	stock = d.get("stock", {})
 	placed = d.get("placed", [])
 	_next_uid = int(d.get("next", 1))
+	expanded = d.get("expanded", [])
 	for p in placed:
 		_next_uid = maxi(_next_uid, int(p.u) + 1)
 
 
 ## はじめの持ち物（最初の日から 2〜3 個は買える）
 static func _starter() -> void:
+	expanded = []
 	mats = {"wood": 4, "stone": 3, "seed": 3, "cloth": 1}
 	stock = {"bench": 1, "flower_pot": 2}
 	placed = []
@@ -314,7 +453,7 @@ static func _save() -> void:
 		return
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify({"mats": mats, "stock": stock, "placed": placed, "next": _next_uid}))
+		f.store_string(JSON.stringify({"mats": mats, "stock": stock, "placed": placed, "next": _next_uid, "expanded": expanded}))
 
 
 static func load_all() -> void:
@@ -338,6 +477,7 @@ const DEMO := [
 
 static func demo_layout(stage: int) -> void:
 	_loaded = true
+	expanded = []
 	placed = []
 	stock = {}
 	var u := 1

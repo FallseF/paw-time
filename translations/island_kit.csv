@@ -93,3 +93,26 @@ KIT_STAGE_1,Beaches & Cliffs,砂浜と崖
 KIT_STAGE_2,Twin Islands,ふたつの島
 KIT_UI_SOON,"Coming soon — sample store",準備中です（見本のストア）
 KIT_UI_COSMETIC,Looks only. Gameplay stays free.,見た目だけ。遊びの進み方は変わりません
+VEH_raft,Raft,いかだ
+VEH_rowboat,Rowboat,ボート
+VEH_ferry,Ferry,フェリー
+VEH_seaplane,Seaplane,水上飛行機
+VEH_helicopter,Helicopter,ヘリコプター
+VEH_paper_boat,Paper Boat,紙の舟
+VEH_giant_koi,Giant Koi,大きな鯉
+KIT_UI_EXPAND,Expand the island,島を広げる
+KIT_UI_EXPAND_PLOT,New land rises from the sea here.,ここに、海から陸がせり上がる
+KIT_UI_EXPAND_ISLET,"A small islet, linked by a bridge.",橋でつながる、小さな島
+KIT_UI_EXPAND_GO,Raise the land,陸をあげる
+KIT_UI_EXPAND_DONE,The island grew!,島が広がった！
+KIT_UI_MAXED,The island is as big as it gets.,これ以上は広げられない
+KIT_UI_EXPANSIONS,Expansions %d/%d,広げた場所 %d/%d
+KIT_UI_GARAGE,Dock,船着き場
+KIT_UI_RIDE,Ride,これに乗る
+KIT_UI_RIDING,Riding,乗っている
+KIT_UI_MAKE,Build,作る
+KIT_UI_VEH_NOTE,Looks only. Every vehicle travels the same and gives the same rewards.,見た目だけ。どの乗り物でも、着く速さやもらえる物は同じ
+KIT_UI_TRAVEL,Heading to %s's island,%sの島へ
+KIT_UI_SKIP,Skip,とばす
+KIT_UI_ARRIVE,Arrived!,到着！
+KIT_UI_MOCK,Mock store — no real payment,見本のストア（本当の支払いはありません）

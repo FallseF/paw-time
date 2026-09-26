@@ -30,6 +30,16 @@ func _initialize() -> void:
 	ok_kit = ok_kit and Wallet.balance() == 500 - 15
 	IslandKit.place("bench", 1.25, -0.5, 2)
 	IslandKit.place("flower_pot", -2.0, 1.75, 0)
+	# 島を広げる（右手前の陸と、手前の小島）と、乗り物
+	IslandKit.grant_material("wood", 30)
+	IslandKit.grant_material("stone", 30)
+	IslandKit.grant_material("shell", 5)
+	ok_kit = ok_kit and IslandKit.expand("plot_front_right") and IslandKit.expand("islet_front")
+	ok_kit = ok_kit and not IslandKit.expand("plot_front_right") # 同じ所は 2 回広げない
+	Vehicles.reset(["raft", "seaplane"], "seaplane")
+	ok_kit = ok_kit and not Vehicles.grant("giant_koi") # 見本の有料は渡せない
+	ok_kit = ok_kit and Vehicles.grant("rowboat") and Vehicles.owned().has("rowboat")
+	Vehicles.set_current("seaplane")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
 	var drop := IslandKit.random_drop(rng)
@@ -40,13 +50,20 @@ func _initialize() -> void:
 	ok = ok and d.level == gs.garden_level
 	ok = ok and d.kit.size() == 2 and d.kit[0].id == "bench" and absf(d.kit[0].x - 1.25) < 0.05 and absf(d.kit[0].z + 0.5) < 0.05 and d.kit[0].r == 2
 	ok = ok and d.kit[1].id == "flower_pot" and absf(d.kit[1].x + 2.0) < 0.05
+	ok = ok and d.expansions == ["plot_front_right", "islet_front"] and d.vehicle == "seaplane"
 	# 版2のコード（置き物キットが無い）も読める
 	var raw := Marshalls.base64_to_raw(_pad(code.replace("-", "+").replace("_", "/")))
-	raw = raw.slice(0, raw.size() - 2 - 4 * 2)
+	raw = raw.slice(0, raw.size() - 1 - 3 - 2 - 4 * 2) # 乗り物・広げた場所・置き物キットを外す
 	raw[0] = 2
 	var v2 := Marshalls.raw_to_base64(raw).replace("+", "-").replace("/", "_").replace("=", "")
 	var dv2: Dictionary = gs.decode_island(v2)
-	ok = ok and dv2.get("name", "") == "みか" and dv2.kit.is_empty() and dv2.layout.has("flowerbed")
+	ok = ok and dv2.get("name", "") == "みか" and dv2.kit.is_empty() and dv2.expansions.is_empty() and dv2.vehicle == "raft" and dv2.layout.has("flowerbed")
+	# 版3のコード（置き物キットまで）も読める
+	var raw3 := Marshalls.base64_to_raw(_pad(code.replace("-", "+").replace("_", "/")))
+	raw3 = raw3.slice(0, raw3.size() - 1 - 3)
+	raw3[0] = 3
+	var dv3: Dictionary = gs.decode_island(Marshalls.raw_to_base64(raw3).replace("+", "-").replace("/", "_").replace("=", ""))
+	ok = ok and dv3.kit.size() == 2 and dv3.expansions.is_empty()
 	ok = ok and d.name == "みか"
 	ok = ok and d.host == gs.host()
 	ok = ok and d.residents.size() == mini(12, gs.owned.size())

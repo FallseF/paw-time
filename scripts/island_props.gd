@@ -113,6 +113,56 @@ static func glb(name: String) -> Mesh:
 	return _meshes.get(name)
 
 
+## 広げた陸・小島の地面（地形と同じ色づけ：芝・砂・ぬれた砂・深い海の底）。半径 r、上は y=0 で平ら。
+## 頂点色は線形の色（肌のシェーダーの vertex_albedo で使う）。岸は少しゆらぐ
+static func land_lobe(r: float, seed_v := 0) -> ArrayMesh:
+	var key := "lobe/%s/%d" % [r, seed_v]
+	if _meshes.has(key):
+		return _meshes[key]
+	var grass := Color(0.58, 0.80, 0.45).srgb_to_linear()
+	var grass2 := Color(0.47, 0.72, 0.40).srgb_to_linear()
+	var sand := Color(0.93, 0.84, 0.64).srgb_to_linear()
+	var wet := Color(0.78, 0.68, 0.52).srgb_to_linear()
+	var bed := Color("1f6f8a").srgb_to_linear()
+	var seg := 64
+	var rings := 22
+	var outer := r + 1.3
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for j in rings + 1:
+		var t := float(j) / rings
+		var rho := outer * pow(t, 0.8)
+		for i in seg + 1:
+			var a := TAU * i / seg
+			var edge := r * (1.0 + 0.06 * sin(3.0 * a + seed_v) + 0.035 * sin(5.0 * a + seed_v * 2.0))
+			var d := rho - edge
+			var h := 0.0 if d < -0.35 else -0.55 * _smooth(-0.35, 1.2, d)
+			var x := cos(a) * rho
+			var z := sin(a) * rho
+			var n := 0.5 + 0.5 * sin(x * 1.7 + sin(z * 1.3) * 2.0) * sin(z * 1.9 + sin(x * 0.9))
+			var g := grass.lerp(grass2, n * 0.6)
+			var sd := sand.lerp(wet, _smooth(-0.12, -0.3, h))
+			var c := sd.lerp(g, 1.0 - _smooth(-0.45, -0.25, d))
+			c = c.lerp(bed, _smooth(-0.3, -0.55, h))
+			st.set_color(c)
+			st.add_vertex(Vector3(x, h, z))
+	for j in rings:
+		for i in seg:
+			var a := j * (seg + 1) + i
+			var b := a + seg + 1
+			for id in [a, b, a + 1, a + 1, b, b + 1]:
+				st.add_index(id)
+	st.generate_normals()
+	var mesh := st.commit()
+	_meshes[key] = mesh
+	return mesh
+
+
+static func _smooth(a: float, b: float, x: float) -> float:
+	var t := clampf((x - a) / (b - a), 0.0, 1.0)
+	return t * t * (3.0 - 2.0 * t)
+
+
 func tube(key: String, pts: Array, radii: Array) -> Mesh:
 	return Obake3D.tube(key, PackedVector3Array(pts), PackedFloat32Array(radii), 16)
 

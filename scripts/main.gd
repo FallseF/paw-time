@@ -14,6 +14,7 @@ const SCREENS := {
 	"moon": preload("res://scripts/screen_moon.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"quiz": preload("res://scripts/screen_quiz.gd"),
+	"travel": preload("res://scripts/screen_travel.gd"),
 }
 
 var root: Control
@@ -38,6 +39,9 @@ func _ready() -> void:
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade.modulate.a = 0.0
+	# 確認用：表示の言語（en / ja）。ふだんは端末の言語
+	if OS.get_environment("OBAKE_LOCALE") != "":
+		TranslationServer.set_locale(OS.get_environment("OBAKE_LOCALE"))
 	var start := OS.get_environment("OBAKE_START")
 	if start != "" and start != "title":
 		GameState.reset(OS.get_environment("OBAKE_MODE") if OS.get_environment("OBAKE_MODE") != "" else "data")
@@ -55,7 +59,8 @@ func _ready() -> void:
 		if not d.is_empty():
 			d.code = code
 			GameState.visit = d
-			start = "garden"
+			# 自分の乗り物で海を渡ってから（OBAKE_NOTRAVEL=1 で、すぐ島へ）
+			start = "garden" if OS.get_environment("OBAKE_NOTRAVEL") != "" else "travel"
 	go(start if SCREENS.has(start) else "title", true)
 	root.add_child(fade)
 	_music()
@@ -131,10 +136,21 @@ func _seed_for(start: String) -> void:
 	if OS.get_environment("OBAKE_LEVEL") != "":
 		GameState.garden_level = int(OS.get_environment("OBAKE_LEVEL"))
 		GameState.garden_seen_level = GameState.garden_level
+	# 確認用：広げた場所（OBAKE_EXPAND=plot_front_right,islet_front）・材料（OBAKE_MATS=各 n こ）・乗り物（OBAKE_VEHICLES=rowboat,ferry）
+	if OS.get_environment("OBAKE_MATS") != "":
+		IslandKit.load_all()
+		for k in IslandKit.MAT_ORDER:
+			IslandKit.grant_material(k, int(OS.get_environment("OBAKE_MATS")))
+	if OS.get_environment("OBAKE_VEHICLES") != "":
+		var vs := Array(OS.get_environment("OBAKE_VEHICLES").split(","))
+		Vehicles.reset(vs, vs[-1])
 	if OS.get_environment("OBAKE_COINS") != "":
 		Wallet.reset(int(OS.get_environment("OBAKE_COINS")))
 	if OS.get_environment("OBAKE_KIT_DEMO") != "":
 		IslandKit.demo_layout(IslandKit.stage_for(GameState.garden_level))
+	if OS.get_environment("OBAKE_EXPAND") != "":
+		IslandKit.load_all()
+		IslandKit.expanded = Array(OS.get_environment("OBAKE_EXPAND").split(","))
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		GameState.sleep(330, 420)

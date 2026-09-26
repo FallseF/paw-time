@@ -235,7 +235,7 @@ func _ask_code() -> void:
 			GameState.load_game()
 		d.code = le.text.strip_edges()
 		GameState.visit = d
-		main.go("garden")))
+		main.go("travel")))
 	v.add_child(Kit.button("やめる", Color(1, 1, 1, 0.9), func():
 		confirm.queue_free()
 		confirm = null, Color("4a3f52"), 40, 14))

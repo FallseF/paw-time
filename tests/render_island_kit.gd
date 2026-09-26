@@ -29,6 +29,9 @@ func _run() -> void:
 	else:
 		for it in IslandKit.ITEMS:
 			ids.append(it.id)
+		# 乗り物（veh: を付けて区別。assets/gen/vehicles/<id>.png）
+		for v in Vehicles.LIST:
+			ids.append("veh:" + v.id)
 	vp = SubViewport.new()
 	vp.size = Vector2i(SIZE * SS, SIZE * SS)
 	vp.transparent_bg = true
@@ -43,8 +46,9 @@ func _run() -> void:
 	cam.fov = 24
 	world.add_child(cam)
 	for id in ids:
-		var n := IslandProps.build(id)
-		n.rotation.y = YAW
+		var veh := String(id).begins_with("veh:")
+		var n := VehicleProps.build_vehicle(id.substr(4)) if veh else IslandProps.build(id)
+		n.rotation.y = YAW + (-PI / 2 if veh else 0.0)
 		world.add_child(n)
 		for i in 3:
 			await process_frame
@@ -54,7 +58,12 @@ func _run() -> void:
 		await RenderingServer.frame_post_draw
 		var img := vp.get_texture().get_image()
 		img.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
-		img.save_png(out.path_join("%s.png" % id))
+		if veh:
+			var vd := ProjectSettings.globalize_path("res://assets/gen/vehicles") if OS.get_environment("KIT_OUT") == "" else out
+			DirAccess.make_dir_recursive_absolute(vd)
+			img.save_png(vd.path_join("%s.png" % id.substr(4)))
+		else:
+			img.save_png(out.path_join("%s.png" % id))
 		n.queue_free()
 		await process_frame
 		print("rendered ", id)

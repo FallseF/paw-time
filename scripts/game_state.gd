@@ -1022,10 +1022,10 @@ func host() -> String:
 	return owned[0].id if not owned.is_empty() else "receipt"
 
 
-## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）・置き物キット（版3）
+## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）・置き物キット（版3）・広げた場所と乗り物（版4）
 func island_code(items_present: Array) -> String:
 	var b := PackedByteArray()
-	b.append(3)
+	b.append(4)
 	b.append(garden_level)
 	b.append(tier())
 	var nm := (nickname if nickname != "" else "ななし").to_utf8_buffer()
@@ -1065,6 +1065,9 @@ func island_code(items_present: Array) -> String:
 		b.append(int(l.get("r", 0)) & 7)
 	# 版3：島の置き物キット（買って置いた物）を後ろに足す
 	b.append_array(IslandKit.encode(IslandKit.placed))
+	# 版4：プレイヤーが広げた場所と、桟橋にとめてある乗り物
+	b.append_array(IslandKit.encode_expansions(IslandKit.expansions()))
+	b.append(Vehicles.index_of(Vehicles.current()))
 	return Marshalls.raw_to_base64(b).replace("+", "-").replace("/", "_").replace("=", "")
 
 
@@ -1077,7 +1080,7 @@ func decode_island(code: String) -> Dictionary:
 	while code.length() % 4 != 0:
 		code += "="
 	var b := Marshalls.base64_to_raw(code)
-	if b.size() < 6 or b[0] < 1 or b[0] > 3:
+	if b.size() < 6 or b[0] < 1 or b[0] > 4:
 		return {}
 	var i := 1
 	var d := {"level": b[1], "tier": clampi(b[2], 0, 3)}
@@ -1131,6 +1134,17 @@ func decode_island(code: String) -> Dictionary:
 			d.decos[key.substr(5)] = maxi(1, lv)
 	# 版3：置き物キット（版1・2のコードには無いので空）
 	d.kit = []
+	d.expansions = []
+	d.vehicle = "raft"
 	if b[0] >= 3:
-		d.kit = IslandKit.decode(b, i).list
+		var kd := IslandKit.decode(b, i)
+		d.kit = kd.list
+		i = kd.next
+	# 版4：広げた場所と乗り物（版1〜3には無い）
+	if b[0] >= 4:
+		var ed := IslandKit.decode_expansions(b, i)
+		d.expansions = ed.list
+		i = ed.next
+		if i < b.size() and b[i] < Vehicles.LIST.size():
+			d.vehicle = Vehicles.LIST[b[i]].id
 	return d
