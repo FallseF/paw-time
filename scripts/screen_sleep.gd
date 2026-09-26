@@ -32,7 +32,7 @@ func _toggle_more() -> void:
 	timeline.visible = open
 	plan_label.visible = not open
 	preview_card.position.y = 350 if open else 160
-	more_btn.text = "とじる ▴" if open else "ほかの過ごし方 ▾"
+	more_btn.text = "とじる ▲" if open else "ほかの過ごし方 ▼"
 	more_btn.position.y = 500
 
 
@@ -184,7 +184,7 @@ func _ready() -> void:
 	add_child(plan_label)
 	more_btn = Button.new()
 	more_btn.flat = true
-	more_btn.text = "ほかの過ごし方 ▾"
+	more_btn.text = "ほかの過ごし方 ▼"
 	more_btn.add_theme_font_override("font", Kit.bold())
 	more_btn.add_theme_font_size_override("font_size", 13)
 	more_btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
@@ -322,7 +322,7 @@ func _set_time(b: int, w: int) -> void:
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rrow.add_child(sp)
 	var more := Button.new()
-	more.text = "内訳 ▾" if not show_parts else "内訳 ▴"
+	more.text = "内訳 ▼" if not show_parts else "内訳 ▲"
 	more.flat = true
 	more.add_theme_font_override("font", Kit.bold())
 	more.add_theme_font_size_override("font_size", 12)

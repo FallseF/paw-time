@@ -1089,7 +1089,7 @@ func _refresh_hud() -> void:
 		else:
 			out.append("[color=#8a7a88]%s[/color]" % steps[i])
 	flow_label.text = "[color=#c9bfc6]・[/color]".join(out)
-	goals_btn.text = "めあて %d/3 ▾" % GameState.goals_done()
+	goals_btn.text = "めあて %d/3 ▼" % GameState.goals_done()
 	if goals_panel:
 		_toggle_goals()
 		_toggle_goals()
@@ -1311,8 +1311,8 @@ func _guide(t: String) -> void:
 	# おばけのひとこと（チュートリアル）
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	var face := Kit.text("👻", 16)
-	face.text = "◉"
+	var face := Kit.text("●", 16)
+	face.text = "●"
 	face.add_theme_color_override("font_color", Color("8b7bff"))
 	row.add_child(face)
 	var l := Kit.wrap(Kit.text(t, 13, Color("6a5bd6")))
