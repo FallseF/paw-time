@@ -1617,3 +1617,7 @@ func demo_orbit() -> void:
 	m.button_mask = MOUSE_BUTTON_MASK_LEFT
 	m.relative = Vector2(-80, 0)
 	_gui_input(m)
+
+
+func demo_fps() -> void:
+	print("[fps] ", Engine.get_frames_per_second(), " walkers=", walkers.size())
