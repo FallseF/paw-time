@@ -126,7 +126,9 @@ func _build_world() -> void:
 		_build_moon_deck(Vector3(2.9, 0, 1.9))
 	if L >= 10:
 		_build_tree(Vector3(3.2, 0, -2.6), Color("b9a7ff"), "dream")
-	for i in GameState.dream_flowers:
+	# 庭が満開になったあとも、めぐみ 80 ごとに夢見草が一輪ふえる
+	var extra_f: int = maxi(0, (GameState.growth - GameState.GARDEN[-1].need) / 80) if L >= GameState.GARDEN.size() - 1 else 0
+	for i in mini(GameState.dream_flowers + extra_f, 40):
 		var f := _dream_flower(Vector3(-3.3 + (i % 8) * 0.35, 0, 2.6 + (i / 8) * 0.25))
 		world.add_child(f)
 	# 仕事の飾り
@@ -574,6 +576,7 @@ func _apply_time(n: float) -> void:
 	env.ambient_light_energy = lerpf(0.4, 0.55, n)
 	sun.light_color = Color("ffe0bf").lerp(Color("9fb4ff"), n)
 	sun.light_energy = lerpf(0.75, 0.3, n)
+	lamp_lights = lamp_lights.filter(func(l): return is_instance_valid(l) and not l.is_queued_for_deletion())
 	for l in lamp_lights:
 		l.light_energy = lerpf(0.4, 1.8, n)
 	if fireflies:
@@ -1141,6 +1144,8 @@ func _show_morning() -> void:
 	r.add_child(Kit.text("%s%d" % ["+" if diff >= 0 else "", int(diff)], 15, Color("3f7d4f") if diff >= 0 else Color("c0473b"), true))
 	card_box.add_child(r)
 	card_box.add_child(Kit.text("庭のめぐみ +%d%s" % [ln.growth_gain, ("（夢で +%d）" % ln.dream) if ln.has("dream") else ""], 14, Color("3f7d4f"), true))
+	if GameState.last_goals > 0:
+		card_box.add_child(Kit.text("きのうのめあて %d/3 達成" % GameState.last_goals, 13, Color("b07a1a"), true))
 	if ln.get("visitor", "") != "":
 		card_box.add_child(Kit.wrap(Kit.text("夜ふかしの灯りに、チョウチンが寄ってきた。でも庭の花は少ししおれた", 13, Color("b0643a"))))
 	var btn := Kit.button("庭を見る", Color("ff8a5b"), _after_morning)
@@ -1215,6 +1220,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	burst.restart()
 	burst.emitting = true
 	Kit.play(self, "grow")
+	Kit.shake(cam, 0.05, 0.3)
 	_toast("庭が育った：%s" % st.name, st.desc)
 	await get_tree().create_timer(2.0).timeout
 	await _focus(Vector3.ZERO, 0)

@@ -307,6 +307,9 @@ func _next() -> void:
 	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	await tw3.finished
 	sfx["chime"].play()
+	if Rares.is_rare(h.id):
+		Kit.shake(cam, 0.07, 0.4)
+		sfx["sparkle"].play()
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
@@ -317,7 +320,7 @@ func _next() -> void:
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
 	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	index += 1
-	next_btn.text = "つぎの玉" if index < orbs.size() else "今日をはじめる"
+	next_btn.text = "つぎの玉" if index < orbs.size() else "庭へ"
 	next_btn.disabled = false
 	busy = false
 

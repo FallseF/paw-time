@@ -82,6 +82,10 @@ func _process(delta: float) -> void:
 				cool = 2.5
 		"sleep":
 			if c.get("going"):
+				if c.plan == "market":
+					c.plan = "done_market"
+					c.going = false
+					c.call("_sleep")
 				return
 			if GameState.mode == "solo":
 				c.call("_choose", ["usual", "usual", "extra", "usual", "market", "usual", "early"][GameState.day % 7])

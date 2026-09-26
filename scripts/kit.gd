@@ -136,3 +136,13 @@ static func label3d(t: String, size := 48, color := Color.WHITE) -> Label3D:
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
 	return l
+
+
+## カメラを少し揺らす（ここぞという時だけ）
+static func shake(cam: Camera3D, amp := 0.08, dur := 0.35) -> void:
+	var tw := cam.create_tween()
+	var n := int(dur / 0.04)
+	for i in n:
+		var k := 1.0 - float(i) / n
+		tw.tween_property(cam, "h_offset", randf_range(-amp, amp) * k, 0.04)
+	tw.tween_property(cam, "h_offset", 0.0, 0.04)

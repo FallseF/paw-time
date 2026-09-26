@@ -243,6 +243,7 @@ func _finish() -> void:
 	if res.won:
 		hint.text = ""
 		header.text = "満月！"
+		Kit.shake(cam, 0.1, 0.5)
 		Kit.play(self, "sparkle")
 		Kit.play(self, "grow")
 		burst.position = moon.global_position
