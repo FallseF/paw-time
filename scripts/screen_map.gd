@@ -21,7 +21,7 @@ func _ready() -> void:
 	head.size = Vector2(332, 44)
 	head.add_theme_constant_override("separation", 8)
 	add_child(head)
-	head.add_child(Kit.text("出撃", 26, Kit.INK, true))
+	head.add_child(Kit.text("お店", 26, Kit.INK, true))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
@@ -266,7 +266,7 @@ func _open_sheet(si: int, st: int) -> void:
 	p.add_child(v)
 	v.add_child(Kit.text("%s" % shop.name, 12, Color(shop.color).darkened(0.2), true))
 	v.add_child(Kit.text(stage.name, 22, Kit.INK, true))
-	var tip := Kit.text(stage.tip, 13, Kit.SUB)
+	var tip := Kit.text(ShopData.stage(si, st).tip, 13, Kit.SUB)
 	tip.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(tip)
 	if GameState.is_cleared(si, st):
@@ -346,7 +346,7 @@ func _open_sheet(si: int, st: int) -> void:
 		var b1 := Kit.button("編成", Color.WHITE, func(): main.go("crew"), Kit.INK)
 		b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(b1)
-	var b2 := Kit.button("出撃！", Color("ff6b5b"), func():
+	var b2 := Kit.button("開店！", Color("ff6b5b"), func():
 		GameState.pending_battle = {"shop": si, "stage": st}
 		main.go("defense"))
 	b2.size_flags_horizontal = Control.SIZE_EXPAND_FILL

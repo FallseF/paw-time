@@ -260,13 +260,13 @@ func battle_boost(shop_id: String) -> Dictionary:
 	var here: bool = DefData.STORE_SHOP.get(boost.store, "") == shop_id or (shop_id == "peak")
 	b.job = boost.role
 	if here:
-		b.start_energy = 200.0
+		b.start_bonus = 15.0
 		b.job_mult = 1.3
-		b.lines.append("%sで働いた：はじめのやる気 +%d" % [boost.store, int(b.start_energy)])
+		b.lines.append("%sで働いた：余裕 +15" % boost.store)
 		b.lines.append("%sのおばけ ×1.3" % ROLE_LABEL[boost.role])
 	else:
 		b.job_mult = 1.1
-		b.lines.append("%sの仕事をした：%sのおばけ ×1.1" % [ROLE_LABEL[boost.role], ROLE_LABEL[boost.role]])
+		b.lines.append("%sのおばけ ×1.1" % ROLE_LABEL[boost.role])
 	return b
 
 

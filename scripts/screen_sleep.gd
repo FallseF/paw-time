@@ -143,7 +143,7 @@ func _set_hours(h: int) -> void:
 	if hours >= 9:
 		lines.append("8時間より先は、同じ")
 	elif hours >= 7:
-		lines.append("明日は、やる気がたまりやすい")
+		lines.append("明日は、つかれにくい")
 	elif hours <= 5:
 		lines.append("夜ふかしの灯りに、何か来る")
 	for s in lines:

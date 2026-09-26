@@ -41,7 +41,7 @@ func _ready() -> void:
 	var dv := VBoxContainer.new()
 	dv.add_theme_constant_override("separation", 2)
 	dp.add_child(dv)
-	dv.add_child(Kit.text("出撃するおばけ（%d体まで）・☆＝育てたい一体（毎日の初勝利で経験+%d）" % [GameState.DECK_MAX, GameState.FOCUS_XP], 9, Kit.SUB, true))
+	dv.add_child(Kit.text("店に出るおばけ（%d体まで）" % GameState.DECK_MAX, 11, Kit.SUB, true))
 	deck_row = HBoxContainer.new()
 	deck_row.add_theme_constant_override("separation", 2)
 	dv.add_child(deck_row)
@@ -139,7 +139,7 @@ func _card(o: Dictionary) -> Control:
 	ts.content_margin_bottom = 1
 	tag.add_theme_stylebox_override("panel", ts)
 	tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var tag_text: String = ("レア" if rare else "%s・%s" % [GameState.ROLE_LABEL[job], u.role])
+	var tag_text: String = ("レア" if rare else GameState.ROLE_LABEL[job])
 	tag.add_child(Kit.text(tag_text, 10, Color.WHITE, true))
 	nr.add_child(tag)
 	var is_focus: bool = GameState.focus == id
@@ -160,8 +160,9 @@ func _card(o: Dictionary) -> Control:
 	var mult := DefData.unit_mult(o.level) * (0.8 if rare else 1.0)
 	if o.level >= DefData.VETERAN_LV:
 		nr.add_child(Kit.text("ベテラン", 11, Color("e8792f"), true))
-	v.add_child(Kit.text("Lv%d　体力 %d　攻撃 %d　やる気 %d" % [o.level, int(u.hp * mult), int(u.atk * mult), u.cost], 11, Kit.SUB))
-	var line := Kit.text(u.get("skill", u.get("line", "")), 11, Kit.INK)
+	var wk: Dictionary = ShopData.worker(id)
+	v.add_child(Kit.text("Lv%d　速さ %.1f　スタミナ %d秒" % [o.level, wk.rate * DefData.unit_mult(o.level), int(wk.stamina * (1.0 + 0.08 * (o.level - 1)))], 11, Kit.SUB))
+	var line := Kit.text(ShopData.HELP_TEXT.get(ShopData.help_of(id), "") if rare else ShopData.worker(id).line, 11, Kit.INK)
 	line.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(line)
 	var xr := HBoxContainer.new()

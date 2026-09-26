@@ -292,7 +292,7 @@ func _render() -> void:
 	# 1行の見出し＋1行の説明だけ
 	if GameState.total_battles == 0:
 		card_title.text = "店に、困りごとが来る"
-		card_body.text = "おばけのみんなで守ろう"
+		card_body.text = "おばけを置いて、回そう"
 	elif first_night:
 		card_title.text = "夜は、川べりへ"
 		card_body.text = "光る玉が、朝に仲間になる"
@@ -311,7 +311,7 @@ func _render() -> void:
 	if first_night:
 		primary = _button("夜の川べりへ", Color("5b6fc2"), night)
 	else:
-		primary = _button("出撃", Color("ff6b5b"), func(): main.go("map"))
+		primary = _button("お店へ", Color("ff6b5b"), func(): main.go("map"))
 	actions.add_child(primary)
 	if GameState.total_battles == 0 or first_night:
 		_pulse(primary)
@@ -324,7 +324,7 @@ func _render() -> void:
 	if s.role != "" and not GameState.shift_done_today:
 		small.append(["シフト記録", _do_shift])
 	if first_night:
-		small.append(["出撃", func(): main.go("map")])
+		small.append(["お店へ", func(): main.go("map")])
 	else:
 		small.append(["夜の川べり", night])
 	if GameState.owned.size() > 2:

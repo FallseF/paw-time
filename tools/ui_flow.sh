@@ -14,7 +14,7 @@ shot() { # 名前 手順
 }
 rm -f "$HOME/Library/Application Support/Godot/app_userdata/おばけの休憩室/obake_c_uiflow.json"
 # 1 タイトル、休憩室、地図の出撃シート、1-1 のはじめ・途中
-OBAKE_FRESH=1 OBAKE_SAVE=$S OBAKE_SHOT="wait1.5,snap,title,wait0.5,morning,wait1.5,snap,map,wait1.5,snap,defense,wait2.5,snap,wait5,snap,call:demo_rush,wait45,snap" OBAKE_SHOT_PATH=/tmp/uiflow_a.png godot --path . --resolution 360x640 --quit-after 200000 >/dev/null 2>&1 || true
+OBAKE_FRESH=1 OBAKE_SAVE=$S OBAKE_SHOT="wait1.5,snap,title,wait0.5,morning,wait1.5,snap,map,wait1.5,snap,defense,wait2.5,snap,wait5,snap,call:demo_rush,wait42,snap" OBAKE_SHOT_PATH=/tmp/uiflow_a.png godot --path . --resolution 360x640 --quit-after 200000 >/dev/null 2>&1 || true
 i=0; for n in 01_title 02_room 03_map 04_battle_start 05_battle_mid 06_result; do [ -f /tmp/uiflow_a_$i.png ] && cp /tmp/uiflow_a_$i.png $OUT/$n.png; i=$((i+1)); done
 rm -f /tmp/uiflow_a*.png
 # 2 そのセーブで、すくい → 寝る → 孵化 → 休憩室 → 地図
