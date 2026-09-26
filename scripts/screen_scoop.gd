@@ -784,7 +784,39 @@ func _finish() -> void:
 	GameState.tut["scoop"] = true
 	Engine.time_scale = 1.0
 	GameState.save()
-	main.go("sleep")
+	busy = true
+	# 今夜のまとめ（静かに閉じる）
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.9), 24))
+	p.position = Vector2(40, 230)
+	p.size = Vector2(280, 0)
+	add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(_text("今夜のすくい", 16, Color("c9d2ff")))
+	v.add_child(_text("%d 個" % caught_count, 34, Color.WHITE, font_black))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	for o in GameState.orbs:
+		var dot := Panel.new()
+		dot.custom_minimum_size = Vector2(16, 16)
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(8)
+		sb.bg_color = GameState.TYPE_COLOR.get(o.type, Color.WHITE)
+		dot.add_theme_stylebox_override("panel", sb)
+		row.add_child(dot)
+	v.add_child(row)
+	v.add_child(_text("玉は、眠っている間にかえる" if caught_count > 0 else "今夜は、水の音だけ", 13, Color(1, 1, 1, 0.7)))
+	var b := Kit.button("帰って、おやすみの支度", Color("8b7bff"), func(): main.go("sleep"), Color.WHITE, 46, 16)
+	v.add_child(b)
+	p.pivot_offset = Vector2(140, 100)
+	p.scale = Vector2(0.8, 0.8)
+	p.modulate.a = 0.0
+	var tw := create_tween().set_parallel()
+	tw.tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(p, "modulate:a", 1.0, 0.25)
 
 
 # ---------- 確認用 ----------

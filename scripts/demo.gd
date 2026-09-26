@@ -70,6 +70,9 @@ func _process(delta: float) -> void:
 				else:
 					main.go("sleep")
 		"scoop":
+			if GameState.scooped_tonight:
+				main.go("sleep")
+				return
 			if c.busy:
 				return
 			if c.orbs.is_empty() or c.poi_type == "":
