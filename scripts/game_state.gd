@@ -92,6 +92,7 @@ var wins_today := 0
 var daily_done := false
 var consolation_done := false
 var daily_pick: Array = [] # [日, 店, 面]
+var settings := {"music": true}
 var perfect := {} # お店を無傷で守った面（周回つきのキー）
 var focus := "" # 育てたい一体。その日の最初の勝ちで経験値 +FOCUS_XP
 const FOCUS_XP := 40
@@ -631,7 +632,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 const SAVE_KEYS := ["day", "phase", "nets", "net_strength", "last_sleep", "owned", "seen", "morning_report", "orbs", "hatched",
 	"scooped_tonight", "sleep_hist", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_days",
 	"first_role_today", "gifted", "received", "rare_pending", "coins", "deck", "cleared", "best_lap", "lap", "boost",
-	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick", "focus", "perfect"]
+	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick", "focus", "perfect", "settings"]
 
 
 func save_game() -> void:
@@ -669,6 +670,7 @@ func load_game() -> bool:
 		nets[k] = int(nets[k])
 	for k in cleared:
 		cleared[k] = int(cleared[k])
+	Kit.set_music_on(settings.get("music", true))
 	for k in coworker_count:
 		coworker_count[k] = int(coworker_count[k])
 	for i in sleep_hist.size():

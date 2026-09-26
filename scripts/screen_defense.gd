@@ -1102,6 +1102,13 @@ func _pause() -> void:
 		paused = false
 		overlay.queue_free()
 		overlay = null))
+	var mb := Kit.button("音楽：%s" % ("ON" if Kit.music_on else "OFF"), Color.WHITE, func(): pass, Kit.INK, 40, 14)
+	mb.pressed.connect(func():
+		Kit.set_music_on(not Kit.music_on)
+		GameState.settings["music"] = Kit.music_on
+		GameState.save_game()
+		mb.text = "音楽：%s" % ("ON" if Kit.music_on else "OFF"))
+	v.add_child(mb)
 	v.add_child(Kit.button("あきらめて帰る", Color("b0a4b8"), func():
 		overlay.queue_free()
 		overlay = null

@@ -87,6 +87,15 @@ func _ready() -> void:
 		bv.add_child(Kit.button("はじめる", Color("ff6b5b"), func():
 			GameState.reset()
 			main.go("morning")))
+	var mb := Kit.button("音楽：%s" % ("ON" if Kit.music_on else "OFF"), Color(1, 1, 1, 0.8), func(): pass, Kit.INK, 34, 12)
+	mb.custom_minimum_size = Vector2(90, 34)
+	mb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	mb.pressed.connect(func():
+		Kit.set_music_on(not Kit.music_on)
+		GameState.settings["music"] = Kit.music_on
+		GameState.save_game()
+		mb.text = "音楽：%s" % ("ON" if Kit.music_on else "OFF"))
+	bv.add_child(mb)
 
 
 func _process(delta: float) -> void:

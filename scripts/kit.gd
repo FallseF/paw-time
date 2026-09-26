@@ -51,7 +51,17 @@ func sfx(n: String, pitch := 1.0, vol := 0.0) -> void:
 			return
 
 
+var music_on := true
+
+
+func set_music_on(on: bool) -> void:
+	music_on = on
+	if _music:
+		_music.volume_db = -12 if on else -80
+
+
 func music(n: String) -> void:
+	_music.volume_db = -12 if music_on else -80
 	if _music_name == n:
 		return
 	_music_name = n
