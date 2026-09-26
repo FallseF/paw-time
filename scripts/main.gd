@@ -90,6 +90,23 @@ func go(screen_name: String, instant := false) -> void:
 	busy = false
 
 
+var click: AudioStreamPlayer
+
+
+## どのボタンも、押すと小さく鳴る
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var c := get_viewport().gui_get_hovered_control()
+		if c is BaseButton and not c.disabled:
+			if click == null:
+				click = AudioStreamPlayer.new()
+				click.stream = load("res://assets/sfx/pop.wav")
+				click.volume_db = -12
+				add_child(click)
+			click.pitch_scale = randf_range(0.95, 1.1)
+			click.play()
+
+
 func _music_for(screen_name: String) -> void:
 	var want := screen_name in MUSIC_SCREENS
 	if want and not music.playing:
