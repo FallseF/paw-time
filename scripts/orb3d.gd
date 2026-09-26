@@ -42,7 +42,7 @@ func setup(d: Dictionary) -> Orb3D:
 	core.mesh = s
 	core_mat = StandardMaterial3D.new()
 	core_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	core_mat.albedo_color = col.lightened(0.4)
+	core_mat.albedo_color = col
 	core_mat.emission_enabled = true
 	core_mat.emission = col
 	core_mat.emission_energy_multiplier = 3.0
@@ -113,10 +113,10 @@ func _process(delta: float) -> void:
 	if alarmed > 0.0:
 		alarmed -= delta
 		pulse = 1.0
-	core_mat.emission_energy_multiplier = (1.0 + pulse * 0.6) if caught else (1.5 + pulse * 0.9)
+	core_mat.emission_energy_multiplier = (0.6 + pulse * 0.4) if caught else (0.8 + pulse * 0.6)
 	halo.scale = Vector3.ONE * (0.7 + pulse * 0.18)
 	if highlight and not caught:
-		core_mat.emission_energy_multiplier = 3.2
+		core_mat.emission_energy_multiplier = 2.2
 		halo.scale = Vector3.ONE * (1.25 + 0.1 * sin(_t * 12.0))
 	if caught:
 		return
