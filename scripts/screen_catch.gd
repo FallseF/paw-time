@@ -200,11 +200,11 @@ func _resolve(timing: float, words: String) -> void:
 		var tw2 := create_tween().set_parallel()
 		tw2.tween_property(v, "scale", Vector2(0.1, 0.1), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 		tw2.tween_property(v, "position", v.position + Vector2(44, 44), 0.35)
-		_toast("%s\n%s をつかまえた！%s" % [words, GameState.SPECIES[w.id].name, "\nはじめて！" if is_new else ""])
+		_toast("%s\n%s をつかまえた！%s" % [words, GameState.info(w.id).name, "\nはじめて！" if is_new else ""])
 		_burst(v.position + Vector2(48, 48))
 		await tw2.finished
 	else:
-		_toast("%s\n%s ににげられた…（%d%%）" % [words, GameState.SPECIES[w.id].name, int(chance * 100)])
+		_toast("%s\n%s ににげられた…（%d%%）" % [words, GameState.info(w.id).name, int(chance * 100)])
 		var tw3 := create_tween().set_parallel()
 		tw3.tween_property(v, "position", v.position + Vector2(randf_range(-200, 200), -260), 0.5).set_ease(Tween.EASE_IN)
 		tw3.tween_property(v, "modulate:a", 0.0, 0.5)

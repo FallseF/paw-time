@@ -102,7 +102,7 @@ func _render_party() -> void:
 	var w: Dictionary = WAVES[wave]
 	for i in GameState.owned.size():
 		var o: Dictionary = GameState.owned[i]
-		var sp: Dictionary = GameState.SPECIES[o.id]
+		var sp: Dictionary = GameState.info(o.id)
 		var weak: bool = sp.type in w.weak
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(108, 76)
@@ -139,7 +139,7 @@ func _act(i: int) -> void:
 		return
 	busy = true
 	var o: Dictionary = GameState.owned[i]
-	var sp: Dictionary = GameState.SPECIES[o.id]
+	var sp: Dictionary = GameState.info(o.id)
 	var w: Dictionary = WAVES[wave]
 	var dmg := GameState.obake_power(o)
 	var weak: bool = sp.type in w.weak

@@ -39,7 +39,7 @@ func _ready() -> void:
 	var n_orbs: int = GameState.hatched.size()
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
-		var t: String = GameState.SPECIES[h.id].type
+		var t: String = GameState.info(h.id).type
 		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": h.id == "kirari", "weight": 0.3})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
@@ -307,7 +307,7 @@ func _next() -> void:
 	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	await tw3.finished
 	sfx["chime"].play()
-	var sp: Dictionary = GameState.SPECIES[h.id]
+	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
 	card_sub.text = "Lv%d ・ %s" % [h.level, _type_label(sp.type)]

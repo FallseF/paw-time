@@ -369,7 +369,7 @@ func _build_ui() -> void:
 
 
 func _refresh_ui() -> void:
-	var sp: Dictionary = GameState.SPECIES[obake.species]
+	var sp: Dictionary = GameState.info(obake.species)
 	var good := ""
 	for nid in GameState.NETS:
 		if GameState.NETS[nid].type == sp.type:
@@ -409,10 +409,6 @@ func _cycle_net() -> void:
 
 func _pick_species() -> String:
 	var r := randf()
-	if r < 0.06:
-		return "kirari"
-	if r < 0.16:
-		return "lantern"
 	return ["receipt", "bubble", "tray", "pan", "box"].pick_random()
 
 
@@ -654,7 +650,7 @@ func _caught(at: Vector3) -> void:
 	particles.position = at
 	particles.restart()
 	particles.emitting = true
-	_banner("つかまえた！\n%s%s" % [GameState.SPECIES[obake.species].name, "  NEW" if is_new else ""], Color("fff2a8"))
+	_banner("つかまえた！\n%s%s" % [GameState.info(obake.species).name, "  NEW" if is_new else ""], Color("fff2a8"))
 	var tw := create_tween()
 	tw.tween_interval(0.6)
 	tw.tween_property(net, "scale", Vector3.ZERO, 0.3)

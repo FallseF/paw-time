@@ -59,6 +59,8 @@ func setup(id: String) -> Obake3D:
 	body = Node3D.new()
 	add_child(body)
 	var col: Color = COLORS.get(id, Color.WHITE)
+	if Rares.is_rare(id):
+		col = Color(Rares.by_id(id).look.c1)
 	var mat := toon(col, 0.12, 0.6 if id == "kirari" else 0.0)
 
 	var head := _mesh(_sphere(0.5), mat, Vector3(0, 0.5, 0))

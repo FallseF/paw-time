@@ -13,7 +13,7 @@ func _ready() -> void:
 	p.size = Vector2(328, 420)
 	add_child(p)
 	box.add_child(UI.label("1週間おつかれさま", 24))
-	box.add_child(UI.label("出会ったおばけ %d / %d 種類" % [GameState.seen.size(), GameState.SPECIES.size()], 16))
+	box.add_child(UI.label("出会ったおばけ %d / %d 種類" % [GameState.seen.size(), GameState.ALL.size()], 16))
 	box.add_child(UI.label("金曜の大ピーク：%s" % ("乗り切った" if GameState.battle_won else "回しきれなかった"), 16))
 	var row := HFlowContainer.new()
 	for o in GameState.owned:
