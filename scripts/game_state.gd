@@ -153,7 +153,7 @@ var gifted := false
 var received := false
 var festival_cleared := false
 var drought := 0 # 新しいレアに会えずに、ちゃんとすくった夜の数
-const DROUGHT_NIGHTS := 5
+const DROUGHT_NIGHTS := 3
 var rare_pending: Array = []
 const RARES_PER_NIGHT := 2
 
