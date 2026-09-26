@@ -92,7 +92,44 @@ func ghost(col: Color, s := 1.0, emission := 0.0, eye_col := INK, sleepy := fals
 		g.add_child(_mesh(_sphere(0.15), mat, Vector3(cos(a) * 0.44, 0.02, sin(a) * 0.44)))
 	if with_face:
 		g.add_child(face(Vector3(0, 0.5, 0), 1.0, eye_col, sleepy))
+		if CAT:
+			_cat_parts(g, col, mat)
 	return g
+
+
+## Paw Time：猫おばけの耳と尻尾。頭（半径 0.5・中心 y=0.5）に合わせて付ける。
+static var CAT := true
+
+
+func _cat_parts(g: Node3D, col: Color, mat: Material) -> void:
+	var pink := flat(Color("f6a8aa"))
+	for sx in [-1.0, 1.0]:
+		var ear := CylinderMesh.new()
+		ear.top_radius = 0.0
+		ear.bottom_radius = 0.16
+		ear.height = 0.3
+		ear.radial_segments = 12
+		var e := _mesh(ear, mat, Vector3(sx * 0.27, 0.9, -0.02))
+		e.rotation = Vector3(-0.1, 0, -sx * 0.38)
+		g.add_child(e)
+		var inner := CylinderMesh.new()
+		inner.top_radius = 0.0
+		inner.bottom_radius = 0.085
+		inner.height = 0.18
+		inner.radial_segments = 10
+		var ie := _mesh(inner, pink, Vector3(sx * 0.265, 0.9, 0.06))
+		ie.rotation = Vector3(-0.1, 0, -sx * 0.38)
+		g.add_child(ie)
+	# ふわっと上がる尻尾（小さな球をつないで弧にする）
+	var tail := Node3D.new()
+	tail.name = "Tail"
+	tail.position = Vector3(0.1, 0.22, -0.45)
+	g.add_child(tail)
+	for i in 6:
+		var t := i / 5.0
+		var r := lerpf(0.09, 0.065, t)
+		var pos := Vector3(sin(t * 1.6) * 0.3, t * 0.55, -0.12 - sin(t * PI) * 0.18)
+		tail.add_child(_mesh(_sphere(r), mat, pos))
 
 
 ## 顔（目・ハイライト・ほっぺ・口）。center は半径 0.5 の頭の中心、k はその頭に対する倍率。正面は +Z。
@@ -114,9 +151,26 @@ func face(center: Vector3, k := 1.0, eye_col := INK, sleepy := false) -> Node3D:
 		var cheek := _mesh(_sphere(0.07), flat(Color("f6a8aa")), Vector3(x * 1.7, -0.08, 0.42))
 		cheek.scale = Vector3(1.0, 0.55, 0.3)
 		f.add_child(cheek)
-	var mouth := _mesh(_sphere(0.05), flat(INK), Vector3(0, -0.07, 0.49))
-	mouth.scale = Vector3(1.2, 0.6, 0.4)
-	f.add_child(mouth)
+	if CAT:
+		# 鼻と「ω」の口、ひげ
+		var nose := _mesh(_sphere(0.028), flat(Color("f08a9a")), Vector3(0, -0.035, 0.5))
+		nose.scale = Vector3(1.3, 0.8, 0.6)
+		f.add_child(nose)
+		for x in [-0.035, 0.035]:
+			var m := _mesh(_sphere(0.032), flat(INK), Vector3(x, -0.085, 0.485))
+			m.scale = Vector3(1.0, 0.55, 0.4)
+			f.add_child(m)
+		for sx in [-1.0, 1.0]:
+			for j in 3:
+				var w := BoxMesh.new()
+				w.size = Vector3(0.2, 0.012, 0.012)
+				var wm := _mesh(w, flat(INK), Vector3(sx * 0.33, -0.03 - j * 0.045, 0.43))
+				wm.rotation = Vector3(0, -sx * 0.35, sx * (0.12 - j * 0.12))
+				f.add_child(wm)
+	else:
+		var mouth := _mesh(_sphere(0.05), flat(INK), Vector3(0, -0.07, 0.49))
+		mouth.scale = Vector3(1.2, 0.6, 0.4)
+		f.add_child(mouth)
 	return f
 
 
