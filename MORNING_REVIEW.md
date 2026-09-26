@@ -8,6 +8,12 @@
 2. 一番気になった案を触る：`godot --path ~/dev/obake-godot-<a|b|c> --resolution 360x640`
 3. 下の「統合の案」に、どれを採るかを一言返す
 
+## 遊べる URL（Vercel、個人の eiyutos-projects、誰でも開ける）
+- A：https://obake-breakroom-a-scoop.vercel.app
+- B：https://obake-breakroom-b-sleep.vercel.app
+- C：https://obake-breakroom-c-defense.vercel.app
+- 最初の読み込みは約60〜70MB（エンジン 39MB＋データ 22〜28MB）。スマホの回線では数十秒かかる。
+
 ## 3案の早見表
 | | A「すくいと収集」 | B「眠りのリズム」 | C「大ピーク防衛」 |
 |---|---|---|---|
