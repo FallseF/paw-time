@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 112)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("何時間ねる？ 選ぶと、すぐ朝になる", 12, Color(1, 1, 1, 0.55))
+	var note := _text("選ぶと、すぐ朝になる", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 148)
 	note.size = Vector2(360, 20)
 	add_child(note)
@@ -69,7 +69,7 @@ func _ready() -> void:
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.1), 22))
 	card.position = Vector2(24, 290)
-	card.size = Vector2(312, 150)
+	card.size = Vector2(312, 0)
 	add_child(card)
 	preview = VBoxContainer.new()
 	preview.add_theme_constant_override("separation", 6)
@@ -150,60 +150,41 @@ func _set_hours(h: int) -> void:
 	create_tween().tween_property(big, "scale", Vector2.ONE, 0.18)
 	for c in preview.get_children():
 		c.queue_free()
+	# 3行まで：玉の育ち・ポイの強さ・（開いたら）明日の予報
 	var strength := GameState.sleep_strength(hours)
-	var n := GameState.orbs.size()
 	var lines := []
-	lines.append(["明日のポイの強さ ×%.2f" % strength, Color("ffe27a") if strength >= 1.25 else (Color("ffb3a8") if strength < 1.0 else Color("e8e2ff"))])
-	if n > 0:
-		if hours >= 7:
-			lines.append(["すくった玉 %d こが、★ひとつ育ってかえる" % n, Color("b8ffcf")])
-		else:
-			lines.append(["すくった玉 %d こが、朝にかえる" % n, Color("e8e2ff")])
-	var s: Dictionary = GameState.today()
-	var worked: bool = GameState.worked_today
-	if hours >= 7 and not GameState.seen.has("nemurin"):
-		lines.append(["よく眠ると、枕元に何かが来そう", Color("c9bdf5")])
-	elif hours >= 8 and not GameState.seen.has("yumemi"):
-		lines.append(["長い夢の先に、何かがいる気がする", Color("c9bdf5")])
-	elif hours <= 5 and not GameState.seen.has("yomise"):
-		lines.append(["夜ふかしの灯りに、何かが寄ってくる", Color("ffcf7a")])
-	elif hours >= 9 and not worked and not GameState.seen.has("hirunen"):
-		lines.append(["休みの日の長い眠りに、何かが来そう", Color("c9bdf5")])
-	if hours == 9:
-		lines.append(["寝すぎると、少しだけぼんやり", Color(1, 1, 1, 0.6)])
-	# 明日の夜の池を、少しだけ先に見せる
-	var tm: Dictionary = GameState.shift_for(GameState.day + 1)
-	var fest := GameState.is_festival(GameState.day + 1)
-	var fc := "明日の夜：%s%s%s" % [tm.weather, ("・" + tm.moon) if tm.moon != "" else "", "・大すくい祭り！" if fest else ""]
-	lines.append([fc, Color("9fe0ff")])
-	if tm.role != "":
-		lines.append(["明日のシフト：%s → %s×2" % [GameState.ROLE_LABEL[tm.role], GameState.POI[GameState.ROLE_POI[tm.role]].name], Color("ffcf9a")])
+	if hours >= 7:
+		lines.append(["玉が★ひとつ育ってかえる", Color("b8ffcf")])
+	elif hours <= 5:
+		lines.append(["寝不足：ポイが弱くなる", Color("ffb3a8")])
 	else:
-		lines.append(["明日はお休み。紙のポイ2本で遊べる", Color(1, 1, 1, 0.6)])
-	# 何時間でポイがどれだけ強くなるかを、小さな棒で見せる
-	var bars := HBoxContainer.new()
-	bars.alignment = BoxContainer.ALIGNMENT_CENTER
-	bars.add_theme_constant_override("separation", 6)
-	for hh in range(4, 10):
-		var col := VBoxContainer.new()
-		col.alignment = BoxContainer.ALIGNMENT_END
-		col.add_theme_constant_override("separation", 2)
-		var st := GameState.sleep_strength(hh)
-		var b := ColorRect.new()
-		b.custom_minimum_size = Vector2(26, 44.0 * (st - 0.5))
-		b.color = Color("ffe27a") if hh == hours else Color(1, 1, 1, 0.25)
-		col.add_child(b)
-		var t := _text("%d" % hh, 11, Color.WHITE if hh == hours else Color(1, 1, 1, 0.5))
-		col.add_child(t)
-		col.custom_minimum_size = Vector2(26, 50)
-		bars.add_child(col)
-	preview.add_child(bars)
-	var cap := _text("ねた時間 → 明日のポイの強さ", 11, Color(1, 1, 1, 0.55))
-	preview.add_child(cap)
+		lines.append(["玉は、ふつうにかえる", Color("e8e2ff")])
+	lines.append(["明日のポイ ×%.2f" % strength, Color("ffe27a") if strength > 1.0 else Color("e8e2ff")])
+	if GameState.unlocked("forecast"):
+		var tm: Dictionary = GameState.shift_for(GameState.day + 1)
+		var fest := GameState.is_festival(GameState.day + 1)
+		var fc := "明日：%s%s" % ["大すくい祭り" if fest else tm.weather, ("・%sのシフト" % GameState.ROLE_LABEL[tm.role]) if tm.role != "" else "・お休み"]
+		lines.append([fc, Color("9fe0ff")])
+	if GameState.unlocked("sleep_bars"):
+		# 何時間でポイがどれだけ強くなるかを、小さな棒で見せる
+		var bars := HBoxContainer.new()
+		bars.alignment = BoxContainer.ALIGNMENT_CENTER
+		bars.add_theme_constant_override("separation", 6)
+		for hh in range(4, 10):
+			var col := VBoxContainer.new()
+			col.alignment = BoxContainer.ALIGNMENT_END
+			col.add_theme_constant_override("separation", 2)
+			var st := GameState.sleep_strength(hh)
+			var b := ColorRect.new()
+			b.custom_minimum_size = Vector2(26, 44.0 * (st - 0.5))
+			b.color = Color("ffe27a") if hh == hours else Color(1, 1, 1, 0.25)
+			col.add_child(b)
+			col.add_child(_text("%d" % hh, 11, Color.WHITE if hh == hours else Color(1, 1, 1, 0.5)))
+			col.custom_minimum_size = Vector2(26, 50)
+			bars.add_child(col)
+		preview.add_child(bars)
 	for l in lines:
-		var lab := _text("・" + l[0], 15, l[1])
-		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		lab.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		var lab := _text(l[0], 16, l[1])
 		preview.add_child(lab)
 
 

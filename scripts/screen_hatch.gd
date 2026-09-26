@@ -399,12 +399,12 @@ func _next() -> void:
 	var extra := ""
 	if h.get("leveled", false):
 		extra = "Lv%d → Lv%d に育った！見た目も変わる" % [h.before, h.level]
-	elif h.get("shard", "") != "":
+	elif h.get("shard", "") != "" and GameState.unlocked("workshop"):
 		extra = "%sのかけら +1（工房で使える）" % GameState.SHARD_LABEL[h.shard]
-	if h.get("gold_shard", "") != "":
+	if h.get("gold_shard", "") != "" and GameState.unlocked("workshop"):
 		extra += ("\n" if extra != "" else "") + "金の玉：%sのかけら +2" % GameState.SHARD_LABEL[h.gold_shard]
 	if h.get("kind", "") == "rainbow" and not rare:
-		extra += ("\n" if extra != "" else "") + "虹の玉：大きく育ち、虹のかけら +1"
+		extra += ("\n" if extra != "" else "") + "虹の玉：大きく育った"
 	card_desc.text = sp.desc + ("\n" + extra if extra != "" else "")
 	card.position.y = 430
 	var tw4 := create_tween().set_parallel()

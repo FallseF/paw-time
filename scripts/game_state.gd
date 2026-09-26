@@ -185,6 +185,18 @@ func _sandboxed() -> bool:
 	return false
 
 
+## はじめての人向けに、仕組みを少しずつ見せる（すくった夜の数で開く）
+const UNLOCK_AT := {
+	"zukan": 1, "shift": 1, "poi_hud": 1, "combo": 1, "goal": 1, "help": 1, "partner_line": 1, "tips": 1,
+	"workshop": 2, "weather": 2, "practice": 2, "forecast": 2, "sleep_bars": 2,
+	"quests": 3,
+}
+
+
+func unlocked(key: String) -> bool:
+	return records.get("nights", 0) >= UNLOCK_AT.get(key, 0)
+
+
 func info(id: String) -> Dictionary:
 	return ALL.get(id, {"name": id, "type": "", "desc": ""})
 
@@ -206,7 +218,7 @@ func reset() -> void:
 	decor = {}
 	orbs = []
 	hatched = []
-	morning_report = ["休憩室の隅に、レシートンが1体ついてきた", "紙のポイを3本もらった。今夜、川べりでおばけの玉をすくおう"]
+	morning_report = []
 	worked_today = false
 	scooped_tonight = false
 	tonight = {}
@@ -530,36 +542,36 @@ func night_mods() -> Dictionary:
 			m.drain = 1.2
 			m.supply += 3
 			m.rain = true
-			m.label.append("雨：玉が多い・ポイがぬれやすい")
+			m.label.append("雨：玉が多い・ぬれやすい")
 		"雷":
 			m.scatter = true
 			m.rainbow += 0.2
-			m.label.append("雷：光るたびに玉が散る")
+			m.label.append("雷：光ると玉が散る")
 		"雪":
 			m.speed = 0.6
 			m.snow = true
-			m.label.append("雪：水がつめたく、玉がゆっくり")
+			m.label.append("雪：玉がゆっくり")
 		"曇":
 			m.label.append("くもり：おだやかな夜")
 	match s.moon:
 		"満月":
 			m.rainbow += 0.45
 			m.rainbow_max = 2
-			m.label.append("満月：虹の玉が浮かびやすい")
+			m.label.append("満月：虹が出やすい")
 		"新月":
 			m.dark = true
 			m.supply += 2
-			m.label.append("新月：暗いが、玉が多い")
+			m.label.append("新月：暗いが玉が多い")
 	if worked_today and (first_role_today or first_store_today):
 		m.rainbow += 0.3
 	if drought >= DROUGHT_NIGHTS:
 		m.rainbow += 0.45
-		m.label.append("虹の気配：まだ見ぬレアが近い")
+		m.label.append("虹の気配：レアが近い")
 	if is_festival():
 		m.festival = true
 		m.supply += 8
 		m.rainbow_max += 1
-		m.label.push_front("大すくい祭り：金の玉が出る。12こで景品、20こで特賞")
+		m.label.push_front("祭り：12こで景品")
 	if m.label.is_empty():
 		m.label.append("晴れ：しずかな水面")
 	m.rainbow = minf(m.rainbow, 0.95)
@@ -845,20 +857,21 @@ func sleep(hours: int) -> void:
 	var free: int = clampi(FREE_POI_CAP - pois.paper, 0, FREE_POI_PER_DAY)
 	pois.paper += free
 	phase = "morning"
-	# 朝の報告
-	morning_report.append("%d時間ねた → ポイの強さ ×%.2f%s" % [hours, strength, "（よく寝た！玉が★1つ育った）" if qb > 0 else ""])
-	if n_orbs > 0:
-		morning_report.append("すくった玉 %d こが、朝日でかえった" % n_orbs)
+	# 朝の報告（短く、3行まで）
+	var head := "%d時間ねた" % hours
+	if qb > 0:
+		head += "：玉がよく育った"
+	elif hours <= 5:
+		head += "：ポイが少し弱い"
+	morning_report.append(head)
 	if free > 0:
-		morning_report.append("毎朝の紙のポイ ×%d" % free)
-	else:
-		morning_report.append("紙のポイは %d 本でいっぱい（使わないと増えない）" % FREE_POI_CAP)
-	if rare_pending.size() > 0:
-		morning_report.append("まだかえっていないレアの気配が %d つ…" % rare_pending.size())
+		morning_report.append("紙のポイ +%d" % free)
 	if auto_claimed > 0:
-		morning_report.append("先週のおねがい %d つのごほうびを受け取った" % auto_claimed)
+		morning_report.append("先週のおねがい：ごほうび受け取り")
+	elif rare_pending.size() > 0:
+		morning_report.append("レアの気配が %d つ…" % rare_pending.size())
 	if day % 7 == 0:
-		morning_report.push_front("第%d週のまとめ：すくった玉 %d・新しい出会い %d" % [week_no() - 1, records.total - int(week_snap.total), seen.size() - int(week_snap.seen)])
+		morning_report.push_front("第%d週：すくった玉 %d・出会い %d" % [week_no() - 1, records.total - int(week_snap.total), seen.size() - int(week_snap.seen)])
 		week_snap = _make_snap()
 		week_best = {"combo": 0, "festival": 0}
 	changed.emit()

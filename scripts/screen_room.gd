@@ -407,21 +407,18 @@ func _build_ui() -> void:
 	add_child(top)
 	var dp := PanelContainer.new()
 	dp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.92), 22))
-	var dv := VBoxContainer.new()
-	dv.add_theme_constant_override("separation", -4)
-	dv.add_child(_text("第%d週 %s曜日" % [GameState.week_no(), s.day], 16, Color("2a2233"), font_black))
-	dv.add_child(_text("%s ・ %s%s" % [s.season, s.weather, ("・" + s.moon) if s.moon != "" else ""], 11, Color("8a7a88")))
-	dp.add_child(dv)
+	dp.add_child(_text("第%d週 %s曜日" % [GameState.week_no(), s.day], 16, Color("2a2233"), font_black))
 	top.add_child(dp)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
 	var hb := _button("？", Color(1, 1, 1, 0.92), _show_boost_help, Color("5b6fc2"))
 	hb.custom_minimum_size = Vector2(40, 44)
+	hb.visible = GameState.unlocked("help")
 	top.add_child(hb)
 	var ws := _button("工房", Color(1, 1, 1, 0.92), func(): main.go("workshop"), Color("d9774a"))
 	ws.custom_minimum_size = Vector2(62, 44)
-	ws.visible = GameState.records.nights > 0 # はじめての夜が終わるまでは出さない
+	ws.visible = GameState.unlocked("workshop") # 仕組みは少しずつ見せる
 	top.add_child(ws)
 	if not GameState.tut.has("partner") or GameState.next_unlock_text().begins_with("工房で"):
 		var wdot := _dot(Color("ff5b5b"))
@@ -429,6 +426,7 @@ func _build_ui() -> void:
 		ws.add_child(wdot)
 	var zk := _button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
 	zk.custom_minimum_size = Vector2(62, 44)
+	zk.visible = GameState.unlocked("zukan")
 	top.add_child(zk)
 	if GameState.claimable().size() > 0 or GameState.seen.size() > int(GameState.tut.get("zukan_seen", 1)):
 		var dot := _dot(Color("ff5b5b"))
@@ -439,6 +437,7 @@ func _build_ui() -> void:
 	poi_panel = pp
 	pp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.85), 18))
 	pp.position = Vector2(12, 66)
+	pp.visible = GameState.unlocked("poi_hud")
 	add_child(pp)
 	pp.size = Vector2(336, 0)
 	poi_row = HFlowContainer.new()
@@ -497,7 +496,7 @@ func _render() -> void:
 			done += 1
 	var ready := GameState.quests_claimable()
 	quest_btn.text = ("今週のおねがい：%dつ受け取れる！" % ready) if ready > 0 else ("今週のおねがい %d/3" % done)
-	quest_btn.visible = GameState.records.nights > 0
+	quest_btn.visible = GameState.unlocked("quests")
 	_place_quest_btn()
 	for c in poi_row.get_children():
 		c.queue_free()
@@ -514,59 +513,46 @@ func _render() -> void:
 		poi_row.add_child(_text("%s %d" % [g[0], n], 12))
 	if GameState.total_pois() == 0:
 		poi_row.add_child(_text("なし", 12, Color("8a7a88")))
-	poi_row.add_child(_text("強さ×%.2f" % GameState.strength, 12, Color("8b7bff")))
+	if GameState.strength != 1.0:
+		poi_row.add_child(_text("強さ×%.2f" % GameState.strength, 12, Color("8b7bff")))
 
 	for c in actions.get_children():
 		c.queue_free()
 	var s: Dictionary = GameState.today()
 	var fest := GameState.is_festival()
+	# カードは「題・一行・ボタン」だけ。くわしいことは「？」や各画面へ
 	if GameState.phase == "scooped":
-		card_title.text = "今夜は %d こすくった" % GameState.tonight.get("count", 0)
-		card_body.text = "寝ると、玉が朝にかえる。よく眠るほど、よく育つ"
+		card_title.text = "今夜は %dこ すくった" % GameState.tonight.get("count", 0)
+		card_body.text = "寝ると、玉が朝にかえる"
 		actions.add_child(_button("寝る", Color("8b7bff"), func(): main.go("sleep")))
 		_fit_card()
 		return
-	var night_label := "夜の川べりへ" if not fest else "大すくい祭りへ！"
+	var night_label := "夜の川べりへ" if not fest else "大すくい祭りへ"
 	var night_col := Color("5b6fc2") if not fest else Color("e8603c")
-	if s.role != "" and not GameState.worked_today:
-		card_title.text = "今日のシフト（見本の記録）"
-		var poi_name: String = GameState.POI[GameState.ROLE_POI[s.role]].name
+	if not GameState.unlocked("shift"):
+		# はじめての日：やることはひとつ
+		card_title.text = "夜の川べりへ"
+		card_body.text = "光る玉を、ポイですくおう"
+		actions.add_child(_button("すくいに行く", night_col, func(): main.go("catch")))
+	elif s.role != "" and not GameState.worked_today:
+		card_title.text = "今日は%sのシフト" % GameState.ROLE_LABEL[s.role]
 		var first: bool = not GameState.stores_seen.has(s.store) or not GameState.roles_seen.has(s.role)
-		card_body.text = "%s ・ %sの%s %d時間\n働くと：%s ×%d%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "＋きらきらポイ（はじめて）" if first else "（何時間でも同じ）"]
-		if GameState.records.nights == 0:
-			# はじめての日は、まず川へ（仕事は下の小さなボタンで。押すとポイが増える）
-			card_title.text = "まずは、夜の川べりへ"
-			actions.add_child(_button("玉をすくいに行く", night_col, func(): main.go("catch")))
-			var sh := _button("先にシフトへ（色のポイ+2）", Color(1, 1, 1, 1), _do_shift, Color("e8603c"))
-			sh.custom_minimum_size = Vector2(0, 40)
-			sh.add_theme_font_size_override("font_size", 14)
-			actions.add_child(sh)
-		else:
-			actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
-			var skip := _button("働かずに、" + night_label, Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
-			skip.custom_minimum_size = Vector2(0, 40)
-			skip.add_theme_font_size_override("font_size", 14)
-			actions.add_child(skip)
+		card_body.text = "働くと 色のポイ+%d%s" % [GameState.work_poi_count(s.hours), "・きらきら+1" if first else ""]
+		actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
+		var skip := _button("働かずに川へ", Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
+		skip.custom_minimum_size = Vector2(0, 38)
+		skip.add_theme_font_size_override("font_size", 14)
+		actions.add_child(skip)
 	else:
 		if GameState.worked_today:
-			card_title.text = "おつかれさま！"
-			card_body.text = _got_text if _got_text != "" else "仕事のポイは、同じ色の玉を引き寄せる"
+			card_title.text = "おつかれさま"
+			card_body.text = _got_text if _got_text != "" else "色のポイは、同じ色の玉を寄せる"
 		else:
 			card_title.text = "今日はお休み"
-			card_body.text = "毎朝の紙のポイで、夜の川べりへ行ける。休んだ日は、よく眠ろう"
+			card_body.text = "紙のポイで、川へ行ける"
+		if fest:
+			card_body.text = "今夜は大すくい祭り"
 		actions.add_child(_button(night_label, night_col, func(): main.go("catch")))
-	card_body.text += "\n今夜：" + String(GameState.night_mods().label[0])
-	card_body.text += "\nおだい：" + String(GameState.night_goal().text)
-	# お知らせは1つだけ（カードが大きくなりすぎないように）
-	var note := ""
-	if GameState.claimable().size() > 0:
-		note = "図鑑に受け取れるごほうびがある"
-	elif GameState.NORMAL_IDS.filter(func(i): return GameState.owned.has(i)).size() >= 2 and not GameState.tut.has("partner"):
-		note = "工房で「相棒」を選べるようになった"
-	elif GameState.records.nights > 0:
-		note = GameState.next_unlock_text()
-	if note != "":
-		card_body.text += "\n" + note
 	_fit_card()
 
 
@@ -588,8 +574,8 @@ func _do_shift() -> void:
 	var got := GameState.finish_shift()
 	var parts: Array = []
 	for g in got:
-		parts.append("%s ×%d（%s）" % [GameState.POI[g.poi].name, g.n, g.why])
-	_got_text = "もらった：" + "、".join(parts)
+		parts.append("%s+%d" % [GameState.POI[g.poi].short, g.n])
+	_got_text = "もらった：" + "・".join(parts)
 	_play_sfx("chime")
 	# もらったポイが、上のポイの棚へ飛んでいく
 	for i in got.size():
@@ -775,6 +761,8 @@ func _show_quests() -> void:
 
 ## 相棒が真顔でひとこと
 func _partner_says() -> void:
+	if not GameState.unlocked("partner_line"):
+		return
 	var w: Dictionary = {}
 	for x in walkers:
 		if x.o.species == GameState.partner:
