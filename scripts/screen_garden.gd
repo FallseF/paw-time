@@ -414,8 +414,31 @@ func _build_dressing(L: int) -> void:
 		var f := _ball(0.045, cols[i % cols.size()])
 		f.position = p
 		g.add_child(f)
+	# 庭の住人（にゃんこ大戦争のノリの紙人形）：かかし（花壇）・おじぞう（縁台）・ねぶくろ（月見台）
+	if L >= 2:
+		_paper("kakashi", Vector3(-3.0, 0, 1.3), 1.3, g)
+	if L >= 6:
+		_paper("jizo", Vector3(-2.0, 0, -1.9), 0.8, g)
+	if L >= 9:
+		_paper("nebukuro", Vector3(2.2, 0, 2.5), 0.7, g)
 	# 夜空の色：段が上がるほど、深い紫に（満開で、ほんのり夢の色）
 	night_sky = Color("141a3a").lerp(Color("2a1f4f"), L / 10.0)
+
+
+func _paper(name: String, at: Vector3, h: float, parent: Node3D) -> void:
+	var path := "res://assets/gen/garden/%s.png" % name
+	if not ResourceLoader.exists(path):
+		return
+	var sp := Sprite3D.new()
+	sp.texture = load(path)
+	sp.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	sp.shaded = false
+	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	sp.pixel_size = h / float(sp.texture.get_height())
+	sp.offset = Vector2(0, sp.texture.get_height() * 0.5)
+	sp.position = at
+	parent.add_child(sp)
 
 
 const STAGE_SPOT := {1: Vector3(0.9, 0, 1.3), 2: Vector3(-2.1, 0, 0.6), 3: Vector3(2.4, 0, -1.2), 4: Vector3(-2.1, 0, 1.1), 5: Vector3(1.3, 0, 0.9), 6: Vector3(-0.9, 0, -1.4), 7: Vector3(-3.0, 0, -1.6), 8: Vector3(0, 0, 0.4), 9: Vector3(2.9, 0, 1.9), 10: Vector3(3.2, 0, -2.3)}
