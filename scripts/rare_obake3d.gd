@@ -165,7 +165,7 @@ func _flake(r: float, c: Color, pos: Vector3) -> Node3D:
 
 ## 光る粒（ほたる・火花）
 func _glow(r: float, c: Color, pos: Vector3, parent: Node3D = null) -> MeshInstance3D:
-	var m := toon(c, 0.3, 1.6, 0.008)
+	var m := toon(c, 0.3, 0.7, 0.008)
 	return _add(_sphere(r), m, pos, parent)
 
 
@@ -202,7 +202,7 @@ func _stripes(cols: Array, rim := 0.2) -> StandardMaterial3D:
 
 ## ネムリン：ふとんで巻かれて、のり巻きのよう。顔だけ出して眠る
 func _b_nemurin() -> void:
-	var roll := _node(Vector3(0, 0.44, -0.05))
+	var roll := _node(Vector3(0, 0.44, -0.05), null, Vector3(0, -0.12, 0))
 	_p.roll = roll
 	var rot := Vector3(PI / 2, 0, 0)
 	_add(_cyl(0.44, 0.44, 0.9, 24), _mat(c2), Vector3.ZERO, roll, rot)
@@ -210,9 +210,7 @@ func _b_nemurin() -> void:
 	_add(_cyl(0.36, 0.36, 0.06, 24), _mat(Color("fbf8ff"), 0.4), Vector3(0, 0, 0.46), roll, rot)
 	_head(c1, 0.3, Vector3(0, -0.02, 0.5), roll)
 	roll.add_child(face(Vector3(0, -0.02, 0.5), 0.6, INK, true))
-	var cap := _add(_cyl(0.0, 0.2, 0.36), _mat(c2.lightened(0.25)), Vector3(0.08, 0.3, 0.46), roll, Vector3(-0.3, 0, -0.6))
-	_add(_sphere(0.07), _mat(Color.WHITE), Vector3(0, 0.2, 0), cap)
-	_p.bubble = _add(_sphere(0.08), _mat(Color("d8f2ff"), 0.8), Vector3(0.2, -0.1, 0.78), roll)
+	_p.bubble = _add(_sphere(0.055), _mat(Color("9fd8ff"), 0.2), Vector3(0.16, -0.08, 0.8), roll)
 
 
 ## ユメミ：眠るおばけの上に、夢の雲。雲の上ではマントのおばけになっている
@@ -259,7 +257,7 @@ func _b_yomise() -> void:
 	_add(_cyl(0.24, 0.2, 0.08), capm, Vector3(0, -1.12, 0), lan)
 	_add(_torus(0.04, 0.07), capm, Vector3(0, -0.01, 0), lan, Vector3(PI / 2, 0, 0))
 	lan.add_child(face(Vector3(0, -0.56, 0.0), 0.86))
-	_add(_cap(0.06, 0.26), _mat(Color("ff7f96"), 0.3), Vector3(0, -0.74, 0.41), lan, Vector3(0.35, 0, 0))
+	_add(_sphere(0.07), _mat(Color("ff7f96"), 0.3), Vector3(0, -0.74, 0.42), lan, Vector3(0.5, 0, 0), Vector3(0.8, 1.3, 0.5))
 	var light := OmniLight3D.new()
 	light.light_color = c2
 	light.light_energy = 0.8
@@ -276,12 +274,12 @@ func _b_hirunen() -> void:
 	_add(_box(Vector3(0.42, 0.1, 0.3)), _mat(Color.WHITE, 0.3), Vector3(-0.5, 0.09, -0.2), null, Vector3(0, 0.2, 0))
 	var g := ghost(c1, 1.0, 0.0, INK, true, false)
 	g.position.y = 0.04
-	g.scale = Vector3(1.25, 0.42, 1.15)
+	g.scale = Vector3(1.2, 0.55, 1.1)
 	body.add_child(g)
 	_p.melt = g
-	body.add_child(face(Vector3(0, 0.26, 0.12), 0.95, INK, true))
-	_add(_sphere(0.5), _mat(LEAF), Vector3(0.05, 0.46, -0.05), null, Vector3(0, 0.4, 0.15), Vector3(0.36, 0.06, 0.2))
-	_add(_cyl(0.015, 0.015, 0.1), _mat(Color("4f8a3a")), Vector3(-0.15, 0.49, -0.1), null, Vector3(0, 0, 1.2))
+	body.add_child(face(Vector3(0, 0.3, 0.08), 1.0, INK, true))
+	_add(_sphere(0.5), _mat(LEAF), Vector3(0.1, 0.62, -0.1), null, Vector3(0, 0.4, 0.35), Vector3(0.5, 0.08, 0.28))
+	_add(_cyl(0.02, 0.02, 0.14), _mat(Color("4f8a3a")), Vector3(-0.15, 0.58, -0.15), null, Vector3(0, 0, 1.0))
 
 
 ## トトノウ：ベンチに座って、頭にタオル。湯気の向こうで落ち着いている
@@ -293,9 +291,10 @@ func _b_totonou() -> void:
 			_add(_box(Vector3(0.07, 0.32, 0.07)), _mat(WOOD_DARK), Vector3(x, 0.16, z))
 	_mini(c1, 0.78, Vector3(0, 0.36, 0), null, true)
 	var towel := _node(Vector3(0.03, 1.12, 0), null, Vector3(0, 0.2, 0.1))
-	_add(_box(Vector3(0.46, 0.08, 0.3)), _mat(Color.WHITE, 0.3), Vector3.ZERO, towel)
-	for x in [-0.14, 0.14]:
-		_add(_box(Vector3(0.04, 0.085, 0.305)), _mat(c2), Vector3(x, 0, 0), towel)
+	var tw := _mat(Color.WHITE, 0.3)
+	_add(_sphere(0.5), tw, Vector3(0, -0.02, 0), towel, Vector3.ZERO, Vector3(0.62, 0.14, 0.42))
+	_add(_sphere(0.5), tw, Vector3(0, 0.05, 0), towel, Vector3.ZERO, Vector3(0.52, 0.12, 0.36))
+	_add(_box(Vector3(0.05, 0.03, 0.2)), _mat(c2), Vector3(0.2, 0.09, 0), towel)
 	for i in 3:
 		_p["steam%d" % i] = _puff(0.05, Color.WHITE, Vector3(-0.42 + i * 0.42, 1.25, -0.1))
 
@@ -341,9 +340,9 @@ func _b_hajimete() -> void:
 
 ## ワタリドリ：羽の生えた小さなおばけが、V の字で渡っていく
 func _b_wataridori() -> void:
-	var spots := [Vector3(0, 0.62, 0.3), Vector3(-0.36, 0.5, 0.0), Vector3(0.36, 0.5, 0.0), Vector3(-0.7, 0.38, -0.3), Vector3(0.7, 0.38, -0.3)]
+	var spots := [Vector3(0, 0.8, 0.25), Vector3(-0.4, 0.5, 0.05), Vector3(0.4, 0.5, 0.05), Vector3(-0.78, 0.2, -0.15), Vector3(0.78, 0.2, -0.15)]
 	for i in spots.size():
-		var s := 0.4 if i == 0 else 0.34
+		var s := 0.44 if i == 0 else 0.38
 		var g := _mini(c1, s, spots[i])
 		_p["bird%d" % i] = g
 		var wm := _mat(Color.WHITE, 0.4, 0.0, s)
@@ -379,7 +378,7 @@ func _b_mitsuboshi() -> void:
 ## ハツコエ：メガホンで、はじめましての大きな声
 func _b_hatsukoe() -> void:
 	_mini(c1, 0.9, Vector3(-0.14, 0, -0.05))
-	var dir := Vector3(1.0, 0.12, 0.55).normalized()
+	var dir := Vector3(0.75, 0.12, 0.9).normalized()
 	var meg := _node(Vector3(-0.14, 0.38, 0.38) + dir * 0.25)
 	_p.meg = meg
 	var cone := _add(_cyl(0.07, 0.25, 0.45), _mat(c2), Vector3.ZERO, meg)
@@ -390,14 +389,14 @@ func _b_hatsukoe() -> void:
 	_point(inner, dir)
 	_add(_sphere(0.1), _skin(c1), Vector3(0, -0.12, 0) - dir * 0.08, meg)
 	for i in 3:
-		var w := _add(_torus(0.12 + i * 0.07, 0.14 + i * 0.07), _mat(c2.lightened(0.3), 0.3, 0.3, 0.6), dir * (0.4 + i * 0.12), meg)
+		var w := _add(_torus(0.12 + i * 0.07, 0.155 + i * 0.07), _mat(c2.lightened(0.3), 0.3, 0.3, 0.6), dir * (0.4 + i * 0.12), meg)
 		_point(w, dir)
 		_p["wave%d" % i] = w
 
 
 ## ヨナキ：おばけが屋根になった屋台。夜の街を静かにひく
 func _b_yonaki() -> void:
-	var col := c1.lightened(0.18)
+	var col := c1.lightened(0.28)
 	var roof := _mini(col, 0.8, Vector3(0, 0.46, -0.08))
 	_p.roof = roof
 	var wood := _mat(WOOD)
@@ -424,11 +423,10 @@ func _b_asatsuyu() -> void:
 	_p.leaf = leaf
 	_add(_sphere(0.5), _mat(c2.darkened(0.1)), Vector3.ZERO, leaf, Vector3.ZERO, Vector3(1.4, 0.1, 0.66))
 	_add(_cyl(0.012, 0.02, 1.2, 8), _mat(c2.lightened(0.35)), Vector3(0, 0.03, 0), leaf, Vector3(0, 0, PI / 2))
-	_add(_cyl(0.025, 0.03, 0.42, 8), _mat(c2.darkened(0.3)), Vector3(-0.72, -0.15, 0), leaf, Vector3(0, 0, 0.5))
 	_mini(c1, 0.5, Vector3(0.14, 0.03, 0.0), leaf)
 	var drop := _node(Vector3(-0.42, 0.12, 0.08), leaf)
 	_p.drop = drop
-	_add(_sphere(0.13), _mat(Color("a8e6ff"), 0.9, 0.1), Vector3.ZERO, drop, Vector3.ZERO, Vector3(1, 0.85, 1))
+	_add(_sphere(0.1), _mat(Color("8fd6ff"), 0.35, 0.1), Vector3(0, -0.02, 0), drop, Vector3.ZERO, Vector3(1, 0.85, 1))
 	_add(_sphere(0.03), flat(Color.WHITE), Vector3(0.04, 0.05, 0.1), drop)
 
 
@@ -477,9 +475,9 @@ func _b_shinya() -> void:
 	_add(_box(Vector3(0.14, 0.325, 0.565)), tape, Vector3(0.04, 0.52, 0), null, Vector3(0, 0.14, 0))
 	var top := _node(Vector3(-0.02, 0.83, 0.0), null, Vector3(0, -0.08, 0))
 	_add(_box(Vector3(0.62, 0.3, 0.5)), card, Vector3.ZERO, top)
-	_add(_box(Vector3(0.62, 0.02, 0.2)), card, Vector3(0, 0.2, 0.33), top, Vector3(-1.0, 0, 0))
-	_add(_box(Vector3(0.62, 0.02, 0.2)), card, Vector3(0, 0.2, -0.33), top, Vector3(1.0, 0, 0))
-	var g := _mini(c1.lightened(0.2), 0.52, Vector3(0, 0.02, 0.0), top)
+	_add(_box(Vector3(0.2, 0.02, 0.5)), card, Vector3(0.38, 0.2, 0), top, Vector3(0, 0, -1.0))
+	_add(_box(Vector3(0.2, 0.02, 0.5)), card, Vector3(-0.38, 0.2, 0), top, Vector3(0, 0, 1.0))
+	var g := _mini(c1.lightened(0.3), 0.52, Vector3(0, 0.08, 0.0), top)
 	_p.peek = g
 
 
@@ -512,11 +510,13 @@ func _b_amagasa() -> void:
 
 ## ユキミ：おばけ三つで雪だるま。バケツをかぶって、枝の腕
 func _b_yukimi() -> void:
-	_mini(c1, 0.64, Vector3(0, 0, 0))
-	_mini(c1, 0.48, Vector3(0, 0.5, 0.02))
-	var top := _mini(c1, 0.36, Vector3(0, 0.88, 0.03))
+	_mini(c1.darkened(0.06), 0.64, Vector3(0, 0, 0))
+	var mid := _mini(c1, 0.48, Vector3(0, 0.5, 0.02))
+	_add(_torus(0.42, 0.56), _mat(c2, 0.3, 0.0, 0.48), Vector3(0, 0.3, 0), mid, Vector3(0.1, 0, 0))
+	_add(_box(Vector3(0.18, 0.45, 0.08)), _mat(c2, 0.3, 0.0, 0.48), Vector3(0.3, 0.1, 0.45), mid, Vector3(0.1, 0, 0.25))
+	var top := _mini(Color.WHITE, 0.36, Vector3(0, 0.88, 0.03))
 	_p.top = top
-	_add(_cyl(0.19, 0.15, 0.2), _mat(c2), Vector3(0.02, 0.92, 0), top, Vector3(0, 0, 0.25), Vector3.ONE / 0.36)
+	_add(_cyl(0.42, 0.34, 0.42), _mat(c2.darkened(0.15), 0.3, 0.0, 0.36), Vector3(0.08, 1.05, 0), top, Vector3(0, 0, 0.3))
 	var twig := _mat(WOOD_DARK)
 	for side in [-1.0, 1.0]:
 		var arm := _node(Vector3(side * 0.22, 0.72, 0.02), null, Vector3(0, 0, -side * 1.0))
@@ -554,9 +554,8 @@ func _b_kaminari() -> void:
 		p2 += Vector3(-0.14, 0.08 + i * 0.03, -0.02)
 		r *= 0.8
 	_add(_cyl(0.0, 0.07, 0.16, 8), dark, p2 + Vector3(0.02, 0.04, 0), tail, Vector3(0, 0, 0.3))
-	var cloud := _node(Vector3(0.66, 1.16, -0.05))
-	_puff(0.1, Color("b9b2e0"), Vector3.ZERO, cloud)
-	var bolt := _node(Vector3(0.66, 0.92, 0.0))
+	var bolt := _node(Vector3(-0.3, 1.0, 0.0), null, Vector3(0, 0, -0.2))
+	bolt.scale = Vector3.ONE * 1.6
 	_p.bolt = bolt
 	var bm := _mat(Color("ffe14d"), 0.3, 0.9, 0.6)
 	_add(_box(Vector3(0.07, 0.2, 0.04)), bm, Vector3(-0.03, 0.08, 0), bolt, Vector3(0, 0, -0.5))
@@ -717,12 +716,13 @@ func _b_shuumatsu() -> void:
 	_p.boat = boat
 	var white := _mat(Color.WHITE, 0.3)
 	_add(_sphere(0.5), white, Vector3(0, 0.16, 0), boat, Vector3.ZERO, Vector3(1.3, 0.5, 0.95))
-	for side in [-1.0, 1.0]:
-		_add(_sphere(0.3), white, Vector3(-0.25, 0.32, side * 0.4), boat, Vector3(side * 0.4, 0, 0.5), Vector3(1.2, 0.35, 0.5))
-	_mini(c1, 0.55, Vector3(-0.12, 0.2, 0.0), boat)
-	var neck := [Vector3(0.52, 0.28, 0), Vector3(0.62, 0.4, 0), Vector3(0.66, 0.54, 0), Vector3(0.64, 0.68, 0), Vector3(0.6, 0.8, 0)]
-	for p in neck:
-		_add(_sphere(0.085), white, p, boat)
+	_add(_cyl(0.0, 0.12, 0.22, 10), white, Vector3(-0.66, 0.36, 0), boat, Vector3(0, 0, 0.9))
+	_mini(c1, 0.6, Vector3(-0.1, 0.34, 0.06), boat)
+	var neck := Curve3D.new()
+	for p in [Vector3(0.5, 0.26, 0), Vector3(0.66, 0.45, 0), Vector3(0.64, 0.66, 0), Vector3(0.6, 0.8, 0)]:
+		neck.add_point(p)
+	for i in 10:
+		_add(_sphere(0.075), white, neck.sample_baked(neck.get_baked_length() * i / 9.0), boat)
 	_add(_sphere(0.12), white, Vector3(0.66, 0.86, 0), boat)
 	_add(_cyl(0.0, 0.045, 0.14, 8), _mat(Color("ff9a4d")), Vector3(0.82, 0.84, 0), boat, Vector3(0, 0, -PI / 2 - 0.2))
 	for z in [-0.1, 0.1]:
@@ -737,11 +737,11 @@ func _b_hyakki() -> void:
 	var n := cols.size() + 1
 	for i in n:
 		var u := float(i) / (n - 1)
-		var p := Vector3(-0.8 + u * 1.6, 0, -0.45 + u * 0.8 + sin(u * PI * 2.0) * 0.14)
+		var p := Vector3(-0.75 + u * 1.4, 0, -0.4 + u * 0.75 + sin(u * PI * 2.0) * 0.3)
 		var lead := i == n - 1
-		var s := 0.42 if lead else 0.3
+		var s := 0.48 if lead else 0.38
 		var g := _mini(c2 if lead else cols[i], s, p)
-		g.rotation.y = 0.55
+		g.rotation.y = 0.1
 		_p["walker%d" % i] = g
 		if lead:
 			var gold := _mat(Color("ffd23f"), 0.3, 0.2, s)
