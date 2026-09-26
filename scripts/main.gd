@@ -4,7 +4,8 @@ extends Node
 const SCREENS := {
 	"morning": preload("res://scripts/screen_morning.gd"),
 	"room": preload("res://scripts/screen_room.gd"),
-	"catch": preload("res://scripts/screen_catch3d.gd"),
+	"catch": preload("res://scripts/screen_scoop.gd"),
+	"catch3d": preload("res://scripts/screen_catch3d.gd"),
 	"catch2d": preload("res://scripts/screen_catch.gd"),
 	"sleep": preload("res://scripts/screen_sleep.gd"),
 	"battle": preload("res://scripts/screen_battle.gd"),

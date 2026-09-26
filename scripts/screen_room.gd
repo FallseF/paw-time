@@ -73,7 +73,7 @@ func _render() -> void:
 		"shift_done":
 			if GameState.day == GameState.BATTLE_DAY and not GameState.battle_won:
 				actions.add_child(UI.button("金曜の大ピークに入る", func(): main.go("battle")))
-			actions.add_child(UI.button("帰り道で網を振る", func(): main.go("catch")))
+			actions.add_child(UI.button("帰り道で、おばけすくい", func(): main.go("catch")))
 
 
 func _do_shift() -> void:
@@ -89,7 +89,7 @@ func _after_shift() -> void:
 		c.queue_free()
 	if GameState.day == GameState.BATTLE_DAY and not GameState.battle_won:
 		actions.add_child(UI.button("金曜の大ピークに入る", func(): main.go("battle")))
-	actions.add_child(UI.button("帰り道で網を振る", func(): main.go("catch")))
+	actions.add_child(UI.button("帰り道で、おばけすくい", func(): main.go("catch")))
 
 
 func _process(delta: float) -> void:

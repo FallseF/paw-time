@@ -49,6 +49,9 @@ var owned: Array = [] # {id, level, xp}
 var seen := {}
 var morning_report: Array = []
 var battle_won := false
+var orbs: Array = [] # すくった光る玉 {type, rare}。朝に割れておばけになる
+var hatched: Array = [] # 今朝割れた玉 {id, is_new, level}
+var scooped_tonight := false
 
 
 func _ready() -> void:
@@ -67,6 +70,9 @@ func reset() -> void:
 	seen = {"receipt": true}
 	morning_report = ["はじめての朝。レシートンが1体、ついてきている"]
 	battle_won = false
+	orbs = []
+	hatched = []
+	scooped_tonight = false
 	changed.emit()
 
 
@@ -162,6 +168,25 @@ func sleep(hours: int, trap_net: String) -> void:
 		else:
 			var is_new := add_obake(caught)
 			morning_report.append("仕掛けた網に %s がかかっていた%s" % [SPECIES[caught].name, "（はじめて！）" if is_new else ""])
+	hatched = []
+	for orb in orbs:
+		var sid := species_for_type(orb.type)
+		if orb.rare or (hours >= 7 and randf() < 0.15):
+			sid = "kirari"
+		elif hours <= 5 and randf() < 0.3:
+			sid = "lantern"
+		var is_new := add_obake(sid)
+		var lv := 1
+		for o in owned:
+			if o.id == sid:
+				o.xp += hours * 4
+				_level_up(o)
+				lv = o.level
+		hatched.append({"id": sid, "is_new": is_new, "level": lv})
+	if orbs.size() > 0:
+		morning_report.append("光る玉が %d 個、朝日で割れた" % orbs.size())
+	orbs = []
+	scooped_tonight = false
 	day += 1
 	phase = "morning"
 	changed.emit()
@@ -187,3 +212,31 @@ func obake_power(o: Dictionary) -> int:
 
 func is_week_over() -> bool:
 	return day >= WEEK.size()
+
+
+const TYPE_SPECIES := {"register": "receipt", "dish": "bubble", "hall": "tray", "kitchen": "pan", "stock": "box", "sleep": "nemuri", "night": "lantern", "rare": "kirari"}
+const TYPE_COLOR := {"register": Color("ffc23d"), "dish": Color("5fc4ff"), "hall": Color("a98bff"), "kitchen": Color("ff7a45"), "stock": Color("e8b878"), "rare": Color("fff2a8")}
+
+
+func species_for_type(t: String) -> String:
+	return TYPE_SPECIES.get(t, "receipt")
+
+
+## 今夜の水面に出る玉。今日の仕事の種類が多めに出る。1晩3〜5個。
+func tonight_orbs() -> Array:
+	var s: Dictionary = today() if day < WEEK.size() else {}
+	var types := ["register", "dish", "hall", "kitchen", "stock"]
+	var out: Array = []
+	var n := randi_range(3, 5)
+	for i in n:
+		var t: String = types.pick_random()
+		if s.get("role", "") != "" and randf() < 0.45:
+			t = s.role
+		var rare: bool = randf() < (0.25 if s.get("first", false) else 0.08)
+		out.append({"type": "rare" if rare else t, "rare": rare, "weight": 0.55 if rare else randf_range(0.25, 0.4)})
+	return out
+
+
+## ポイの破れにくさ（睡眠で決まる）
+func poi_strength() -> float:
+	return net_strength

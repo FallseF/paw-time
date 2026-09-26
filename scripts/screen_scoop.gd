@@ -1,0 +1,785 @@
+extends Control
+## おばけすくい。夜の川べりで、水面をただよう光る玉をポイですくう。
+## 押している間だけポイが水に入り、離すとすくい上げる。
+## ポイの枚数＝その日に働いた分、破れにくさ＝昨夜の睡眠。速く動かすほど、重い玉ほど破れやすい。
+
+var main
+
+const WATER_RX := 2.7
+const WATER_RZ := 2.2
+const POI_R := 0.3
+
+var vp: SubViewport
+var cam: Camera3D
+var cam_base: Transform3D
+var world: Node3D
+var water_mat: ShaderMaterial
+var poi: Node3D
+var poi_film_mat: StandardMaterial3D
+var poi_rim: MeshInstance3D
+var orbs: Array = []
+var total_tonight := 0
+var caught_count := 0
+
+var poi_type := ""
+var durability := 1.0
+var pressed := false
+var last_ground := Vector3.ZERO
+var busy := false
+var ripple_t := 10.0
+
+var font_bold: FontFile
+var font_black: FontFile
+var jar_row: HBoxContainer
+var poi_label: Label
+var dura_bar: ProgressBar
+var hint: Label
+var banner: Label
+var poi_btn: Button
+var flash: ColorRect
+var drops: CPUParticles3D
+var stars: CPUParticles3D
+var sfx := {}
+var ambience: AudioStreamPlayer
+
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	font_bold = load("res://assets/fonts/ZenMaruGothic-Bold.ttf")
+	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
+	_build_world()
+	_build_ui()
+	_build_audio()
+	var list := GameState.tonight_orbs()
+	total_tonight = list.size()
+	for d in list:
+		_spawn_orb(d)
+	_pick_poi()
+	_refresh_ui()
+
+
+# ---------- 世界 ----------
+
+func _build_world() -> void:
+	var box := SubViewportContainer.new()
+	box.stretch = true
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(box)
+	vp = SubViewport.new()
+	vp.own_world_3d = true
+	vp.msaa_3d = Viewport.MSAA_4X
+	box.add_child(vp)
+	world = Node3D.new()
+	vp.add_child(world)
+
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color("0b1026")
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("3a4a8a")
+	env.ambient_light_energy = 0.5
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.glow_enabled = true
+	env.glow_intensity = 1.2
+	env.glow_strength = 1.2
+	env.glow_bloom = 0.25
+	env.glow_hdr_threshold = 0.7
+	var we := WorldEnvironment.new()
+	we.environment = env
+	world.add_child(we)
+
+	var moon := DirectionalLight3D.new()
+	moon.rotation_degrees = Vector3(-55, -30, 0)
+	moon.light_color = Color("9fb4ff")
+	moon.light_energy = 0.35
+	world.add_child(moon)
+
+	cam = Camera3D.new()
+	cam.position = Vector3(0, 2.6, 4.6)
+	cam.fov = 50
+	world.add_child(cam)
+	cam.look_at(Vector3(0, 0.2, -1.1))
+	cam_base = cam.transform
+
+	# 岸（草地）
+	var bank := MeshInstance3D.new()
+	var bp := PlaneMesh.new()
+	bp.size = Vector2(30, 30)
+	bank.mesh = bp
+	bank.position = Vector3(0, -0.02, 0)
+	bank.material_override = Obake3D.toon(Color("1f3b2e"), 0.05)
+	world.add_child(bank)
+
+	# 水面（楕円の池）
+	var water := MeshInstance3D.new()
+	var wp := PlaneMesh.new()
+	wp.size = Vector2(WATER_RX * 2.0, WATER_RZ * 2.0)
+	wp.subdivide_width = 8
+	wp.subdivide_depth = 8
+	water.mesh = wp
+	water_mat = ShaderMaterial.new()
+	water_mat.shader = load("res://shaders/water.gdshader")
+	water.material_override = water_mat
+	world.add_child(water)
+
+	# 縁の石
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	for i in 34:
+		var a := TAU * i / 34.0
+		var r := 1.0 + rng.randf_range(-0.03, 0.05)
+		var st := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		var size := rng.randf_range(0.18, 0.3)
+		sm.radius = size
+		sm.height = size * 1.1
+		st.mesh = sm
+		st.scale = Vector3(1.3, 0.55, 1.0)
+		st.position = Vector3(cos(a) * WATER_RX * r, 0.02, sin(a) * WATER_RZ * r)
+		st.rotation.y = rng.randf() * TAU
+		st.material_override = Obake3D.toon(Color("5d6a86").lerp(Color("7a86a0"), rng.randf()), 0.2)
+		world.add_child(st)
+
+	# 草むら
+	for i in 40:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(1.15, 1.8)
+		var g := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = 0.0
+		cm.bottom_radius = 0.06
+		cm.height = rng.randf_range(0.25, 0.5)
+		g.mesh = cm
+		g.position = Vector3(cos(a) * WATER_RX * r, cm.height * 0.5, sin(a) * WATER_RZ * r)
+		g.rotation.z = rng.randf_range(-0.3, 0.3)
+		g.material_override = Obake3D.toon(Color("2f5a3c"), 0.1)
+		world.add_child(g)
+
+	# 夜空：月と星
+	var moon_m := MeshInstance3D.new()
+	var mm := SphereMesh.new()
+	mm.radius = 0.9
+	mm.height = 1.8
+	moon_m.mesh = mm
+	moon_m.material_override = _glow_mat(Color("fff1c8"), 2.2)
+	moon_m.position = Vector3(4.5, 7.5, -16)
+	world.add_child(moon_m)
+	var sky_stars := CPUParticles3D.new()
+	sky_stars.amount = 120
+	sky_stars.lifetime = 100.0
+	sky_stars.preprocess = 100.0
+	sky_stars.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	sky_stars.emission_box_extents = Vector3(22, 6, 1)
+	sky_stars.position = Vector3(0, 9, -18)
+	sky_stars.gravity = Vector3.ZERO
+	sky_stars.initial_velocity_max = 0.0
+	var stm := SphereMesh.new()
+	stm.radius = 0.04
+	stm.height = 0.08
+	sky_stars.mesh = stm
+	sky_stars.material_override = _glow_mat(Color("dfe6ff"), 2.0)
+	world.add_child(sky_stars)
+	# 遠くの木立
+	for i in 16:
+		var tx := -10.0 + i * 1.35 + rng.randf_range(-0.3, 0.3)
+		var tz := rng.randf_range(-9, -6)
+		var tr := MeshInstance3D.new()
+		var tm := SphereMesh.new()
+		var ts := rng.randf_range(0.9, 1.5)
+		tm.radius = ts
+		tm.height = ts * 2.2
+		tr.mesh = tm
+		tr.position = Vector3(tx, ts * 0.9, tz)
+		tr.material_override = Obake3D.toon(Color("132a26"), 0.05)
+		world.add_child(tr)
+
+	# 灯籠
+	for p in [Vector3(-2.2, 0, -1.6), Vector3(2.3, 0, -2.2)]:
+		_lantern(Vector3(p.x * 1.35, 0, p.z * 1.3))
+
+	# ほたる
+	var flies := CPUParticles3D.new()
+	flies.amount = 50
+	flies.lifetime = 7.0
+	flies.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	flies.emission_box_extents = Vector3(4, 0.6, 3)
+	flies.position = Vector3(0, 0.8, -0.5)
+	flies.gravity = Vector3.ZERO
+	flies.initial_velocity_min = 0.03
+	flies.initial_velocity_max = 0.12
+	flies.spread = 180
+	var fm := SphereMesh.new()
+	fm.radius = 0.018
+	fm.height = 0.036
+	flies.mesh = fm
+	flies.material_override = _glow_mat(Color("d8ff9a"), 4.0)
+	world.add_child(flies)
+
+	# しぶきと星
+	drops = _burst(Color("cfe8ff"), 24, 0.7, Vector3(0, -6, 0), 1.2, 2.4)
+	stars = _burst(Color("fff2a8"), 40, 1.1, Vector3(0, -1.5, 0), 1.0, 2.2)
+
+	poi = _make_poi()
+	world.add_child(poi)
+	poi.position = Vector3(0, 0.5, 1.2)
+
+
+func _glow_mat(c: Color, e: float) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = c
+	m.emission_enabled = true
+	m.emission = c
+	m.emission_energy_multiplier = e
+	return m
+
+
+func _burst(c: Color, amount: int, life: float, grav: Vector3, vmin: float, vmax: float) -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.emitting = false
+	p.one_shot = true
+	p.amount = amount
+	p.lifetime = life
+	p.explosiveness = 1.0
+	p.direction = Vector3(0, 1, 0)
+	p.spread = 70
+	p.initial_velocity_min = vmin
+	p.initial_velocity_max = vmax
+	p.gravity = grav
+	var m := SphereMesh.new()
+	m.radius = 0.025
+	m.height = 0.05
+	p.mesh = m
+	p.material_override = _glow_mat(c, 2.5)
+	world.add_child(p)
+	return p
+
+
+func _lantern(at: Vector3) -> void:
+	var base := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.28, 0.9, 0.28)
+	base.mesh = bm
+	base.position = at + Vector3(0, 0.45, 0)
+	base.material_override = Obake3D.toon(Color("6b6f7e"), 0.1)
+	world.add_child(base)
+	var lamp := MeshInstance3D.new()
+	var lm := BoxMesh.new()
+	lm.size = Vector3(0.36, 0.34, 0.36)
+	lamp.mesh = lm
+	lamp.position = at + Vector3(0, 1.07, 0)
+	lamp.material_override = _glow_mat(Color("ffcf7a"), 2.6)
+	world.add_child(lamp)
+	var roof := MeshInstance3D.new()
+	var rm := CylinderMesh.new()
+	rm.top_radius = 0.0
+	rm.bottom_radius = 0.34
+	rm.height = 0.22
+	rm.radial_segments = 4
+	roof.mesh = rm
+	roof.position = at + Vector3(0, 1.35, 0)
+	roof.material_override = Obake3D.toon(Color("4a4e5c"), 0.1)
+	world.add_child(roof)
+	var l := OmniLight3D.new()
+	l.light_color = Color("ffc070")
+	l.light_energy = 2.2
+	l.omni_range = 3.2
+	l.position = at + Vector3(0, 1.1, 0)
+	world.add_child(l)
+
+
+func _make_poi() -> Node3D:
+	var n := Node3D.new()
+	poi_rim = MeshInstance3D.new()
+	var t := TorusMesh.new()
+	t.inner_radius = POI_R - 0.025
+	t.outer_radius = POI_R + 0.015
+	poi_rim.mesh = t
+	n.add_child(poi_rim)
+	var film := MeshInstance3D.new()
+	var f := CylinderMesh.new()
+	f.top_radius = POI_R - 0.01
+	f.bottom_radius = POI_R - 0.01
+	f.height = 0.004
+	film.mesh = f
+	poi_film_mat = StandardMaterial3D.new()
+	poi_film_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	poi_film_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	poi_film_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	poi_film_mat.albedo_color = Color(1, 1, 1, 0.45)
+	film.material_override = poi_film_mat
+	n.add_child(film)
+	var handle := MeshInstance3D.new()
+	var h := BoxMesh.new()
+	h.size = Vector3(0.06, 0.03, 0.34)
+	handle.mesh = h
+	handle.position = Vector3(0.12, 0.05, POI_R + 0.17)
+	handle.rotation = Vector3(-0.35, -0.4, 0)
+	handle.material_override = Obake3D.toon(Color("e85a4f"), 0.2)
+	n.add_child(handle)
+	return n
+
+
+func _spawn_orb(d: Dictionary) -> void:
+	var o := Orb3D.new().setup(d)
+	var a := randf() * TAU
+	o.position = Vector3(cos(a) * WATER_RX * 0.5 * randf(), 0.0, sin(a) * WATER_RZ * 0.5 * randf())
+	world.add_child(o)
+	orbs.append(o)
+
+
+# ---------- UI ----------
+
+func _pill(bg: Color, radius := 22) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.set_corner_radius_all(radius)
+	s.content_margin_left = 14
+	s.content_margin_right = 14
+	s.content_margin_top = 7
+	s.content_margin_bottom = 7
+	s.shadow_color = Color(0, 0, 0, 0.3)
+	s.shadow_size = 8
+	s.shadow_offset = Vector2(0, 3)
+	return s
+
+
+func _text(t: String, size: int, color := Color.WHITE, font: FontFile = null) -> Label:
+	var l := Label.new()
+	l.text = t
+	l.add_theme_font_override("font", font if font else font_bold)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return l
+
+
+func _build_ui() -> void:
+	var top := VBoxContainer.new()
+	top.position = Vector2(16, 18)
+	top.size = Vector2(328, 90)
+	top.add_theme_constant_override("separation", 8)
+	add_child(top)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	top.add_child(row)
+	var jp := PanelContainer.new()
+	jp.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.7)))
+	jp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var jv := HBoxContainer.new()
+	jv.add_theme_constant_override("separation", 6)
+	jv.add_child(_text("今夜のすくい", 14, Color("e8ecff")))
+	jar_row = HBoxContainer.new()
+	jar_row.add_theme_constant_override("separation", 4)
+	jv.add_child(jar_row)
+	jp.add_child(jv)
+	row.add_child(jp)
+	var home := Button.new()
+	home.text = "帰る"
+	home.add_theme_font_override("font", font_bold)
+	home.add_theme_font_size_override("font_size", 14)
+	for k in ["normal", "hover", "pressed"]:
+		home.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.9)))
+	home.add_theme_color_override("font_color", Color("1a1f3a"))
+	home.add_theme_color_override("font_hover_color", Color("1a1f3a"))
+	home.pressed.connect(_finish)
+	row.add_child(home)
+
+	var pp := PanelContainer.new()
+	pp.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.7)))
+	pp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var ph := HBoxContainer.new()
+	ph.add_theme_constant_override("separation", 8)
+	poi_label = _text("", 14, Color("e8ecff"))
+	ph.add_child(poi_label)
+	dura_bar = ProgressBar.new()
+	dura_bar.custom_minimum_size = Vector2(110, 10)
+	dura_bar.show_percentage = false
+	dura_bar.max_value = 1.0
+	dura_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(1, 1, 1, 0.2)
+	bg.set_corner_radius_all(5)
+	dura_bar.add_theme_stylebox_override("background", bg)
+	ph.add_child(dura_bar)
+	pp.add_child(ph)
+	top.add_child(pp)
+
+	hint = _text("押して水に入れる → 玉の下で離して、すくう", 14, Color(1, 1, 1, 0.85))
+	hint.position = Vector2(0, 596)
+	hint.size = Vector2(360, 24)
+	add_child(hint)
+
+	poi_btn = Button.new()
+	poi_btn.position = Vector2(286, 520)
+	poi_btn.size = Vector2(60, 60)
+	poi_btn.add_theme_font_override("font", font_bold)
+	poi_btn.add_theme_font_size_override("font_size", 12)
+	poi_btn.pressed.connect(_cycle_poi)
+	add_child(poi_btn)
+
+	banner = _text("", 36, Color.WHITE, font_black)
+	banner.add_theme_color_override("font_outline_color", Color("0b1026"))
+	banner.add_theme_constant_override("outline_size", 10)
+	banner.position = Vector2(0, 200)
+	banner.size = Vector2(360, 120)
+	banner.pivot_offset = Vector2(180, 60)
+	banner.modulate.a = 0.0
+	add_child(banner)
+
+	flash = ColorRect.new()
+	flash.color = Color("fff6d8")
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flash.modulate.a = 0.0
+	add_child(flash)
+
+
+func _build_audio() -> void:
+	for n in ["splash", "lift", "chime", "tear", "sparkle"]:
+		var p := AudioStreamPlayer.new()
+		p.stream = load("res://assets/sfx/%s.wav" % n)
+		add_child(p)
+		sfx[n] = p
+	ambience = AudioStreamPlayer.new()
+	var loop: AudioStreamWAV = load("res://assets/sfx/river_loop.wav")
+	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	loop.loop_end = loop.data.size() / 2
+	ambience.stream = loop
+	ambience.volume_db = -8
+	add_child(ambience)
+	ambience.play()
+
+
+func _play(n: String, pitch := 1.0) -> void:
+	var p: AudioStreamPlayer = sfx[n]
+	p.pitch_scale = pitch
+	p.play()
+
+
+func _refresh_ui() -> void:
+	for c in jar_row.get_children():
+		c.queue_free()
+	for i in total_tonight:
+		var dot := Panel.new()
+		dot.custom_minimum_size = Vector2(14, 14)
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(7)
+		if i < GameState.orbs.size():
+			var o: Dictionary = GameState.orbs[i]
+			sb.bg_color = GameState.TYPE_COLOR.get(o.type, Color.WHITE)
+		else:
+			sb.bg_color = Color(1, 1, 1, 0.22)
+		dot.add_theme_stylebox_override("panel", sb)
+		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		jar_row.add_child(dot)
+	var left := 0
+	for id in GameState.nets:
+		left += GameState.nets[id]
+	poi_label.text = "ポイ ×%d" % left
+	dura_bar.value = durability if poi_type != "" else 0.0
+	var fill := StyleBoxFlat.new()
+	fill.set_corner_radius_all(5)
+	fill.bg_color = Color("7bdc6b") if durability > 0.5 else (Color("ffd23f") if durability > 0.25 else Color("ff6b5b"))
+	dura_bar.add_theme_stylebox_override("fill", fill)
+	var col := Color("dddddd")
+	var name := "なし"
+	if poi_type != "":
+		col = GameState.TYPE_COLOR.get(GameState.NETS[poi_type].type, Color("ffd84d"))
+		name = GameState.NETS[poi_type].name.replace("網", "")
+	var st := _pill(col, 30)
+	for k in ["normal", "hover", "pressed"]:
+		poi_btn.add_theme_stylebox_override(k, st)
+	poi_btn.text = "%s\n×%d" % [name, GameState.nets.get(poi_type, 0)]
+	poi_btn.add_theme_color_override("font_color", Color("1a1f3a"))
+	poi_btn.add_theme_color_override("font_hover_color", Color("1a1f3a"))
+	if poi_type != "":
+		poi_rim.material_override = Obake3D.toon(col, 0.4, 0.4)
+	poi_film_mat.albedo_color = Color(1, 1, 1, 0.15 + 0.4 * durability)
+
+
+func _pick_poi() -> void:
+	poi_type = ""
+	for id in GameState.nets:
+		if GameState.nets[id] > 0:
+			poi_type = id
+			break
+	durability = 1.0
+
+
+func _cycle_poi() -> void:
+	if busy or pressed:
+		return
+	var ids: Array = GameState.NETS.keys()
+	var start := ids.find(poi_type)
+	for i in range(1, ids.size() + 1):
+		var id: String = ids[(start + i) % ids.size()]
+		if GameState.nets.get(id, 0) > 0:
+			poi_type = id
+			durability = 1.0
+			break
+	_refresh_ui()
+
+
+# ---------- 入力 ----------
+
+func _ground(p: Vector2) -> Vector3:
+	var from := cam.project_ray_origin(p)
+	var dir := cam.project_ray_normal(p)
+	if absf(dir.y) < 1e-4:
+		return last_ground
+	var t := -from.y / dir.y
+	var g := from + dir * t
+	# 池の外には出さない
+	var e := Vector2(g.x / WATER_RX, g.z / WATER_RZ)
+	if e.length() > 0.92:
+		e = e.normalized() * 0.92
+		g = Vector3(e.x * WATER_RX, 0, e.y * WATER_RZ)
+	return g
+
+
+func _gui_input(event: InputEvent) -> void:
+	if busy:
+		return
+	var pos := Vector2.ZERO
+	var down := false
+	var up := false
+	var motion := false
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		pos = event.position
+		down = event.pressed
+		up = not event.pressed
+	elif event is InputEventScreenTouch:
+		pos = event.position
+		down = event.pressed
+		up = not event.pressed
+	elif event is InputEventMouseMotion or event is InputEventScreenDrag:
+		pos = event.position
+		motion = true
+	else:
+		return
+	if pos.y < 120:
+		return
+	var g := _ground(pos)
+	if down:
+		if poi_type == "":
+			_banner("ポイがない。今夜はおしまい", Color("ffb3a8"))
+			return
+		pressed = true
+		last_ground = g
+		poi.position = Vector3(g.x, -0.04, g.z)
+		_ripple(g)
+		_play("splash", randf_range(0.9, 1.1))
+		hint.text = "玉の下まで、そっと動かす"
+	elif motion:
+		if pressed:
+			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
+			durability -= (0.02 + speed * 0.02) * get_process_delta_time() / GameState.poi_strength()
+			last_ground = g
+			poi.position = Vector3(g.x, -0.04, g.z)
+			if durability <= 0:
+				_tear(null)
+				return
+			_refresh_ui()
+		else:
+			poi.position = Vector3(g.x, 0.45, g.z)
+	elif up and pressed:
+		pressed = false
+		_lift()
+
+
+func _ripple(g: Vector3) -> void:
+	ripple_t = 0.0
+	water_mat.set_shader_parameter("ripple_pos", g)
+
+
+# ---------- すくい上げ ----------
+
+func _lift() -> void:
+	busy = true
+	var target: Orb3D = null
+	var best := POI_R
+	for o in orbs:
+		var d := Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length()
+		if d < best:
+			best = d
+			target = o
+	if target == null:
+		var tw := create_tween()
+		tw.tween_property(poi, "position:y", 0.45, 0.25)
+		_play("lift")
+		drops.position = poi.position
+		drops.restart()
+		drops.emitting = true
+		await tw.finished
+		durability -= 0.05 / GameState.poi_strength()
+		if durability <= 0:
+			_tear(null)
+			return
+		hint.text = "玉の真下で離すと、すくえる"
+		_refresh_ui()
+		busy = false
+		return
+
+	var match_mult := 0.7 if GameState.NETS[poi_type].type == target.data.type else 1.0
+	var cost: float = target.data.weight * match_mult / GameState.poi_strength()
+	var will_hold := durability - cost > 0.0
+	target.caught = true
+	orbs.erase(target)
+	# スローモーションで持ち上げる
+	_play("lift", 0.8)
+	Engine.time_scale = 0.3
+	var cam_to := cam_base
+	cam_to.origin = cam_base.origin.lerp(poi.position + Vector3(0, 1.6, 1.3), 0.45)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "transform", cam_to.looking_at(poi.position, Vector3.UP), 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(poi, "position:y", 0.55, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(target, "position", Vector3(poi.position.x, 0.58, poi.position.z), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	drops.position = poi.position
+	drops.restart()
+	drops.emitting = true
+	await tw.finished
+	if not will_hold:
+		Engine.time_scale = 1.0
+		target.caught = false
+		_tear(target)
+		return
+	durability -= cost
+	# 決まった瞬間
+	_flash(0.5)
+	_play("chime")
+	if target.data.rare:
+		_play("sparkle")
+	Input.vibrate_handheld(40)
+	stars.position = target.position
+	stars.restart()
+	stars.emitting = true
+	Engine.time_scale = 1.0
+	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
+	caught_count += 1
+	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
+	var tw2 := create_tween().set_parallel()
+	tw2.tween_property(cam, "transform", cam_base, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(target, "position", cam.project_position(Vector2(120, 40), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw2.tween_property(target, "scale", Vector3.ONE * 0.3, 0.7)
+	await tw2.finished
+	target.queue_free()
+	poi.position.y = 0.45
+	_refresh_ui()
+	busy = false
+	hint.text = "押して水に入れる → 玉の下で離して、すくう"
+	if orbs.is_empty():
+		await get_tree().create_timer(0.6).timeout
+		_finish()
+
+
+func _tear(target: Orb3D) -> void:
+	busy = true
+	_play("tear")
+	Input.vibrate_handheld(80)
+	_banner("やぶれた…", Color("ffb3a8"))
+	GameState.nets[poi_type] -= 1
+	var tw := create_tween().set_parallel()
+	tw.tween_property(poi_film_mat, "albedo_color:a", 0.0, 0.2)
+	tw.tween_property(cam, "transform", cam_base, 0.5)
+	if target:
+		tw.tween_property(target, "position", Vector3(target.position.x, 0.0, target.position.z), 0.35).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+		orbs.append(target)
+	await tw.finished
+	if target:
+		_ripple(target.position)
+		_play("splash", 0.8)
+	await get_tree().create_timer(0.6).timeout
+	_pick_poi()
+	poi.position.y = 0.45
+	_refresh_ui()
+	busy = false
+	if poi_type == "":
+		hint.text = "ポイを使い切った"
+		await get_tree().create_timer(0.8).timeout
+		_finish()
+	else:
+		hint.text = "新しいポイ。こんどはそっと"
+
+
+# ---------- 毎フレーム ----------
+
+func _process(delta: float) -> void:
+	ripple_t += delta
+	water_mat.set_shader_parameter("ripple_t", ripple_t)
+	var ps: Array[Vector4] = []
+	var cs: Array[Vector4] = []
+	for i in 6:
+		if i < orbs.size():
+			var ob: Orb3D = orbs[i]
+			var c: Color = ob.light.light_color
+			ps.append(Vector4(ob.position.x, 0, ob.position.z, 1.0))
+			cs.append(Vector4(c.r, c.g, c.b, 1))
+		else:
+			ps.append(Vector4(100, 0, 100, 0))
+			cs.append(Vector4(0, 0, 0, 0))
+	water_mat.set_shader_parameter("orb_pos", ps)
+	water_mat.set_shader_parameter("orb_col", cs)
+	for o: Orb3D in orbs:
+		if o.caught:
+			continue
+		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta
+		# 水中でポイが近くにあると、少し逃げる
+		if pressed:
+			var away: Vector3 = o.position - poi.position
+			away.y = 0
+			var d: float = away.length()
+			if d < 0.7 and d > 0.001:
+				steer += away.normalized() * (0.7 - d) * 1.6 * delta
+		o.vel = (o.vel + steer).limit_length(0.35)
+		o.position += o.vel * delta
+		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
+		if e.length() > 0.8:
+			o.vel -= Vector3(e.x, 0, e.y).normalized() * 0.6 * delta * 10.0
+		o.position.y = 0.0
+
+
+# ---------- 演出 ----------
+
+func _banner(text: String, color: Color) -> void:
+	banner.text = text
+	banner.add_theme_color_override("font_color", color)
+	banner.modulate.a = 1.0
+	banner.scale = Vector2(0.5, 0.5)
+	var tw := create_tween()
+	tw.tween_property(banner, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.9)
+	tw.tween_property(banner, "modulate:a", 0.0, 0.35)
+
+
+func _flash(a: float) -> void:
+	flash.modulate.a = a
+	create_tween().tween_property(flash, "modulate:a", 0.0, 0.35)
+
+
+func _finish() -> void:
+	if GameState.scooped_tonight:
+		return
+	GameState.scooped_tonight = true
+	Engine.time_scale = 1.0
+	main.go("sleep")
+
+
+# ---------- 確認用 ----------
+
+func demo_hold() -> void:
+	# 1つ目の玉の真下にポイを入れた状態を作る
+	if orbs.is_empty():
+		return
+	var o: Orb3D = orbs[0]
+	o.vel = Vector3.ZERO
+	o.set_process(false)
+	pressed = true
+	poi.position = Vector3(o.position.x, -0.04, o.position.z)
+	_ripple(o.position)
+
+
+func demo_lift() -> void:
+	pressed = false
+	_lift()
