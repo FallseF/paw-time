@@ -57,7 +57,8 @@ var hint_target: Control
 var hint_key := ""
 var overlay: Control
 var retreated := false
-var weak_label: Label3D
+var weak_tag: PanelContainer
+var weak_tag_label: Label
 var weak_uid := -1
 var boss_bar: PanelContainer
 var boss_hp: ProgressBar
@@ -437,18 +438,29 @@ func _label3d(t: String, c: Color, size := 48) -> Label3D:
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
 	l.render_priority = 5
+	l.outline_render_priority = 4
 	return l
 
 
+## 3D の位置に、2D の文字をぽんと出す（縁取りがくっきり出るので 2D にした）
 func _popup(t: String, pos: Vector3, c: Color, size := 48) -> void:
-	if pops_alive > 14:
+	if pops_alive > 14 or cam.is_position_behind(pos):
 		return
 	pops_alive += 1
-	var l := _label3d(t, c, size)
-	l.position = pos
-	world.add_child(l)
+	var l := Kit.text(t, int(size / 2.3), c, true)
+	l.add_theme_color_override("font_outline_color", Kit.INK)
+	l.add_theme_constant_override("outline_size", 6)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(l)
+	move_child(l, 2)
+	l.reset_size()
+	var sp := cam.unproject_position(pos)
+	l.position = sp - l.size / 2
+	l.pivot_offset = l.size / 2
+	l.scale = Vector2(0.5, 0.5)
 	var tw := l.create_tween()
-	tw.tween_property(l, "position:y", pos.y + 0.7, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(l, "position:y", l.position.y - 30, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(l, "modulate:a", 0.0, 0.3).set_delay(0.4)
 	tw.tween_callback(func():
 		pops_alive -= 1
@@ -791,29 +803,41 @@ func _refresh_ui() -> void:
 var weak_job := ""
 
 
-## いちばん前の困りごとの頭に、弱点をひと言だけ出す
+## いちばん前の困りごとの頭に、弱点をひと言だけ出す（2D の札を 3D の位置に重ねる）
 func _update_weak_label() -> void:
 	var front := {}
 	for e in sim.entities:
 		if e.side == 1 and (front.is_empty() or e.x > front.x):
 			front = e
 	weak_job = ""
-	if front.is_empty() or not views.has(front.uid) or front.weak == "":
-		if weak_label:
-			weak_label.visible = false
+	if weak_tag == null:
+		weak_tag = PanelContainer.new()
+		weak_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		weak_tag_label = Kit.text("", 11, Color.WHITE, true)
+		weak_tag.add_child(weak_tag_label)
+		add_child(weak_tag)
+		move_child(weak_tag, 2)
+	if front.is_empty() or not views.has(front.uid) or front.weak == "" or ended:
+		weak_tag.visible = false
 		return
 	weak_job = front.weak
-	if weak_label == null:
-		weak_label = _label3d("", Color.WHITE, 34)
-		world.add_child(weak_label)
 	var v: Dictionary = views[front.uid]
 	var h: float = DefData.ENEMIES[front.id].h
-	weak_label.visible = true
-	weak_label.text = "弱点 %s" % GameState.ROLE_LABEL[front.weak]
-	weak_label.modulate = Color.WHITE
-	weak_label.outline_modulate = DefData.job_color(front.weak).darkened(0.1)
-	weak_label.outline_size = 16
-	weak_label.position = v.root.position + Vector3(0, h + 0.35, 0.3)
+	var p3: Vector3 = v.root.position + Vector3(0, h + 0.25, 0)
+	if cam.is_position_behind(p3):
+		weak_tag.visible = false
+		return
+	var sp := cam.unproject_position(p3)
+	weak_tag.visible = sp.x > -20 and sp.x < 380
+	var st := Kit.pill(DefData.job_color(front.weak), 10, 0.15)
+	st.content_margin_left = 8
+	st.content_margin_right = 8
+	st.content_margin_top = 2
+	st.content_margin_bottom = 2
+	weak_tag.add_theme_stylebox_override("panel", st)
+	weak_tag_label.text = "弱点 %s" % GameState.ROLE_LABEL[front.weak]
+	weak_tag.reset_size()
+	weak_tag.position = sp - Vector2(weak_tag.size.x / 2, weak_tag.size.y)
 
 
 func _draw_minimap() -> void:
@@ -1306,13 +1330,7 @@ func _cannon_fx() -> void:
 	tw.tween_property(wave, "position:x", DefData.LANE - DefSim.CANNON_REACH, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.7)
 	tw.chain().tween_callback(wave.queue_free)
-	var l := _label3d("キーンコーン", Color("fff6e0"), 64)
-	l.position = Vector3(DefData.LANE - 2.5, 2.8, 0.5)
-	world.add_child(l)
-	var tw2 := l.create_tween()
-	tw2.tween_property(l, "position:y", 3.4, 1.0)
-	tw2.parallel().tween_property(l, "modulate:a", 0.0, 0.5).set_delay(0.5)
-	tw2.tween_callback(l.queue_free)
+	_popup("キーンコーン", Vector3(cam_x, 2.6, 0.5), Color("fff6e0"), 70)
 	cam_hold = 0.0
 
 
