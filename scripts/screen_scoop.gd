@@ -1728,6 +1728,9 @@ func _show_result(reason: String, was_best: bool) -> void:
 		row.add_child(dot)
 	v.add_child(row)
 	var lines: Array = []
+	var pv := _hatch_preview()
+	if pv != "":
+		lines.append(pv)
 	lines.append("最高コンボ %d%s" % [best_combo, "  新記録！" if was_best else ""])
 	if clean_count > 0:
 		lines.append("ていねいな玉 %d（朝よく育つ）" % clean_count)
@@ -1758,8 +1761,12 @@ func _show_result(reason: String, was_best: bool) -> void:
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 	b.pressed.connect(func(): main.go("sleep"))
 	v.add_child(b)
+	await get_tree().process_frame
+	card.reset_size()
+	card.size.x = 312
+	card.position.y = clampf((640.0 - card.size.y) / 2.0, 8.0, 200.0)
 	card.scale = Vector2(0.85, 0.85)
-	card.pivot_offset = Vector2(156, 150)
+	card.pivot_offset = card.size / 2.0
 	card.modulate.a = 0.0
 	var tw := create_tween().set_parallel()
 	tw.tween_property(card, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -1768,6 +1775,41 @@ func _show_result(reason: String, was_best: bool) -> void:
 		_play("fanfare")
 	else:
 		_play("chime", 0.8)
+
+
+## 朝なにがかえるか（種類ごと）と、Lvアップしそうな子
+func _hatch_preview() -> String:
+	var per := {}
+	var xp := {}
+	var school := 0
+	var mystery := 0
+	for o in GameState.orbs:
+		if o.kind in ["rainbow", "gold"]:
+			mystery += 1
+			continue
+		if o.kind == "school":
+			school += 1
+			if school % 2 == 0:
+				continue
+		var sid: String = GameState.TYPE_SPECIES.get(o.type, "receipt")
+		per[sid] = per.get(sid, 0) + 1
+		xp[sid] = xp.get(sid, 0) + 4 + o.quality * 4 + (4 if GameState.owned.has(sid) else 0)
+	if per.is_empty() and mystery == 0:
+		return ""
+	var parts: Array = []
+	for sid in per:
+		parts.append("%s×%d" % [GameState.info(sid).name, per[sid]])
+	if mystery > 0:
+		parts.append("？×%d" % mystery)
+	var t := "朝かえる：" + "・".join(parts)
+	for sid in xp:
+		var own: Dictionary = GameState.owned.get(sid, {})
+		if own.is_empty() or own.level >= GameState.MAX_LEVEL:
+			continue
+		if xp[sid] >= GameState.xp_to_next(own.level) - own.xp:
+			t += "\n%sがLv%dになりそう" % [GameState.info(sid).name, own.level + 1]
+			break
+	return t
 
 
 func _rank_text() -> String:
