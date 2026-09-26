@@ -420,7 +420,7 @@ func _build_ui() -> void:
 	ws.custom_minimum_size = Vector2(62, 44)
 	ws.visible = GameState.unlocked("workshop") # 仕組みは少しずつ見せる
 	top.add_child(ws)
-	if not GameState.tut.has("partner") or GameState.next_unlock_text().begins_with("工房で"):
+	if GameState.next_unlock_text().begins_with("工房で"):
 		var wdot := _dot(Color("ff5b5b"))
 		wdot.position = Vector2(50, -2)
 		ws.add_child(wdot)
@@ -437,7 +437,7 @@ func _build_ui() -> void:
 	poi_panel = pp
 	pp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.85), 18))
 	pp.position = Vector2(12, 66)
-	pp.visible = GameState.unlocked("poi_hud")
+	pp.visible = false # ポイは川べりの棚で見る（休憩室では出さない）
 	add_child(pp)
 	pp.size = Vector2(336, 0)
 	poi_row = HFlowContainer.new()
@@ -495,7 +495,7 @@ func _render() -> void:
 		if GameState.claimed.has(q.key):
 			done += 1
 	var ready := GameState.quests_claimable()
-	quest_btn.text = ("今週のおねがい：%dつ受け取れる！" % ready) if ready > 0 else ("今週のおねがい %d/3" % done)
+	quest_btn.text = ("おねがい：%dつ受け取れる" % ready) if ready > 0 else ("今週のおねがい %d/3" % done)
 	quest_btn.visible = GameState.unlocked("quests")
 	_place_quest_btn()
 	for c in poi_row.get_children():
@@ -623,7 +623,8 @@ func _pop_card() -> void:
 func _show_report() -> void:
 	report = PanelContainer.new()
 	report.add_theme_stylebox_override("panel", _pill(Color(0.16, 0.13, 0.22, 0.92), 22))
-	report.position = Vector2(16, 110)
+	report.position = Vector2(16, 66)
+	quest_btn.modulate.a = 0.0 # 報告のあいだは、ほかの表示を重ねない
 	report.size = Vector2(328, 0)
 	report.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(report)
@@ -652,7 +653,7 @@ func _place_quest_btn() -> void:
 	if not is_inside_tree():
 		return
 	if is_instance_valid(poi_panel):
-		quest_btn.position.y = poi_panel.position.y + poi_panel.size.y + 6
+		quest_btn.position.y = 66.0
 
 
 ## 仕事と睡眠が、どう効くか
@@ -799,6 +800,7 @@ func _close_report() -> void:
 		return
 	var r := report
 	report = null
+	create_tween().tween_property(quest_btn, "modulate:a", 1.0, 0.3)
 	var tw := create_tween()
 	tw.tween_property(r, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(r.queue_free)

@@ -77,6 +77,7 @@ var tut_step := -1
 var tut_label: Label
 var tray_bg: PanelContainer
 var show_combo := true
+var night_gift := 0
 var tut_target: Orb3D
 var goal_pill: PanelContainer
 var goal: Dictionary
@@ -160,9 +161,10 @@ func _ready() -> void:
 	_show_conditions()
 	if tut_step == 0:
 		_tut_show()
-	if gift > 0:
-		_float_text("祭りのふるまい：紙のポイ ×%d" % gift, Vector2(180, 300), Color("ffb35c"))
+	night_gift = gift
 	_night_title()
+	if gift > 0 and not GameState.unlocked("weather"):
+		_toast("祭りのふるまい：紙のポイ+%d" % gift)
 
 
 # ---------- 世界 ----------
@@ -816,6 +818,8 @@ func _build_ui() -> void:
 		bl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		cv.add_child(bl)
 	cond_pill.visible = cv.get_child_count() > 0
+	if cond_pill.visible:
+		tip_t = 6.0 # 今夜の様子が消えてから、ヒントを出す（重ねない）
 	add_child(cond_pill)
 
 
@@ -1367,7 +1371,7 @@ func _lift() -> void:
 	elif list.any(func(o): return o.kind == "gold"):
 		title = "金の玉！"
 	# ひとつの知らせにまとめる（題＋よかったところ）
-	var detail := "・".join(tags)
+	var detail: String = tags[0] if tags.size() > 0 else "" # 一番大事なひとつだけ
 	if special or combo in [3, 5, 8, 10, 15, 20]:
 		var head := title if special else "%dコンボ！" % combo
 		_banner(head + ("\n" + detail if detail != "" else ""), Color("fff2a8"))
@@ -1397,7 +1401,7 @@ func _lift() -> void:
 	create_tween().tween_property(jar, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if last_gasp:
 		_refresh_ui() # おだいのごほうびを先に受け取ってから、次のポイを選ぶ
-		_float_text("ぎりぎりセーフ！でも紙が…", Vector2(180, 300), Color("ffd6a8"), 18)
+		_toast("ぎりぎりセーフ！でも紙が…")
 		await get_tree().create_timer(0.35).timeout
 		_tear_after_catch()
 		return
@@ -1506,7 +1510,7 @@ func _tear(list: Array) -> void:
 	var left_txt := "%s あと%d本" % [GameState.POI[selected].name, left_n] if selected != "" and GameState.POI.has(selected) and not practice else ""
 	_banner("やぶれた…" if lost < 3 else "やぶれた…\n%dコンボ" % combo, Color("ffb3a8"))
 	if left_txt != "":
-		_float_text(left_txt, Vector2(180, 330), Color(1, 1, 1, 0.95), 16)
+		_toast(left_txt) # 大きな知らせと重ならない、下の位置に
 	combo = kept
 	in_hand = false
 	used = false
@@ -1825,6 +1829,13 @@ func _float_text(text: String, at: Vector2, color: Color, size := 18) -> void:
 	for c in float_layer.get_children():
 		if not c.has_meta("keep"):
 			c.queue_free()
+	# 大きな知らせ（まんなか）や夜の題が出ているあいだは、その下にずらす
+	var busy_mid: bool = banner.modulate.a > 0.05
+	for c in float_layer.get_children():
+		if c.has_meta("keep") and c.modulate.a > 0.05:
+			busy_mid = true
+	if busy_mid and at.y > 170.0 and at.y < 340.0:
+		at.y = 360.0
 	var l := _text(text, size, color, font_black)
 	l.add_theme_color_override("font_outline_color", Color("0b1026"))
 	l.add_theme_constant_override("outline_size", 6)
@@ -1872,13 +1883,15 @@ func _night_title() -> void:
 	var s := GameState.today()
 	var t := "練習" if practice else ("大すくい祭り" if mods.festival else "%s曜の夜" % s.day)
 	var l := _text(t, 34, Color("fff6e8"), font_black)
+	l.set_meta("keep", true)
 	l.add_theme_color_override("font_outline_color", Color("0b1026"))
 	l.add_theme_constant_override("outline_size", 10)
 	l.position = Vector2(0, 250)
 	l.size = Vector2(360, 50)
 	l.modulate.a = 0.0
 	float_layer.add_child(l)
-	var sub := _text("%s%s" % [s.weather, ("・" + s.moon) if s.moon != "" else ""], 16, Color("ffe7a8"))
+	var sub := _text("%s%s%s" % [s.weather, ("・" + s.moon) if s.moon != "" else "", ("・紙のポイ+%d" % night_gift) if night_gift > 0 else ""], 16, Color("ffe7a8"))
+	sub.set_meta("keep", true)
 	sub.position = Vector2(0, 298)
 	sub.size = Vector2(360, 24)
 	sub.modulate.a = 0.0
