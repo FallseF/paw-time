@@ -208,7 +208,7 @@ func _stage_row(si: int, st: int) -> Control:
 			ids[s[0]] = true
 		var n := 0
 		for id in ids:
-			if n >= 3:
+			if n >= (2 if done else 3):
 				break
 			var tr := TextureRect.new()
 			tr.texture = Kit.enemy_tex(id)
@@ -219,6 +219,10 @@ func _stage_row(si: int, st: int) -> Control:
 			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_child(tr)
 			n += 1
+	if done:
+		var star := Kit.text("★" if GameState.is_perfect(si, st) else "☆", 18, Color("e8a317") if GameState.is_perfect(si, st) else Color("d8cfc6"), true)
+		star.tooltip_text = "お店を無傷で守ると★"
+		row.add_child(star)
 	if open and not done:
 		var np := PanelContainer.new()
 		np.add_theme_stylebox_override("panel", Kit.pill(Color("ff6b5b"), 10, 0.0))
@@ -272,6 +276,8 @@ func _open_sheet(si: int, st: int) -> void:
 	var tip := Kit.text(stage.tip, 13, Kit.SUB)
 	tip.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(tip)
+	var goal := Kit.text(("★ 達成ずみ：お店を無傷で守った" if GameState.is_perfect(si, st) else "★ お店を無傷で守ると、まかない +30%"), 12, Color("e8a317"), true)
+	v.add_child(goal)
 	# 出てくる困りごと
 	var er := HBoxContainer.new()
 	er.add_theme_constant_override("separation", 6)
@@ -328,7 +334,7 @@ func _open_sheet(si: int, st: int) -> void:
 		pic.texture = Kit.portrait(id)
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		pic.custom_minimum_size = Vector2(42, 42)
+		pic.custom_minimum_size = Vector2(36, 36)
 		dr.add_child(pic)
 	var dp := PanelContainer.new()
 	dp.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 14, 0.0))

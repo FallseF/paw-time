@@ -92,6 +92,7 @@ var wins_today := 0
 var daily_done := false
 var consolation_done := false
 var daily_pick: Array = [] # [日, 店, 面]
+var perfect := {} # お店を無傷で守った面（周回つきのキー）
 var focus := "" # 育てたい一体。その日の最初の勝ちで経験値 +FOCUS_XP
 const FOCUS_XP := 40
 var total_battles := 0
@@ -160,6 +161,7 @@ func reset() -> void:
 	enemies_seen = {}
 	daily_pick = []
 	focus = ""
+	perfect = {}
 	changed.emit()
 
 
@@ -362,6 +364,10 @@ func is_cleared(si: int, st: int, l := -1) -> bool:
 	return cleared.get(DefData.stage_key(si, st, lap if l < 0 else l), 0) > 0
 
 
+func is_perfect(si: int, st: int) -> bool:
+	return perfect.has(DefData.stage_key(si, st, lap))
+
+
 func clear_count(si: int, st: int) -> int:
 	return int(cleared.get(DefData.stage_key(si, st, lap), 0))
 
@@ -420,6 +426,11 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 			r.coins += 60
 			r.daily = true
 		r.first = first
+		# お店が無傷なら★（はじめての★で +30%）
+		if stats.get("base", 0.0) >= 0.999 and not perfect.has(key):
+			perfect[key] = true
+			r["perfect"] = true
+			r.coins += int(base * 0.3)
 		if wins_today == 0 and focus != "" and not owned_of(focus).is_empty():
 			var fo := owned_of(focus)
 			fo.xp += FOCUS_XP
@@ -620,7 +631,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 const SAVE_KEYS := ["day", "phase", "nets", "net_strength", "last_sleep", "owned", "seen", "morning_report", "orbs", "hatched",
 	"scooped_tonight", "sleep_hist", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_days",
 	"first_role_today", "gifted", "received", "rare_pending", "coins", "deck", "cleared", "best_lap", "lap", "boost",
-	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick", "focus"]
+	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick", "focus", "perfect"]
 
 
 func save_game() -> void:
