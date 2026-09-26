@@ -773,15 +773,33 @@ func _gui_input(event: InputEvent) -> void:
 	tw2.tween_callback(l.queue_free)
 
 
+const LINES_TIER := [
+	["…ねむい", "きのう、何時にねた？", "庭が、しょんぼりしてる", "花が下を見ている。こっちも見ている"],
+	["まあまあの夜だった", "今夜は、早めに", "…ふわぁ", "いつもの時刻、覚えてる？"],
+	["いい夜だった", "花がのびた", "朝の空気がすき", "リズム、悪くない"],
+	["ぐっすり", "庭がきらきらしてる", "夢で羊をかぞえた。四ひきめで寝た", "今日は、なにもしなくていい気がする"],
+]
+const LINES_OWN := {
+	"receipt": ["レシート、のびた", "合計は、言えない", "…ピッ"],
+	"bubble": ["ぷく", "割れた。平気", "洗ったら、減った"],
+	"tray": ["お盆は落とさない", "中身は知らない", "…（バランス中）"],
+	"pan": ["じゅう", "さわらないで。あつくはない", "油の音がすき"],
+	"box": ["箱から出ない", "住所はここ", "中は広い（ことにしている）"],
+	"nemuri": ["zzz…", "…（寝ている）", "羊が一ぴき…"],
+	"lantern": ["夜はこれから", "明るいけど、眠い", "…消さないで"],
+}
+const LINES_NIGHT := ["もう寝る？", "川べり、行く？", "虫の声", "今夜は何時に寝るの"]
+
+
 func _line_for(id: String) -> String:
 	var t := GameState.tier()
-	var common: Array = [["…ねむい", "昨日、何時にねた？", "庭がしょんぼりしてる"], ["まあまあの夜だった", "今夜は早めに", "…ふわぁ"], ["いい夜だった", "花がのびた", "朝の空気がすき"], ["ぐっすり", "庭がきらきらしてる", "夢で羊をかぞえた"]][t]
-	var own := {"receipt": "レシート、のびた", "bubble": "ぷく", "tray": "お盆は落とさない", "pan": "じゅう", "box": "箱から出ない", "nemuri": "zzz…", "lantern": "夜はこれから"}
-	if own.has(id) and randf() < 0.4:
-		return own[id]
-	if Rares.is_rare(id) and randf() < 0.5:
-		return "……"
-	return common.pick_random()
+	if Rares.is_rare(id):
+		return ["……", "…", "（じっとこっちを見ている）", "……（うなずく）"].pick_random()
+	if LINES_OWN.has(id) and randf() < 0.45:
+		return LINES_OWN[id].pick_random()
+	if night > 0.5 and randf() < 0.4:
+		return LINES_NIGHT.pick_random()
+	return LINES_TIER[t].pick_random()
 
 
 # ---------- UI ----------
@@ -1016,9 +1034,50 @@ func _card_fit() -> void:
 	card.size.y = 0
 	await get_tree().process_frame
 	card.position.y = 626 - card.size.y
+	_place_handle()
+
+
+var handle: Button
+var card_hidden := false
+
+
+## カードをしまって、庭をひろく見る
+func _place_handle() -> void:
+	if handle == null:
+		handle = Button.new()
+		handle.add_theme_font_override("font", Kit.black())
+		handle.add_theme_font_size_override("font_size", 12)
+		for k in ["normal", "hover", "pressed", "focus"]:
+			handle.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.95), 14, 0.15, Vector2(10, 3)))
+		handle.add_theme_color_override("font_color", Color("6a5f70"))
+		handle.add_theme_color_override("font_hover_color", Color("6a5f70"))
+		handle.pressed.connect(_toggle_card)
+		add_child(handle)
+	if card_hidden:
+		handle.text = "▲ カードを出す"
+		handle.position = Vector2(126, 598)
+	else:
+		handle.text = "▼ しまう"
+		handle.position = Vector2(card.position.x + card.size.x - 84, card.position.y - 14)
+	handle.size = Vector2(0, 0)
+
+
+func _toggle_card() -> void:
+	Kit.play(self, "tap", 1.1)
+	card_hidden = not card_hidden
+	card.visible = not card_hidden
+	_place_handle()
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "v_offset", -0.7 if card_hidden else -1.6, 0.4).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(cam, "fov", 42.0 if card_hidden else 52.0, 0.4).set_trans(Tween.TRANS_SINE)
 
 
 func _pop_card() -> void:
+	if card_hidden:
+		card_hidden = false
+		card.visible = true
+		cam.v_offset = -1.6
+		cam.fov = 52.0
 	card.pivot_offset = Vector2(166, 200)
 	card.scale = Vector2(0.96, 0.96)
 	card.modulate.a = 0.0
