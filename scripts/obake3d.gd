@@ -74,10 +74,12 @@ func setup(id: String) -> Obake3D:
 
 ## おばけの体（丸い頭・胴・波打つ裾・顔）をひとつ組んで返す。足元が y=0、高さ約 1.0。
 ## s はこのノードに掛ける縮尺。輪郭の太さが縮尺に引きずられないよう、ここで補正する。
-func ghost(col: Color, s := 1.0, emission := 0.0, eye_col := INK, sleepy := false, with_face := true) -> Node3D:
+## mat を渡すと、その材質で塗る（col と emission は使わない）。
+func ghost(col: Color, s := 1.0, emission := 0.0, eye_col := INK, sleepy := false, with_face := true, mat: Material = null) -> Node3D:
 	var g := Node3D.new()
 	g.scale = Vector3.ONE * s
-	var mat := toon(col, 0.12, emission, 0.025 / s)
+	if mat == null:
+		mat = toon(col, 0.12, emission, 0.025 / s)
 	g.add_child(_mesh(_sphere(0.5), mat, Vector3(0, 0.5, 0)))
 	var trunk := CylinderMesh.new()
 	trunk.top_radius = 0.5

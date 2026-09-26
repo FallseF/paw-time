@@ -77,6 +77,10 @@ func _make_stage() -> void:
 func _shoot(id: String) -> Image:
 	seed(hash(id))
 	var ob := Obake3D.make(id)
+	if ob == null:
+		push_error("could not build " + id)
+		quit(1)
+		return Image.create(1, 1, false, Image.FORMAT_RGBA8)
 	ob.bob = false
 	ob.set("_t", 0.0)
 	ob.rotation.y = YAW
