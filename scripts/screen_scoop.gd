@@ -22,6 +22,8 @@ var water_mat: ShaderMaterial
 var poi: Node3D
 var poi_film_mat: StandardMaterial3D
 var poi_rim: MeshInstance3D
+var inner_ring: MeshInstance3D
+var inner_ring_mat: StandardMaterial3D
 var orbs: Array = []
 var mods: Dictionary
 var supply := 0
@@ -489,6 +491,19 @@ func _make_poi() -> Node3D:
 	poi_film_mat.albedo_color = Color(1, 1, 1, 0.45)
 	film.material_override = poi_film_mat
 	n.add_child(film)
+	# 真ん中の目じるし（ここに乗せてすくうと★）
+	inner_ring = MeshInstance3D.new()
+	var it := TorusMesh.new()
+	it.inner_radius = POI_R * 0.6 - 0.006
+	it.outer_radius = POI_R * 0.6 + 0.006
+	inner_ring.mesh = it
+	inner_ring.scale = Vector3(s, 1, s)
+	inner_ring_mat = StandardMaterial3D.new()
+	inner_ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	inner_ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	inner_ring_mat.albedo_color = Color(1, 1, 1, 0.35)
+	inner_ring.material_override = inner_ring_mat
+	n.add_child(inner_ring)
 	var handle := MeshInstance3D.new()
 	var h := BoxMesh.new()
 	h.size = Vector3(0.06, 0.03, 0.4)
@@ -1364,7 +1379,7 @@ func _update_poi(delta: float) -> void:
 			gentle_time = 0.0
 		# 速く動かすほど、紙が弱る（そっと動かせば、ほとんど減らない）
 		var over := maxf(0.0, poi_speed - 0.6)
-		var drain: float = (0.012 + 0.35 * over * over) * GameState.poi_gentle_mult() * mods.drain
+		var drain: float = (0.012 + minf(0.25 * over * over, 0.45)) * GameState.poi_gentle_mult() * mods.drain
 		if tut_step >= 0:
 			drain = 0.0 # はじめての1つめは、破れない
 		durability -= drain * delta
@@ -1375,14 +1390,23 @@ func _update_poi(delta: float) -> void:
 		var over_list := _orbs_over_poi()
 		for o: Orb3D in orbs:
 			o.highlight = over_list.has(o)
+		# そっと＋真ん中がそろうと、内側の輪が金色になる（★の合図）
+		var centered := false
+		for o: Orb3D in over_list:
+			if Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length() < radius * 0.6:
+				centered = true
+		inner_ring_mat.albedo_color = Color(1, 0.85, 0.3, 0.95) if centered and gentle_time >= 0.2 else Color(1, 1, 1, 0.35)
 		var c := _cost_of(over_list) if over_list.size() > 0 else 0.0
 		var frac := clampf(durability / dura_max, 0.0, 1.0)
 		var cf := clampf(c / dura_max, 0.0, frac)
 		dura_cost.position.x = 280.0 * (frac - cf)
 		dura_cost.size.x = 280.0 * cf
 		var danger := c >= durability
+		var gasp := danger and over_list.size() == 1 and durability >= dura_max * 0.5
 		dura_cost.color = Color(1, 0.2, 0.2, 0.55 + 0.4 * absf(sin(Time.get_ticks_msec() * 0.012))) if danger else Color(1, 0.85, 0.4, 0.75)
-		if danger and not auto:
+		if gasp and not auto:
+			hint.text = "ぎりぎり！すくえるけど、ポイは破れる"
+		elif danger and not auto:
 			hint.text = "重すぎる！このままだと、やぶれる"
 		elif over_list.size() > 0 and tut_step < 0 and not auto:
 			hint.text = "いま離せば、すくえる" if over_list.size() == 1 else "%dつ重なっている！" % over_list.size()

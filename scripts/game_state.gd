@@ -141,6 +141,8 @@ var first_store_today := false
 var gifted := false
 var received := false
 var festival_cleared := false
+var drought := 0 # 新しいレアに会えずに、ちゃんとすくった夜の数
+const DROUGHT_NIGHTS := 5
 var rare_pending: Array = []
 const RARES_PER_NIGHT := 2
 
@@ -215,6 +217,7 @@ func reset() -> void:
 	gifted = false
 	received = false
 	festival_cleared = false
+	drought = 0
 	rare_pending = []
 	changed.emit()
 
@@ -294,7 +297,8 @@ func today() -> Dictionary:
 # ---------- 仕事（ブースト） ----------
 
 func work_poi_count(hours: int) -> int:
-	return clampi(1 + int(hours >= 4), 1, WORK_POI_CAP)
+	# 何時間働いても同じ（長く働くほど得、にはしない）
+	return WORK_POI_CAP if hours > 0 else 0
 
 
 ## シフトを終えたときにポイを受け取る。はじめての仕事・店ならきらきらポイ
@@ -522,6 +526,9 @@ func night_mods() -> Dictionary:
 			m.label.append("新月：暗いが、玉が多い")
 	if worked_today and (first_role_today or first_store_today):
 		m.rainbow += 0.3
+	if drought >= DROUGHT_NIGHTS:
+		m.rainbow += 0.45
+		m.label.append("虹の気配：まだ見ぬレアが近い")
 	if is_festival():
 		m.festival = true
 		m.supply += 8
@@ -692,7 +699,7 @@ func record_scoop_night(result: Dictionary) -> void:
 # ---------- 寝る → 朝 ----------
 
 func sleep_strength(hours: int) -> float:
-	return {4: 0.7, 5: 0.8, 6: 1.0, 7: 1.25, 8: 1.35, 9: 1.3}.get(clampi(hours, 4, 9), 1.0)
+	return {4: 0.75, 5: 0.85, 6: 1.0, 7: 1.2, 8: 1.25, 9: 1.2}.get(clampi(hours, 4, 9), 1.0)
 
 
 func sleep_quality_bonus(hours: int) -> int:
@@ -742,9 +749,14 @@ func sleep(hours: int) -> void:
 		var rid: String = rare_pending.pop_front()
 		add_obake(rid)
 		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rare"})
-	# 虹の玉：待っているレアがいれば、その子がかえる。いなければ大きく育ったふつうのおばけ
+	# 虹の玉：待っているレアがいれば、その子がかえる。
+	# しばらくレアに会えていなければ、まだ見ぬレアを連れてくる（働かない日が続いても図鑑が止まりきらない）
 	for orb in rainbows:
 		shards.rainbow += 1
+		if rare_pending.is_empty() and drought >= DROUGHT_NIGHTS:
+			var unseen: Array = Rares.LIST.filter(func(r): return not seen.has(r.id)).map(func(r): return r.id)
+			if unseen.size() > 0:
+				rare_pending.append(unseen.pick_random())
 		if rare_pending.size() > 0:
 			var rid: String = rare_pending.pop_front()
 			add_obake(rid)
@@ -756,6 +768,11 @@ func sleep(hours: int) -> void:
 		var r := add_obake(sid, 34 + q * 4, q)
 		hatched.append({"id": sid, "is_new": r.is_new, "level": r.level, "before": before, "leveled": r.leveled, "rare": false, "quality": q, "kind": "rainbow", "shard": r.shard})
 	# 3) 次の日へ
+	var new_rare: bool = hatched.any(func(h): return h.get("rare", false))
+	if new_rare:
+		drought = 0
+	elif tonight.get("count", 0) >= 3:
+		drought += 1
 	work_hist.append(worked_today)
 	var n_orbs := orbs.size()
 	orbs = []
@@ -900,7 +917,7 @@ func reward_text(rw: Dictionary) -> String:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist", "decor"]
+const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist", "decor", "drought"]
 
 
 func save_game() -> void:

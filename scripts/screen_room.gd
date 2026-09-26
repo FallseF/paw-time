@@ -442,7 +442,7 @@ func _render() -> void:
 		card_title.text = "今日のシフト（見本の記録）"
 		var poi_name: String = GameState.POI[GameState.ROLE_POI[s.role]].name
 		var first: bool = not GameState.stores_seen.has(s.store) or not GameState.roles_seen.has(s.role)
-		card_body.text = "%s ・ %sの%s %d時間\n働くと：%s ×%d%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "＋きらきらポイ（はじめて）" if first else "（長く働いても2本まで）"]
+		card_body.text = "%s ・ %sの%s %d時間\n働くと：%s ×%d%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "＋きらきらポイ（はじめて）" if first else "（何時間でも同じ）"]
 		actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
 		var skip := _button("働かずに、" + night_label, Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
 		skip.custom_minimum_size = Vector2(0, 40)
