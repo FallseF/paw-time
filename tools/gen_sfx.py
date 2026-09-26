@@ -275,6 +275,21 @@ def room_loop():
     return out
 
 
+def swish_loop():
+    # 水の中でポイを動かす音（ループ）：やわらかいノイズを帯域で絞る
+    n = int(SR * 2.0)
+    noise = [random.uniform(-1, 1) for _ in range(n)]
+    a = lowpass(noise, 0.08)
+    b = lowpass(a, 0.3)
+    out = [(a[i] - b[i] * 0.6) * (0.8 + 0.2 * math.sin(2 * math.pi * 3 * i / SR)) for i in range(n)]
+    fade = int(SR * 0.2)
+    for i in range(fade):
+        k = i / fade
+        out[i] = out[i] * k + out[n - fade + i] * (1 - k)
+    return out[: n - fade]
+
+
+write("swish_loop", swish_loop())
 write("room_loop", room_loop())
 write("bubble", bubble())
 write("pop", pop())

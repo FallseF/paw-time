@@ -116,6 +116,7 @@ var scraps: CPUParticles3D
 var stars: CPUParticles3D
 var sfx := {}
 var ambience: AudioStreamPlayer
+var swish: AudioStreamPlayer
 var float_layer: Control
 
 
@@ -864,6 +865,15 @@ func _build_audio() -> void:
 	ambience.volume_db = -8 if loop_name == "river_loop" else -6
 	add_child(ambience)
 	ambience.play()
+	# 水の中でポイを動かすと、しゃばしゃば鳴る（速いほど大きい）
+	swish = AudioStreamPlayer.new()
+	var sw: AudioStreamWAV = load("res://assets/sfx/swish_loop.wav")
+	sw.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	sw.loop_end = sw.data.size() / 2
+	swish.stream = sw
+	swish.volume_db = -60
+	add_child(swish)
+	swish.play()
 
 
 func _play(n: String, pitch := 1.0, vol := 0.0) -> void:
@@ -1442,6 +1452,10 @@ func _process(delta: float) -> void:
 
 
 func _update_poi(delta: float) -> void:
+	if swish:
+		var loud := clampf(poi_speed / 2.5, 0.0, 1.0) if pressed else 0.0
+		swish.volume_db = lerpf(swish.volume_db, lerpf(-40.0, -6.0, loud) if loud > 0.02 else -60.0, minf(1.0, delta * 10.0))
+		swish.pitch_scale = 0.8 + loud * 0.5
 	if busy:
 		return
 	# 水に入れていない間は、ポイは見せない（押したところに現れる）
