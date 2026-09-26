@@ -30,7 +30,10 @@ var rare_tease := false
 
 func _update_header() -> void:
 	var n := orbs.size()
-	header.text = "朝のお迎え %d / %d%s" % [mini(index, n), n, "　虹色がまじってる" if rare_tease and index < n else ""]
+	if index == 0:
+		header.text = "朝のお迎え：玉が %d こ%s" % [n, "　虹色がまじってる" if rare_tease else ""]
+	else:
+		header.text = "朝のお迎え %d / %d" % [mini(index, n), n]
 
 
 func _ready() -> void:
