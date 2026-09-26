@@ -31,6 +31,7 @@ godot --headless --path . -s tests/test_scoop_input.gd   # 本物のマウス入
 godot --headless --path . -s tests/test_tutorial.gd      # はじめての夜の説明が 押す→寄せる→離す で進んで終わる
 godot --headless --path . -s tests/test_double_sleep.gd  # 「眠って朝へ」二度押しで2日進まない
 godot --headless --path . --fixed-fps 60 -s tests/test_practice.gd   # 練習ではポイも玉も記録も変わらない
+godot --headless --path . -s tests/test_week_rollover.gd # 週が変わっても、できていたおねがいのごほうびが消えない
 godot --headless --path . -s tests/sim_week.gd           # 4週間の簡易比較
 
 ./tools/make_promo.sh    # 広告動画を録り直す（Movie Maker → ffmpeg）
@@ -124,5 +125,5 @@ godot --headless --path . -s tests/sim_week.gd           # 4週間の簡易比�
 2. 玉の性格（`scripts/orb3d.gd`：群れ／人見知り／跳ねる／重い／虹の予告）と、はじめて見た時の一行ヒント
 3. 「今夜のおだい」「今週のおねがい」「池の様子」「明日の予報」（`GameState.night_goal / week_quests / night_mods`）
 4. 図鑑の「受け取る」と称号、休憩室のおばけタップと相棒のひとこと、工房のかざり、練習モード
-5. セーブ（一時ファイル→入れ替え＋.bak、JSON の整数戻し）と `OBAKE_AUTOPLAY` の自動バランス確認・テスト5本
+5. セーブ（一時ファイル→入れ替え＋.bak、JSON の整数戻し）と `OBAKE_AUTOPLAY` の自動バランス確認・テスト6本
 6. 広告動画は `scripts/demo.gd` で字幕をゲーム内に描く方式（この環境の ffmpeg に drawtext が無いため）
