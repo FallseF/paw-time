@@ -12,6 +12,70 @@ func run(m) -> void:
 	if days > 0:
 		await autoplay(days)
 		get_tree().quit()
+	elif OS.get_environment("OBAKE_DEMO") != "":
+		await promo()
+		get_tree().quit()
+
+
+func _wait(t: float) -> void:
+	await get_tree().create_timer(t, true, false, true).timeout
+
+
+## 広告動画用：いちばんいい場面を自動で見せる（約 42 秒）
+func promo() -> void:
+	seed(20260926)
+	GameState.reset()
+	GameState.fast_forward(10, [7, 8, 7])
+	# 1) 満月の夜、仕事のポイで、すくう（0〜12秒）
+	GameState.day = 17 # 木曜・満月
+	GameState.worked_today = false
+	GameState.finish_shift()
+	GameState.pois["kira"] = max(GameState.pois.kira, 1)
+	if not GameState.seen.has("tsukimi"):
+		GameState.rare_pending.push_front("tsukimi")
+	await main.go("catch", true)
+	var scoop = main.current
+	scoop.start_auto(0.95)
+	await _wait(1.2)
+	scoop.demo_rainbow()
+	await _wait(10.8)
+	# 2) 寝る → 朝、玉がかえる（12〜24秒）
+	scoop.ended = true
+	GameState.record_scoop_night({"count": scoop.count, "best_combo": scoop.best_combo, "clean": scoop.clean_count, "rainbow": scoop.rainbow_count})
+	await main.go("sleep")
+	await _wait(1.6)
+	main.current._sleep()
+	await _wait(2.6)
+	var hatch = main.current
+	for i in 3:
+		if hatch.has_method("_next"):
+			hatch._next()
+		await _wait(2.7)
+	# 3) 休憩室がにぎやかに（24〜29秒）
+	await main.go("room")
+	await _wait(1.2)
+	main.current._close_report()
+	await _wait(3.6)
+	# 4) 図鑑はトロフィー部屋（29〜34秒）
+	await main.go("zukan")
+	var z = main.current
+	await _wait(0.8)
+	var sc: ScrollContainer = z.get_child(2) if z.get_child(2) is ScrollContainer else null
+	for c in z.get_children():
+		if c is ScrollContainer:
+			sc = c
+	if sc:
+		var tw := create_tween()
+		tw.tween_property(sc, "scroll_vertical", 900, 4.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await _wait(4.4)
+	# 5) 土曜は大すくい祭り（34〜42秒）
+	GameState.day = 19
+	GameState.phase = "room"
+	GameState.orbs = []
+	GameState.pois["paper"] = 6
+	await main.go("catch")
+	main.current.start_auto(0.95)
+	await _wait(8.0)
 
 
 func autoplay(days: int) -> void:

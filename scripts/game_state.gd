@@ -671,7 +671,7 @@ func sleep(hours: int) -> void:
 	for i in min(RARES_PER_NIGHT, rare_pending.size()):
 		var rid: String = rare_pending.pop_front()
 		add_obake(rid)
-		hatched.push_front({"id": rid, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rare"})
+		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rare"})
 	# 3) 次の日へ
 	var n_orbs := orbs.size()
 	orbs = []

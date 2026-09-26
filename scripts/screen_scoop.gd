@@ -101,7 +101,6 @@ var banner: Label
 var tray: HBoxContainer
 var flash: ColorRect
 var cond_pill: PanelContainer
-var fest_label: Label
 var tut_ring: Panel
 var drops: CPUParticles3D
 var stars: CPUParticles3D
@@ -137,7 +136,7 @@ func _ready() -> void:
 	if tut_step == 0:
 		_tut_show()
 	if gift > 0:
-		_float_text("祭りのふるまい：紙のポイ ×%d" % gift, Vector2(180, 150), Color("ffb35c"))
+		_float_text("祭りのふるまい：紙のポイ ×%d" % gift, Vector2(180, 300), Color("ffb35c"))
 
 
 # ---------- 世界 ----------
@@ -675,13 +674,6 @@ func _build_ui() -> void:
 		cv.add_child(l)
 	add_child(cond_pill)
 
-	if mods.festival:
-		fest_label = _text("", 15, Color("ffb35c"), font_black)
-		fest_label.add_theme_color_override("font_outline_color", Color("0b1026"))
-		fest_label.add_theme_constant_override("outline_size", 6)
-		fest_label.position = Vector2(0, 118)
-		fest_label.size = Vector2(360, 22)
-		add_child(fest_label)
 
 	float_layer = Control.new()
 	float_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -809,8 +801,6 @@ func _refresh_ui() -> void:
 	count_label.text = "すくった %d" % count
 	if goal_label:
 		_update_goal()
-	if mods.festival:
-		fest_label.text = "大すくい祭り  %d / 12%s" % [count, "  達成！" if count >= 12 else ""]
 	combo_label.text = ("%d" % combo) if combo >= 2 else ""
 	combo_sub.text = "コンボ" if combo >= 2 else ("最高 %d" % best_combo if best_combo >= 2 else "")
 	# ポイの丈夫さ

@@ -23,6 +23,7 @@ var burst: CPUParticles3D
 var rays: MeshInstance3D
 var sfx := {}
 var busy := false
+var skip_btn: Button
 
 
 func _ready() -> void:
@@ -47,12 +48,29 @@ func _ready() -> void:
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
 		o.light.light_energy = 0.5
-		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
+		var per_row := 6
+		var row := i / per_row
+		var in_row := mini(per_row, n_orbs - row * per_row)
+		o.position = Vector3((i % per_row - (in_row - 1) / 2.0) * 0.34, 0.36 + row * 0.26, 0.2 - row * 0.3)
+		o.halo.visible = false
 		world.add_child(o)
 		orbs.append(o)
 	var rares := GameState.hatched.filter(func(h): return h.get("rare", false)).size()
 	header.text = "朝だ。玉が %d 個%s" % [n_orbs, "（虹色がまじってる）" if rares > 0 else ""]
 	next_btn.text = "玉をひらく"
+	if n_orbs >= 3:
+		skip_btn = Button.new()
+		skip_btn.text = "まとめて"
+		skip_btn.position = Vector2(290, 582)
+		skip_btn.size = Vector2(62, 38)
+		skip_btn.add_theme_font_override("font", font_bold)
+		skip_btn.add_theme_font_size_override("font_size", 12)
+		for k in ["normal", "hover", "pressed"]:
+			skip_btn.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.85), 19))
+		skip_btn.add_theme_color_override("font_color", Color("5b4a3a"))
+		skip_btn.add_theme_color_override("font_hover_color", Color("5b4a3a"))
+		skip_btn.pressed.connect(_open_all)
+		add_child(skip_btn)
 
 
 func _build_world() -> void:
@@ -76,8 +94,9 @@ func _build_world() -> void:
 	env.ambient_light_energy = 0.25
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	env.glow_enabled = true
-	env.glow_intensity = 0.5
-	env.glow_hdr_threshold = 1.2
+	env.glow_intensity = 0.35
+	env.glow_bloom = 0.0
+	env.glow_hdr_threshold = 1.6
 	var we := WorldEnvironment.new()
 	we.environment = env
 	world.add_child(we)
@@ -85,7 +104,7 @@ func _build_world() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-30, 40, 0)
 	sun.light_color = Color("ffc98f")
-	sun.light_energy = 0.6
+	sun.light_energy = 0.45
 	sun.shadow_enabled = true
 	world.add_child(sun)
 
@@ -107,7 +126,7 @@ func _build_world() -> void:
 	wm.size = Vector3(10, 5, 0.1)
 	wall.mesh = wm
 	wall.position = Vector3(0, 2.5, -1.4)
-	wall.material_override = Obake3D.toon(Color("e8d3bd"), 0.05)
+	wall.material_override = Obake3D.toon(Color("c9a78a"), 0.05)
 	world.add_child(wall)
 	# 朝日の窓
 	var win := MeshInstance3D.new()
@@ -144,6 +163,7 @@ func _build_world() -> void:
 	rmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	rmat.albedo_color = Color(1.0, 0.8, 0.55, 0.06)
 	rays.material_override = rmat
+	rays.visible = false
 	world.add_child(rays)
 	# 座布団
 	var cushion := MeshInstance3D.new()
@@ -249,6 +269,8 @@ func _build_ui() -> void:
 	next_btn.add_theme_font_size_override("font_size", 18)
 	for k in ["normal", "hover", "pressed"]:
 		next_btn.add_theme_stylebox_override(k, _pill(Color("ff8a5b"), 25))
+	next_btn.add_theme_stylebox_override("disabled", _pill(Color(1.0, 0.54, 0.36, 0.45), 25))
+	next_btn.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.8))
 	next_btn.add_theme_color_override("font_color", Color.WHITE)
 	next_btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	next_btn.pressed.connect(_next)
@@ -346,8 +368,79 @@ func _next() -> void:
 		bump.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	index += 1
 	next_btn.text = "つぎの玉" if index < orbs.size() else "今日をはじめる"
+	if skip_btn:
+		skip_btn.visible = orbs.size() - index >= 2
 	next_btn.disabled = false
 	busy = false
+
+
+## 残りをまとめてひらいて、一覧で見せる
+func _open_all() -> void:
+	if busy:
+		return
+	busy = true
+	next_btn.visible = false
+	skip_btn.visible = false
+	card.modulate.a = 0.0
+	if current_obake:
+		current_obake.queue_free()
+	_flash(0.9)
+	sfx["hatch"].play()
+	burst.position = Vector3(0, 0.5, 0.3)
+	burst.restart()
+	burst.emitting = true
+	for o in orbs:
+		if is_instance_valid(o):
+			o.queue_free()
+	var dim := ColorRect.new()
+	dim.color = Color(0.1, 0.07, 0.12, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color(1, 0.98, 0.95, 0.97), 24))
+	p.position = Vector2(20, 90)
+	p.size = Vector2(320, 0)
+	add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	p.add_child(v)
+	v.add_child(_text("けさ かえったおばけ", 20, Color("2a2233"), font_black))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 4)
+	v.add_child(grid)
+	var lvups := 0
+	for i in range(index, GameState.hatched.size()):
+		var h: Dictionary = GameState.hatched[i]
+		var sp: Dictionary = GameState.info(h.id)
+		var tag := ""
+		if h.is_new:
+			tag = " NEW"
+		elif h.get("leveled", false):
+			tag = " Lv%d↑" % h.level
+			lvups += 1
+		if h.get("rare", false):
+			tag = " レア!"
+		var l := _text("● " + sp.name + tag, 14, Color("e85a4f") if h.is_new else Color("2a2233"))
+		l.autowrap_mode = TextServer.AUTOWRAP_OFF
+		l.custom_minimum_size = Vector2(145, 0)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		grid.add_child(l)
+	if lvups > 0:
+		sfx["levelup"].play()
+	var b := Button.new()
+	b.text = "今日をはじめる"
+	b.custom_minimum_size = Vector2(0, 48)
+	b.add_theme_font_override("font", font_black)
+	b.add_theme_font_size_override("font_size", 18)
+	for k in ["normal", "hover", "pressed"]:
+		b.add_theme_stylebox_override(k, _pill(Color("ff8a5b"), 24))
+	b.add_theme_color_override("font_color", Color.WHITE)
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
+	b.pressed.connect(func(): main.go("room"))
+	v.add_child(b)
+	index = orbs.size()
 
 
 func _type_label(t: String) -> String:
