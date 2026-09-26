@@ -83,7 +83,9 @@ func _ready() -> void:
 	sim = DefSim.new()
 	var deck: Array = GameState.deck_for_battle()
 	sim.setup(si, st, deck, boost, GameState.lap)
-	cam_x = DefData.LANE - 3.0
+	# はじめに渦を見せてから、店の前へ流す
+	cam_x = 3.0
+	cam_hold = 1.0
 	_build_world()
 	_build_ui()
 	Kit.music("c_battle_loop")
