@@ -66,7 +66,7 @@ func _build_world() -> void:
 	cam = Camera3D.new()
 	cam.position = Vector3(0, 4.4, 7.4)
 	cam.fov = 38
-	cam.v_offset = -0.55
+	cam.v_offset = -0.42
 	world.add_child(cam)
 	cam.look_at(Vector3(0, 0.3, -0.6))
 
@@ -118,6 +118,7 @@ func _build_world() -> void:
 	world.add_child(cup)
 	_box(Vector3(0.8, 0.1, 0.8), Vector3(1.9, 0.05, -0.9), Color("c9454a"))
 
+	_build_decor()
 	# おばけたち
 	var ids: Array = GameState.owned.keys()
 	ids.sort_custom(func(a, b): return GameState.level_of(a) > GameState.level_of(b))
@@ -125,10 +126,101 @@ func _build_world() -> void:
 		var id: String = ids[i]
 		var ob := Obake3D.make(id)
 		ob.set_level(GameState.level_of(id))
-		ob.scale = Vector3.ONE * 0.62
-		ob.position = Vector3(randf_range(-1.7, 1.7), 0, randf_range(-1.3, 1.3))
+		ob.scale = Vector3.ONE * (0.45 if Rares.is_rare(id) else 0.62)
+		ob.position = Vector3(randf_range(-1.8, 1.8), 0, randf_range(-1.6, 0.7))
 		world.add_child(ob)
 		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0)})
+
+
+## 工房で作ったかざり
+func _build_decor() -> void:
+	var d: Dictionary = GameState.decor
+	if d.has("chochin"):
+		for x in [-1.0, 1.2]:
+			var l := MeshInstance3D.new()
+			var sm := SphereMesh.new()
+			sm.radius = 0.22
+			sm.height = 0.5
+			l.mesh = sm
+			l.position = Vector3(x, 1.5, -2.1)
+			l.material_override = Obake3D.toon(Color("e8483f"), 0.2, 0.8)
+			world.add_child(l)
+			_box(Vector3(0.02, 1.4, 0.02), Vector3(x, 2.4, -2.1), Color("3a2a2a"))
+			var ol := OmniLight3D.new()
+			ol.light_color = Color("ff9a6b")
+			ol.light_energy = 0.8
+			ol.omni_range = 2.5
+			ol.position = Vector3(x, 1.7, -1.8)
+			world.add_child(ol)
+	if d.has("plant"):
+		var pot := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = 0.22
+		cm.bottom_radius = 0.16
+		cm.height = 0.35
+		pot.mesh = cm
+		pot.position = Vector3(-2.6, 0.18, -1.9)
+		pot.material_override = Obake3D.toon(Color("c7744a"), 0.1)
+		world.add_child(pot)
+		for i in 5:
+			var leaf := MeshInstance3D.new()
+			var lm := SphereMesh.new()
+			lm.radius = 0.2
+			lm.height = 0.4
+			leaf.mesh = lm
+			leaf.position = Vector3(-2.6 + cos(i * 1.3) * 0.15, 0.55 + i * 0.12, -1.9 + sin(i * 1.3) * 0.15)
+			leaf.material_override = Obake3D.toon(Color("5f9e5a"), 0.2)
+			world.add_child(leaf)
+	if d.has("bowl"):
+		var bowl := MeshInstance3D.new()
+		var bm := SphereMesh.new()
+		bm.radius = 0.25
+		bm.height = 0.45
+		bowl.mesh = bm
+		_box(Vector3(0.7, 0.06, 0.35), Vector3(1.9, 1.05, -2.3), Color("8a5a3a"))
+		bowl.position = Vector3(1.9, 1.3, -2.3)
+		var gm := StandardMaterial3D.new()
+		gm.albedo_color = Color(0.7, 0.9, 1.0, 0.35)
+		gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		bowl.material_override = gm
+		world.add_child(bowl)
+		var orb := MeshInstance3D.new()
+		var om := SphereMesh.new()
+		om.radius = 0.07
+		om.height = 0.14
+		orb.mesh = om
+		orb.position = bowl.position
+		var em := StandardMaterial3D.new()
+		em.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		em.albedo_color = Color("fff2a8")
+		orb.material_override = em
+		world.add_child(orb)
+	if d.has("poster"):
+		_box(Vector3(0.6, 0.7, 0.03), Vector3(0.1, 1.45, -2.47), Color("2b3478"))
+		_box(Vector3(0.3, 0.3, 0.01), Vector3(0.1, 1.55, -2.45), Color("fff1c8"))
+		_box(Vector3(0.44, 0.06, 0.01), Vector3(0.1, 1.24, -2.45), Color("ffc23d"))
+	if d.has("kotatsu"):
+		_box(Vector3(1.2, 0.08, 1.2), Vector3(0.9, 0.42, -1.2), Color("8a5a3a"))
+		_box(Vector3(1.4, 0.36, 1.4), Vector3(0.9, 0.2, -1.2), Color("d9554f"))
+		var mikan := MeshInstance3D.new()
+		var mm := SphereMesh.new()
+		mm.radius = 0.08
+		mm.height = 0.14
+		mikan.mesh = mm
+		mikan.position = Vector3(0.8, 0.52, -1.1)
+		mikan.material_override = Obake3D.toon(Color("ff9a2a"), 0.2)
+		world.add_child(mikan)
+	if d.has("dango"):
+		_box(Vector3(0.4, 0.1, 0.4), Vector3(-2.0, 0.5, -1.4), Color("c9a06b"))
+		for i in 3:
+			var dg := MeshInstance3D.new()
+			var dm := SphereMesh.new()
+			dm.radius = 0.09
+			dm.height = 0.18
+			dg.mesh = dm
+			dg.position = Vector3(-2.08 + i * 0.08, 0.63 + (0.12 if i == 1 else 0.0), -1.4)
+			dg.material_override = Obake3D.toon(Color("fbf6ea"), 0.3)
+			world.add_child(dg)
 
 
 func _box(size: Vector3, pos: Vector3, c: Color) -> void:
@@ -150,7 +242,7 @@ func _process(delta: float) -> void:
 		var to: Vector3 = w.target
 		var d := to - ob.position
 		if d.length() < 0.05:
-			w.target = Vector3(randf_range(-1.7, 1.7), 0, randf_range(-1.3, 1.3))
+			w.target = Vector3(randf_range(-1.8, 1.8), 0, randf_range(-1.6, 0.7))
 			w.wait = randf_range(1.0, 4.0)
 			continue
 		ob.position += d.normalized() * min(d.length(), 0.5 * delta)

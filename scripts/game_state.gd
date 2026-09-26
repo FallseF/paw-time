@@ -55,6 +55,17 @@ const CRAFTS := {
 	"double": {"stock": 2, "hall": 1},
 	"akari": {"kitchen": 2, "rainbow": 1},
 }
+## 休憩室のかざり（かけらの使い道。見た目だけ）
+const DECOR := {
+	"chochin": {"name": "赤ちょうちん", "cost": {"register": 3, "kitchen": 3}},
+	"plant": {"name": "観葉植物", "cost": {"dish": 3, "stock": 3}},
+	"bowl": {"name": "玉の金魚鉢", "cost": {"dish": 4, "hall": 2}},
+	"poster": {"name": "すくい名人のポスター", "cost": {"hall": 3, "register": 3}},
+	"kotatsu": {"name": "こたつ", "cost": {"stock": 5, "kitchen": 3}},
+	"dango": {"name": "月見だんご", "cost": {"register": 4, "rainbow": 1}},
+}
+const DECOR_ORDER := ["chochin", "plant", "bowl", "poster", "kotatsu", "dango"]
+
 ## 相棒：池のほとりで手伝う。レベルが上がるほど効く
 const PARTNER_SKILL := {
 	"receipt": "コンボが途切れにくい",
@@ -102,6 +113,7 @@ var seen := {}
 var shards := {}
 var upgrades := {"fuchi": 0, "wa": 0, "kami": 0}
 var partner := "receipt"
+var decor := {}
 var orbs: Array = [] # 今夜すくった玉 {type, kind, quality}
 var hatched: Array = [] # 今朝かえったおばけ
 var morning_report: Array = []
@@ -177,6 +189,7 @@ func reset() -> void:
 	shards = {"register": 0, "dish": 0, "hall": 0, "kitchen": 0, "stock": 0, "rainbow": 0}
 	upgrades = {"fuchi": 0, "wa": 0, "kami": 0}
 	partner = "receipt"
+	decor = {}
 	orbs = []
 	hatched = []
 	morning_report = ["休憩室の隅に、レシートンが1体ついてきた", "紙のポイを3本もらった。今夜、川べりでおばけの玉をすくおう"]
@@ -370,6 +383,15 @@ func upgrade(key: String) -> bool:
 	if lv >= 3 or not pay(UPGRADES[key].cost[lv]):
 		return false
 	upgrades[key] = lv + 1
+	changed.emit()
+	save_game()
+	return true
+
+
+func buy_decor(key: String) -> bool:
+	if decor.has(key) or not pay(DECOR[key].cost):
+		return false
+	decor[key] = true
 	changed.emit()
 	save_game()
 	return true
@@ -825,7 +847,7 @@ func reward_text(rw: Dictionary) -> String:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist"]
+const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist", "decor"]
 
 
 func save_game() -> void:
@@ -971,3 +993,7 @@ func fast_forward(days: int, sleep_pattern := [7, 8, 6, 7, 9, 7, 5]) -> void:
 		# 余ったかけらで、工房の改良を進める
 		for u in ["fuchi", "wa", "kami"]:
 			upgrade(u)
+		if i % 3 == 2:
+			for key in DECOR_ORDER:
+				if buy_decor(key):
+					break

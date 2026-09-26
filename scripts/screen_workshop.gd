@@ -80,6 +80,13 @@ func _build() -> void:
 	col.add_child(_section("特別なポイ（1本ずつ使い切り）"))
 	for pid in ["lure", "double", "akari"]:
 		col.add_child(_margin(_craft_card(pid)))
+	# かざり
+	col.add_child(_section("休憩室のかざり（見た目だけ）"))
+	var dg := VBoxContainer.new()
+	dg.add_theme_constant_override("separation", 6)
+	for key in GameState.DECOR_ORDER:
+		dg.add_child(_decor_row(key))
+	col.add_child(_margin(dg))
 	# 相棒
 	col.add_child(_section("相棒（池のほとりで手伝う）"))
 	col.add_child(_margin(_partner_card()))
@@ -266,6 +273,38 @@ func _craft_card(pid: String) -> Control:
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(b)
 	return p
+
+
+func _decor_row(key: String) -> Control:
+	var d: Dictionary = GameState.DECOR[key]
+	var have: bool = GameState.decor.has(key)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color.WHITE if not have else Color("fff6e0"), 16))
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	p.add_child(h)
+	var v := VBoxContainer.new()
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.add_child(_text(d.name, 14, Color("2a2233"), font_black))
+	if have:
+		v.add_child(_text("休憩室にかざってある", 12, Color("b07a3a")))
+	else:
+		v.add_child(_cost_row(d.cost))
+	h.add_child(v)
+	if not have:
+		var b := _button("かざる", Color("5fb07a"), _do_decor.bind(key))
+		b.custom_minimum_size = Vector2(76, 40)
+		b.disabled = not GameState.can_pay(d.cost)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(b)
+	return p
+
+
+func _do_decor(key: String) -> void:
+	if GameState.buy_decor(key):
+		_play("craft")
+		_toast("%sを休憩室にかざった" % GameState.DECOR[key].name)
+		_build()
 
 
 func _partner_card() -> Control:
