@@ -74,7 +74,7 @@ func _debug_setup() -> void:
 		GameState.coins = 3000
 		for id in ["iraira", "gyouretsu", "chuumon", "araimono", "denwa"]:
 			GameState.enemies_seen[id] = true
-		for si in 2:
+		for si in (3 if OS.get_environment("OBAKE_BOSS") != "" else 2):
 			for st in DefData.shop(si).stages.size():
 				GameState.cleared[DefData.stage_key(si, st)] = 1
 

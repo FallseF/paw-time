@@ -1513,7 +1513,7 @@ func _result(r: Dictionary) -> void:
 	ps.content_margin_left = 18
 	ps.content_margin_right = 18
 	p.add_theme_stylebox_override("panel", ps)
-	p.position = Vector2(24, 150)
+	p.position = Vector2(24, 120)
 	p.size = Vector2(312, 0)
 	overlay.add_child(p)
 	var v := VBoxContainer.new()
@@ -1561,8 +1561,9 @@ func _result(r: Dictionary) -> void:
 			notes.append(["くり返しのまかないは半分（その日4勝目からは4分の1）", Kit.SUB])
 	else:
 		notes.append(["困りごとには、効く仕事がある", Kit.INK])
-		for line in _stage_tips():
-			notes.append([line, Kit.SUB])
+		var tips := _stage_tips()
+		for k in mini(3, tips.size()):
+			notes.append([tips[k], Kit.SUB])
 		notes.append(["強化すると、おばけが強くなる", Kit.INK])
 	for n in notes:
 		var l := Kit.text(n[0], 13, n[1], true)
