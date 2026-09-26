@@ -8,7 +8,7 @@ var cam: Camera3D
 var world: Node3D
 var orbs: Array = []
 var index := 0
-var current_obake: Obake3D
+var current_obake: Node3D
 var font_bold: FontFile
 var font_black: FontFile
 var card: PanelContainer
@@ -39,15 +39,17 @@ func _ready() -> void:
 		add_child(p)
 		sfx[n] = p
 	# 新顔とレアを先に、いつもの子はあとでまとめて
-	var featured: Array = GameState.hatched.filter(func(x): return x.is_new or x.get("rare", false))
-	var dupes: Array = GameState.hatched.filter(func(x): return not (x.is_new or x.get("rare", false)))
+	var featured: Array = GameState.hatched.filter(func(x): return x.is_new or x.get("rare", false) or x.has("kind"))
+	var dupes: Array = GameState.hatched.filter(func(x): return not (x.is_new or x.get("rare", false) or x.has("kind")))
 	GameState.hatched = featured + dupes
 	batch_from = featured.size() if dupes.size() >= 2 else GameState.hatched.size()
 	var n_orbs: int = GameState.hatched.size()
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
 		var t: String = GameState.info(h.id).type
-		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": Rares.is_rare(h.id) or h.get("big", false), "weight": 0.3})
+		if h.has("kind"):
+			t = "any"
+		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": Rares.is_rare(h.id) or h.get("big", false), "weight": 0.3, "content": h.get("content", {})})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
 		# 生まれたおばけが主役なので、棚の玉は控えめに光らせる（照らす光は特に弱く）
@@ -264,7 +266,7 @@ func _next() -> void:
 	if index >= orbs.size():
 		GameState.newcomers = []
 		for hh in GameState.hatched:
-			if hh.is_new and not GameState.newcomers.has(hh.id):
+			if hh.is_new and not hh.has("kind") and not GameState.newcomers.has(hh.id):
 				GameState.newcomers.append(hh.id)
 		GameState.hatched = []
 		GameState.save()
@@ -308,6 +310,9 @@ func _next() -> void:
 	burst.restart()
 	burst.emitting = true
 	orb.queue_free()
+	if h.has("kind"):
+		await _reveal_item(h)
+		return
 	current_obake = Obake3D.make(h.id)
 	current_obake.position = Vector3(0, 0.55, 0.3)
 	current_obake.scale = Vector3.ONE * 0.05
@@ -404,3 +409,29 @@ func _flash(a: float) -> void:
 
 func demo_open() -> void:
 	_next()
+
+
+## 玉から出たのが、島の材料や服だったとき
+func _reveal_item(h: Dictionary) -> void:
+	var c: Dictionary = h.content
+	current_obake = Drops.make_icon(c)
+	current_obake.position = Vector3(0, 0.75, 0.3)
+	current_obake.scale = Vector3.ONE * 0.05
+	world.add_child(current_obake)
+	var tw3 := create_tween().set_parallel()
+	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.55, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw3.tween_property(current_obake, "rotation:y", TAU, 1.2).set_trans(Tween.TRANS_SINE)
+	await tw3.finished
+	sfx["chime"].play()
+	card_title.text = tr(Drops.info(c).get("name", ""))
+	badge.get_parent().visible = h.is_new
+	card_sub.text = tr("島の材料") if c.kind == "material" else tr("服")
+	card_desc.text = tr("島をつくるときに使える") if c.kind == "material" else tr("おばけに着せられる")
+	card.position.y = 400
+	var tw4 := create_tween().set_parallel()
+	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
+	tw4.tween_property(card, "position:y", 372.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	index += 1
+	next_btn.text = "つぎの玉" if index < orbs.size() else "庭へ"
+	next_btn.disabled = false
+	busy = false

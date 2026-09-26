@@ -25,6 +25,14 @@ func setup(d: Dictionary) -> Orb3D:
 	add_child(model)
 	light = model.light
 	halo_mat = StandardMaterial3D.new()
+	# 中身のヒント：材料・服なら、眠る子猫の影の代わりに小さな影
+	var c: Dictionary = d.get("content", {})
+	if c.get("kind", "obake") != "obake" and model.sleeper:
+		model.sleeper.visible = false
+		var ic := Drops.make_icon(c, true)
+		ic.scale = Vector3.ONE * 0.2
+		ic.position = model.sleeper.position
+		model.add_child(ic)
 	_t = randf() * TAU
 	vel = Vector3(randf_range(-0.3, 0.3), 0, randf_range(-0.3, 0.3))
 	return self

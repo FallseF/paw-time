@@ -130,6 +130,8 @@ func _seed_for(start: String) -> void:
 		fast_forward(ff)
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
+		if OS.get_environment("OBAKE_ITEMS") != "":
+			GameState.orbs = [{"type": "hall", "rare": false, "content": {"kind": "material", "id": "shell"}}, {"type": "kitchen", "rare": false, "content": {"kind": "cloth", "id": "scarf"}}]
 		GameState.sleep(330, 420)
 		var force := OS.get_environment("OBAKE_RARE")
 		if force != "":

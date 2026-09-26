@@ -132,6 +132,7 @@ var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
 var stall_claimed := false
 var force_dream := false # 宣伝動画用
+var stash := {} # 玉から出た材料と服 "kind:id" → 数（Drops.grant が数える）
 
 # ---------- 島（自分たちの島をつくって、シェアする） ----------
 var layout := {} # 島の物の置き場所 key → {x, z, r(45°単位), h(しまった)}
@@ -210,6 +211,7 @@ func reset(new_mode := "data") -> void:
 	week_start_growth = 0
 	pending_toasts = []
 	layout = {}
+	stash = {}
 	host_id = ""
 	keepsakes = []
 	visit = {}
@@ -630,7 +632,8 @@ func tonight_orbs() -> Array:
 			wgt *= 1.3 # 箱の玉は重い
 		elif t == "dish" and not rare:
 			wgt *= 0.8 # 泡の玉は軽い
-		out.append({"type": "rare" if rare else t, "rare": rare, "weight": wgt})
+		var tt: String = "rare" if rare else t
+		out.append({"type": tt, "rare": rare, "weight": wgt, "content": Drops.roll(tt, rare)})
 	return out
 
 
@@ -801,6 +804,12 @@ func sleep(bed: int, wake: int) -> void:
 
 func _hatch_orbs(h: float) -> void:
 	for orb in orbs:
+		# 中身が材料・服なら、おばけではなくそれが出る
+		var c: Dictionary = orb.get("content", {})
+		if c.get("kind", "obake") != "obake":
+			var nw := Drops.grant(c)
+			hatched.append({"id": c.id, "kind": c.kind, "content": c, "is_new": nw, "level": 1, "rare": false})
+			continue
 		var sid: String = species_for_type(orb.type) if orb.type != "rare" else ["receipt", "bubble", "tray", "pan", "box"].pick_random()
 		var is_new := add_obake(sid)
 		var lv := 1
@@ -932,7 +941,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash"]
 
 
 func save() -> void:

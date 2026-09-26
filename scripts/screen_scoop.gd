@@ -406,6 +406,21 @@ const ORB_TAG := {"register": "ピッと動いて、止まる", "dish": "ふわ�
 
 ## その色の玉にはじめて会ったときだけ、玉の上に性格をひとこと
 func _orb_tag(o: Orb3D) -> void:
+	var ck: String = o.data.get("content", {}).get("kind", "obake")
+	if ck != "obake" and not GameState.tut.has("hint_" + ck):
+		GameState.tut["hint_" + ck] = true
+		tag_n += 1
+		var hl := Kit.label3d(tr("中に、島の材料") if ck == "material" else tr("中に、服"), 30, Color("fff2a8"))
+		hl.pixel_size = 0.0035
+		hl.position = Vector3(0, 0.5, 0)
+		hl.visible = false
+		o.add_child(hl)
+		var tw0 := create_tween()
+		tw0.tween_interval(0.8 + tag_n * 2.4)
+		tw0.tween_callback(func(): if is_instance_valid(hl): hl.visible = true)
+		tw0.tween_interval(2.3)
+		tw0.tween_callback(func(): if is_instance_valid(hl): hl.queue_free())
+		return
 	var t: String = o.data.type
 	if not ORB_TAG.has(t) or GameState.tut.has("orb_" + t) or GameState.day < 1:
 		return
@@ -788,7 +803,7 @@ func _lift() -> void:
 	stars.restart()
 	stars.emitting = true
 	Engine.time_scale = 1.0
-	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
+	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare, "content": target.data.get("content", {})})
 	GameState.total_scooped += 1
 	GameState.tonight_caught += 1
 	if GameState.tonight_caught >= 3:

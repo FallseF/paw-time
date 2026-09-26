@@ -148,3 +148,9 @@ godot --headless --path . -s tests/sim_b.gd
 - こちらの変更を上にのせ直し：Obake3D.make_custom、Orb3D の hop（はねる玉）、図鑑の棚は Look "studio" とカードのミップマップ
 - Look のプリセットを追加（island / dream / moon / title）し、島・夢・満月・タイトルの光を Look.apply に。孵化は aaa 側の "hatch"、図鑑は "studio"。島の昼夜の切りかえは Look のキーと環境光を動かす
 - 庭の住人（setup を通さない入れ物）で接地影の処理が落ちていたので、body が無いときは飛ばす
+
+## 19. 玉の中身：おばけ／島の材料／服（持ち主の報酬設計）
+- 仕事はポイ（網）をくれる（これまでどおり）。夜の玉の中身は、川に浮かんだ時点で Drops.roll() が決める：おばけ（約66%）・島の材料（22%）・服（12%）。虹の玉・夢の泡・夜の玉はおばけ
+- ヒント：材料・服の玉は、眠る子猫の影の代わりに光る小さな影（流木・小石・貝・シーグラス・苔／リボンの輪）が中に見える。その種類にはじめて会った夜だけ「中に、島の材料」「中に、服」と玉の上に出る
+- 朝の孵化で明かす：材料・服は回りながら出てきて、カードに名前・「島の材料」「服」。GameState.stash に "kind:id" → 数で数える（セーブに入る）
+- scripts/drops.gd が仮の受け口。wardrobe / island-kit を取り込んだら、_roll_cloth → Wardrobe.random_drop()、_roll_material → IslandKit.random_drop()、grant の中身を Wardrobe.grant(id) / IslandKit.grant_material(id) に差しかえるだけ
