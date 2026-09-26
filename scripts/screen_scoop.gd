@@ -26,6 +26,7 @@ var durability := 1.0
 var dura_by := {} # ポイの種類ごとの残り（切りかえても回復しない）
 var extra := false
 var perfect_streak := 0
+var tag_n := -1
 # 寝息のリズム：ポイを水に入れたまま、じっとしていると「ゆめの泡」が浮いてくる
 const STILL_NEED := 1.8
 var still_t := 0.0
@@ -397,6 +398,30 @@ func _spawn_orb(d: Dictionary) -> void:
 	o.position = Vector3(cos(a) * WATER_RX * 0.5 * randf(), 0.0, sin(a) * WATER_RZ * 0.5 * randf())
 	world.add_child(o)
 	orbs.append(o)
+	_orb_tag(o)
+
+
+const ORB_TAG := {"register": "ピッと動いて、止まる", "dish": "ふわふわ。逃げない", "hall": "まっすぐ滑って逃げる", "kitchen": "はねる", "stock": "重い。動かない", "rare": "輪をかいて泳ぐ"}
+
+
+## その色の玉にはじめて会ったときだけ、玉の上に性格をひとこと
+func _orb_tag(o: Orb3D) -> void:
+	var t: String = o.data.type
+	if not ORB_TAG.has(t) or GameState.tut.has("orb_" + t):
+		return
+	GameState.tut["orb_" + t] = true
+	tag_n += 1
+	var l := Kit.label3d(ORB_TAG[t], 30, GameState.TYPE_COLOR.get(t, Color.WHITE).lightened(0.3))
+	l.pixel_size = 0.0035
+	l.position = Vector3(0, 0.5, 0)
+	l.visible = false
+	o.add_child(l)
+	# ひとつずつ順番に出す（重ならないように）
+	var tw := create_tween()
+	tw.tween_interval(0.8 + tag_n * 2.4)
+	tw.tween_callback(func(): if is_instance_valid(l): l.visible = true)
+	tw.tween_interval(2.3)
+	tw.tween_callback(func(): if is_instance_valid(l): l.queue_free())
 
 
 # ---------- UI ----------
