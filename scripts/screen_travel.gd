@@ -227,7 +227,8 @@ func _arrive() -> void:
 
 func _finish() -> void:
 	if main and not main.busy:
-		main.go("garden")
+		# お店の島（GameState.visit.shop）なら、お店の島の画面へ
+		main.go("shop_island" if GameState.visit.has("shop") else "garden")
 
 
 ## 確認用：途中の場面で止める（撮影）

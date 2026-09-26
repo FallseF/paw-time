@@ -221,6 +221,7 @@ func _ready() -> void:
 		Kit.nudge.call_deferred(go)
 	_label_go()
 	_set_time(bed, wake)
+	Reminders.attach_sleep(self) # あしたシフトがあれば、相棒の「早めに寝よう！」
 
 
 func _row(label: String, y: int, cb: Callable) -> Label:

@@ -333,18 +333,44 @@ func _daily() -> void:
 	if not just.is_empty():
 		_open_review(just)
 		return
+	# 前の晩・当日の朝のひとこと（Reminders）がいちばん上
+	var slot := _reminder_note(0)
 	var rev := Reviews.pending()
 	if not rev.is_empty():
 		var s: Dictionary = rev[0]
-		_notify(0, tr("NOTE_REVIEW") % String(s.get("store", s.get("place", ""))), tr("NOTE_REVIEW_SUB"), Color("ffd23f"), func(): _open_review(s))
+		_notify(slot, tr("NOTE_REVIEW") % String(s.get("store", s.get("place", ""))), tr("NOTE_REVIEW_SUB"), Color("ffd23f"), func(): _open_review(s))
 		return
 	# 求人の知らせを Off にした人には、毎日の求人カードを出さない（自分で入れたシフトの評価は出す）
 	if not JobPrefs.suggest_on():
 		return
+	# 「また来てほしいな」のおさそい（Invites）。相棒が持ってきて、求人カードのいちばん前に並ぶ
+	Invites.seed_sample()
+	var inv := Invites.pending()
+	if not inv.is_empty():
+		_notify(slot, tr("INVITE_NOTE") % inv[0].store, JobListings.when_text(inv[0]), Color("ff8fb1"), _open_viewer)
+		slot += 1
 	var left := undecided()
 	if left.is_empty():
 		return
-	_notify(0, tr("NOTE_DAILY") % [SpecialObake.pet_name(), left.size()], tr("NOTE_DAILY_SUB") % JobListings.wage_text(left[0]), role_color(left[0].role), _open_viewer)
+	_notify(slot, tr("NOTE_DAILY") % [SpecialObake.pet_name(), left.size()], tr("NOTE_DAILY_SUB") % JobListings.wage_text(left[0]), role_color(left[0].role), _open_viewer)
+
+
+## 前の晩（島の夜）と当日の朝（島の朝・昼）の、相棒のひとこと。出したら次の段の番号を返す
+func _reminder_note(slot: int) -> int:
+	var eve := GameState.phase == "evening"
+	var s := Reminders.evening() if eve else Reminders.morning()
+	if s.is_empty():
+		return slot
+	var tx: Array = Reminders.evening_text(s) if eve else Reminders.morning_text(s)
+	_notify(slot, tx[0], tx[1], Color("9fb4ff"), func(): _reminder_sheet(tx, eve))
+	return slot + 1
+
+
+func _reminder_sheet(tx: Array, eve: bool) -> void:
+	if viewer:
+		return
+	_garden_card(false)
+	_sheet(SpecialObake.pet_name(), tx[0], "%s\n%s" % [tx[1], tr("REMIND_EVE_BODY" if eve else "REMIND_AM_BODY")], tr("REMIND_OK"), _close_sheet)
 
 
 ## 島の右上（図鑑の下）の小さな「しごと」ボタン：自分でシフトを入れる・働く条件（求人の知らせの On/Off）
@@ -367,7 +393,33 @@ func open_work_menu() -> void:
 	var pet := SpecialObake.pet_name()
 	var body := tr("WORK_MENU_BODY") % Shifts.upcoming().size()
 	_sheet(pet, tr("WORK_MENU_TITLE"), body, tr("SHIFT_FORM_OPEN"), open_shift_form, -1, 0,
-		[[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_CLOSE"), _close_sheet]])
+		[[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("WORK_MENU_CLOSE"), _close_sheet]])
+
+
+## 働いたお店の一覧（お店の島へ）。まだ無ければ、見本のお店
+func open_shops() -> void:
+	if viewer:
+		return
+	_garden_card(false)
+	var ids := ShopCulture.worked_shops()
+	var body := tr("SHOPS_BODY")
+	var sample := ids.is_empty()
+	if sample:
+		ids = [Invites.SAMPLE_LISTING, "cvs_machikado", "bk_komugi"]
+		body = tr("SHOPS_EMPTY")
+	var links: Array = []
+	for id in ids.slice(0, 4):
+		var lid: String = id
+		var nm := JobListings.store_name(lid) + ("  (%s)" % tr("SHOPS_SAMPLE") if sample else "")
+		links.append(["%s  ·  %s" % [nm, tr("SHOPS_VISIT")], func(): _visit_shop(lid)])
+	links.append([tr("WORK_MENU_CLOSE"), _close_sheet])
+	_sheet(SpecialObake.pet_name(), tr("SHOPS_TITLE"), body, tr("SHOPS_VISIT") + ": " + JobListings.store_name(ids[0]), func(): _visit_shop(ids[0]), -1, 0, links.slice(1))
+
+
+## お店の島へ（乗り物で海を渡ってから。screen_travel → screen_shop_island）
+func _visit_shop(listing_id: String) -> void:
+	GameState.visit = ShopCulture.visit_data(listing_id)
+	_go("travel")
 
 
 func _close_sheet() -> void:
@@ -446,7 +498,7 @@ func _open_viewer() -> void:
 		return
 	if Onboarding.at("found"):
 		Onboarding.advance("done")
-	jobs = undecided()
+	jobs = Invites.pending() + undecided()
 	index = 0
 	accepted = 0
 	_build_viewer()
@@ -482,10 +534,11 @@ func _show_job() -> void:
 		_show_end()
 		return
 	var j: Dictionary = jobs[index]
-	_say(j.line)
+	_say(tr("INVITE_SAY") % j.store if Invites.is_invite(j) else j.line)
 	stage.talk()
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 6)
+	_invite_chip(top, j)
 	top.add_child(_chip(tr("JOB_ROLE_" + String(j.role).to_upper()), role_color(j.role).darkened(0.25)))
 	top.add_child(_chip(tr("JOB_PAY_" + String(j.pay).to_upper()), Color("e9f3ea"), GREEN))
 	var sp := Control.new()
@@ -507,10 +560,22 @@ func _show_job() -> void:
 	voice.add_theme_stylebox_override("panel", Kit.pill(Color("f1f7f1"), 12, 0.0, Vector2(10, 5)))
 	voice.add_child(I18n.wrap(_text(Reviews.summary_text(j.listing), 12, GREEN, true)))
 	card_box.add_child(voice)
+	_visit_island_link(j)
 	var acc := Kit.button(tr("JOB_ACCEPT"), ORANGE, _accept)
 	card_box.add_child(acc)
 	card_box.add_child(_link(tr("JOB_PASS"), _pass))
 	_pop_card()
+
+
+## おさそい（Invites）の印
+func _invite_chip(top: HBoxContainer, j: Dictionary) -> void:
+	if Invites.is_invite(j):
+		top.add_child(_chip(tr("INVITE_CHIP"), Color("ff8fb1").darkened(0.15)))
+
+
+## 「このお店の島を見にいく」（お店の島：働いた人の評価で育つ島）
+func _visit_island_link(j: Dictionary) -> void:
+	card_box.add_child(_link(tr("JOB_VISIT_ISLAND") + "  ›", func(): _visit_shop(j.listing), Color("3b8a7a")))
 
 
 func _accept() -> void:
@@ -521,8 +586,11 @@ func _accept() -> void:
 	# 一緒に働く係と共有する約束：Shifts の 1 件の形
 	var s := {"id": j.id, "title": j.title, "place": j.place, "store": j.store, "role": j.role, "start": j.start, "end": j.end,
 		"wage": j.wage, "pay": j.pay, "listing": j.listing, "sample": true}
-	Shifts.add(s)
-	decide(j.id, "accept")
+	if Invites.is_invite(j):
+		s = Invites.accept(j)
+	else:
+		Shifts.add(s)
+		decide(j.id, "accept")
 	accepted += 1
 	stage.joy()
 	Kit.play(self, "sparkle")
@@ -548,7 +616,10 @@ func _pass() -> void:
 		return
 	busy = true
 	var j: Dictionary = jobs[index]
-	decide(j.id, "pass")
+	if Invites.is_invite(j):
+		Invites.decline(j)
+	else:
+		decide(j.id, "pass")
 	stage.shrug()
 	_say(tr("SHRUG_%d" % (index % 2 + 1)))
 	var tw := create_tween().set_parallel()
@@ -672,6 +743,7 @@ func _send_review(s: Dictionary) -> void:
 		if rv_tags[tg]:
 			tags.append(tg)
 	Reviews.add(s, rv_stars, tags)
+	Invites.after_review(s, rv_stars) # よい評価なら、そのお店から「また来てほしいな」のおさそい
 	# ごほうびはポイ（すくいの網）。働いた時間とは関係なく、1 回 1 本
 	GameState.nets["plain"] = GameState.nets.get("plain", 0) + Reviews.BONUS_POI
 	GameState.save()
@@ -720,6 +792,21 @@ func demo_shift_add() -> void:
 
 func demo_open() -> void:
 	_open_viewer()
+
+
+## 求人カードの「このお店の島を見にいく」と同じ
+func demo_visit() -> void:
+	_visit_shop(jobs[index].listing if index < jobs.size() else Invites.SAMPLE_LISTING)
+
+
+func demo_shops() -> void:
+	open_shops()
+
+
+## いちばん上の知らせ（前の晩・当日の朝のひとこと）を押す
+func demo_remind() -> void:
+	if not notes.is_empty() and is_instance_valid(notes[0]):
+		notes[0].pressed.emit()
 
 
 func demo_accept() -> void:
