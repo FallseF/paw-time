@@ -57,13 +57,12 @@ var goal_toast: PanelContainer
 
 
 ## めあて達成の知らせ（どの画面でも上から降りてくる）
-var pending_goals: Array = []
 
 
 func _on_goal(text: String, all_done: bool) -> void:
 	# 寝ている間・夢の中で達成したものは、朝の庭で知らせる
 	if current and current.get_script().resource_path.get_file() in ["screen_sleep.gd", "screen_dream.gd", "screen_hatch.gd"]:
-		pending_goals.append([text, all_done])
+		GameState.pending_toasts.append([text, all_done])
 		return
 	if goal_toast and is_instance_valid(goal_toast):
 		goal_toast.queue_free()
@@ -176,13 +175,13 @@ func go(screen_name: String, instant := false) -> void:
 		await tw2.finished
 		fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	busy = false
-	if screen_name == "garden" and not pending_goals.is_empty():
+	if screen_name == "garden" and not GameState.pending_toasts.is_empty():
 		_flush_goals()
 
 
 func _flush_goals() -> void:
-	var list := pending_goals.duplicate()
-	pending_goals.clear()
+	var list := GameState.pending_toasts.duplicate()
+	GameState.pending_toasts.clear()
 	for g in list:
 		await get_tree().create_timer(0.6).timeout
 		_on_goal(g[0], g[1])

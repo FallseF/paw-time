@@ -133,6 +133,7 @@ var last_goals := 0
 var stall_claimed := false
 var force_dream := false # 宣伝動画用
 var week_start_seen := 1
+var pending_toasts: Array = [] # 寝ている間に達成しためあての知らせ
 var week_start_growth := 0
 var quiet := false # 早送り中は知らせを出さない
 var newcomers: Array = [] # けさ初めて来た子（庭で縁側から出てくる）
@@ -198,6 +199,7 @@ func reset(new_mode := "data") -> void:
 	total_scooped = 0
 	week_start_seen = 1
 	week_start_growth = 0
+	pending_toasts = []
 	night_plan = ""
 	lit_deco = ""
 	work_hist = []
@@ -902,7 +904,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts"]
 
 
 func save() -> void:
