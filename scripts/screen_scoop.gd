@@ -444,6 +444,8 @@ func _build_ui() -> void:
 	bg.set_corner_radius_all(5)
 	dura_bar.add_theme_stylebox_override("background", bg)
 	ph.add_child(dura_bar)
+	var calm: String = ["水面ざわざわ", "水面ふつう", "水面しずか", "水面しずか"][GameState.tier()]
+	ph.add_child(_text(calm, 12, GameState.TIER_COLOR[GameState.tier()]))
 	pp.add_child(ph)
 	top.add_child(pp)
 
@@ -832,7 +834,7 @@ func _process(delta: float) -> void:
 			var d: float = away.length()
 			if d < 0.7 and d > 0.001:
 				steer += away.normalized() * (0.7 - d) * 1.0 * delta
-		o.vel = (o.vel + steer).limit_length(0.24)
+		o.vel = (o.vel + steer).limit_length([0.32, 0.26, 0.21, 0.17][GameState.tier()]) # よく眠ると、水面がしずか
 		o.position += o.vel * delta
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
 		if e.length() > 0.8:
