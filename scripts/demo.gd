@@ -237,5 +237,5 @@ func _promo() -> void:
 	# 9) タイトル
 	_mark("9)")
 	await _go("title")
-	await _wait(3.0)
+	await _wait(2.6)
 	get_tree().quit()
