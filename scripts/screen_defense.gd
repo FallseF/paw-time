@@ -1119,7 +1119,7 @@ func _pause() -> void:
 	overlay.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Kit.CREAM, 24))
-	p.position = Vector2(30, 110)
+	p.position = Vector2(30, 60)
 	p.size = Vector2(300, 0)
 	overlay.add_child(p)
 	var v := VBoxContainer.new()
@@ -1132,7 +1132,9 @@ func _pause() -> void:
 		var hl := Kit.text("・" + line, 12, Kit.INK)
 		hl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		v.add_child(hl)
-	for line in _stage_tips():
+	var tips := _stage_tips()
+	for k in mini(4, tips.size()):
+		var line: String = tips[k]
 		var l := Kit.text(line, 12, Kit.SUB)
 		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		v.add_child(l)
