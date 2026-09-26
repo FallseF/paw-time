@@ -1461,13 +1461,20 @@ func _show_morning() -> void:
 	var parts := HFlowContainer.new()
 	parts.add_theme_constant_override("h_separation", 5)
 	parts.add_theme_constant_override("v_separation", 4)
+	# 良かったところは一言に。足りなかったところだけチップで見せる
+	var bad := 0
 	for p in ln.parts:
+		if p[1] >= 0:
+			continue
+		bad += 1
 		var pc := PanelContainer.new()
-		var good: bool = p[1] >= 0
-		pc.add_theme_stylebox_override("panel", Kit.pill(Color("e7f6e9") if good else Color("fde7e3"), 11, 0.0, Vector2(7, 2)))
-		pc.add_child(Kit.text("%s %s%d" % [p[0], "+" if good else "", p[1]], 12, Color("3f7d4f") if good else Color("c0473b")))
+		pc.add_theme_stylebox_override("panel", Kit.pill(Color("fde7e3"), 11, 0.0, Vector2(7, 2)))
+		pc.add_child(Kit.text("%s %d" % [p[0], p[1]], 12, Color("c0473b")))
 		parts.add_child(pc)
-	card_box.add_child(parts)
+	if bad == 0:
+		card_box.add_child(Kit.text(["いい夜だった", "いつもどおり、ぐっすり", "よく眠れた。庭もそう言っている"].pick_random(), 14, Color("3f7d4f"), true))
+	else:
+		card_box.add_child(parts)
 	var r := HBoxContainer.new()
 	r.add_theme_constant_override("separation", 8)
 	r.add_child(Kit.text("リズム", 14, Color("8a7a88")))
