@@ -23,6 +23,7 @@ var burst: CPUParticles3D
 var rays: MeshInstance3D
 var sfx := {}
 var busy := false
+var deck_btn: Button
 
 
 func _ready() -> void:
@@ -315,6 +316,19 @@ func _next() -> void:
 	card_desc.text = sp.desc
 	if not u.is_empty():
 		card_desc.text += "\n戦いでは：" + (u.skill if u.has("skill") else "%s。%s" % [u.role, u.line])
+	# 新しい仲間が編成に入っていなければ、ここで入れられる（いっぱいなら最後の一体と入れかえ）
+	if deck_btn:
+		deck_btn.queue_free()
+		deck_btn = null
+	if not u.is_empty() and not h.id in GameState.deck:
+		var last: String = GameState.deck[GameState.deck.size() - 1] if GameState.deck.size() >= GameState.DECK_MAX else ""
+		deck_btn = Kit.button(("%sと入れかえて編成する" % GameState.info(last).name) if last != "" else "編成に入れる", Color("8b7bff"), func():
+			if last != "":
+				GameState.toggle_deck(last)
+			GameState.toggle_deck(h.id)
+			deck_btn.disabled = true
+			deck_btn.text = "編成に入れた", Color.WHITE, 36, 13)
+		card.get_child(0).add_child(deck_btn)
 	card.size = Vector2(312, 0)
 	await get_tree().process_frame
 	var final_y: float = 566.0 - card.get_combined_minimum_size().y
