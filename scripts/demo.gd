@@ -157,11 +157,19 @@ func _go(screen: String, instant := false) -> void:
 
 func _promo() -> void:
 	await get_tree().process_frame
+	# 0) つかみ：育ちきった夜の庭
+	_mark("0)")
+	GameState.reset("data")
+	main.fast_forward(26)
+	GameState.phase = "evening"
+	await _go("garden", true)
+	main.current.call("_toggle_card")
+	await _wait(2.4)
 	# 1) すくい（スロー）
 	_mark("1)")
 	GameState.reset("data")
 	GameState.nets["plain"] = 3
-	await _go("catch", true)
+	await _go("catch")
 	await _wait(0.9)
 	main.current.call("demo_hold")
 	await _wait(0.5)
@@ -193,7 +201,7 @@ func _promo() -> void:
 	await _go("hatch")
 	await _wait(0.4)
 	main.current.call("_next")
-	await _wait(3.6)
+	await _wait(3.3)
 	# 5) 庭が育つ
 	_mark("5)")
 	main.fast_forward(6)
@@ -209,13 +217,13 @@ func _promo() -> void:
 	await _go("moon")
 	await _wait(0.6)
 	main.current.call("demo_light_all")
-	await _wait(4.6)
+	await _wait(4.2)
 	# 7) 育った夜の庭
 	_mark("7)")
 	main.fast_forward(24)
 	GameState.phase = "evening"
 	await _go("garden")
-	await _wait(3.5)
+	await _wait(2.6)
 	# 8) 図鑑
 	_mark("8)")
 	await _go("zukan")

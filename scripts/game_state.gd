@@ -866,6 +866,8 @@ func save() -> void:
 
 
 func has_save() -> bool:
+	if OS.get_environment("OBAKE_NOSAVE") != "":
+		return false
 	return FileAccess.file_exists(SAVE_PATH)
 
 
