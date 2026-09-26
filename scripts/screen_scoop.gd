@@ -76,7 +76,7 @@ var goal_label: Label
 var tip_pill: PanelContainer
 var tip_label: Label
 var tip_queue: Array = []
-var tip_t := 0.0
+var tip_t := 2.2 # 夜の題が消えてから
 const KIND_TIPS := {
 	"school": "青は群れ。重ねて、まとめてすくえる",
 	"shy": "紫は人見知り。速いポイからは逃げる",
@@ -149,6 +149,7 @@ func _ready() -> void:
 		_tut_show()
 	if gift > 0:
 		_float_text("祭りのふるまい：紙のポイ ×%d" % gift, Vector2(180, 300), Color("ffb35c"))
+	_night_title()
 
 
 # ---------- 世界 ----------
@@ -1713,6 +1714,30 @@ func _show_conditions() -> void:
 	var tw := create_tween()
 	tw.tween_interval(5.0)
 	tw.tween_property(cond_pill, "modulate:a", 0.0, 0.6)
+
+
+## 夜のはじめの一枚（曜日と空模様）
+func _night_title() -> void:
+	var s := GameState.today()
+	var t := "練習" if practice else ("大すくい祭り" if mods.festival else "%s曜の夜" % s.day)
+	var l := _text(t, 34, Color("fff6e8"), font_black)
+	l.add_theme_color_override("font_outline_color", Color("0b1026"))
+	l.add_theme_constant_override("outline_size", 10)
+	l.position = Vector2(0, 250)
+	l.size = Vector2(360, 50)
+	l.modulate.a = 0.0
+	float_layer.add_child(l)
+	var sub := _text("%s%s" % [s.weather, ("・" + s.moon) if s.moon != "" else ""], 16, Color("ffe7a8"))
+	sub.position = Vector2(0, 298)
+	sub.size = Vector2(360, 24)
+	sub.modulate.a = 0.0
+	float_layer.add_child(sub)
+	for n in [l, sub]:
+		var tw := create_tween()
+		tw.tween_property(n, "modulate:a", 1.0, 0.4)
+		tw.tween_interval(1.1)
+		tw.tween_property(n, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(n.queue_free)
 
 
 # ---------- コツ ----------
