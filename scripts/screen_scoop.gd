@@ -225,6 +225,40 @@ func _build_world() -> void:
 	drops = _burst(Color("cfe8ff"), 24, 0.7, Vector3(0, -6, 0), 1.2, 2.4)
 	stars = _burst(Color("fff2a8"), 40, 1.1, Vector3(0, -1.5, 0), 1.0, 2.2)
 
+	# 雨・雪の夜は、川べりにも降る
+	var wt: String = GameState.today().weather
+	if wt == "雨" or wt == "雷" or wt == "雪":
+		var snow := wt == "雪"
+		var rp := CPUParticles3D.new()
+		rp.amount = 70 if snow else 140
+		rp.lifetime = 5.0 if snow else 1.1
+		rp.preprocess = rp.lifetime
+		rp.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		rp.emission_box_extents = Vector3(4, 0.2, 3.5)
+		rp.position = Vector3(0, 4.5, 0)
+		rp.direction = Vector3.DOWN
+		rp.spread = 40 if snow else 4
+		rp.gravity = Vector3(0, -0.3 if snow else -9.0, 0)
+		rp.initial_velocity_min = 0.3 if snow else 2.0
+		rp.initial_velocity_max = 0.6 if snow else 3.0
+		var rm: Mesh
+		if snow:
+			var sm2 := SphereMesh.new()
+			sm2.radius = 0.03
+			sm2.height = 0.06
+			rm = sm2
+		else:
+			var bm2 := BoxMesh.new()
+			bm2.size = Vector3(0.01, 0.2, 0.01)
+			rm = bm2
+		rp.mesh = rm
+		var rmat := StandardMaterial3D.new()
+		rmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		rmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		rmat.albedo_color = Color(1, 1, 1, 0.85) if snow else Color(0.75, 0.85, 1.0, 0.45)
+		rp.material_override = rmat
+		world.add_child(rp)
+
 	poi = _make_poi()
 	world.add_child(poi)
 	poi.position = Vector3(0, 0.5, 1.2)
