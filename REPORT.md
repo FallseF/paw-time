@@ -175,3 +175,11 @@ godot --headless --path . -s tests/sim_week.gd           # 4週間の早送り�
 - 結果は3行まで（はじめの夜は「朝、おばけにかえる」だけ）、寝る画面も3行まで。文言は20字前後に短くした。
 - 前後のスクリーンショット：`ui_review/before_*.png` と `ui_review/after_*.png`（タイトル→休憩室→はじめてのすくい→すくい中→結果→寝る→朝のお迎え→2日目の休憩室）。
 - Web 書き出し：`build/web/`（index.pck 約28MB）。ブラウザでの起動は未確認。
+
+## レアを3Dに置き換え（09:20〜09:35）
+
+- feature/rare-3d の `RareObake3D`・`tests/render_rares.gd`・`assets/gen/rares3d` を取り込み、`obake3d.gd` に `ghost()`/`face()`/輪郭の太さ引数を手で合わせた（Lvの飾りは残す）。ふつうのおばけの見た目は変わらない。ついでに、Lvで少し大きくなる分が毎フレーム上書きされていたのを直した。
+- 平たいレアの絵（assets/gen/rares・rares_thumb・style2・cards）は削除。図鑑カードは `assets/gen/rares3d_thumb`（3D の絵の縮小版）。Web の index.pck は約28MB→約12.6MB。
+- 休憩室ではレアを小さめ（0.5）、横に広い子（ヒャッキ・ワタリドリ・シュウマツ）は0.42で、まわりを広めにあける。この3体が同時に並ぶ場面は、撮って確かめてはいない。
+- Web で豆腐になる字：scripts/ の文字列をフォントで調べ、無かったのは ✓ だけ（○ に置き換え）。
+- 広告動画 promo/promo.mp4 は撮り直していないので、平たいレアのまま。
