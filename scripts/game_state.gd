@@ -614,6 +614,12 @@ func tonight_orbs() -> Array:
 
 ## 眠りのレアの「きざし」。あと少しで会えそうなものを一行で
 func omen() -> String:
+	# 週の後半は、満月の夜までの数を
+	if weekday() >= 3 and weekday() <= 5:
+		var lit: int = moon_lanterns().count(true)
+		if lit < 4:
+			return "日曜の満月まで：よく眠れた夜 %d / 4" % lit
+		return "日曜は満月になりそう（よく眠れた夜 %d）" % lit
 	if not seen.has("asayake"):
 		var n := 0
 		for i in range(sleep_hist.size() - 1, -1, -1):
