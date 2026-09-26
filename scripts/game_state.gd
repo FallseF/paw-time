@@ -460,6 +460,14 @@ static func wake_clock(m: int) -> String:
 	return "%d:%02d" % [m / 60, m % 60]
 
 
+## 7.67 → 「7時間40分」
+static func hm(h: float) -> String:
+	var m := int(round(h * 60.0))
+	if m % 60 == 0:
+		return "%d時間" % (m / 60)
+	return "%d時間%d分" % [m / 60, m % 60]
+
+
 static func hours_of(bed: int, wake: int) -> float:
 	return (wake + 360 - bed) / 60.0
 

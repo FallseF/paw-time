@@ -1450,7 +1450,7 @@ func _show_morning() -> void:
 	busy = false
 	# それから、ゆうべの眠りを短く
 	_clear_card()
-	card_box.add_child(Kit.text("おはよう。%.1f 時間ねむった" % ln.hours, 19, Color("2a2233"), true))
+	card_box.add_child(Kit.text("おはよう。%s ねむった" % GameState.hm(ln.hours), 19, Color("2a2233"), true))
 	card_box.add_child(Kit.text("%s に寝て %s に起きた" % [GameState.clock(ln.bed), GameState.wake_clock(ln.wake)], 13, Color("8a7a88")))
 	var parts := HFlowContainer.new()
 	parts.add_theme_constant_override("h_separation", 5)

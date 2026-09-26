@@ -15,6 +15,7 @@ var bed_btns: Array = []
 var stars: Array = []
 var _t := 0.0
 var going := false
+var show_parts := false
 var plan := "usual"
 var plan_btns := {}
 var go_btn: Button
@@ -124,12 +125,12 @@ func _ready() -> void:
 	var moon := Panel.new()
 	var ms := StyleBoxFlat.new()
 	ms.bg_color = Color("fff1c8")
-	ms.set_corner_radius_all(30)
+	ms.set_corner_radius_all(20)
 	ms.shadow_color = Color(1, 0.95, 0.8, 0.45)
-	ms.shadow_size = 24
+	ms.shadow_size = 14
 	moon.add_theme_stylebox_override("panel", ms)
-	moon.position = Vector2(270, 40)
-	moon.size = Vector2(60, 60)
+	moon.position = Vector2(306, 10)
+	moon.size = Vector2(40, 40)
 	add_child(moon)
 
 	var title := Kit.text("おやすみの前に", 24, Color("f3eeff"), true, HORIZONTAL_ALIGNMENT_CENTER)
@@ -267,9 +268,33 @@ func _set_time(b: int, w: int) -> void:
 		c.queue_free()
 	var ns := GameState.night_score(bed, wake)
 	var h: float = ns.hours
-	var head := Kit.text("%s → %s　%.1f時間の眠り" % [GameState.clock(bed), GameState.wake_clock(wake), h], 17, Color.WHITE, true)
+	var head := Kit.text("%s → %s　%s" % [GameState.clock(bed), GameState.wake_clock(wake), GameState.hm(h)], 18, Color.WHITE, true)
 	preview.add_child(head)
+	var after0 := clampf(GameState.rhythm + ns.score * GameState.RHYTHM_RATE, 0, 100)
+	var n0 := GameState.orbs.size()
+	var summary := "朝に玉 %d 個 ・ 庭のめぐみ +%d" % [n0, GameState.growth_gain(ns.score, h)] if n0 > 0 else "庭のめぐみ +%d" % GameState.growth_gain(ns.score, h)
+	preview.add_child(Kit.text(summary, 15, Color("c8f0c0"), true))
+	var diff := int(after0) - int(GameState.rhythm)
+	var t0 := 3 if after0 >= 75 else (2 if after0 >= 50 else (1 if after0 >= 25 else 0))
+	var rrow := HBoxContainer.new()
+	rrow.add_theme_constant_override("separation", 8)
+	rrow.add_child(Kit.text("リズム %s%d → %s" % ["+" if diff >= 0 else "", diff, GameState.TIER_NAME[t0]], 15, GameState.TIER_COLOR[t0], true))
+	var sp := Control.new()
+	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rrow.add_child(sp)
+	var more := Button.new()
+	more.text = "内訳 ▾" if not show_parts else "内訳 ▴"
+	more.flat = true
+	more.add_theme_font_override("font", Kit.bold())
+	more.add_theme_font_size_override("font_size", 12)
+	more.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	more.pressed.connect(func():
+		show_parts = not show_parts
+		_set_time(bed, wake))
+	rrow.add_child(more)
+	preview.add_child(rrow)
 	var parts := HFlowContainer.new()
+	parts.visible = show_parts
 	parts.add_theme_constant_override("h_separation", 6)
 	parts.add_theme_constant_override("v_separation", 4)
 	for p in ns.parts:
@@ -279,13 +304,7 @@ func _set_time(b: int, w: int) -> void:
 		pc.add_child(Kit.text("%s %s%d" % [p[0], "+" if good else "", p[1]], 12, Color("d8ffe0") if good else Color("ffd3cc")))
 		parts.add_child(pc)
 	preview.add_child(parts)
-	var after := clampf(GameState.rhythm + ns.score * GameState.RHYTHM_RATE, 0, 100)
-	var t_after := 3 if after >= 75 else (2 if after >= 50 else (1 if after >= 25 else 0))
-	preview.add_child(Kit.text("リズム %d → %d（%s）" % [int(GameState.rhythm), int(after), GameState.TIER_NAME[t_after]], 14, GameState.TIER_COLOR[t_after]))
-	preview.add_child(Kit.text("明日の庭のめぐみ ＋%d くらい" % GameState.growth_gain(ns.score, h), 14, Color("c8f0c0")))
-	var n := GameState.orbs.size()
-	if n > 0:
-		preview.add_child(Kit.text("光る玉 %d 個が、朝にかえる" % n, 13, Color("e8e2ff")))
+	var t_after := t0
 	if ns.late:
 		preview.add_child(Kit.wrap(Kit.text("夜ふかし：夜のおばけが寄ってくる。でも庭はしおれる", 13, Color("ffc28a"))))
 	elif h >= 7.0 and t_after >= 2:
