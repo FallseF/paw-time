@@ -112,6 +112,14 @@ func deploy(i: int) -> bool:
 	if e.ability == "swarm":
 		for k in 100:
 			swarm_queue.append([t + 0.15 + k * 0.035, s.lv])
+	elif e.ability == "gift":
+		energy = minf(energy_max(), energy + 250.0)
+		events.append({"type": "gift", "uid": e.uid})
+	elif e.ability == "rally":
+		for o in entities:
+			if o.side == 0 and o.hp > 0:
+				o.hp = minf(o.max_hp, o.hp + o.max_hp * 0.5)
+		events.append({"type": "heal", "uid": e.uid})
 	return true
 
 
@@ -159,7 +167,7 @@ func _new_entity(side: int, id: String) -> Dictionary:
 	return {"uid": _uid, "side": side, "id": id, "x": 0.0, "z": 0.0, "hp": 1.0, "max_hp": 1.0, "atk": 0.0, "rate": 1.0, "range": 1.0,
 		"speed": 1.0, "kb": 1, "kb_done": 0, "cd": 0.3, "state": "walk", "st": 0.0, "area": false, "guard": 0.0, "ability": "",
 		"job": "", "weak": "", "drop": 0, "tiny": false, "sleep": 0.0, "slow": 0.0, "hop_cd": 0.0, "boss": false, "split": "",
-		"drain": 0, "attacking": false, "lv": 1, "big": false, "winding": false}
+		"drain": 0, "attacking": false, "lv": 1, "big": false, "winding": false, "hits": 0}
 
 
 func _spawn_ally(id: String, lv: int) -> Dictionary:
@@ -400,6 +408,9 @@ func _attack(e: Dictionary, targets: Array, base_hit: bool) -> void:
 	elif not targets.is_empty():
 		hits = [targets[0]]
 	var a := _atk_of(e)
+	if e.ability == "count":
+		e.hits += 1
+		a *= 1.0 + 0.15 * minf(e.hits, 20)
 	var times := 2 if e.ability == "double" else 1
 	events.append({"type": "attack", "uid": e.uid, "bolt": e.ability == "bolt", "tx": (hits[0].x if not hits.is_empty() else (BASE_E_X if e.side == 0 else base_a_x))})
 	for k in times:

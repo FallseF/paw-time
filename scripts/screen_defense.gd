@@ -1279,6 +1279,9 @@ func _handle_events(evs: Array) -> void:
 					_fx("heal", views[ev.uid].root.position + Vector3(0, 0.8, 0.3))
 			"sleep":
 				pass
+			"gift":
+				_popup_ui("やる気 +250 おすそわけ", energy_lbl)
+				Kit.sfx("c_coin", 1.3)
 			"drain":
 				_popup_ui("やる気 -%d" % 20, energy_lbl)
 			"surge_warn":

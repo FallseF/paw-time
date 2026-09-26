@@ -22,7 +22,7 @@ const UNITS := {
 }
 
 ## レアは特別な一体。見た目のシルエットに合った、変な能力を持つ。
-## ability: bolt / hop / swarm / sleep / lantern / dream / sunrise / gold / slow / shield / burst / double
+## ability: bolt / hop / swarm / sleep / lantern / dream / sunrise / gold / slow / shield / burst / double / gift / rally / count
 const RARE_UNITS := {
 	"kaminari": {"ability": "bolt", "cost": 420, "cd": 16.0, "hp": 260, "atk": 150, "rate": 3.2, "range": 7.0, "speed": 0.7, "kb": 2,
 		"skill": "遠くの困りごとに、雷を落とす（射程がとても長い）"},
@@ -64,12 +64,12 @@ const RARE_UNITS := {
 		"skill": "花びらを散らして、まとめて押し返す"},
 	"nakayoshi": {"ability": "shield", "cost": 220, "cd": 10.0, "hp": 360, "atk": 25, "rate": 1.4, "range": 1.0, "speed": 1.0, "kb": 3,
 		"skill": "となりのおばけと手をつなぐ。みんなかたくなる"},
-	"okurimono": {"ability": "gold", "cost": 160, "cd": 8.0, "hp": 200, "atk": 35, "rate": 1.2, "range": 1.0, "speed": 1.3, "kb": 3,
-		"skill": "倒した困りごとから、やる気が2倍もらえる"},
+	"okurimono": {"ability": "gift", "cost": 160, "cd": 14.0, "hp": 200, "atk": 35, "rate": 1.2, "range": 1.0, "speed": 1.3, "kb": 3,
+		"skill": "出すと、やる気を250おすそわけしてくれる（差し引きで得）"},
 	"morattan": {"ability": "sunrise", "cost": 220, "cd": 16.0, "hp": 240, "atk": 30, "rate": 1.4, "range": 1.0, "speed": 1.0, "kb": 3,
 		"skill": "いるあいだ、やる気のたまりが1.4倍"},
-	"teamwork": {"ability": "lantern", "cost": 340, "cd": 16.0, "hp": 420, "atk": 60, "rate": 1.3, "range": 1.2, "speed": 1.0, "kb": 3,
-		"skill": "みんなで越えた夜の力。まわりの攻撃が1.3倍"},
+	"teamwork": {"ability": "rally", "cost": 340, "cd": 20.0, "hp": 420, "atk": 60, "rate": 1.3, "range": 1.2, "speed": 1.0, "kb": 3,
+		"skill": "出すと、場のおばけ全員の傷が半分なおる"},
 	"senpai": {"ability": "shield", "cost": 240, "cd": 10.0, "hp": 400, "atk": 40, "rate": 1.3, "range": 1.0, "speed": 1.0, "kb": 3,
 		"skill": "頼られると伸びる。まわりの受ける傷を減らす"},
 	"yasumijouzu": {"ability": "dream", "cost": 200, "cd": 12.0, "hp": 260, "atk": 0, "rate": 1.6, "range": 3.0, "speed": 0.8, "kb": 2,
@@ -80,8 +80,8 @@ const RARE_UNITS := {
 		"skill": "日だまりの匂いで、困りごとが寝てしまう"},
 	"totonou": {"ability": "sunrise", "cost": 240, "cd": 16.0, "hp": 260, "atk": 35, "rate": 1.4, "range": 1.0, "speed": 1.0, "kb": 3,
 		"skill": "いつも落ち着いている。やる気のたまりが1.4倍"},
-	"kazoeuta": {"ability": "bolt", "cost": 320, "cd": 14.0, "hp": 220, "atk": 80, "rate": 2.0, "range": 5.5, "speed": 0.9, "kb": 2,
-		"skill": "数を歌うと、遠くの困りごとが崩れる"},
+	"kazoeuta": {"ability": "count", "cost": 280, "cd": 12.0, "hp": 240, "atk": 30, "rate": 1.0, "range": 1.4, "speed": 1.0, "kb": 3,
+		"skill": "数を歌う。たたくたびに、ひとつずつ強くなる"},
 	"mangetsu": {"ability": "burst", "cost": 480, "cd": 24.0, "hp": 500, "atk": 320, "rate": 3.6, "range": 2.0, "speed": 0.8, "kb": 2, "area": true,
 		"skill": "ひと月ぶんの眠りの力で、大きく押しつぶす"},
 }
