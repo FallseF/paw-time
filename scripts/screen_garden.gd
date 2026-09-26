@@ -1034,7 +1034,15 @@ func _show_card() -> void:
 	_clear_card()
 	var s: Dictionary = GameState.today()
 	if GameState.phase == "day":
-		if s.role != "":
+		if s.get("chore", false):
+			card_box.add_child(Kit.text("今日のおてつだい", 18, Color("2a2233"), true))
+			card_box.add_child(Kit.wrap(Kit.text("%s（%sの経験になる）\n天気：%s" % [GameState.CHORE_TEXT[s.role], GameState.ROLE_LABEL[s.role], s.weather], 14, Color("6a5f70"))))
+			if not GameState.tut.has("shift"):
+				_guide("おてつだいで、その仕事のポイが1本。記録とつなぐと、本物のシフトで庭に飾りも届く")
+			var b := Kit.button("おてつだいする", Color("ff8a5b"), _do_shift)
+			card_box.add_child(b)
+			card_box.add_child(Kit.button("今日はのんびりする", Color(1, 1, 1, 0.9), _rest, Color("6a5f70"), 40, 14))
+		elif s.role != "":
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.wrap(Kit.text("%s ・ %sの%s（%d時間）\n天気：%s%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, s.weather, "　はじめての経験" if s.first else ""], 14, Color("6a5f70"))))
 			if not GameState.tut.has("shift"):

@@ -262,6 +262,16 @@ func shift_for(d: int) -> Dictionary:
 	if mode == "solo":
 		s.role = ""
 		s.store = ""
+		s.coworkers = []
+		s.first = false
+		s.newbie = false
+		# ひとりのときは、庭のおてつだい（仕事の代わり。ポイ1本、飾りは届かない）
+		if d > 0 and rng.randf() < 0.45:
+			s.role = ["register", "hall", "dish", "kitchen", "stock"][rng.randi() % 5]
+			s.store = "庭のおてつだい"
+			s.band = "昼"
+			s.hours = 1
+			s["chore"] = true
 	s["day"] = WEEKDAYS[wd]
 	s["moon"] = "満月" if wd == 6 else ""
 	s["season"] = season()
@@ -337,6 +347,15 @@ func finish_shift() -> Array:
 	for c in s.coworkers:
 		coworker_count[c] = coworker_count.get(c, 0) + 1
 	var net_id: String = ROLE_NET[s.role]
+	if s.get("chore", false):
+		nets[net_id] = mini(nets[net_id] + 1, 4)
+		got.append({"kind": "poi", "id": net_id, "n": 1, "text": "%s ×1" % NETS[net_id].name})
+		if first_role_today:
+			nets["kira"] += 1
+			got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめてのおてつだい）"})
+		save()
+		changed.emit()
+		return got
 	nets[net_id] = mini(nets[net_id] + 2, 4) # 種類つきのポイは4本まで（ためこみすぎない）
 	got.append({"kind": "poi", "id": net_id, "n": 2, "text": "%s ×2" % NETS[net_id].name})
 	if s.first or first_role_today:
@@ -363,6 +382,9 @@ func finish_shift() -> Array:
 	save()
 	changed.emit()
 	return got
+
+
+const CHORE_TEXT := {"register": "落ち葉のおかんじょう", "hall": "縁側へのおぜん運び", "dish": "たらいでお皿あらい", "kitchen": "おでんの下ごしらえ", "stock": "物置の箱の整理"}
 
 
 ## 今日の同僚に、おばけをおすそわけする（オクリモノの条件）
