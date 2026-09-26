@@ -1483,7 +1483,7 @@ func _tear(list: Array) -> void:
 		kept = int(combo * (0.3 + 0.1 * GameState.partner_level()))
 	var lost := combo - kept
 	var left_n: int = pool.get(selected, 0)
-	var left_txt := "%s あと%d本" % [GameState.POI[selected].name, left_n] if selected != "" and GameState.POI.has(selected) else ""
+	var left_txt := "%s あと%d本" % [GameState.POI[selected].name, left_n] if selected != "" and GameState.POI.has(selected) and not practice else ""
 	_banner("やぶれた…" if lost < 3 else "やぶれた…\n%dコンボ" % combo, Color("ffb3a8"))
 	if left_txt != "":
 		_float_text(left_txt, Vector2(180, 330), Color(1, 1, 1, 0.95), 16)
