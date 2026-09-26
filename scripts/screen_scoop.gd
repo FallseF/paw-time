@@ -914,6 +914,16 @@ func _build_audio() -> void:
 	ambience.volume_db = -8 if loop_name == "river_loop" else -6
 	add_child(ambience)
 	ambience.play()
+	# まばらな琴の音（祭りの夜は祭りばやしがあるので鳴らさない）
+	if loop_name == "river_loop":
+		var music := AudioStreamPlayer.new()
+		var ml: AudioStreamWAV = load("res://assets/sfx/night_loop.wav")
+		ml.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		ml.loop_end = ml.data.size() / 2
+		music.stream = ml
+		music.volume_db = -16
+		add_child(music)
+		music.play()
 	# 水の中でポイを動かすと、しゃばしゃば鳴る（速いほど大きい）
 	swish = AudioStreamPlayer.new()
 	var sw: AudioStreamWAV = load("res://assets/sfx/swish_loop.wav")

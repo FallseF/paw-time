@@ -289,6 +289,33 @@ def swish_loop():
     return out[: n - fade]
 
 
+def night_loop():
+    # 夜の川べりの、まばらな琴の音（16秒でひとまわり）
+    n = int(SR * 16.0)
+    out = [0.0] * n
+    rnd = random.Random(33)
+    scale = [293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3]
+    t = 0.3
+    while t < 15.2:
+        fr = rnd.choice(scale)
+        s0 = int(SR * t)
+        ln = int(SR * 2.2)
+        for j in range(ln):
+            if s0 + j < n:
+                e = math.exp(-j / (SR * 0.7)) * min(1.0, j / (SR * 0.004))
+                out[s0 + j] += 0.35 * e * (math.sin(2 * math.pi * fr * j / SR) + 0.35 * math.sin(2 * math.pi * fr * 2.0 * j / SR) + 0.12 * math.sin(2 * math.pi * fr * 3.01 * j / SR))
+        t += rnd.choice([0.9, 1.3, 1.8, 2.4])
+    # ひくい持続音
+    for i in range(n):
+        out[i] += 0.06 * math.sin(2 * math.pi * 146.8 * i / SR) * (0.6 + 0.4 * math.sin(2 * math.pi * i / (SR * 8.0)))
+    fade = int(SR * 0.5)
+    for i in range(fade):
+        k = i / fade
+        out[i] = out[i] * k + out[n - fade + i] * (1 - k)
+    return out[: n - fade]
+
+
+write("night_loop", night_loop())
 write("swish_loop", swish_loop())
 write("room_loop", room_loop())
 write("bubble", bubble())
