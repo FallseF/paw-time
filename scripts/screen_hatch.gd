@@ -411,18 +411,30 @@ func _open_all() -> void:
 	grid.add_theme_constant_override("v_separation", 4)
 	v.add_child(grid)
 	var lvups := 0
+	# 同じおばけはまとめて「×数」で（何十個あっても画面に収まるように）
+	var agg := {}
+	var order: Array = []
 	for i in range(index, GameState.hatched.size()):
 		var h: Dictionary = GameState.hatched[i]
-		var sp: Dictionary = GameState.info(h.id)
+		if not agg.has(h.id):
+			agg[h.id] = {"n": 0, "new": false, "lv": 0, "rare": h.get("rare", false)}
+			order.append(h.id)
+		var a: Dictionary = agg[h.id]
+		a.n += 1
+		a.new = a.new or h.is_new
+		if h.get("leveled", false):
+			a.lv = max(a.lv, h.level)
+	for id in order:
+		var a: Dictionary = agg[id]
 		var tag := ""
-		if h.is_new:
-			tag = " NEW"
-		elif h.get("leveled", false):
-			tag = " Lv%d↑" % h.level
-			lvups += 1
-		if h.get("rare", false):
+		if a.rare:
 			tag = " レア!"
-		var l := _text("● " + sp.name + tag, 14, Color("e85a4f") if h.is_new else Color("2a2233"))
+		elif a.new:
+			tag = " NEW"
+		elif a.lv > 0:
+			tag = " Lv%d↑" % a.lv
+			lvups += 1
+		var l := _text("● %s%s%s" % [GameState.info(id).name, (" ×%d" % a.n) if a.n > 1 else "", tag], 14, Color("e85a4f") if a.new else Color("2a2233"))
 		l.autowrap_mode = TextServer.AUTOWRAP_OFF
 		l.custom_minimum_size = Vector2(145, 0)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
