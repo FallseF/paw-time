@@ -7,7 +7,7 @@ extends Node
 
 signal changed
 
-const SAVE_PATH := "user://obake_c.json"
+var SAVE_PATH := "user://obake_c.json"
 const SAVE_VERSION := 1
 
 const SPECIES := {
@@ -101,6 +101,8 @@ func _ready() -> void:
 		ALL[id] = SPECIES[id]
 	for r in Rares.LIST:
 		ALL[r.id] = {"name": r.name, "type": "rare", "desc": r.desc, "hint": r.hint, "group": r.group}
+	if OS.get_environment("OBAKE_SAVE") != "":
+		SAVE_PATH = OS.get_environment("OBAKE_SAVE")
 	reset()
 	if OS.get_environment("OBAKE_FRESH") == "" and OS.get_environment("OBAKE_DEMO") == "":
 		load_game()
@@ -626,6 +628,10 @@ func load_game() -> bool:
 		nets[k] = int(nets[k])
 	for k in cleared:
 		cleared[k] = int(cleared[k])
+	for k in coworker_count:
+		coworker_count[k] = int(coworker_count[k])
+	for i in sleep_hist.size():
+		sleep_hist[i] = int(sleep_hist[i])
 	if boost.has("hours"):
 		boost.hours = int(boost.hours)
 	for h in hatched:

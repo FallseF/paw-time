@@ -1316,9 +1316,15 @@ func _result(r: Dictionary) -> void:
 	row.add_theme_constant_override("separation", 8)
 	v.add_child(row)
 	if won:
-		var b1 := Kit.button("つぎへ" if r.first else "地図へ", Kit.ACCENT, func():
+		var to_room: bool = GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles >= 2
+		if to_room:
+			var tl := Kit.text("夜は川べりで、新しい仲間をすくおう", 13, Color("5b6fc2"), true)
+			tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			v.add_child(tl)
+			v.move_child(tl, v.get_child_count() - 2)
+		var b1 := Kit.button("休憩室へ" if to_room else ("つぎへ" if r.first else "地図へ"), Kit.ACCENT, func():
 			GameState.set_meta("open_next", r.first)
-			main.go("map"))
+			main.go("room" if to_room else "map"))
 		b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(b1)
 		var b2 := Kit.button("もう一回", Color("b0a4b8"), func(): main.go("defense"))
