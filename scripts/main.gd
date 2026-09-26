@@ -35,6 +35,10 @@ func _ready() -> void:
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		GameState.sleep(7, "")
+		var force := OS.get_environment("OBAKE_RARE")
+		if force != "":
+			GameState.add_obake(force)
+			GameState.hatched.push_front({"id": force, "is_new": true, "level": 1, "rare": true})
 	go(start if SCREENS.has(start) else "morning", true)
 	root.add_child(fade)
 	_maybe_autoshot()

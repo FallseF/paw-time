@@ -299,7 +299,7 @@ func _next() -> void:
 	burst.restart()
 	burst.emitting = true
 	orb.queue_free()
-	current_obake = Obake3D.new().setup(h.id)
+	current_obake = Obake3D.make(h.id)
 	current_obake.position = Vector3(0, 0.55, 0.3)
 	current_obake.scale = Vector3.ONE * 0.05
 	world.add_child(current_obake)
@@ -310,7 +310,7 @@ func _next() -> void:
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
-	card_sub.text = "Lv%d ・ %s" % [h.level, _type_label(sp.type)]
+	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
 	card_desc.text = sp.desc
 	card.position.y = 430
 	var tw4 := create_tween().set_parallel()

@@ -23,6 +23,12 @@ var eyes: Array[MeshInstance3D] = []
 var bob := true
 
 
+static func make(id: String) -> Obake3D:
+	if Rares.is_rare(id):
+		return RareObake3D.new().setup(id)
+	return Obake3D.new().setup(id)
+
+
 static func toon(color: Color, rim := 0.35, emission := 0.0) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color

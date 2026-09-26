@@ -120,9 +120,9 @@ func _build_world() -> void:
 	var n := GameState.owned.size()
 	for i in n:
 		var o: Dictionary = GameState.owned[i]
-		var ob := Obake3D.new().setup(o.id)
+		var ob := Obake3D.make(o.id)
 		ob.scale = Vector3.ONE * 0.62
-		ob.position = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.2, 1.8))
+		ob.position = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
 		world.add_child(ob)
 		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0)})
 
@@ -146,7 +146,7 @@ func _process(delta: float) -> void:
 		var to: Vector3 = w.target
 		var d := to - ob.position
 		if d.length() < 0.05:
-			w.target = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.2, 1.8))
+			w.target = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
 			w.wait = randf_range(1.0, 4.0)
 			continue
 		ob.position += d.normalized() * min(d.length(), 0.5 * delta)

@@ -415,7 +415,7 @@ func _pick_species() -> String:
 func _spawn(id: String) -> void:
 	if obake:
 		obake.queue_free()
-	obake = Obake3D.new().setup(id)
+	obake = Obake3D.make(id)
 	obake.position = obake_home
 	obake.rotation.y = 0
 	obake.scale = Vector3.ONE * 0.01

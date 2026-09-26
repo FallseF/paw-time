@@ -173,10 +173,8 @@ func _shelf() -> Control:
 
 
 func _card_texture(id: String) -> Texture2D:
-	var path := "res://assets/gen/cards/%s.png" % id
-	if ResourceLoader.exists(path):
-		return load(path)
-	return null
+	var path := RareObake3D.art_path(id)
+	return load(path) if path != "" else null
 
 
 func _card(r: Dictionary) -> Control:
