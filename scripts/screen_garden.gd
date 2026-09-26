@@ -729,7 +729,19 @@ func _end_act(w: Dictionary) -> void:
 
 
 ## 庭のおばけをタップすると、跳ねてひとこと
+var orbit := 0.0
+
+
+## 庭をよこになぞると、ぐるっと少し回して見られる
 func _gui_input(event: InputEvent) -> void:
+	if (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) or event is InputEventScreenDrag:
+		if busy:
+			return
+		orbit = clampf(orbit - event.relative.x * 0.006, -0.6, 0.6)
+		var t := cam_home
+		t.origin = Basis(Vector3.UP, orbit) * cam_home.origin
+		cam.transform = t.looking_at(Vector3(0, 0.0, -0.4), Vector3.UP)
+		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var pos: Vector2 = event.position
@@ -1244,6 +1256,7 @@ func _reveal_deco(role: String) -> void:
 
 ## カメラを寄せる（mode 1）/ 戻す（mode 0）
 func _focus(at: Vector3, mode: int) -> void:
+	orbit = 0.0
 	var to := cam_home
 	if mode == 1:
 		to.origin = at + Vector3(0, 2.4, 4.4)
