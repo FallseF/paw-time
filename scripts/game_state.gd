@@ -5,6 +5,7 @@ extends Node
 ## 記録がなくても（ひとりで遊ぶ）毎日の夜が来る。記録をつなぐと（見本データ）シフトと睡眠が自動で入る。
 
 signal changed
+signal goal_completed(text: String, all_done: bool)
 
 const SAVE_PATH := "user://obake_b_save.json"
 
@@ -125,6 +126,8 @@ var tut := {} # チュートリアルの済み印
 var total_scooped := 0
 var night_plan := "" # "" / extra（もうひと玉）/ market（夜店）
 var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい）
+var goals: Array = [] # 今日のめあて {id, text, done}
+var last_goals := 0
 
 
 func _ready() -> void:
@@ -180,6 +183,9 @@ func reset(new_mode := "data") -> void:
 	rare_pending = []
 	tut = {}
 	total_scooped = 0
+	night_plan = ""
+	lit_deco = ""
+	make_goals()
 	changed.emit()
 
 
@@ -496,6 +502,63 @@ func tonight_orbs() -> Array:
 	return out
 
 
+# ---------- 今日のめあて ----------
+
+const GOAL_TEXT := {
+	"scoop3": "玉を3個すくう",
+	"talk": "庭のおばけに話しかける",
+	"usual": "いつもの時刻（±20分）に寝る",
+	"hours7": "7時間以上眠る",
+	"light": "飾りをひとつともす",
+	"match": "仕事のポイで、同じ色の玉をすくう",
+	"zukan": "図鑑でヒントを見る",
+	"early_ok": "0時までに寝る",
+}
+
+
+func make_goals() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_base * 13 + day * 71
+	var sleep_goal: String = ["usual", "hours7", "early_ok"][rng.randi() % 3]
+	if bed_hist.is_empty():
+		sleep_goal = "hours7"
+	var pool := ["scoop3", "talk", "zukan"]
+	if not decos.is_empty():
+		pool.append("light")
+	var typed := false
+	for k in ["receipt", "bubble", "tray", "pan", "box"]:
+		if nets.get(k, 0) > 0:
+			typed = true
+	if typed or today().role != "":
+		pool.append("match")
+	var picks: Array = []
+	while picks.size() < 2:
+		var g: String = pool[rng.randi() % pool.size()]
+		if not picks.has(g):
+			picks.append(g)
+	goals = []
+	for g in picks + [sleep_goal]:
+		goals.append({"id": g, "text": GOAL_TEXT[g], "done": false})
+
+
+## めあてを達成したら、めぐみ +3。3つそろうと、いつものポイ +1
+func goal(id: String) -> void:
+	for g in goals:
+		if g.id == id and not g.done:
+			g.done = true
+			growth += 3
+			var all := goals.all(func(x): return x.done)
+			if all:
+				nets["plain"] = mini(nets["plain"] + 1, 6)
+			goal_completed.emit(g.text, all)
+			changed.emit()
+			return
+
+
+func goals_done() -> int:
+	return goals.filter(func(x): return x.done).size()
+
+
 # ---------- 眠る ----------
 
 ## 眠る。リズム・庭の育ち・夜の訪問者・レア・玉の孵化をまとめて決める。
@@ -511,6 +574,14 @@ func sleep(bed: int, wake: int) -> void:
 	growth += gain
 	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:
 		garden_level += 1
+	var diff_usual: int = absi(bed - usual_bed())
+	if not bed_hist.is_empty() and diff_usual <= 20:
+		goal("usual")
+	if h >= 7.0:
+		goal("hours7")
+	if bed <= 360:
+		goal("early_ok")
+	last_goals = goals_done()
 	bed_hist.append(bed)
 	sleep_hist.append(h)
 	good_hist.append(ns.good)
@@ -544,6 +615,7 @@ func sleep(bed: int, wake: int) -> void:
 		weekend_shifts = {}
 	# 毎日のいつものポイ（使い残しは持ち越し、最大5本）
 	nets["plain"] = mini(5, nets["plain"] + 3)
+	make_goals()
 	phase = "morning"
 	save()
 	changed.emit()
@@ -680,7 +752,7 @@ func rare_context(s: Dictionary, hours: int, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals"]
 
 
 func save() -> void:

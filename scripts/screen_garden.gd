@@ -29,6 +29,8 @@ var poi_row: HBoxContainer
 var card: PanelContainer
 var card_box: VBoxContainer
 var toast: PanelContainer
+var goals_btn: Button
+var goals_panel: PanelContainer
 var busy := false
 var _t := 0.0
 
@@ -152,6 +154,8 @@ func _build_world() -> void:
 	fireflies.material_override = Kit.glow(Color("d8ff9a"), 4.0)
 	world.add_child(fireflies)
 
+	_weather(GameState.today().weather)
+
 	burst = CPUParticles3D.new()
 	burst.emitting = false
 	burst.one_shot = true
@@ -198,6 +202,46 @@ func _grass_tufts() -> void:
 		world.add_child(g)
 		g.scale = Vector3.ONE * 0.01
 		create_tween().tween_property(g, "scale", Vector3.ONE, 0.5).set_delay(rng.randf() * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+var thunder_t := 0.0
+var weather := ""
+
+
+## 今日の天気：雨・雪・雷
+func _weather(w: String) -> void:
+	weather = w
+	if w not in ["雨", "雪", "雷"]:
+		return
+	var p := CPUParticles3D.new()
+	p.amount = 160 if w != "雪" else 90
+	p.lifetime = 1.2 if w != "雪" else 5.0
+	p.preprocess = p.lifetime
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(5, 0.2, 4)
+	p.position = Vector3(0, 5, 0)
+	p.direction = Vector3.DOWN
+	p.spread = 5 if w != "雪" else 40
+	p.gravity = Vector3(0, -9 if w != "雪" else -0.3, 0)
+	p.initial_velocity_min = 2.0 if w != "雪" else 0.3
+	p.initial_velocity_max = 3.0 if w != "雪" else 0.6
+	var m: Mesh
+	if w == "雪":
+		var sm := SphereMesh.new()
+		sm.radius = 0.035
+		sm.height = 0.07
+		m = sm
+	else:
+		var bm := BoxMesh.new()
+		bm.size = Vector3(0.012, 0.22, 0.012)
+		m = bm
+	p.mesh = m
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.8, 0.88, 1.0, 0.55) if w != "雪" else Color(1, 1, 1, 0.9)
+	p.material_override = mat
+	world.add_child(p)
 
 
 func _mat(c: Color) -> StandardMaterial3D:
@@ -548,6 +592,19 @@ func _tween_night(to: float, dur := 1.4) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if weather == "雷":
+		thunder_t -= delta
+		if thunder_t <= 0:
+			thunder_t = randf_range(5.0, 9.0)
+			var bg := env.background_color
+			env.background_color = Color("fff6d8")
+			sun.light_energy += 1.5
+			Kit.play(self, "tear", 0.35, -8)
+			var tw := create_tween()
+			tw.tween_interval(0.08)
+			tw.tween_callback(func():
+				env.background_color = bg
+				_apply_time(night))
 	for f in flowers:
 		f.rotation.x = sin(_t * 1.3 + f.position.x * 3.0) * 0.06
 	for w in walkers:
@@ -629,6 +686,7 @@ func _gui_input(event: InputEvent) -> void:
 	var tw := create_tween()
 	tw.tween_property(o, "position:y", o.position.y + 0.5, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(o, "position:y", o.position.y, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	GameState.goal("talk")
 	var l := Kit.label3d(_line_for(best.id), 34, Color("fff6e8"))
 	l.position = Vector3(0, 1.9, 0)
 	o.add_child(l)
@@ -698,6 +756,19 @@ func _build_ui() -> void:
 	poi_row.add_theme_constant_override("separation", 6)
 	mv.add_child(poi_row)
 
+	goals_btn = Button.new()
+	goals_btn.position = Vector2(236, 142)
+	goals_btn.size = Vector2(112, 30)
+	goals_btn.add_theme_font_override("font", Kit.black())
+	goals_btn.add_theme_font_size_override("font_size", 12)
+	for k in ["normal", "hover", "pressed", "focus"]:
+		goals_btn.add_theme_stylebox_override(k, Kit.pill(Color("fff6d8"), 15, 0.12, Vector2(8, 3)))
+	goals_btn.add_theme_color_override("font_color", Color("8a5a10"))
+	goals_btn.add_theme_color_override("font_hover_color", Color("8a5a10"))
+	goals_btn.pressed.connect(_toggle_goals)
+	add_child(goals_btn)
+	GameState.goal_completed.connect(func(_t, _a): _refresh_hud())
+
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.96), 24, 0.18, Vector2(16, 14)))
 	card.position = Vector2(14, 420)
@@ -710,6 +781,10 @@ func _build_ui() -> void:
 
 func _refresh_hud() -> void:
 	top_day.text = GameState.day_label()
+	goals_btn.text = "めあて %d/3 ▾" % GameState.goals_done()
+	if goals_panel:
+		_toggle_goals()
+		_toggle_goals()
 	var t := GameState.tier()
 	rhythm_bar.value = GameState.rhythm / 100.0
 	(rhythm_bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = GameState.TIER_COLOR[t]
@@ -746,6 +821,28 @@ func _refresh_hud() -> void:
 		poi_row.add_child(Kit.text("×%d" % n, 12))
 	var stp := Kit.text("破れにくさ ×%.2f" % GameState.poi_strength(), 12, Color("8b7bff"))
 	poi_row.add_child(stp)
+
+
+func _toggle_goals() -> void:
+	if goals_panel:
+		goals_panel.queue_free()
+		goals_panel = null
+		return
+	goals_panel = PanelContainer.new()
+	goals_panel.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.98, 0.9, 0.97), 16, 0.18, Vector2(12, 8)))
+	goals_panel.position = Vector2(118, 176)
+	goals_panel.size = Vector2(230, 0)
+	add_child(goals_panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 3)
+	goals_panel.add_child(v)
+	v.add_child(Kit.text("今日のめあて（1つ めぐみ+3）", 11, Color("8a7a88")))
+	for g in GameState.goals:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.add_child(Kit.text("●" if g.done else "○", 12, Color("e0a030") if g.done else Color("b8aeb6")))
+		row.add_child(Kit.wrap(Kit.text(g.text, 12, Color("4a3f52") if not g.done else Color("a89ea6"))))
+		v.add_child(row)
 
 
 func _clear_card() -> void:
@@ -874,6 +971,8 @@ func _deco_chips() -> void:
 		var role: String = r
 		b.pressed.connect(func():
 			GameState.lit_deco = "" if GameState.lit_deco == role else role
+			if GameState.lit_deco != "":
+				GameState.goal("light")
 			Kit.play(self, "bell", 1.2, -6)
 			_light_deco()
 			_show_card())

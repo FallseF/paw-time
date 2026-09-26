@@ -277,6 +277,8 @@ func _card(r: Dictionary) -> Control:
 
 
 func _show_detail(r: Dictionary) -> void:
+	if not GameState.seen.has(r.id):
+		GameState.goal("zukan")
 	if detail:
 		detail.queue_free()
 	var found: bool = GameState.seen.has(r.id)

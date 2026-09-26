@@ -671,6 +671,10 @@ func _lift() -> void:
 	Engine.time_scale = 1.0
 	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
 	GameState.total_scooped += 1
+	if caught_count + 1 >= 3:
+		GameState.goal("scoop3")
+	if GameState.NETS[poi_type].type == target.data.type:
+		GameState.goal("match")
 	caught_count += 1
 	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
