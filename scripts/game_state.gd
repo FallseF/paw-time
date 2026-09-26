@@ -132,6 +132,13 @@ var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
 var stall_claimed := false
 var force_dream := false # 宣伝動画用
+
+# ---------- 島（自分たちの島をつくって、シェアする） ----------
+var layout := {} # 島の物の置き場所 key → {x, z, r(45°単位), h(しまった)}
+var nickname := ""
+var host_id := "" # 島のあるじ（マイおばけ猫が決まったら、ここに入れる）。空なら最初の子
+var keepsakes: Array = [] # おでかけ先に置いてきたおばけ {owner, id, day}
+var visit := {} # いま、おでかけ中の島（空なら自分の島）
 var week_start_seen := 1
 var pending_toasts: Array = [] # 寝ている間に達成しためあての知らせ
 var week_start_growth := 0
@@ -200,6 +207,10 @@ func reset(new_mode := "data") -> void:
 	week_start_seen = 1
 	week_start_growth = 0
 	pending_toasts = []
+	layout = {}
+	host_id = ""
+	keepsakes = []
+	visit = {}
 	night_plan = ""
 	lit_deco = ""
 	work_hist = []
@@ -919,7 +930,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes"]
 
 
 func save() -> void:
@@ -975,3 +986,122 @@ func load_game() -> bool:
 func delete_save() -> void:
 	if has_save():
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+
+
+# ---------- 島のシェア（サーバーなし：URL の #island=<code>） ----------
+
+const SHARE_URL := "https://obake-breakroom-b-sleep.vercel.app/#island="
+## 動かせる物（順番がコードの番号。後ろに足すだけにする）
+const ISLAND_ITEMS := ["flowerbed", "lantern", "pond", "bench", "sakura", "moondeck", "dream", "deco_register", "deco_hall", "deco_dish", "deco_kitchen", "deco_stock", "deco_mask", "res_kakashi", "res_jizo", "res_nebukuro"]
+const ITEM_NAME := {"flowerbed": "花壇", "lantern": "灯籠", "pond": "池", "bench": "縁台", "sakura": "桜", "moondeck": "月見台", "dream": "夢見の木", "deco_register": "パラソル席", "deco_hall": "赤ちょうちん", "deco_dish": "泡のたらい", "deco_kitchen": "おでん鍋", "deco_stock": "秘密基地", "deco_mask": "お面屋", "res_kakashi": "かかし", "res_jizo": "おじぞう", "res_nebukuro": "ねぶくろ"}
+
+
+func species_list() -> Array:
+	var out: Array = NORMAL.duplicate()
+	for r in Rares.LIST:
+		out.append(r.id)
+	return out
+
+
+func host() -> String:
+	if host_id != "" and seen.has(host_id):
+		return host_id
+	return owned[0].id if not owned.is_empty() else "receipt"
+
+
+## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）
+func island_code(items_present: Array) -> String:
+	var b := PackedByteArray()
+	b.append(1)
+	b.append(garden_level)
+	b.append(tier())
+	var nm := (nickname if nickname != "" else "ななし").to_utf8_buffer()
+	if nm.size() > 30:
+		nm = nm.slice(0, 30)
+	b.append(nm.size())
+	b.append_array(nm)
+	var sl := species_list()
+	b.append(maxi(0, sl.find(host())))
+	var res: Array = []
+	for o in owned.slice(-12):
+		res.append(maxi(0, sl.find(o.id)))
+	b.append(res.size())
+	for r in res:
+		b.append(r)
+	var its: Array = []
+	for key in items_present:
+		var idx := ISLAND_ITEMS.find(key)
+		if idx < 0:
+			continue
+		var l: Dictionary = layout.get(key, {})
+		if l.get("h", false):
+			continue
+		its.append([idx, l])
+	b.append(its.size())
+	for it in its:
+		var key: String = ISLAND_ITEMS[it[0]]
+		var lv := 0
+		if key.begins_with("deco_"):
+			lv = deco_level(key.substr(5))
+		var l: Dictionary = it[1]
+		b.append(it[0] | (lv << 6))
+		b.append(clampi(int(round((float(l.get("x", 99.0)) + 6.0) * 20.0)), 0, 255) if l.has("x") else 255)
+		b.append(clampi(int(round((float(l.get("z", 0.0)) + 6.0) * 20.0)), 0, 255) if l.has("x") else 255)
+		b.append(int(l.get("r", 0)) & 7)
+	return Marshalls.raw_to_base64(b).replace("+", "-").replace("/", "_").replace("=", "")
+
+
+## コードから島を読む。こわれていたら {} を返す
+func decode_island(code: String) -> Dictionary:
+	code = code.strip_edges()
+	if code.contains("#island="):
+		code = code.split("#island=")[1]
+	code = code.replace("-", "+").replace("_", "/")
+	while code.length() % 4 != 0:
+		code += "="
+	var b := Marshalls.base64_to_raw(code)
+	if b.size() < 6 or b[0] != 1:
+		return {}
+	var i := 1
+	var d := {"level": b[1], "tier": clampi(b[2], 0, 3)}
+	i = 3
+	var n: int = b[i]
+	i += 1
+	if i + n > b.size():
+		return {}
+	d.name = b.slice(i, i + n).get_string_from_utf8()
+	i += n
+	var sl := species_list()
+	d.host = sl[clampi(b[i], 0, sl.size() - 1)]
+	i += 1
+	var rn: int = b[i]
+	i += 1
+	d.residents = []
+	for k in rn:
+		if i >= b.size():
+			return {}
+		d.residents.append(sl[clampi(b[i], 0, sl.size() - 1)])
+		i += 1
+	var itn: int = b[i] if i < b.size() else 0
+	i += 1
+	d.items = {}
+	d.layout = {}
+	d.decos = {}
+	for k in itn:
+		if i + 3 >= b.size():
+			return {}
+		var idx: int = b[i] & 63
+		var lv: int = b[i] >> 6
+		var x: int = b[i + 1]
+		var z: int = b[i + 2]
+		var r: int = b[i + 3]
+		i += 4
+		if idx >= ISLAND_ITEMS.size():
+			continue
+		var key: String = ISLAND_ITEMS[idx]
+		d.items[key] = true
+		if x != 255:
+			d.layout[key] = {"x": x / 20.0 - 6.0, "z": z / 20.0 - 6.0, "r": r}
+		if key.begins_with("deco_"):
+			d.decos[key.substr(5)] = maxi(1, lv)
+	return d

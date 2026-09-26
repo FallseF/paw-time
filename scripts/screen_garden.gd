@@ -96,11 +96,11 @@ func _build_world() -> void:
 	cam.look_at(Vector3(0, 0.0, -0.4))
 	cam_home = cam.transform
 
-	var L: int = GameState.garden_seen_level
-	var t: int = GameState.tier()
+	var L: int = _L()
+	var t: int = _T()
 	# 地面：さびしい土 → 芝
 	var ground_c := Color("8d7b68") if L < 1 else _grass_color()
-	_box(Vector3(16, 0.1, 16), Vector3(0, -0.05, 0), ground_c)
+	_build_land(L, ground_c)
 	if L >= 1:
 		_grass_tufts()
 	# 小石
@@ -110,6 +110,9 @@ func _build_world() -> void:
 		var st := _ball(rr.randf_range(0.07, 0.14), Color("9a948c"))
 		st.scale = Vector3(1.3, 0.6, 1.0)
 		st.position = Vector3(rr.randf_range(-3.4, 3.4), 0.03, rr.randf_range(-2.2, 2.8))
+		if not _inside(st.position):
+			st.free()
+			continue
 		world.add_child(st)
 	# 石の小道
 	for i in 6:
@@ -134,16 +137,15 @@ func _build_world() -> void:
 		_build_tree(Vector3(3.2, 0, -2.6), Color("b9a7ff"), "dream")
 	# 庭が満開になったあとも、めぐみ 80 ごとに夢見草が一輪ふえる
 	var extra_f: int = maxi(0, (GameState.growth - GameState.GARDEN[-1].need) / 80) if L >= GameState.GARDEN.size() - 1 else 0
-	for i in mini(GameState.dream_flowers + extra_f, 40):
+	for i in (0 if _vis() else mini(GameState.dream_flowers + extra_f, 40)):
 		var f := _dream_flower(Vector3(-3.3 + (i % 8) * 0.35, 0, 2.6 + (i / 8) * 0.25))
 		world.add_child(f)
 	_build_next_stake(L)
 	_build_dressing(L)
 	# 仕事の飾り
-	for role in GameState.decos:
-		var lv: int = GameState.deco_level(role)
-		if lv > 0:
-			_build_deco(role, lv)
+	var dd := _decos()
+	for role in dd:
+		_build_deco(role, dd[role])
 
 	# 夜の灯り（ほたる）
 	fireflies = CPUParticles3D.new()
@@ -164,8 +166,9 @@ func _build_world() -> void:
 	fireflies.material_override = Kit.glow(Color("d8ff9a"), 4.0)
 	world.add_child(fireflies)
 
-	_weather(GameState.today().weather)
-	_season_fx(GameState.season(), GameState.today().weather)
+	if not _vis():
+		_weather(GameState.today().weather)
+		_season_fx(GameState.season(), GameState.today().weather)
 
 	# 夜空の月と星（夜だけ見える）
 	sky_moon = _ball(0.45, Color("fff1c8"), Kit.glow(Color("fff1c8"), 1.6))
@@ -207,7 +210,17 @@ func _build_world() -> void:
 
 	# おばけたち（最大 14 体まで庭に出る）
 	# 新しく来た子を優先して、18 体まで
-	for o in GameState.owned.slice(-18):
+	var res: Array = []
+	if _vis():
+		for id in V.residents:
+			res.append({"id": id, "level": 3})
+	else:
+		res = GameState.owned.slice(-18)
+	var host_id: String = V.host if _vis() else GameState.host()
+	_build_host(host_id)
+	for o in res:
+		if o.id == host_id:
+			continue
 		var ob := Obake3D.make(o.id)
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
 		if Rares.is_rare(o.id):
@@ -217,7 +230,7 @@ func _build_world() -> void:
 		world.add_child(ob)
 		var w := {"o": ob, "id": o.id, "target": ob.position, "wait": randf_range(0.5, 3.0), "act": "", "emote": null}
 		# けさ来た子は、縁側から出てくる
-		if GameState.newcomers.has(o.id):
+		if not _vis() and GameState.newcomers.has(o.id):
 			ob.position = Vector3(randf_range(-1.0, 0.6), 0.3, -2.9)
 			w.target = Vector3(randf_range(-2.2, 2.0), 0, randf_range(-2.4, -1.9)) # 縁側の前に並ぶ
 			w.wait = 0.8 + GameState.newcomers.find(o.id) * 0.6
@@ -234,7 +247,7 @@ func _build_world() -> void:
 
 ## 芝の色（リズムが低いと、少し枯れた色）
 func _grass_color() -> Color:
-	return Color("7d8a58").lerp(Color("5f9150"), GameState.tier() / 3.0)
+	return Color("7d8a58").lerp(Color("5f9150"), _T() / 3.0)
 
 
 func _grass_tufts() -> void:
@@ -244,6 +257,9 @@ func _grass_tufts() -> void:
 		var p := Vector3(rng.randf_range(-3.6, 3.6), 0, rng.randf_range(-2.6, 2.8))
 		var g := _cone(0.05, rng.randf_range(0.12, 0.22), Color("5d8c4a").lerp(Color("88c070"), rng.randf()))
 		g.position = p + Vector3(0, 0.08, 0)
+		if not _inside(p, 0.2):
+			g.free()
+			continue
 		world.add_child(g)
 		g.scale = Vector3.ONE * 0.01
 		create_tween().tween_property(g, "scale", Vector3.ONE, 0.5).set_delay(rng.randf() * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -362,11 +378,157 @@ func _ball(r: float, c: Color, mat: Material = null) -> MeshInstance3D:
 
 
 func _group(name: String, pos: Vector3) -> Node3D:
+	if items.has(name) and is_instance_valid(items[name]) and not items[name].is_queued_for_deletion():
+		items[name].queue_free()
 	var n := Node3D.new()
 	n.position = pos
+	n.set_meta("home", pos)
+	var l: Dictionary = _lay().get(name, {})
+	if l.has("x"):
+		n.position = Vector3(float(l.x), pos.y, float(l.z))
+	n.rotation.y = int(l.get("r", 0)) * PI / 4.0
+	if GameState.ISLAND_ITEMS.has(name):
+		n.visible = V.items.has(name) if _vis() else not l.get("h", false)
 	world.add_child(n)
 	items[name] = n
+	_cur_group = name
 	return n
+
+
+# ---------- 島（おでかけ中は、読んだコードの島を出す） ----------
+
+var V := {} # おでかけ先の島（空なら自分の島）
+var _cur_group := ""
+
+
+func _vis() -> bool:
+	return not V.is_empty()
+
+
+func _lay() -> Dictionary:
+	return V.layout if _vis() else GameState.layout
+
+
+func _L() -> int:
+	return int(V.level) if _vis() else GameState.garden_seen_level
+
+
+func _T() -> int:
+	return int(V.tier) if _vis() else GameState.tier()
+
+
+func _decos() -> Dictionary:
+	if _vis():
+		return V.decos
+	var d := {}
+	for role in GameState.decos:
+		var lv: int = GameState.deco_level(role)
+		if lv > 0:
+			d[role] = lv
+	return d
+
+
+func _deco_lv(role: String) -> int:
+	return int(_decos().get(role, 0))
+
+
+## 住人の行き先。物を動かしたら、いっしょに動く
+func _spot(d: Dictionary) -> void:
+	var g: Node3D = items.get(_cur_group)
+	if g and is_instance_valid(g):
+		if not g.visible:
+			return
+		var home: Vector3 = g.get_meta("home", g.position)
+		d.group = _cur_group
+		d.local = d.pos - home
+		d.pos = g.position + Basis(Vector3.UP, g.rotation.y) * d.local
+	spots.append(d)
+
+
+func _move_spots(name: String) -> void:
+	var g: Node3D = items.get(name)
+	for sp in spots:
+		if sp.get("group", "") == name:
+			sp.pos = g.position + Basis(Vector3.UP, g.rotation.y) * sp.local
+
+
+var land_grass: MeshInstance3D
+var land_sand: MeshInstance3D
+var sea_mat: StandardMaterial3D
+
+
+## 島：海・砂浜・芝の円と、うしろの丘（休憩室が建つ）
+func _build_land(L: int, ground_c: Color) -> void:
+	var sea := MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(40, 40)
+	sea.mesh = pm
+	sea_mat = StandardMaterial3D.new()
+	sea_mat.albedo_color = Color("4fa8bd")
+	sea_mat.roughness = 0.4
+	sea.material_override = sea_mat
+	sea.position.y = -0.14
+	world.add_child(sea)
+	land_sand = _cyl(1.0, 0.12, Color("e8d3a8"))
+	land_sand.position.y = -0.1
+	world.add_child(land_sand)
+	land_grass = _cyl(1.0, 0.1, ground_c)
+	land_grass.position.y = -0.05
+	world.add_child(land_grass)
+	_box(Vector3(14, 0.1, 5), Vector3(0, -0.05, -5.0), ground_c).name = "hill"
+	_box(Vector3(14.6, 0.12, 5.2), Vector3(0, -0.1, -5.0), Color("e8d3a8"))
+	var r := _island_r(L)
+	land_grass.scale = Vector3(r, 1, r)
+	land_sand.scale = Vector3(r + 0.45, 1, r + 0.45)
+	# 波打ちぎわの白い輪
+	for i in 40:
+		var a := TAU * i / 40.0
+		if sin(a) < -0.55:
+			continue
+		var f := _ball(0.07, Color("f4fbff"), Obake3D.flat(Color("f4fbff")))
+		f.scale = Vector3(2.2, 0.25, 1.0)
+		f.rotation.y = -a + PI / 2
+		f.position = Vector3(cos(a) * (r + 0.55), -0.09, sin(a) * (r + 0.55))
+		f.name = "foam"
+		f.set_meta("a", a)
+		world.add_child(f)
+
+
+func _grow_land(L: int) -> void:
+	var r := _island_r(L)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(land_grass, "scale", Vector3(r, 1, r), 0.8).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(land_sand, "scale", Vector3(r + 0.45, 1, r + 0.45), 0.8).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	for c in world.get_children():
+		if c.name.begins_with("foam") and c.has_meta("a"):
+			var a: float = c.get_meta("a")
+			tw.tween_property(c, "position", Vector3(cos(a) * (r + 0.55), -0.09, sin(a) * (r + 0.55)), 0.8)
+
+
+var host_node: Obake3D
+
+
+## 島のあるじ（縁側の前で出むかえる）。マイおばけ猫が決まったら GameState.host_id に入れるだけでよい
+func _build_host(id: String) -> void:
+	if host_node and is_instance_valid(host_node):
+		host_node.queue_free()
+	host_node = Obake3D.make(id)
+	host_node.scale = Vector3.ONE * (0.46 if Rares.is_rare(id) else 0.62)
+	host_node.position = Vector3(0.9, 0, -2.15)
+	world.add_child(host_node)
+	var l := Kit.label3d("あるじ", 26, Color("ffe27a"))
+	l.pixel_size = 0.006
+	l.position = Vector3(0, 1.75 if not Rares.is_rare(id) else 2.4, 0)
+	host_node.add_child(l)
+
+
+## 島の大きさ（段が上がるほど、岸がひろがる）
+func _island_r(L: int) -> float:
+	return 3.6 + L * 0.13
+
+
+func _inside(p: Vector3, margin := 0.3) -> bool:
+	return Vector2(p.x, p.z).length() < _island_r(_L()) - margin or p.z < -2.4
 
 
 ## 段が上がるほど、ひと目で分かる変化：道の灯り（段の数だけ）・生け垣・野の花・夜空の色
@@ -426,16 +588,51 @@ func _build_dressing(L: int) -> void:
 		_paper("jizo", Vector3(3.2, 0, -1.2), 0.9, g)
 	if L >= 9:
 		_paper("nebukuro", Vector3(1.6, 0, 2.9), 1.0, g)
+	# 桟橋（段 4）と灯台（段 8）
+	if L >= 4:
+		var r := _island_r(L)
+		var dir := Vector3(0.93, 0, 0.36).normalized()
+		for k in 7:
+			var at := dir * (r - 0.4 + k * 0.42)
+			var plank := _box(Vector3(0.7, 0.06, 0.36), at + Vector3(0, 0.02, 0), Color("b07a4a"), g)
+			plank.rotation.y = atan2(dir.x, dir.z)
+			if k % 2 == 0:
+				for sx in [-0.3, 0.3]:
+					var post := _cyl(0.04, 0.4, Color("7a4e32"))
+					post.position = at + Basis(Vector3.UP, atan2(dir.x, dir.z)) * Vector3(sx, -0.1, 0)
+					g.add_child(post)
+	if L >= 8:
+		var lh := Vector3(3.6, 0, -2.9)
+		var tower := _cyl(0.3, 1.6, Color("fffaf2"), 0.22)
+		tower.position = lh + Vector3(0, 0.8, 0)
+		g.add_child(tower)
+		for k in 2:
+			var band := _cyl(0.29 - k * 0.04, 0.2, Color("e8505b"))
+			band.position = lh + Vector3(0, 0.45 + k * 0.6, 0)
+			g.add_child(band)
+		var lamp := _ball(0.18, Color("ffe7a8"), Kit.glow(Color("ffe08a"), 2.4))
+		lamp.position = lh + Vector3(0, 1.75, 0)
+		g.add_child(lamp)
+		var roof := _cyl(0.26, 0.24, Color("e8505b"), 0.0)
+		roof.position = lh + Vector3(0, 2.0, 0)
+		g.add_child(roof)
+		var ll := OmniLight3D.new()
+		ll.light_color = Color("ffe08a")
+		ll.omni_range = 3.5
+		ll.position = lh + Vector3(0, 1.8, 0.3)
+		ll.set_meta("dressing", true)
+		g.add_child(ll)
+		lamp_lights.append(ll)
 	# 夜空の色：段が上がるほど、深い紫に（満開で、ほんのり夢の色）
 	night_sky = Color("141a3a").lerp(Color("2a1f4f"), L / 10.0)
 
 
 ## 庭の住人（トゥーンの 3D）：かかし・おじぞう・ねぶくろ。ふつうのおばけと同じ体と顔で組む
-func _paper(name: String, at: Vector3, h: float, parent: Node3D) -> void:
+func _paper(name: String, at: Vector3, h: float, _parent: Node3D) -> void:
+	var gr := _group("res_" + name, at)
 	var o := Obake3D.new()
 	o.bob = false
-	o.position = at
-	parent.add_child(o)
+	gr.add_child(o)
 	match name:
 		"kakashi":
 			# 一本足のかかし：棒の上に白いおばけ、麦わら帽子、横木の腕
@@ -540,8 +737,8 @@ func _build_house() -> void:
 	sign.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	sign.no_depth_test = false
 	h.add_child(sign)
-	spots.append({"pos": Vector3(-1.5, 0.3, -2.8), "act": "sit"})
-	spots.append({"pos": Vector3(0.6, 0.3, -2.8), "act": "sleep"})
+	_spot({"pos": Vector3(-1.5, 0.3, -2.8), "act": "sit"})
+	_spot({"pos": Vector3(0.6, 0.3, -2.8), "act": "sleep"})
 
 
 func _build_lantern(at: Vector3, lit: bool) -> void:
@@ -561,7 +758,7 @@ func _build_lantern(at: Vector3, lit: bool) -> void:
 	roof.mesh.radial_segments = 4
 	roof.position = Vector3(0, 1.22, 0)
 	g.add_child(roof)
-	spots.append({"pos": at + Vector3(-0.5, 0, 0.4), "act": "look"})
+	_spot({"pos": at + Vector3(-0.5, 0, 0.4), "act": "look"})
 
 
 func _build_flowerbed(at: Vector3, L: int, t: int) -> void:
@@ -596,7 +793,7 @@ func _build_flowerbed(at: Vector3, L: int, t: int) -> void:
 		f.rotation.z = [0.6, 0.3, 0.08, 0.0][t] * (1 if i % 2 == 0 else -1)
 		f.scale = Vector3.ONE * [0.75, 0.9, 1.0, 1.12][t]
 		flowers.append(f)
-	spots.append({"pos": at + Vector3(0.1, 0, 0.8), "act": "water"})
+	_spot({"pos": at + Vector3(0.1, 0, 0.8), "act": "water"})
 
 
 func _build_pond(at: Vector3) -> void:
@@ -616,7 +813,7 @@ func _build_pond(at: Vector3) -> void:
 		s.scale = Vector3(1.3, 0.6, 1)
 		s.position = Vector3(cos(a) * 1.17, 0.04, sin(a) * 0.72)
 		g.add_child(s)
-	spots.append({"pos": at + Vector3(0, 0.02, 0), "act": "swim"})
+	_spot({"pos": at + Vector3(0, 0.02, 0), "act": "swim"})
 
 
 func _build_bench(at: Vector3) -> void:
@@ -624,8 +821,8 @@ func _build_bench(at: Vector3) -> void:
 	_box(Vector3(1.6, 0.08, 0.6), Vector3(0, 0.4, 0), Color("c9454a"), g)
 	for x in [-0.7, 0.7]:
 		_box(Vector3(0.08, 0.4, 0.5), Vector3(x, 0.2, 0), Color("6b4430"), g)
-	spots.append({"pos": at + Vector3(-0.4, 0.44, 0), "act": "sit"})
-	spots.append({"pos": at + Vector3(0.4, 0.44, 0), "act": "sit"})
+	_spot({"pos": at + Vector3(-0.4, 0.44, 0), "act": "sit"})
+	_spot({"pos": at + Vector3(0.4, 0.44, 0), "act": "sit"})
 
 
 func _build_tree(at: Vector3, leaf: Color, name: String) -> void:
@@ -649,7 +846,7 @@ func _build_tree(at: Vector3, leaf: Color, name: String) -> void:
 		l.position = Vector3(0, 1.6, 0.5)
 		g.add_child(l)
 		lamp_lights.append(l)
-	spots.append({"pos": at + Vector3(0.6, 0, 0.5), "act": "sleep"})
+	_spot({"pos": at + Vector3(0.6, 0, 0.5), "act": "sleep"})
 
 
 func _build_moon_deck(at: Vector3) -> void:
@@ -668,7 +865,7 @@ func _build_moon_deck(at: Vector3) -> void:
 	s.position = Vector3(0.4, 0.6, -0.3)
 	s.rotation.z = 0.2
 	g.add_child(s)
-	spots.append({"pos": at + Vector3(0, 0.2, 0.25), "act": "look"})
+	_spot({"pos": at + Vector3(0, 0.2, 0.25), "act": "look"})
 
 
 func _dream_flower(at: Vector3) -> Node3D:
@@ -688,7 +885,7 @@ func _build_deco(role: String, lv: int) -> void:
 	# 店の名札
 	var key := "deco_" + role
 	var store: String = GameState.deco_store.get(role, "")
-	if items.has(key) and store != "" and store != "手作り":
+	if items.has(key) and store != "" and store != "手作り" and not _vis():
 		var tag := Kit.label3d(store.split(" ")[-1], 30, Color("fff6e8"))
 		tag.pixel_size = 0.007
 		tag.position = Vector3(0, 0.3, 0.6)
@@ -741,7 +938,7 @@ func _build_deco_body(role: String, lv: int) -> void:
 				var cake := _cyl(0.08, 0.08, Color("ffd1e0"))
 				cake.position = Vector3(-0.12, 0.56, 0.05)
 				g.add_child(cake)
-			spots.append({"pos": Vector3(-1.9, 0, 1.9), "act": "tea"})
+			_spot({"pos": Vector3(-1.9, 0, 1.9), "act": "tea"})
 		"hall":
 			var g := _group("deco_hall", Vector3(0, 0, -1.9))
 			for x in [-2.6, 2.6]:
@@ -774,7 +971,7 @@ func _build_deco_body(role: String, lv: int) -> void:
 				var b := _ball(0.07 + randf() * 0.05, Color("f4fbff"))
 				b.position = Vector3(randf_range(-0.28, 0.28), 0.28 + randf() * 0.08, randf_range(-0.28, 0.28))
 				g.add_child(b)
-			spots.append({"pos": Vector3(0.9, 0.12, 2.5), "act": "swim"})
+			_spot({"pos": Vector3(0.9, 0.12, 2.5), "act": "swim"})
 		"kitchen":
 			var g := _group("deco_kitchen", Vector3(2.8, 0, -0.1))
 			_box(Vector3(0.9, 0.6, 0.6), Vector3(0, 0.3, 0), Color("a87250"), g)
@@ -809,14 +1006,14 @@ func _build_deco_body(role: String, lv: int) -> void:
 					var p := _cyl(0.03, 1.4, Color("6b4430"))
 					p.position = Vector3(x, 0.7, 0.3)
 					g.add_child(p)
-			spots.append({"pos": Vector3(2.8, 0, 0.5), "act": "eat"})
+			_spot({"pos": Vector3(2.8, 0, 0.5), "act": "eat"})
 		"stock":
 			var g := _group("deco_stock", Vector3(-3.0, 0, 0.0))
 			var n := 3 if lv < 2 else 6
 			for i in n:
 				var b := _box(Vector3(0.5, 0.36, 0.45), Vector3((i % 3) * 0.45 - 0.45, 0.18 + (i / 3) * 0.36, randf_range(-0.05, 0.05)), Color("d9a86c"), g)
 				b.rotation.y = randf_range(-0.15, 0.15)
-			spots.append({"pos": Vector3(-3.0, 0, 0.6), "act": "hide"})
+			_spot({"pos": Vector3(-3.0, 0, 0.6), "act": "hide"})
 
 
 # ---------- 時間帯 ----------
@@ -837,6 +1034,8 @@ func _apply_time(n: float) -> void:
 	crickets.volume_db = lerpf(-60.0, -14.0, n)
 	var day_bg := Color("f3d9c4").lerp(Color("cfe3ef"), 0.3)
 	env.background_color = day_bg.lerp(night_sky, n)
+	if sea_mat:
+		sea_mat.albedo_color = Color("4fa8bd").lerp(Color("1a2a52"), n)
 	env.ambient_light_color = Color("ffe9d6").lerp(Color("5a64a8"), n)
 	env.ambient_light_energy = lerpf(0.4, 0.55, n)
 	sun.light_color = Color("ffe0bf").lerp(Color("9fb4ff"), n)
@@ -941,8 +1140,12 @@ func _end_act(w: Dictionary) -> void:
 func _edge_point() -> Vector3:
 	if randf() < 0.25:
 		return Vector3(randf_range(-2.6, 2.4), 0, randf_range(-2.7, -2.3)) # 縁側の前
-	var side := -1.0 if randf() < 0.5 else 1.0
-	return Vector3(side * randf_range(1.6, 3.3), 0, randf_range(-1.6, 2.6))
+	for k in 8:
+		var side := -1.0 if randf() < 0.5 else 1.0
+		var p := Vector3(side * randf_range(1.6, 3.3), 0, randf_range(-1.6, 2.6))
+		if _inside(p, 0.5):
+			return p
+	return Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, -1.0))
 
 
 func _is_center(p: Vector3) -> bool:
@@ -1709,9 +1912,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	# 部品を作り直して、ぽんと出す
 	match level:
 		1:
-			var g := _box(Vector3(16, 0.1, 16), Vector3(0, -0.049, 0), _grass_color())
-			g.scale = Vector3(0.01, 1, 0.01)
-			create_tween().tween_property(g, "scale", Vector3.ONE, 0.8).set_trans(Tween.TRANS_SINE)
+			(land_grass.material_override as StandardMaterial3D).albedo_color = _grass_color()
 			_grass_tufts()
 		2, 4:
 			if items.has("flowerbed"):
@@ -1744,6 +1945,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	burst.emitting = true
 	_build_next_stake(level)
 	_build_dressing(level)
+	_grow_land(level)
 	_apply_time(night)
 	Kit.play(self, "grow")
 	Kit.shake(cam, 0.05, 0.3)
