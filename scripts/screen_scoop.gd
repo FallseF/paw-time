@@ -752,7 +752,7 @@ func _build_ui() -> void:
 
 	var gp := PanelContainer.new()
 	gp.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.72), 14))
-	gp.position = Vector2(12, 440)
+	gp.position = Vector2(12, 434)
 	gp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_label = _text("", 13, Color("ffe7a8"))
 	gp.add_child(goal_label)
@@ -817,7 +817,7 @@ func _build_ui() -> void:
 	hint = _text("", 14, Color(1, 1, 1, 0.9))
 	hint.add_theme_color_override("font_outline_color", Color("0b1026"))
 	hint.add_theme_constant_override("outline_size", 5)
-	hint.position = Vector2(0, 486)
+	hint.position = Vector2(0, 474)
 	hint.size = Vector2(360, 22)
 	add_child(hint)
 
