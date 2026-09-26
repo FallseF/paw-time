@@ -72,6 +72,8 @@ static func button(t: String, bg: Color, cb: Callable, fg := Color.WHITE, h := 5
 
 ## ボタンを「ここを押して」と揺らす（チュートリアル）
 static func nudge(c: Control) -> void:
+	if not is_instance_valid(c) or not c.is_inside_tree():
+		return
 	c.pivot_offset = c.size / 2
 	var tw := c.create_tween().set_loops()
 	tw.tween_property(c, "scale", Vector2(1.05, 1.05), 0.45).set_trans(Tween.TRANS_SINE)
