@@ -63,7 +63,7 @@ static func label(text: String, size := 16, color := INK, align := HORIZONTAL_AL
 	l.horizontal_alignment = align
 	# 折り返すラベルは横に広がるようにする（横並びの中で幅0になって縦書きに崩れるのを防ぐ）
 	if wrap:
-		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return l
 

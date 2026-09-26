@@ -84,6 +84,19 @@ func _ready() -> void:
 	flies.position = Vector3(0, 0.8, 0)
 	w.add_child(flies)
 
+	var lb := Button.new()
+	lb.flat = true
+	lb.text = "日本語" if Kit.is_en() else "EN"
+	lb.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	lb.add_theme_font_override("font", Kit.bold())
+	lb.add_theme_font_size_override("font_size", 14)
+	lb.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
+	lb.position = Vector2(270, 10)
+	lb.size = Vector2(80, 32)
+	lb.pressed.connect(func():
+		Kit.save_lang("ja" if Kit.is_en() else "en")
+		main.go("title", true))
+	add_child(lb)
 	var t1 := Kit.text("Paw Time", 44, Color("fff6e8"), true, HORIZONTAL_ALIGNMENT_CENTER)
 	t1.add_theme_color_override("font_outline_color", Color("0b1026"))
 	t1.add_theme_constant_override("outline_size", 10)
@@ -191,7 +204,7 @@ func _peek() -> String:
 	var dd := int(d.get("day", 0))
 	var lv := int(d.get("garden_level", 0))
 	var seen: Dictionary = d.get("seen", {})
-	return "%d週目 %s曜日 ・ 庭 Lv%d ・ 図鑑 %d" % [dd / 7 + 1, GameState.WEEKDAYS[dd % 7], lv + 1, seen.size()]
+	return tr("%d週目 %s曜日 ・ 庭 Lv%d ・ 図鑑 %d") % [dd / 7 + 1, tr(GameState.WEEKDAYS[dd % 7]), lv + 1, seen.size()]
 
 
 ## 手元で試すとき：島のコード（または URL）を貼って、おでかけ

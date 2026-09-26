@@ -4,6 +4,30 @@ class_name Kit
 static var _bold: FontFile
 static var _black: FontFile
 static var _sfx := {}
+const SETTINGS := "user://settings.cfg"
+
+
+static func is_en() -> bool:
+	return TranslationServer.get_locale().begins_with("en")
+
+
+## 言語（既定は英語）。タイトルの EN / 日本語 で切りかえ、settings.cfg に残す
+static func load_lang() -> void:
+	var c := ConfigFile.new()
+	var lang := "en"
+	if c.load(SETTINGS) == OK:
+		lang = c.get_value("ui", "lang", "en")
+	if OS.get_environment("OBAKE_LANG") != "":
+		lang = OS.get_environment("OBAKE_LANG")
+	TranslationServer.set_locale(lang)
+
+
+static func save_lang(lang: String) -> void:
+	var c := ConfigFile.new()
+	c.load(SETTINGS)
+	c.set_value("ui", "lang", lang)
+	c.save(SETTINGS)
+	TranslationServer.set_locale(lang)
 
 
 static func bold() -> FontFile:
@@ -45,7 +69,7 @@ static func text(t: String, size: int, color := Color("2a2233"), heavy := false,
 
 
 static func wrap(l: Label) -> Label:
-	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return l
 

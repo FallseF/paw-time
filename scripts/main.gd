@@ -24,6 +24,7 @@ var demo: Node
 
 
 func _ready() -> void:
+	Kit.load_lang()
 	# 宣伝動画の撮影用：ウィンドウの大きさを指定（OBAKE_WINDOW=720x1280）
 	var win := OS.get_environment("OBAKE_WINDOW")
 	if win != "":

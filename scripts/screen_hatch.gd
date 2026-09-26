@@ -54,7 +54,7 @@ func _ready() -> void:
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
-	header.text = "朝だ。光る玉が %d 個" % n_orbs
+	header.text = tr("朝だ。光る玉が %d 個") % n_orbs
 	next_btn.text = "玉をひらく"
 	# 最初の玉は、待たずにひらく
 	await get_tree().create_timer(0.7).timeout
@@ -213,7 +213,7 @@ func _text(t: String, size: int, color := Color("2a2233"), font: FontFile = null
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
 
 
@@ -228,7 +228,7 @@ func _build_ui() -> void:
 
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _pill(Color(1, 0.98, 0.95, 0.96), 24))
-	card.position = Vector2(24, 400)
+	card.position = Vector2(24, 372)
 	card.size = Vector2(312, 140)
 	card.modulate.a = 0.0
 	add_child(card)
@@ -246,7 +246,7 @@ func _build_ui() -> void:
 	v.add_child(card_title)
 	card_sub = _text("", 14, Color("8a7a88"))
 	v.add_child(card_sub)
-	card_desc = _text("", 14, Color("4a3f52"))
+	card_desc = _text("", 13, Color("4a3f52"))
 	v.add_child(card_desc)
 
 	next_btn = Button.new()
@@ -335,12 +335,12 @@ func _next() -> void:
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
-	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
+	card_sub.text = (tr("レア ・ %s") % tr(sp.group)) if Rares.is_rare(h.id) else (tr("Lv%d ・ %s") % [h.level, tr(_type_label(sp.type))])
 	card_desc.text = sp.desc
-	card.position.y = 430
+	card.position.y = 400
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
-	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw4.tween_property(card, "position:y", 372.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	index += 1
 	next_btn.text = "つぎの玉" if index < orbs.size() else "庭へ"
 	next_btn.disabled = false
@@ -391,15 +391,15 @@ func _open_batch() -> void:
 	sfx["chime"].play()
 	var lines: Array = []
 	for id in counts:
-		lines.append("%s ×%d（Lv%d）" % [GameState.info(id).name, counts[id], levels[id]])
+		lines.append("%s ×%d（Lv%d）" % [tr(GameState.info(id).name), counts[id], levels[id]])
 	card_title.text = "いつもの子たち"
 	badge.get_parent().visible = false
 	card_sub.text = "なかまが増えて、少し育った"
 	card_desc.text = "\n".join(lines)
-	card.position.y = 430
+	card.position.y = 400
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
-	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw4.tween_property(card, "position:y", 372.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	index = orbs.size()
 	next_btn.text = "庭へ"
 	next_btn.disabled = false

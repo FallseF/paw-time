@@ -239,7 +239,7 @@ func _build_world() -> void:
 			ob.position = Vector3(randf_range(-1.0, 0.6), 0.3, -2.9)
 			w.target = Vector3(randf_range(-2.2, 2.0), 0, randf_range(-2.4, -1.9)) # 縁側の前に並ぶ
 			w.wait = 0.8 + GameState.newcomers.find(o.id) * 0.6
-			var tag := Kit.label3d("NEW " + GameState.info(o.id).name, 30, Color("ffe27a"))
+			var tag := Kit.label3d("NEW " + tr(GameState.info(o.id).name), 30, Color("ffe27a"))
 			tag.position = Vector3(0, 1.9, 0)
 			ob.add_child(tag)
 			var tw := tag.create_tween()
@@ -720,7 +720,7 @@ func _build_next_stake(L: int) -> void:
 	post.name = "post"
 	_box(Vector3(1.0, 0.62, 0.04), Vector3(0, 0.85, 0), Color("f4e6cc"), g)
 	var names := {1: "芝", 2: "花壇", 3: "灯り", 4: "花", 5: "池", 6: "縁台", 7: "桜", 8: "ほたる", 9: "月見台", 10: "夢見の木"}
-	var l := Kit.label3d("%s\n予定地" % names.get(nx, ""), 44, Color("4a3f52"))
+	var l := Kit.label3d(tr("%s\n予定地") % tr(names.get(nx, "")), 44, Color("4a3f52"))
 	l.outline_size = 0
 	l.pixel_size = 0.0055
 	l.billboard = BaseMaterial3D.BILLBOARD_DISABLED
@@ -904,7 +904,7 @@ func _build_deco(role: String, lv: int) -> void:
 	var key := "deco_" + role
 	var store: String = GameState.deco_store.get(role, "")
 	if items.has(key) and store != "" and store != "手作り" and not _vis():
-		var tag := Kit.label3d(store.split(" ")[-1], 30, Color("fff6e8"))
+		var tag := Kit.label3d(tr(store).split(" ")[-1] if not Kit.is_en() else tr(store).split(" ")[0], 30, Color("fff6e8"))
 		tag.pixel_size = 0.007
 		tag.position = Vector3(0, 0.3, 0.6)
 		tag.no_depth_test = false
@@ -1345,7 +1345,7 @@ func _build_ui() -> void:
 
 func _refresh_hud() -> void:
 	top_day.text = GameState.day_label()
-	rhythm_chip.text = "眠り：%s" % GameState.tier_name()
+	rhythm_chip.text = tr("眠り：%s") % tr(GameState.tier_name())
 	for k in ["normal", "hover", "pressed", "focus"]:
 		rhythm_chip.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.92), 19, 0.14, Vector2(12, 4)))
 	rhythm_chip.add_theme_color_override("font_color", GameState.TIER_COLOR[GameState.tier()].darkened(0.35))
@@ -1359,7 +1359,7 @@ func _refresh_hud() -> void:
 		else:
 			out.append("[color=#8a7a88]%s[/color]" % steps[i])
 	flow_label.text = "[color=#c9bfc6]・[/color]".join(out)
-	goals_btn.text = "めあて %d/3 ▼" % GameState.goals_done()
+	goals_btn.text = tr("めあて %d/3 ▼") % GameState.goals_done()
 	if goals_panel:
 		_toggle_goals()
 		_toggle_goals()
@@ -1397,7 +1397,7 @@ func _refresh_hud() -> void:
 		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		poi_row.add_child(dot)
 		poi_row.add_child(Kit.text("×%d" % n, 12))
-	var stp := Kit.text("破れにくさ ×%.2f" % GameState.poi_strength(), 12, Color("8b7bff"))
+	var stp := Kit.text(tr("破れにくさ ×%.2f") % GameState.poi_strength(), 12, Color("8b7bff"))
 	poi_row.add_child(stp)
 
 
@@ -1431,7 +1431,7 @@ func _toggle_diary() -> void:
 	v.add_theme_constant_override("separation", 6)
 	p.add_child(v)
 	v.add_child(Kit.text("ねむり日記", 20, Color("2a2233"), true))
-	v.add_child(Kit.text("リズム %d（%s）・ いつもの時刻 %s" % [int(GameState.rhythm), GameState.tier_name(), GameState.clock(GameState.usual_bed())], 13, Color("6a5f70")))
+	v.add_child(Kit.text(tr("リズム %d（%s）・ いつもの時刻 %s") % [int(GameState.rhythm), tr(GameState.tier_name()), GameState.clock(GameState.usual_bed())], 13, Color("6a5f70")))
 	var chart := Control.new()
 	chart.custom_minimum_size = Vector2(296, 190)
 	chart.draw.connect(func(): _draw_diary(chart))
@@ -1442,7 +1442,7 @@ func _toggle_diary() -> void:
 	for h in GameState.sleep_hist.slice(-7):
 		avg += h
 	if n > 0:
-		v.add_child(Kit.text("この7夜の平均 %.1f 時間 ・ これまで %d 夜" % [avg / min(7, n), n], 13, Color("4a3f52"), true))
+		v.add_child(Kit.text(tr("この7夜の平均 %.1f 時間 ・ これまで %d 夜") % [avg / min(7, n), n], 13, Color("4a3f52"), true))
 
 
 func _draw_diary(c: Control) -> void:
@@ -1471,7 +1471,7 @@ func _draw_diary(c: Control) -> void:
 		sb.bg_color = col
 		sb.set_corner_radius_all(6)
 		c.draw_style_box(sb, Rect2(bx, y, ex - bx, 14))
-		c.draw_string(f, Vector2(0, y + 12), GameState.WEEKDAYS[(start_day + i) % 7], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("4a3f52"))
+		c.draw_string(f, Vector2(0, y + 12), tr(GameState.WEEKDAYS[(start_day + i) % 7]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("4a3f52"))
 		c.draw_string(f, Vector2(ex + 4, y + 12), "%.1f" % hrs[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8a7a88"))
 	if beds.is_empty():
 		c.draw_string(f, Vector2(left, 90), "まだ記録がない。今夜から", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("8a7a88"))
@@ -1619,7 +1619,7 @@ func _show_card() -> void:
 			card_box.add_child(_link("今日はのんびりする", _rest))
 		elif s.role != "":
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("%s・%s" % [s.store, GameState.ROLE_LABEL[s.role]], 14, Color("6a5f70")))
+			card_box.add_child(Kit.text(tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])], 14, Color("6a5f70")))
 			if not GameState.tut.has("shift"):
 				_guide("働くと、庭に飾りが届く")
 			var b := Kit.button("シフトに行く", Color("ff8a5b"), _do_shift)
@@ -1657,13 +1657,13 @@ func _show_card() -> void:
 			row.add_child(_link("すくわずに寝る", func(): main.go("sleep")))
 			if GameState.can_gift() and GameState.day >= 4:
 				var c: String = GameState.today().coworkers[0]
-				row.add_child(_link("%sにおすそわけ" % c, _gift))
+				row.add_child(_link(tr("%sにおすそわけ") % c, _gift))
 			card_box.add_child(row)
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 		else:
 			card_box.add_child(Kit.text("おやすみの時間", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("玉を %d 個持ち帰った" % GameState.orbs.size(), 14, Color("6a5f70")))
+			card_box.add_child(Kit.text(tr("玉を %d 個持ち帰った") % GameState.orbs.size(), 14, Color("6a5f70")))
 			card_box.add_child(Kit.button("寝る", Color("8b7bff"), func(): main.go("sleep")))
 	_card_fit()
 	_pop_card()
@@ -1673,7 +1673,7 @@ func _gift() -> void:
 	var c := GameState.gift()
 	var o: Dictionary = GameState.owned.pick_random()
 	Kit.play(self, "pop", 1.1)
-	_toast("おすそわけ", "%sに、%sを1体わたした（写しなので、庭の子はそのまま）" % [c, GameState.info(o.id).name])
+	_toast("おすそわけ", tr("%sに、%sを1体わたした（写しなので、庭の子はそのまま）") % [c, tr(GameState.info(o.id).name)])
 	_show_card()
 
 
@@ -1872,7 +1872,7 @@ func _show_morning() -> void:
 	busy = false
 	# それから、ゆうべの眠りを短く
 	_clear_card()
-	card_box.add_child(Kit.text("おはよう。%s ねむった" % GameState.hm(ln.hours), 19, Color("2a2233"), true))
+	card_box.add_child(Kit.text(tr("おはよう。%s ねむった") % GameState.hm(ln.hours), 19, Color("2a2233"), true))
 	# ひとことだけ：良ければ一言、足りなければいちばん大きい理由
 	var worst = null
 	for p in ln.parts:
@@ -1882,7 +1882,7 @@ func _show_morning() -> void:
 		var good_line: String = ["いい夜だった", "いつもどおり、ぐっすり", "庭もよく眠れたらしい"].pick_random() if ln.score >= 18 else "まあまあの夜だった"
 		card_box.add_child(Kit.text(good_line, 14, Color("3f7d4f"), true))
 	else:
-		card_box.add_child(Kit.text("すこし残念：%s" % worst[0], 14, Color("c0473b"), true))
+		card_box.add_child(Kit.text(tr("すこし残念：%s") % tr(worst[0]), 14, Color("c0473b"), true))
 	var r := HBoxContainer.new()
 	r.add_theme_constant_override("separation", 8)
 	r.add_child(Kit.text("リズム", 14, Color("8a7a88")))
@@ -1974,7 +1974,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	_apply_time(night)
 	Kit.play(self, "grow")
 	Kit.shake(cam, 0.05, 0.3)
-	_toast("庭が育った：%s" % st.name, st.desc)
+	_toast(tr("庭が育った：%s") % tr(st.name), tr(st.desc))
 	await get_tree().create_timer(2.0).timeout
 	await _focus(Vector3.ZERO, 0)
 
@@ -2089,7 +2089,7 @@ func _build_edit_ui() -> void:
 		fl.add_theme_constant_override("h_separation", 6)
 		for k in hidden:
 			var key: String = k
-			fl.add_child(_link("＋" + GameState.ITEM_NAME[key], func(): _unhide(key)))
+			fl.add_child(_link("＋" + tr(GameState.ITEM_NAME[key]), func(): _unhide(key)))
 		v.add_child(fl)
 	v.add_child(Kit.button("できた", Color("ff8a5b"), _exit_edit))
 	v.add_child(_link("島をシェアする", _share))
@@ -2231,9 +2231,9 @@ func _share() -> void:
 	var url: String = GameState.SHARE_URL + code
 	DisplayServer.clipboard_set(url)
 	if OS.has_feature("web"):
-		JavaScriptBridge.eval("""(function(u){ if (navigator.share) { navigator.share({title: 'Paw Time', text: 'わたしの島', url: u}).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(u); } })('%s')""" % url)
+		JavaScriptBridge.eval("""(function(u){ if (navigator.share) { navigator.share({title: 'Paw Time', text: 'My island', url: u}).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(u); } })('%s')""" % url)
 	Kit.play(self, "chime", 1.1)
-	_popup("島のコードをコピーした", "リンクを送ると、%sの島に遊びに来てもらえる" % GameState.nickname, code)
+	_popup("島のコードをコピーした", tr("リンクを送ると、%sの島に遊びに来てもらえる") % GameState.nickname, code)
 
 
 func _ask_name() -> void:
@@ -2314,7 +2314,7 @@ func _start_visit() -> void:
 	add_child(top)
 	var dp := PanelContainer.new()
 	dp.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.92), 20, 0.14, Vector2(12, 6)))
-	dp.add_child(Kit.text("%sの島" % V.name, 15, Color("2a2233"), true))
+	dp.add_child(Kit.text(tr("%sの島") % V.name, 15, Color("2a2233"), true))
 	top.add_child(dp)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2325,8 +2325,8 @@ func _start_visit() -> void:
 	night = 0.0
 	_apply_time(0.0)
 	_clear_card()
-	card_box.add_child(Kit.text("%sの島に、おでかけ" % V.name, 18, Color("2a2233"), true))
-	card_box.add_child(Kit.text("おばけ %d 体・島 Lv%d" % [V.residents.size() + 1, int(V.level) + 1], 14, Color("6a5f70")))
+	card_box.add_child(Kit.text(tr("%sの島に、おでかけ") % V.name, 18, Color("2a2233"), true))
+	card_box.add_child(Kit.text(tr("おばけ %d 体・島 Lv%d") % [V.residents.size() + 1, int(V.level) + 1], 14, Color("6a5f70")))
 	if not _left_here():
 		card_box.add_child(Kit.button("おばけを1体、おいていく", Color("ff8a5b"), _pick_present))
 	else:
@@ -2363,7 +2363,7 @@ func _pick_present() -> void:
 
 func _start_visit_card() -> void:
 	_clear_card()
-	card_box.add_child(Kit.text("%sの島に、おでかけ" % V.name, 18, Color("2a2233"), true))
+	card_box.add_child(Kit.text(tr("%sの島に、おでかけ") % V.name, 18, Color("2a2233"), true))
 	card_box.add_child(Kit.button("おばけを1体、おいていく", Color("ff8a5b"), _pick_present))
 	card_box.add_child(_link("自分の島にかえる", _go_home))
 	_card_fit()
@@ -2384,9 +2384,9 @@ func _leave(id: String) -> void:
 	burst.restart()
 	burst.emitting = true
 	Kit.play(self, "chime")
-	_toast("おみやげ", "%sを、%sの島においてきた" % [GameState.info(id).name, V.name])
+	_toast("おみやげ", tr("%sを、%sの島においてきた") % [tr(GameState.info(id).name), V.name])
 	_clear_card()
-	card_box.add_child(Kit.text("%sが、島になじんだ" % GameState.info(id).name, 16, Color("3f7d4f"), true))
+	card_box.add_child(Kit.text(tr("%sが、島になじんだ") % tr(GameState.info(id).name), 16, Color("3f7d4f"), true))
 	card_box.add_child(Kit.button("自分の島にかえる", Color("ff8a5b"), _go_home))
 	_card_fit()
 

@@ -587,7 +587,7 @@ func _refresh_ui() -> void:
 	var left := 0
 	for id in GameState.nets:
 		left += GameState.nets[id]
-	poi_label.text = "ポイ ×%d" % left
+	poi_label.text = tr("ポイ ×%d") % left
 	dura_bar.value = durability if poi_type != "" else 0.0
 	var fill := StyleBoxFlat.new()
 	fill.set_corner_radius_all(5)
@@ -601,7 +601,7 @@ func _refresh_ui() -> void:
 	var st := _pill(col, 30)
 	for k in ["normal", "hover", "pressed"]:
 		poi_btn.add_theme_stylebox_override(k, st)
-	poi_btn.text = "%s\n×%d" % [name, GameState.nets.get(poi_type, 0)]
+	poi_btn.text = "%s\n×%d" % [tr(name), GameState.nets.get(poi_type, 0)]
 	poi_btn.add_theme_color_override("font_color", Color("1a1f3a"))
 	poi_btn.add_theme_color_override("font_hover_color", Color("1a1f3a"))
 	if poi_type != "":
@@ -803,10 +803,10 @@ func _lift() -> void:
 		perfect_streak += 1
 		var msg := "ぴったり！"
 		if perfect_streak >= 3:
-			msg = "ぴったり ×%d\nめぐみ +3" % perfect_streak
+			msg = tr("ぴったり ×%d\nめぐみ +3") % perfect_streak
 			GameState.growth += 3
 			GameState._recalc_level()
-		_banner(msg if not target.data.rare else msg + "\nふしぎな光…", Color("ffe27a"))
+		_banner(msg if not target.data.rare else msg + tr("\nふしぎな光…"), Color("ffe27a"))
 		_play("sparkle")
 	else:
 		perfect_streak = 0
@@ -1034,7 +1034,7 @@ func _finish() -> void:
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
 	v.add_child(_text("今夜のすくい", 16, Color("c9d2ff")))
-	v.add_child(_text("%d 個" % caught_count, 34, Color.WHITE, font_black))
+	v.add_child(_text(tr("%d 個") % caught_count, 34, Color.WHITE, font_black))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)

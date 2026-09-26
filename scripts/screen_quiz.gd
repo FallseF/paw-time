@@ -323,7 +323,7 @@ func _build_questions() -> void:
 	q_text = _text("", 22, Color("fff6e8"), font_black)
 	q_text.position = Vector2(16, 250)
 	q_text.size = Vector2(328, 64)
-	q_text.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	q_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	q_box.add_child(q_text)
 	for i in 2:
 		var b := Button.new()
@@ -642,10 +642,10 @@ func _fill_card(t: Dictionary) -> void:
 	var col := QuizData.tone(result.type_id)
 	r_kicker.add_theme_color_override("font_color", col.darkened(0.5))
 	r_name.text = t.name
-	r_en.text = t.en_name
+	r_en.text = t.en_name if not Kit.is_en() else ""
 	r_line.text = t.line
-	r_job.text = "向いてる仕事：%s" % QuizData.JOBS[t.job].ja
-	r_match.text = "相性のいいタイプ：%s" % QuizData.TYPES[t.match].name
+	r_job.text = tr("向いてる仕事：%s") % tr(QuizData.JOBS[t.job].ja)
+	r_match.text = tr("相性のいいタイプ：%s") % tr(QuizData.TYPES[t.match].name)
 	for c in r_axes.get_children():
 		c.queue_free()
 	for i in 4:
@@ -699,7 +699,7 @@ func open_share() -> void:
 	var copy := _button("シェア文をコピー", Color("fffaf2"), _copy_text, INK, 44)
 	v.add_child(copy)
 	share_status = _text("カードを作っています…", 12, SUB)
-	share_status.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	share_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	share_status.custom_minimum_size = Vector2(300, 0)
 	v.add_child(share_status)
 	v.add_child(_link("とじる", SUB, close_share))

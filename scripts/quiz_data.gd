@@ -185,4 +185,6 @@ static func tone(type_id: String) -> Color:
 ## シェア用の文面
 static func share_text(type_id: String) -> String:
 	var t: Dictionary = TYPES[type_id]
+	if TranslationServer.get_locale().begins_with("en"):
+		return "My cat-obake is \"%s\"!\n%s\n#PawTime\n%s" % [t.en_name, t.en_line, SITE_URL]
 	return "わたしのマイおばけ猫は「%s」！\n%s\n#PawTime #マイおばけ猫\n%s" % [t.name, t.line, SITE_URL]

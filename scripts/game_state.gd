@@ -248,7 +248,7 @@ func is_moon_night() -> bool:
 
 
 func day_label() -> String:
-	return "%d週目 %s曜日" % [week() + 1, WEEKDAYS[weekday()]]
+	return tr("%d週目 %s曜日") % [week() + 1, tr(WEEKDAYS[weekday()])]
 
 
 ## その日の記録（シフト・天気）。1週目の月〜金は見本、それ以外は日付から生成する。
@@ -378,7 +378,7 @@ func finish_shift() -> Array:
 	var net_id: String = ROLE_NET[s.role]
 	if s.get("chore", false):
 		nets[net_id] = mini(nets[net_id] + 1, 4)
-		got.append({"kind": "poi", "id": net_id, "n": 1, "text": "%s ×1" % NETS[net_id].name})
+		got.append({"kind": "poi", "id": net_id, "n": 1, "text": "%s ×1" % tr(NETS[net_id].name)})
 		if first_role_today:
 			nets["kira"] += 1
 			got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめてのおてつだい）"})
@@ -388,12 +388,12 @@ func finish_shift() -> Array:
 			decos[s.role] = 1
 			deco_store[s.role] = "手作り"
 			new_decos.append(s.role)
-			got.append({"kind": "deco", "id": s.role, "text": "手作りの「%s」ができた" % DECOS[s.role].name})
+			got.append({"kind": "deco", "id": s.role, "text": tr("手作りの「%s」ができた") % tr(DECOS[s.role].name)})
 		save()
 		changed.emit()
 		return got
 	nets[net_id] = mini(nets[net_id] + 2, 4) # 種類つきのポイは4本まで（ためこみすぎない）
-	got.append({"kind": "poi", "id": net_id, "n": 2, "text": "%s ×2" % NETS[net_id].name})
+	got.append({"kind": "poi", "id": net_id, "n": 2, "text": "%s ×2" % tr(NETS[net_id].name)})
 	if s.first or first_role_today:
 		nets["kira"] += 1
 		got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめての経験）"})
@@ -403,7 +403,7 @@ func finish_shift() -> Array:
 			if coworker_count.get(c, 0) >= 2:
 				received = true
 				orbs.append({"type": s.role, "rare": false})
-				got.append({"kind": "gift", "id": s.role, "text": "%sから、光る玉をもらった" % c})
+				got.append({"kind": "gift", "id": s.role, "text": tr("%sから、光る玉をもらった") % tr(c)})
 				break
 	var before: int = decos.get(s.role, 0)
 	if before == 0:
@@ -411,10 +411,10 @@ func finish_shift() -> Array:
 	decos[s.role] = before + 1
 	if before == 0:
 		new_decos.append(s.role)
-		got.append({"kind": "deco", "id": s.role, "text": "庭に「%s」が届いた" % DECOS[s.role].name})
+		got.append({"kind": "deco", "id": s.role, "text": tr("庭に「%s」が届いた") % tr(DECOS[s.role].name)})
 	elif before == 2:
 		new_decos.append(s.role)
-		got.append({"kind": "deco", "id": s.role, "text": "「%s」が少し豪華になった" % DECOS[s.role].name})
+		got.append({"kind": "deco", "id": s.role, "text": tr("「%s」が少し豪華になった") % tr(DECOS[s.role].name)})
 	save()
 	changed.emit()
 	return got
@@ -486,8 +486,8 @@ static func wake_clock(m: int) -> String:
 static func hm(h: float) -> String:
 	var m := int(round(h * 60.0))
 	if m % 60 == 0:
-		return "%d時間" % (m / 60)
-	return "%d時間%d分" % [m / 60, m % 60]
+		return TranslationServer.translate("%d時間") % (m / 60)
+	return TranslationServer.translate("%d時間%d分") % [m / 60, m % 60]
 
 
 static func hours_of(bed: int, wake: int) -> float:
@@ -640,7 +640,7 @@ func omen() -> String:
 	if weekday() >= 3 and weekday() <= 5:
 		var lit: int = good_hist.slice(-weekday()).count(true) if good_hist.size() >= weekday() else good_hist.count(true)
 		if lit < 4:
-			return "満月まで：よい夜 %d / 4" % lit
+			return tr("満月まで：よい夜 %d / 4") % lit
 		return "日曜は、満月になりそう"
 	if not seen.has("asayake"):
 		var n := 0
@@ -649,14 +649,14 @@ func omen() -> String:
 				break
 			n += 1
 		if n >= 1 and n < 3:
-			return "よく眠る夜が %d つ続いている" % n
+			return tr("よく眠る夜が %d つ続いている") % n
 	if not seen.has("totonou") and bed_hist.size() >= 2:
 		if absi(bed_hist[-1] - bed_hist[-2]) <= 20:
 			return "同じ時刻の夜が続いている"
 	if not seen.has("hirunen") and shift_for(day).role == "":
 		return "休みの日は、たっぷり眠ろう"
 	if not seen.has("mangetsu") and sleep_hist.size() >= 7:
-		return "ひと月の眠り：%d / 28 夜" % sleep_hist.size()
+		return tr("ひと月の眠り：%d / 28 夜") % sleep_hist.size()
 	return ""
 
 

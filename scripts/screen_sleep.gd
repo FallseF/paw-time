@@ -40,7 +40,7 @@ func _toggle_more() -> void:
 func _label_go() -> void:
 	if plan_label:
 		var names := {"record": "スマホの記録どおり", "early": "少し早めに寝る", "usual": "いつもの時刻に寝る", "extra": "もうひと回り、すくう", "market": "夜店をのぞく"}
-		plan_label.text = "今夜：%s" % names.get(plan, "")
+		plan_label.text = tr("今夜：%s") % tr(names.get(plan, ""))
 	if go_btn == null:
 		return
 	if plan == "extra" and GameState.night_plan != "extra":
@@ -73,11 +73,11 @@ func _build_plans() -> void:
 	var list := PLANS.duplicate()
 	if GameState.mode == "data":
 		var r := GameState.recorded_sleep()
-		list[0] = ["record", "スマホの記録どおり", "%s に寝て %s に起きた" % [GameState.clock(r.bed), GameState.wake_clock(r.wake)]]
+		list[0] = ["record", "スマホの記録どおり", tr("%s に寝て %s に起きた") % [GameState.clock(r.bed), GameState.wake_clock(r.wake)]]
 	for p in list:
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(156, 62)
-		b.text = "%s\n%s" % [p[1], p[2]]
+		b.text = "%s\n%s" % [tr(p[1]), tr(p[2])]
 		b.add_theme_font_override("font", Kit.bold())
 		b.add_theme_font_size_override("font_size", 12)
 		b.add_theme_color_override("font_color", Color.WHITE)
@@ -158,7 +158,7 @@ func _ready() -> void:
 	title.size = Vector2(360, 36)
 	add_child(title)
 	locked = false
-	var note_t := "いつもの時刻は %s ごろ" % GameState.clock(GameState.usual_bed())
+	var note_t := tr("いつもの時刻は %s ごろ") % GameState.clock(GameState.usual_bed())
 	if GameState.mode == "data":
 		note_t = "スマホの記録（見本）がとどいた"
 	if not GameState.tut.has("sleep"):
@@ -293,7 +293,7 @@ func _draw_timeline() -> void:
 		var x: float = to_x.call(m)
 		var lbl := GameState.clock(m + 180)
 		timeline.draw_string(f, Vector2(x - 12, 46), lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1, 1, 1, 0.5))
-	timeline.draw_string(f, Vector2(ux, 8), "いつも", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8fe0a0"))
+	timeline.draw_string(f, Vector2(ux, 8), tr("いつも"), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8fe0a0"))
 
 
 func _set_time(b: int, w: int) -> void:
@@ -311,13 +311,13 @@ func _set_time(b: int, w: int) -> void:
 	preview.add_child(head)
 	var after0 := clampf(GameState.rhythm + ns.score * GameState.RHYTHM_RATE, 0, 100)
 	var n0 := GameState.orbs.size()
-	var summary := ("朝に、玉が %d 個かえる" % n0) if n0 > 0 else "明日の庭が、すこし育つ"
+	var summary := (tr("朝に、玉が %d 個かえる") % n0) if n0 > 0 else "明日の庭が、すこし育つ"
 	preview.add_child(Kit.text(summary, 15, Color("c8f0c0"), true))
 	var diff := int(after0) - int(GameState.rhythm)
 	var t0 := 3 if after0 >= 75 else (2 if after0 >= 50 else (1 if after0 >= 25 else 0))
 	var rrow := HBoxContainer.new()
 	rrow.add_theme_constant_override("separation", 8)
-	rrow.add_child(Kit.text("リズム %s %s" % ["↑" if diff > 0 else ("↓" if diff < 0 else "→"), GameState.TIER_NAME[t0]], 15, GameState.TIER_COLOR[t0], true))
+	rrow.add_child(Kit.text(tr("リズム %s %s") % ["↑" if diff > 0 else ("↓" if diff < 0 else "→"), tr(GameState.TIER_NAME[t0])], 15, GameState.TIER_COLOR[t0], true))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rrow.add_child(sp)
@@ -340,7 +340,7 @@ func _set_time(b: int, w: int) -> void:
 		var good: bool = p[1] >= 0
 		var pc := PanelContainer.new()
 		pc.add_theme_stylebox_override("panel", Kit.pill(Color(0.56, 0.88, 0.63, 0.22) if good else Color(1, 0.5, 0.45, 0.25), 12, 0.0, Vector2(8, 3)))
-		pc.add_child(Kit.text("%s %s%d" % [p[0], "+" if good else "", p[1]], 12, Color("d8ffe0") if good else Color("ffd3cc")))
+		pc.add_child(Kit.text("%s %s%d" % [tr(p[0]), "+" if good else "", p[1]], 12, Color("d8ffe0") if good else Color("ffd3cc")))
 		parts.add_child(pc)
 	preview.add_child(parts)
 	var t_after := t0
@@ -428,7 +428,7 @@ func _market() -> void:
 	v.add_child(Kit.wrap(Kit.text("たこ焼きの湯気の向こうで、ぼんやり光るおばけが並んでいる。屋台をひとつ、のぞいていく", 13, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER)))
 	for st in STALLS:
 		var b := Button.new()
-		b.text = "%s　%s\n%s" % [st[0], st[1], st[2]]
+		b.text = "%s　%s\n%s" % [tr(st[0]), tr(st[1]), tr(st[2])]
 		b.custom_minimum_size = Vector2(0, 56)
 		b.add_theme_font_override("font", Kit.bold())
 		b.add_theme_font_size_override("font_size", 12)
@@ -439,7 +439,7 @@ func _market() -> void:
 		var name: String = st[0]
 		b.pressed.connect(func(): _stall(name))
 		v.add_child(b)
-	v.add_child(Kit.text("%s に寝る（リズムは下がる）" % GameState.clock(bed), 12, Color("ffc28a"), false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("%s に寝る（リズムは下がる）") % GameState.clock(bed), 12, Color("ffc28a"), false, HORIZONTAL_ALIGNMENT_CENTER))
 	Kit.play(self, "bell", 0.7)
 	p.pivot_offset = Vector2(156, 120)
 	p.scale = Vector2(0.7, 0.7)
@@ -482,7 +482,7 @@ func _stall(name: String) -> void:
 		"わたあめ屋":
 			var rare := randf() < 0.5
 			GameState.orbs.append({"type": "rare" if rare else ["register", "dish", "hall", "kitchen", "stock"].pick_random(), "rare": rare})
-			msg = "わたあめの中に、光る玉が入っていた" + ("。虹色だ" if rare else "")
+			msg = tr("わたあめの中に、光る玉が入っていた") + (tr("。虹色だ") if rare else "")
 	GameState.save()
 	for c in market_panel.get_child(0).get_children():
 		c.queue_free()

@@ -63,7 +63,7 @@ static func render(host: Node, result: Dictionary) -> Image:
 	box.add_child(vp3)
 	var ob := _stage3d(vp3, t.look)
 	# 舞台の中の小さなタグ（向いてる仕事）
-	var job := _chip("向いてる仕事  " + QuizData.JOBS[t.job].ja, bold, 30, Color.WHITE, col.darkened(0.35))
+	var job := _chip(TranslationServer.translate("向いてる仕事  ") + TranslationServer.translate(QuizData.JOBS[t.job].ja), bold, 30, Color.WHITE, col.darkened(0.35))
 	job.position = Vector2(126, 238)
 	vp.add_child(job)
 
@@ -79,7 +79,7 @@ static func render(host: Node, result: Dictionary) -> Image:
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	vp.add_child(name_l)
-	var en := _label(t.en_name, bold, 30, col.darkened(0.4))
+	var en := _label(t.en_name if not Kit.is_en() else "", bold, 30, col.darkened(0.4))
 	en.position = Vector2(0, 946)
 	en.size = Vector2(W, 42)
 	en.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -225,5 +225,5 @@ static func deliver(img: Image, type_id: String) -> String:
 	var path := "user://" + file
 	var err := img.save_png(path)
 	if err != OK:
-		return "保存できませんでした（%s）" % error_string(err)
-	return "保存しました：" + ProjectSettings.globalize_path(path)
+		return TranslationServer.translate("保存できませんでした（%s）") % error_string(err)
+	return TranslationServer.translate("保存しました：") + ProjectSettings.globalize_path(path)

@@ -272,9 +272,9 @@ func _finish() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
 	p.add_child(v)
-	v.add_child(Kit.text("灯り %d / 6" % lit, 20, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.text("月の玉 ×%d%s" % [res.orbs, "（虹の玉つき）" if res.won else ""], 15, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.text("庭のめぐみ +%d" % res.growth, 14, Color("3f7d4f"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("灯り %d / 6") % lit, 20, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("月の玉 ×%d%s") % [res.orbs, tr("（虹の玉つき）") if res.won else ""], 15, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("庭のめぐみ +%d") % res.growth, 14, Color("3f7d4f"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	# 今週のふりかえり
 	var hs: Array = GameState.sleep_hist.slice(-6)
 	var avg := 0.0
@@ -282,7 +282,7 @@ func _finish() -> void:
 		avg += h
 	if hs.size() > 0:
 		avg /= hs.size()
-	v.add_child(Kit.text("今週：平均 %.1f 時間 ・ 新しい子 %d ・ めぐみ %d" % [avg, GameState.seen.size() - GameState.week_start_seen, GameState.growth - GameState.week_start_growth], 12, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("今週：平均 %.1f 時間 ・ 新しい子 %d ・ めぐみ %d") % [avg, GameState.seen.size() - GameState.week_start_seen, GameState.growth - GameState.week_start_growth], 12, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER))
 	if res.won:
 		v.add_child(Kit.wrap(Kit.text("満月の朝には、めずらしいおばけが来るかもしれない", 12, Color("8a5bd6"), false, HORIZONTAL_ALIGNMENT_CENTER)))
 	v.add_child(Kit.button("寝る", Color("8b7bff"), func(): main.go("sleep")))

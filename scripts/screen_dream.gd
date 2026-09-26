@@ -338,7 +338,7 @@ func _tap() -> void:
 	if bd < 0.2:
 		count += 1
 		combo += 1
-		_pop("ぴったり" if combo < 3 else "ぴったり ×%d" % combo, Color("fff2a8"))
+		_pop("ぴったり" if combo < 3 else tr("ぴったり ×%d") % combo, Color("fff2a8"))
 		Kit.play(self, "chime", 0.9 + min(combo, 8) * 0.06, -4)
 		burst.position = o.position + Vector3(0, 0.4, 0)
 		burst.restart()
@@ -356,7 +356,7 @@ func _tap() -> void:
 		_pop("はやい…", Color("ffb3a8"))
 		Kit.play(self, "tap", 0.7)
 		return
-	counter.text = "%d ひき" % count
+	counter.text = tr("%d ひき") % count
 	counter.scale = Vector2(1.25, 1.25)
 	create_tween().tween_property(counter, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK)
 
@@ -386,9 +386,9 @@ func _finish() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
-	v.add_child(Kit.text(("%d ひき かぞえた" if game == "sheep" else "%d こ ひろった") % count, 24, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.text("スヤリの玉 ×%d" % res.orbs, 16, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.text("庭のめぐみ +%d" % res.growth, 15, Color("3f7d4f"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text((tr("%d ひき かぞえた") if game == "sheep" else tr("%d こ ひろった")) % count, 24, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("スヤリの玉 ×%d") % res.orbs, 16, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("庭のめぐみ +%d") % res.growth, 15, Color("3f7d4f"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	if res.flower:
 		v.add_child(Kit.wrap(Kit.text("ぜんぶそろった。庭に夢見草が一輪咲く", 13, Color("8a5bd6"), false, HORIZONTAL_ALIGNMENT_CENTER)))
 	v.add_child(Kit.button("目をさます", Color("ff8a5b"), func(): main.go("hatch")))
@@ -494,12 +494,12 @@ func _process_stars(delta: float) -> void:
 			else:
 				count += 1
 				combo += 1
-				_pop("ひろった" if combo < 3 else "ひろった ×%d" % combo, Color("fff2a8"))
+				_pop("ひろった" if combo < 3 else tr("ひろった ×%d") % combo, Color("fff2a8"))
 				Kit.play(self, "chime", 0.9 + min(combo, 8) * 0.06, -4)
 				burst.position = n.position
 				burst.restart()
 				burst.emitting = true
-				counter.text = "%d こ" % count
+				counter.text = tr("%d こ") % count
 				counter.scale = Vector2(1.25, 1.25)
 				create_tween().tween_property(counter, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK)
 			n.queue_free()

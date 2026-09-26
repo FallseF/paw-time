@@ -34,7 +34,7 @@ func _ready() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
-	head.add_child(_text("レア %d / %d" % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
+	head.add_child(_text(tr("レア %d / %d") % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
 	var back := Button.new()
 	back.text = "もどる"
 	back.add_theme_font_override("font", font_bold)
@@ -64,7 +64,7 @@ func _ready() -> void:
 	col.add_child(_section("庭の育ち"))
 	col.add_child(_garden_list())
 	for g in GROUPS:
-		col.add_child(_section("レア ・ " + g))
+		col.add_child(_section(tr("レア ・ ") + tr(g)))
 		var grid := GridContainer.new()
 		grid.columns = 3
 		grid.add_theme_constant_override("h_separation", 8)
@@ -176,7 +176,7 @@ func _shelf() -> Control:
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.add_theme_constant_override("separation", 0)
 	for id in NORMAL:
-		var nm: String = GameState.info(id).name if GameState.seen.has(id) else "？？？"
+		var nm: String = tr(GameState.info(id).name) if GameState.seen.has(id) else "？？？"
 		for o in GameState.owned:
 			if o.id == id:
 				nm += "\nLv%d" % o.level
@@ -206,10 +206,10 @@ func _garden_list() -> Control:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		row.add_child(_text("●" if done else "○", 12, Color("7fbf6a") if done else Color("c9bfc6")))
-		var name_l := _text(st.name if done else ("？？？（めぐみ %d）" % st.need if i == L + 1 else "？？？"), 13, Color("2a2233") if done else Color("9a8e98"), font_black if done else null)
+		var name_l := _text(tr(st.name) if done else (tr("？？？（めぐみ %d）") % st.need if i == L + 1 else "？？？"), 13, Color("2a2233") if done else Color("9a8e98"), font_black if done else null)
 		row.add_child(name_l)
 		v.add_child(row)
-	v.add_child(_text("めぐみ %d ・ 満月の夜 %d 回 ・ 夢見草 %d 輪" % [GameState.growth, GameState.moon_nights, GameState.dream_flowers], 12, Color("6a5f70")))
+	v.add_child(_text(tr("めぐみ %d ・ 満月の夜 %d 回 ・ 夢見草 %d 輪") % [GameState.growth, GameState.moon_nights, GameState.dream_flowers], 12, Color("6a5f70")))
 	v.add_child(_text("仕事の飾り", 13, Color("8a7a88")))
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", 6)
@@ -218,7 +218,7 @@ func _garden_list() -> Control:
 		var lv: int = GameState.deco_level(r)
 		var chip := PanelContainer.new()
 		chip.add_theme_stylebox_override("panel", _pill(Color("f3ecff") if lv > 0 else Color("f1ebe4"), 12))
-		var t: String = GameState.DECOS[r].name if lv > 0 else "？？？（%s）" % GameState.ROLE_LABEL[r]
+		var t: String = tr(GameState.DECOS[r].name) if lv > 0 else "？？？（%s）" % tr(GameState.ROLE_LABEL[r])
 		if lv == 2:
 			t += " ★"
 		chip.add_child(_text(t, 11, Color("4a3f52") if lv > 0 else Color("a89ea6")))
@@ -284,7 +284,7 @@ func _card(r: Dictionary) -> Control:
 	v.add_child(name_l)
 	var hint := _text(r.desc if found else r.hint, 10, Color("7a6f7c"))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(84, 0)
 	v.add_child(hint)
 	p.gui_input.connect(func(e):
@@ -336,12 +336,12 @@ func _show_detail(r: Dictionary) -> void:
 	var n := _text(r.name if found else "？？？", 26, Color("2a2233"), font_black)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(n)
-	var g := _text("レア ・ " + r.group, 13, Color(r.look.c2).darkened(0.2))
+	var g := _text(tr("レア ・ ") + tr(r.group), 13, Color(r.look.c2).darkened(0.2))
 	g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(g)
-	var d := _text(r.desc if found else "ヒント：" + r.hint, 15, Color("4a3f52"))
+	var d := _text(tr(r.desc) if found else tr("ヒント：") + tr(r.hint), 15, Color("4a3f52"))
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(d)
 
 
