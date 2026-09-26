@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("本番ではスマホの睡眠記録から自動で入ります", 12, Color(1, 1, 1, 0.55))
+	var note := _text("本番ではスマホの睡眠記録から入ります（ここでは選べます）", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 186)
 	note.size = Vector2(360, 20)
 	add_child(note)
@@ -136,22 +136,37 @@ func _round(t: String, cb: Callable) -> Button:
 func _set_hours(h: int) -> void:
 	hours = clampi(h, 4, 9)
 	big.text = "%d時間" % hours
+	big.pivot_offset = big.size / 2
+	big.scale = Vector2(1.12, 1.12)
+	create_tween().tween_property(big, "scale", Vector2.ONE, 0.18)
 	for c in preview.get_children():
 		c.queue_free()
-	var strength := 0.7 if hours < 6 else (1.0 if hours < 7 else 1.25)
+	var strength := GameState.sleep_strength(hours)
 	var n := GameState.orbs.size()
 	var lines := []
+	lines.append(["明日のポイの強さ ×%.2f" % strength, Color("ffe27a") if strength >= 1.25 else (Color("ffb3a8") if strength < 1.0 else Color("e8e2ff"))])
 	if n > 0:
-		lines.append("光る玉 %d 個が、寝ている間に育つ" % n)
-	if hours >= 7:
-		lines.append("よく眠ると、レアなおばけが生まれやすい")
-	elif hours <= 5:
-		lines.append("夜ふかしすると、ヨミセが寄ってくる")
-	lines.append("明日のポイの強さ ×%.2f" % strength)
-	for s in lines:
-		var l := _text("・" + s, 15, Color("e8e2ff"))
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		preview.add_child(l)
+		if hours >= 7:
+			lines.append(["すくった玉 %d 個が、★ひとつ育ってかえる" % n, Color("b8ffcf")])
+		else:
+			lines.append(["すくった玉 %d 個が、朝にかえる" % n, Color("e8e2ff")])
+	var s: Dictionary = GameState.today()
+	var worked: bool = GameState.worked_today
+	if hours >= 7 and not GameState.seen.has("nemurin"):
+		lines.append(["よく眠ると、枕元に何かが来そう", Color("c9bdf5")])
+	elif hours >= 8 and not GameState.seen.has("yumemi"):
+		lines.append(["長い夢の先に、何かがいる気がする", Color("c9bdf5")])
+	elif hours <= 5 and not GameState.seen.has("yomise"):
+		lines.append(["夜ふかしの灯りに、何かが寄ってくる", Color("ffcf7a")])
+	elif hours >= 9 and not worked and not GameState.seen.has("hirunen"):
+		lines.append(["休みの日の長い眠りに、何かが来そう", Color("c9bdf5")])
+	if hours == 9:
+		lines.append(["寝すぎると、少しだけぼんやり", Color(1, 1, 1, 0.6)])
+	for l in lines:
+		var lab := _text("・" + l[0], 15, l[1])
+		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		lab.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		preview.add_child(lab)
 
 
 func _sleep() -> void:
@@ -170,5 +185,5 @@ func _sleep() -> void:
 	tw.parallel().tween_property(zz, "modulate:a", 1.0, 0.6)
 	tw.tween_interval(0.9)
 	await tw.finished
-	GameState.sleep(hours, "")
-	main.go("hatch" if GameState.hatched.size() > 0 else "morning")
+	GameState.sleep(hours)
+	main.go("hatch" if GameState.hatched.size() > 0 else "room")

@@ -140,3 +140,122 @@ write("hatch", hatch())
 write("sparkle", sparkle())
 write("river_loop", river_loop())
 print("wrote sfx to", OUT)
+
+
+# ---- Variant A で足した音 ----
+
+def bubble():
+    n = int(SR * 1.2)
+    out = [0.0] * n
+    for k in range(9):
+        s = int(SR * (k * 0.11 + random.uniform(0, 0.04)))
+        f0 = random.uniform(500, 900)
+        for j in range(int(SR * 0.09)):
+            if s + j < n:
+                f = f0 + j * 12
+                out[s + j] += 0.5 * math.sin(2 * math.pi * f * j / SR) * math.exp(-j / (SR * 0.025))
+    return out
+
+
+def pop():
+    n = int(SR * 0.12)
+    return [math.sin(2 * math.pi * (600 + i * 18) * i / SR) * math.exp(-i / (SR * 0.02)) for i in range(n)]
+
+
+def thunder():
+    n = int(SR * 2.2)
+    noise = [random.uniform(-1, 1) for _ in range(n)]
+    f = lowpass(noise, 0.02)
+    out = []
+    for i in range(n):
+        crack = random.uniform(-1, 1) * math.exp(-i / (SR * 0.05)) * 0.8
+        rumble = f[i] * 6 * math.exp(-i / (SR * 0.9)) * (0.6 + 0.4 * math.sin(i / SR * 13))
+        out.append(crack + rumble)
+    return out
+
+
+def combo():
+    n = int(SR * 0.35)
+    out = [0.0] * n
+    for k, fr in enumerate([1568.0, 2093.0]):
+        s = int(SR * k * 0.06)
+        for j in range(n - s):
+            out[s + j] += math.sin(2 * math.pi * fr * j / SR) * math.exp(-j / (SR * 0.08))
+    return out
+
+
+def fanfare():
+    n = int(SR * 1.8)
+    out = [0.0] * n
+    seq = [(0.0, 784), (0.12, 988), (0.24, 1175), (0.36, 1568), (0.36, 1175), (0.36, 988)]
+    for t0, fr in seq:
+        s = int(SR * t0)
+        for j in range(n - s):
+            e = math.exp(-j / (SR * (0.25 if t0 < 0.3 else 0.8)))
+            out[s + j] += e * (math.sin(2 * math.pi * fr * j / SR) + 0.25 * math.sin(2 * math.pi * fr * 3 * j / SR))
+    return out
+
+
+def levelup():
+    n = int(SR * 1.0)
+    out = [0.0] * n
+    for k, fr in enumerate([523, 659, 784, 1046, 1318]):
+        s = int(SR * k * 0.07)
+        for j in range(n - s):
+            out[s + j] += 0.6 * math.exp(-j / (SR * 0.3)) * math.sin(2 * math.pi * fr * j / SR)
+    return out
+
+
+def craft():
+    n = int(SR * 0.9)
+    out = [0.0] * n
+    for k in range(3):
+        s = int(SR * k * 0.13)
+        for j in range(int(SR * 0.1)):
+            if s + j < n:
+                out[s + j] += random.uniform(-1, 1) * math.exp(-j / (SR * 0.012)) * 0.7
+    for j in range(n - int(SR * 0.4)):
+        s = int(SR * 0.4)
+        out[s + j] += 0.6 * math.exp(-j / (SR * 0.3)) * (math.sin(2 * math.pi * 1318 * j / SR) + 0.5 * math.sin(2 * math.pi * 1976 * j / SR))
+    return out
+
+
+def festival_loop():
+    # 太鼓と笛（ペンタトニック）の、ゆるい祭りばやし 4 小節
+    bpm = 104
+    beat = 60.0 / bpm
+    n = int(SR * beat * 16)
+    out = [0.0] * n
+    def drum(t, f0, amp, dec):
+        s = int(SR * t)
+        for j in range(int(SR * 0.5)):
+            if s + j < n:
+                f = f0 * (1 + 0.6 * math.exp(-j / (SR * 0.02)))
+                out[s + j] += amp * math.sin(2 * math.pi * f * j / SR) * math.exp(-j / (SR * dec))
+    for b in range(16):
+        drum(b * beat, 70, 0.9 if b % 4 == 0 else 0.5, 0.18)
+        if b % 2 == 1:
+            drum(b * beat + beat * 0.5, 180, 0.25, 0.05)
+    scale = [587, 659, 784, 880, 988, 1175]
+    rnd = random.Random(8)
+    melody = [rnd.choice(scale) for _ in range(16)]
+    for b, fr in enumerate(melody):
+        s = int(SR * b * beat)
+        ln = int(SR * beat * 0.95)
+        for j in range(ln):
+            if s + j < n:
+                vib = 1 + 0.006 * math.sin(2 * math.pi * 5.5 * j / SR)
+                e = min(1.0, j / (SR * 0.03)) * math.exp(-j / (SR * 0.9))
+                out[s + j] += 0.22 * e * (math.sin(2 * math.pi * fr * vib * j / SR) + 0.3 * math.sin(4 * math.pi * fr * vib * j / SR))
+    return out
+
+
+write("bubble", bubble())
+write("pop", pop())
+write("thunder", thunder())
+write("combo", combo())
+write("fanfare", fanfare())
+write("levelup", levelup())
+write("craft", craft())
+write("festival_loop", festival_loop())
+print("wrote variant A sfx")

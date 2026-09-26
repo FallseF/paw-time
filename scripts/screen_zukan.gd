@@ -34,7 +34,7 @@ func _ready() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
-	head.add_child(_text("レア %d / %d" % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
+	head.add_child(_text("%d / %d" % [GameState.seen.size(), GameState.ALL.size()], 16, Color("8a5bd6"), font_black))
 	var back := Button.new()
 	back.text = "もどる"
 	back.add_theme_font_override("font", font_bold)
@@ -52,14 +52,18 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
 	var col := VBoxContainer.new()
-	col.custom_minimum_size = Vector2(360, 0)
+	col.custom_minimum_size = Vector2(348, 0)
 	col.add_theme_constant_override("separation", 12)
 	scroll.add_child(col)
 
-	col.add_child(_section("ふつうのおばけ"))
+	col.add_child(_records())
+	for key in GameState.claimable():
+		col.add_child(_claim_row(key))
+	col.add_child(_next_milestone())
+	col.add_child(_group_head("ふつう", "ふつうのおばけ"))
 	col.add_child(_shelf())
 	for g in GROUPS:
-		col.add_child(_section("レア ・ " + g))
+		col.add_child(_group_head(g, "レア ・ " + g))
 		var grid := GridContainer.new()
 		grid.columns = 3
 		grid.add_theme_constant_override("h_separation", 8)
@@ -144,6 +148,7 @@ func _shelf() -> Control:
 		var pos := Vector3((i - 2) * 1.05, 0, 0)
 		if GameState.seen.has(id):
 			var o := Obake3D.new().setup(id)
+			o.set_level(GameState.level_of(id))
 			o.position = pos
 			o.scale = Vector3.ONE * 0.8
 			w.add_child(o)
@@ -164,12 +169,148 @@ func _shelf() -> Control:
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.add_theme_constant_override("separation", 0)
 	for id in NORMAL:
-		var l := _text(GameState.info(id).name if GameState.seen.has(id) else "？？？", 12, Color("6a5f70"))
+		var l := _text(("%s\nLv%d" % [GameState.info(id).name, GameState.level_of(id)]) if GameState.seen.has(id) else "？？？", 11, Color("6a5f70"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.custom_minimum_size = Vector2(66, 18)
 		names.add_child(l)
 	v.add_child(names)
 	return v
+
+
+func _records() -> Control:
+	var r: Dictionary = GameState.records
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color("2a2233"), 18))
+	var h := HBoxContainer.new()
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	h.add_theme_constant_override("separation", 14)
+	p.add_child(h)
+	for pair in [["すくった玉", r.total], ["最高コンボ", r.best_combo], ["虹の玉", r.rainbow], ["夜", r.nights]]:
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", -2)
+		var n := _text(str(pair[1]), 20, Color("ffe27a"), font_black)
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(n)
+		var l := _text(pair[0], 10, Color(1, 1, 1, 0.7))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(l)
+		h.add_child(v)
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 12)
+	m.add_theme_constant_override("margin_right", 12)
+	m.add_child(p)
+	return m
+
+
+func _claim_row(key: String) -> Control:
+	var label: String = ("「%s」をそろえた" % key.substr(2)) if key.begins_with("g:") else ("%s種類に出会った" % key.substr(2))
+	var rw: Dictionary = GameState.GROUP_REWARD[key.substr(2)] if key.begins_with("g:") else GameState.milestone_reward(int(key.substr(2)))
+	var p := PanelContainer.new()
+	var st := _pill(Color("fff3c4"), 18)
+	st.border_color = Color("ffb35c")
+	st.set_border_width_all(2)
+	p.add_theme_stylebox_override("panel", st)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	p.add_child(h)
+	var v := VBoxContainer.new()
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.add_child(_text(label, 14, Color("2a2233"), font_black))
+	var d := _text(GameState.reward_text(rw), 11, Color("6a5f70"))
+	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	v.add_child(d)
+	h.add_child(v)
+	var b := Button.new()
+	b.text = "受け取る"
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(84, 40)
+	b.add_theme_font_override("font", font_black)
+	b.add_theme_font_size_override("font_size", 14)
+	for k in ["normal", "hover", "pressed"]:
+		b.add_theme_stylebox_override(k, _pill(Color("ff8a5b"), 20))
+	b.add_theme_color_override("font_color", Color.WHITE)
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.pressed.connect(func():
+		var got := GameState.claim(key)
+		if got.is_empty():
+			return
+		_play("fanfare")
+		b.text = "受け取った"
+		b.disabled = true
+		var tw := create_tween()
+		tw.tween_property(p, "modulate", Color(1.2, 1.2, 1.0), 0.15)
+		tw.tween_property(p, "modulate", Color(1, 1, 1, 0.6), 0.4))
+	h.add_child(b)
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 12)
+	m.add_theme_constant_override("margin_right", 12)
+	m.add_child(p)
+	return m
+
+
+func _next_milestone() -> Control:
+	var n: int = GameState.seen.size()
+	var next := 0
+	for mlt in GameState.MILESTONES:
+		if n < mlt:
+			next = mlt
+			break
+	var t := "つぎのごほうびまで あと %d 種類" % (next - n) if next > 0 else "すべての節目のごほうびを受け取った"
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 18)
+	m.add_child(_text(t, 12, Color("b07a3a")))
+	return m
+
+
+func _group_head(g: String, title: String) -> Control:
+	var pr: Vector2i = GameState.group_progress(g)
+	var done := pr.x >= pr.y
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 18)
+	m.add_theme_constant_override("margin_right", 18)
+	m.add_theme_constant_override("margin_top", 8)
+	m.add_child(h)
+	var medal := Panel.new()
+	var ms := StyleBoxFlat.new()
+	ms.bg_color = Color("ffc93d") if done else Color(0, 0, 0, 0.08)
+	ms.border_color = Color("2a2233") if done else Color(0, 0, 0, 0.15)
+	ms.set_border_width_all(2)
+	ms.set_corner_radius_all(10)
+	medal.add_theme_stylebox_override("panel", ms)
+	medal.custom_minimum_size = Vector2(20, 20)
+	medal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(medal)
+	var l := _text(title, 15, Color("2a2233") if done else Color("8a7a88"), font_black if done else null)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.clip_text = true
+	h.add_child(l)
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(60, 8)
+	bar.max_value = pr.y
+	bar.value = pr.x
+	bar.show_percentage = false
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0, 0, 0, 0.1)
+	bg.set_corner_radius_all(4)
+	var fg := StyleBoxFlat.new()
+	fg.bg_color = Color("ffb35c") if done else Color("8b7bff")
+	fg.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("background", bg)
+	bar.add_theme_stylebox_override("fill", fg)
+	h.add_child(bar)
+	h.add_child(_text("%d/%d" % [pr.x, pr.y], 13, Color("8a7a88")))
+	return m
+
+
+func _play(n: String) -> void:
+	var p := AudioStreamPlayer.new()
+	p.stream = load("res://assets/sfx/%s.wav" % n)
+	add_child(p)
+	p.play()
 
 
 func _card_texture(id: String) -> Texture2D:

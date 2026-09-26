@@ -10,7 +10,7 @@ var cam: Camera3D
 var walkers: Array = []
 var font_bold: FontFile
 var font_black: FontFile
-var poi_row: HBoxContainer
+var poi_row: HFlowContainer
 var card_title: Label
 var card_body: Label
 var actions: VBoxContainer
@@ -117,10 +117,12 @@ func _build_world() -> void:
 	_box(Vector3(0.8, 0.1, 0.8), Vector3(1.4, 0.05, 1.0), Color("c9454a"))
 
 	# おばけたち
-	var n := GameState.owned.size()
-	for i in n:
-		var o: Dictionary = GameState.owned[i]
-		var ob := Obake3D.make(o.id)
+	var ids: Array = GameState.owned.keys()
+	ids.sort_custom(func(a, b): return GameState.level_of(a) > GameState.level_of(b))
+	for i in min(ids.size(), 10):
+		var id: String = ids[i]
+		var ob := Obake3D.make(id)
+		ob.set_level(GameState.level_of(id))
 		ob.scale = Vector3.ONE * 0.62
 		ob.position = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
 		world.add_child(ob)
@@ -194,43 +196,61 @@ func _button(t: String, bg: Color, cb: Callable, fg := Color.WHITE) -> Button:
 
 
 func _build_ui() -> void:
+	var s := GameState.today()
 	var top := HBoxContainer.new()
-	top.position = Vector2(14, 16)
-	top.size = Vector2(332, 44)
-	top.add_theme_constant_override("separation", 8)
+	top.position = Vector2(12, 14)
+	top.size = Vector2(336, 44)
+	top.add_theme_constant_override("separation", 6)
 	add_child(top)
 	var dp := PanelContainer.new()
 	dp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.92), 22))
-	dp.add_child(_text("%s曜日の休憩室" % GameState.today().day, 16, Color("2a2233"), font_black))
+	var dv := VBoxContainer.new()
+	dv.add_theme_constant_override("separation", -4)
+	dv.add_child(_text("第%d週 %s曜日" % [GameState.week_no(), s.day], 16, Color("2a2233"), font_black))
+	dv.add_child(_text("%s ・ %s%s" % [s.season, s.weather, ("・" + s.moon) if s.moon != "" else ""], 11, Color("8a7a88")))
+	dp.add_child(dv)
 	top.add_child(dp)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
+	var ws := _button("工房", Color(1, 1, 1, 0.92), func(): main.go("workshop"), Color("d9774a"))
+	ws.custom_minimum_size = Vector2(62, 44)
+	top.add_child(ws)
 	var zk := _button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
-	zk.custom_minimum_size = Vector2(70, 40)
+	zk.custom_minimum_size = Vector2(62, 44)
 	top.add_child(zk)
+	if GameState.claimable().size() > 0:
+		var dot := _dot(Color("ff5b5b"))
+		dot.position = Vector2(50, -2)
+		zk.add_child(dot)
 
 	var pp := PanelContainer.new()
 	pp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.85), 18))
-	pp.position = Vector2(14, 68)
+	pp.position = Vector2(12, 66)
 	add_child(pp)
-	poi_row = HBoxContainer.new()
-	poi_row.add_theme_constant_override("separation", 10)
+	pp.size = Vector2(336, 0)
+	poi_row = HFlowContainer.new()
+	poi_row.add_theme_constant_override("h_separation", 5)
+	poi_row.add_theme_constant_override("v_separation", 0)
 	pp.add_child(poi_row)
 
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.96), 24))
-	card.position = Vector2(16, 430)
-	card.size = Vector2(328, 190)
+	card.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.97), 24))
+	card.position = Vector2(12, 372)
+	card.size = Vector2(336, 256)
 	add_child(card)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 8)
+	v.add_theme_constant_override("separation", 6)
 	card.add_child(v)
-	card_title = _text("", 18, Color("2a2233"), font_black)
+	card_title = _text("", 19, Color("2a2233"), font_black)
 	v.add_child(card_title)
-	card_body = _text("", 14, Color("6a5f70"))
+	card_body = _text("", 13, Color("6a5f70"))
 	card_body.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	card_body.custom_minimum_size = Vector2(300, 0)
 	v.add_child(card_body)
+	var fill := Control.new()
+	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(fill)
 	actions = VBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	v.add_child(actions)
@@ -243,69 +263,97 @@ func _dot(c: Color) -> Panel:
 	s.set_corner_radius_all(7)
 	p.add_theme_stylebox_override("panel", s)
 	p.custom_minimum_size = Vector2(14, 14)
+	p.size = Vector2(14, 14)
 	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return p
 
 
 func _render() -> void:
 	for c in poi_row.get_children():
 		c.queue_free()
-	poi_row.add_child(_text("ポイ", 13, Color("8a7a88")))
-	var any := false
-	for id in GameState.NETS:
-		var n: int = GameState.nets[id]
+	poi_row.add_child(_text("ポイ", 12, Color("8a7a88")))
+	for id in GameState.POI_ORDER:
+		var n: int = GameState.pois.get(id, 0)
 		if n <= 0:
 			continue
-		any = true
-		var t: String = GameState.NETS[id].type
-		poi_row.add_child(_dot(GameState.TYPE_COLOR.get(t, Color("ffd84d"))))
-		poi_row.add_child(_text("×%d" % n, 13))
-	if not any:
-		poi_row.add_child(_text("なし", 13, Color("8a7a88")))
-	poi_row.add_child(_text("強さ ×%.2f" % GameState.net_strength, 13, Color("8b7bff")))
+		poi_row.add_child(_dot(Color(GameState.POI[id].color).darkened(0.05)))
+		poi_row.add_child(_text("%s%d" % [GameState.POI[id].short, n], 12))
+	if GameState.total_pois() == 0:
+		poi_row.add_child(_text("なし", 12, Color("8a7a88")))
+	poi_row.add_child(_text("強さ×%.2f" % GameState.strength, 12, Color("8b7bff")))
 
 	for c in actions.get_children():
 		c.queue_free()
 	var s: Dictionary = GameState.today()
-	if GameState.phase in ["morning", "room"]:
-		if s.role == "":
-			card_title.text = "今日は休み"
-			card_body.text = "ポイはもらえない。残りのポイで、夜の川べりへ行ける"
-			actions.add_child(_button("夜の川べりへ", Color("5b6fc2"), _after_shift))
-		else:
-			card_title.text = "今日のシフト"
-			card_body.text = "%s ・ %sの%s %d時間%s\n天気：%s%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, "（はじめて）" if s.first else "", s.weather, "　満月" if s.moon == "満月" else ""]
-			actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
-	elif GameState.phase == "shift_done":
-		if GameState.day == GameState.BATTLE_DAY and not GameState.battle_won:
-			actions.add_child(_button("金曜の大ピークへ", Color("e85a4f"), func(): main.go("battle")))
-		if not GameState.scooped_tonight:
-			actions.add_child(_button("夜の川べりで、おばけすくい", Color("5b6fc2"), func(): main.go("catch")))
+	var fest := GameState.is_festival()
+	if GameState.phase == "scooped":
+		card_title.text = "今夜は %d 個すくった" % GameState.tonight.get("count", 0)
+		card_body.text = "寝ると、玉が朝にかえる。よく眠るほど、よく育つ"
 		actions.add_child(_button("寝る", Color("8b7bff"), func(): main.go("sleep")))
+		return
+	var night_label := "夜の川べりへ" if not fest else "大すくい祭りへ！"
+	var night_col := Color("5b6fc2") if not fest else Color("e8603c")
+	if s.role != "" and not GameState.worked_today:
+		card_title.text = "今日のシフト（見本の記録）"
+		var poi_name: String = GameState.POI[GameState.ROLE_POI[s.role]].name
+		card_body.text = "%s ・ %sの%s %d時間\n働くと %s ×%d（何時間でも2本まで）%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "\nはじめての店・仕事なら、きらきらポイも" if not GameState.stores_seen.has(s.store) or not GameState.roles_seen.has(s.role) else ""]
+		actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
+		var skip := _button("働かずに、" + night_label, Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
+		skip.custom_minimum_size = Vector2(0, 40)
+		skip.add_theme_font_size_override("font_size", 14)
+		actions.add_child(skip)
+	else:
+		if GameState.worked_today:
+			card_title.text = "おつかれさま！"
+			card_body.text = _got_text if _got_text != "" else "仕事のポイは、同じ色の玉を引き寄せる"
+		else:
+			card_title.text = "今日はお休み"
+			card_body.text = "毎朝の紙のポイで、夜の川べりへ行ける。休んだ日は、よく眠ろう"
+		if fest:
+			card_body.text += "\n今夜は大すくい祭り。12個すくうと景品"
+		actions.add_child(_button(night_label, night_col, func(): main.go("catch")))
+	card_body.text += "\n今夜の池：" + String(GameState.night_mods().label[0])
+	if GameState.day == 0 and not GameState.worked_today:
+		card_body.text += "\nまずは働いてポイを増やすか、そのまま川へ"
+
+
+var _got_text := ""
 
 
 func _do_shift() -> void:
 	var got := GameState.finish_shift()
-	GameState.phase = "shift_done"
-	card_title.text = "おつかれさま！"
-	card_body.text = "ポイをもらった：" + "、".join(got)
-	GameState.changed.emit()
-	card_title.text = "おつかれさま！"
-	card_body.text = "ポイをもらった：" + "、".join(got)
+	var parts: Array = []
+	for g in got:
+		parts.append("%s ×%d（%s）" % [GameState.POI[g.poi].name, g.n, g.why])
+	_got_text = "もらった：" + "、".join(parts)
+	_play_sfx("chime")
+	GameState.save_game()
+	_render()
+	_pop_card()
 
 
-func _after_shift() -> void:
-	GameState.phase = "shift_done"
-	card_title.text = "今夜はどうする？"
-	card_body.text = ""
-	GameState.changed.emit()
+func _play_sfx(n: String) -> void:
+	var p := AudioStreamPlayer.new()
+	p.stream = load("res://assets/sfx/%s.wav" % n)
+	add_child(p)
+	p.play()
+	p.finished.connect(p.queue_free)
+
+
+func _pop_card() -> void:
+	var card: Control = actions.get_parent().get_parent()
+	card.pivot_offset = card.size / 2
+	card.scale = Vector2(1.05, 1.05)
+	create_tween().tween_property(card, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _show_report() -> void:
 	report = PanelContainer.new()
-	report.add_theme_stylebox_override("panel", _pill(Color(0.16, 0.13, 0.22, 0.88), 22))
+	report.add_theme_stylebox_override("panel", _pill(Color(0.16, 0.13, 0.22, 0.92), 22))
 	report.position = Vector2(16, 110)
 	report.size = Vector2(328, 0)
+	report.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(report)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
@@ -316,7 +364,22 @@ func _show_report() -> void:
 		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		l.custom_minimum_size = Vector2(296, 0)
 		v.add_child(l)
+	v.add_child(_text("タップで閉じる", 11, Color(1, 1, 1, 0.45)))
+	report.gui_input.connect(func(e):
+		if (e is InputEventMouseButton or e is InputEventScreenTouch) and e.pressed:
+			_close_report())
+	report.modulate.a = 0.0
+	create_tween().tween_property(report, "modulate:a", 1.0, 0.3)
 	var tw := create_tween()
-	tw.tween_interval(5.0)
-	tw.tween_property(report, "modulate:a", 0.0, 0.6)
-	tw.tween_callback(report.queue_free)
+	tw.tween_interval(9.0)
+	tw.tween_callback(_close_report)
+
+
+func _close_report() -> void:
+	if report == null or not is_instance_valid(report):
+		return
+	var r := report
+	report = null
+	var tw := create_tween()
+	tw.tween_property(r, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(r.queue_free)

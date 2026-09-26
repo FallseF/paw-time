@@ -31,7 +31,7 @@ func _ready() -> void:
 	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
 	_build_world()
 	_build_ui()
-	for n in ["hatch", "sparkle", "chime"]:
+	for n in ["hatch", "sparkle", "chime", "levelup", "fanfare"]:
 		var p := AudioStreamPlayer.new()
 		p.stream = load("res://assets/sfx/%s.wav" % n)
 		add_child(p)
@@ -40,14 +40,18 @@ func _ready() -> void:
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
 		var t: String = GameState.info(h.id).type
-		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": h.id == "kirari", "weight": 0.3})
+		var kind: String = "rainbow" if h.get("rare", false) or h.get("kind", "") == "rainbow" else h.get("kind", "normal")
+		if kind == "school" or kind == "heavy":
+			kind = "normal"
+		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "kind": kind})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
 		o.light.light_energy = 0.5
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
-	header.text = "朝だ。光る玉が %d 個" % n_orbs
+	var rares := GameState.hatched.filter(func(h): return h.get("rare", false)).size()
+	header.text = "朝だ。玉が %d 個%s" % [n_orbs, "（虹色がまじってる）" if rares > 0 else ""]
 	next_btn.text = "玉をひらく"
 
 
@@ -262,7 +266,7 @@ func _next() -> void:
 	if busy:
 		return
 	if index >= orbs.size():
-		main.go("morning")
+		main.go("room")
 		return
 	busy = true
 	next_btn.disabled = true
@@ -292,7 +296,7 @@ func _next() -> void:
 	# 割れる
 	_flash(0.9)
 	sfx["hatch"].play()
-	if h.id == "kirari":
+	if h.get("rare", false) or h.get("kind", "") == "rainbow":
 		sfx["sparkle"].play()
 	Input.vibrate_handheld(60)
 	burst.position = orb.position
@@ -300,22 +304,46 @@ func _next() -> void:
 	burst.emitting = true
 	orb.queue_free()
 	current_obake = Obake3D.make(h.id)
+	current_obake.set_level(h.get("before", 1) if h.get("leveled", false) else h.level)
 	current_obake.position = Vector3(0, 0.55, 0.3)
 	current_obake.scale = Vector3.ONE * 0.05
 	world.add_child(current_obake)
 	var tw3 := create_tween()
 	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	await tw3.finished
-	sfx["chime"].play()
+	var rare: bool = h.get("rare", false)
+	sfx["fanfare" if rare or h.is_new else "chime"].play()
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
-	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
-	card_desc.text = sp.desc
+	var stars := "★".repeat(h.get("quality", 0)) + "☆".repeat(3 - h.get("quality", 0))
+	if rare:
+		card_sub.text = "レア ・ %s" % sp.group
+	else:
+		card_sub.text = "Lv%d ・ %s  %s" % [h.level, _type_label(sp.type), stars]
+	var extra := ""
+	if h.get("leveled", false):
+		extra = "Lv%d → Lv%d に育った！見た目も変わる" % [h.before, h.level]
+	elif h.get("shard", "") != "":
+		extra = "%sのかけら +1（工房で使える）" % GameState.SHARD_LABEL[h.shard]
+	if h.get("kind", "") == "rainbow":
+		extra += ("\n" if extra != "" else "") + "虹の玉：大きく育ち、虹のかけら +1"
+	card_desc.text = sp.desc + ("\n" + extra if extra != "" else "")
 	card.position.y = 430
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
-	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw4.tween_property(card, "position:y", 390.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if h.get("leveled", false):
+		await get_tree().create_timer(0.5).timeout
+		sfx["levelup"].play()
+		_flash(0.4)
+		burst.position = current_obake.position + Vector3(0, 0.3, 0)
+		burst.restart()
+		burst.emitting = true
+		current_obake.set_level(h.level)
+		var bump := create_tween()
+		bump.tween_property(current_obake, "scale", Vector3.ONE * 0.62, 0.15)
+		bump.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	index += 1
 	next_btn.text = "つぎの玉" if index < orbs.size() else "今日をはじめる"
 	next_btn.disabled = false
@@ -323,7 +351,7 @@ func _next() -> void:
 
 
 func _type_label(t: String) -> String:
-	return {"register": "レジの経験", "dish": "皿洗いの経験", "hall": "ホールの経験", "kitchen": "キッチンの経験", "stock": "品出しの経験", "night": "夜ふかし", "rare": "はじめての経験", "sleep": "よく眠った朝"}.get(t, "")
+	return {"register": "レジの経験", "dish": "皿洗いの経験", "hall": "ホールの経験", "kitchen": "キッチンの経験", "stock": "品出しの経験", "night": "夜ふかし", "rare": "虹の玉", "sleep": "よく眠った朝"}.get(t, "")
 
 
 func _flash(a: float) -> void:

@@ -52,6 +52,11 @@ func setup(id: String) -> Obake3D:
 	return self
 
 
+func set_level(lv: int) -> void:
+	if sprite == null:
+		super.set_level(lv)
+
+
 func _process(delta: float) -> void:
 	if sprite == null:
 		super._process(delta)

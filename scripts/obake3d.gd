@@ -21,6 +21,9 @@ var _t := 0.0
 var _blink := 0.0
 var eyes: Array[MeshInstance3D] = []
 var bob := true
+var level := 1
+var growth := 1.0
+var extras: Node3D
 
 
 static func make(id: String) -> Obake3D:
@@ -184,3 +187,59 @@ func _process(delta: float) -> void:
 		_blink = 0.12
 	for e in eyes:
 		e.scale.y = 0.15 if _blink > 0 else 1.2
+
+
+## レベルで見た目が育つ：Lv2 首巻き / Lv3 頭の芽 / Lv4 胸の名札 / Lv5 王冠。少しずつ大きくなる
+func set_level(lv: int) -> void:
+	level = lv
+	growth = 1.0 + 0.06 * (lv - 1)
+	body.scale = Vector3.ONE * growth
+	if extras:
+		extras.queue_free()
+	extras = Node3D.new()
+	body.add_child(extras)
+	var base: Color = COLORS.get(species, Color.WHITE)
+	if lv >= 2:
+		var scarf := TorusMesh.new()
+		scarf.inner_radius = 0.42
+		scarf.outer_radius = 0.56
+		var sm := _mesh(scarf, toon(base.darkened(0.45), 0.2), Vector3(0, 0.3, 0))
+		sm.scale = Vector3(1, 0.7, 1)
+		extras.add_child(sm)
+		var tail := BoxMesh.new()
+		tail.size = Vector3(0.12, 0.28, 0.05)
+		var tm := _mesh(tail, toon(base.darkened(0.45), 0.2), Vector3(0.28, 0.18, 0.46))
+		tm.rotation.z = 0.3
+		extras.add_child(tm)
+	if lv >= 3:
+		var stem := CylinderMesh.new()
+		stem.top_radius = 0.02
+		stem.bottom_radius = 0.025
+		stem.height = 0.16
+		extras.add_child(_mesh(stem, toon(Color("4f8a5b"), 0.2), Vector3(0, 1.05, 0)))
+		for x in [-1, 1]:
+			var leaf := _mesh(_sphere(0.09), toon(Color("7bc96f"), 0.2), Vector3(x * 0.09, 1.13, 0))
+			leaf.scale = Vector3(1.3, 0.45, 0.8)
+			leaf.rotation.z = x * 0.4
+			extras.add_child(leaf)
+	if lv >= 4:
+		var tag := CylinderMesh.new()
+		tag.top_radius = 0.09
+		tag.bottom_radius = 0.09
+		tag.height = 0.03
+		var badge := _mesh(tag, toon(Color("fff4d6"), 0.2), Vector3(-0.2, 0.22, 0.5))
+		badge.rotation.x = PI / 2
+		extras.add_child(badge)
+	if lv >= 5:
+		var ring := CylinderMesh.new()
+		ring.top_radius = 0.2
+		ring.bottom_radius = 0.18
+		ring.height = 0.12
+		extras.add_child(_mesh(ring, toon(Color("ffc93d"), 0.3, 0.3), Vector3(0.05, 1.02, 0)))
+		for i in 5:
+			var c := CylinderMesh.new()
+			c.top_radius = 0.0
+			c.bottom_radius = 0.06
+			c.height = 0.14
+			var a := TAU * i / 5.0
+			extras.add_child(_mesh(c, toon(Color("ffc93d"), 0.3, 0.3), Vector3(0.05 + cos(a) * 0.15, 1.14, sin(a) * 0.15)))
