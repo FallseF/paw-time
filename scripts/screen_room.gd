@@ -15,6 +15,7 @@ var card_title: Label
 var card_body: Label
 var actions: VBoxContainer
 var report: PanelContainer
+var card: PanelContainer
 
 
 func _ready() -> void:
@@ -235,10 +236,10 @@ func _build_ui() -> void:
 	poi_row.add_theme_constant_override("v_separation", 0)
 	pp.add_child(poi_row)
 
-	var card := PanelContainer.new()
+	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.97), 24))
-	card.position = Vector2(12, 372)
-	card.size = Vector2(336, 256)
+	card.position = Vector2(12, 400)
+	card.size = Vector2(336, 0)
 	add_child(card)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
@@ -249,9 +250,6 @@ func _build_ui() -> void:
 	card_body.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	card_body.custom_minimum_size = Vector2(300, 0)
 	v.add_child(card_body)
-	var fill := Control.new()
-	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(fill)
 	actions = VBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	v.add_child(actions)
@@ -292,13 +290,15 @@ func _render() -> void:
 		card_title.text = "今夜は %d 個すくった" % GameState.tonight.get("count", 0)
 		card_body.text = "寝ると、玉が朝にかえる。よく眠るほど、よく育つ"
 		actions.add_child(_button("寝る", Color("8b7bff"), func(): main.go("sleep")))
+		_fit_card()
 		return
 	var night_label := "夜の川べりへ" if not fest else "大すくい祭りへ！"
 	var night_col := Color("5b6fc2") if not fest else Color("e8603c")
 	if s.role != "" and not GameState.worked_today:
 		card_title.text = "今日のシフト（見本の記録）"
 		var poi_name: String = GameState.POI[GameState.ROLE_POI[s.role]].name
-		card_body.text = "%s ・ %sの%s %d時間\n働くと %s ×%d（何時間でも2本まで）%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "\nはじめての店・仕事なら、きらきらポイも" if not GameState.stores_seen.has(s.store) or not GameState.roles_seen.has(s.role) else ""]
+		var first: bool = not GameState.stores_seen.has(s.store) or not GameState.roles_seen.has(s.role)
+		card_body.text = "%s ・ %sの%s %d時間\n働くと：%s ×%d%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "＋きらきらポイ（はじめて）" if first else "（長く働いても2本まで）"]
 		actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
 		var skip := _button("働かずに、" + night_label, Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
 		skip.custom_minimum_size = Vector2(0, 40)
@@ -311,16 +311,22 @@ func _render() -> void:
 		else:
 			card_title.text = "今日はお休み"
 			card_body.text = "毎朝の紙のポイで、夜の川べりへ行ける。休んだ日は、よく眠ろう"
-		if fest:
-			card_body.text += "\n今夜は大すくい祭り。12個すくうと景品"
 		actions.add_child(_button(night_label, night_col, func(): main.go("catch")))
-	card_body.text += "\n今夜の池：" + String(GameState.night_mods().label[0])
-	card_body.text += "\n今夜のおだい：" + String(GameState.night_goal().text)
+	card_body.text += "\n今夜：" + String(GameState.night_mods().label[0])
+	card_body.text += "\nおだい：" + String(GameState.night_goal().text)
 	var nu := GameState.next_unlock_text()
-	if nu != "":
+	if nu != "" and GameState.records.nights > 0:
 		card_body.text += "\n" + nu
-	if GameState.day == 0 and not GameState.worked_today:
-		card_body.text += "\nまずは働いてポイを増やすか、そのまま川へ"
+	_fit_card()
+
+
+func _fit_card() -> void:
+	await get_tree().process_frame
+	if not is_instance_valid(card):
+		return
+	card.reset_size()
+	card.size.x = 336
+	card.position.y = 628.0 - card.size.y
 
 
 var _got_text := ""
