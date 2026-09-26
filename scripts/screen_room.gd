@@ -9,6 +9,7 @@ var world: Node3D
 var cam: Camera3D
 var walkers: Array = []
 ## おばけの居場所（前・中・奥に、ずらして並べる。0 は相棒）
+const WIDE_RARES := ["hyakki", "wataridori", "shuumatsu"]
 const HOMES := [Vector3(-1.3, 0, 0.45), Vector3(0.1, 0, 0.2), Vector3(1.5, 0, -0.1), Vector3(-0.55, 0, -0.35), Vector3(0.6, 0, -0.4), Vector3(-1.95, 0, -1.1), Vector3(-0.95, 0, -1.25), Vector3(0.05, 0, -1.2), Vector3(1.0, 0, -1.3), Vector3(1.95, 0, -1.05)]
 var font_bold: FontFile
 var font_black: FontFile
@@ -154,7 +155,11 @@ func _build_world() -> void:
 		var id: String = ids[i]
 		var ob := Obake3D.make(id)
 		ob.set_level(GameState.level_of(id))
-		ob.scale = Vector3.ONE * (0.45 if Rares.is_rare(id) else 0.62)
+		# レアは3Dで少し大きいので小さめに。横に広い子（行列・渡り鳥・週末）はさらに小さく
+		var sc := 0.62
+		if Rares.is_rare(id):
+			sc = 0.42 if id in WIDE_RARES else 0.5
+		ob.scale = Vector3.ONE * sc
 		if i == 0:
 			ob.scale *= 1.05 # 相棒は少し大きく、前に
 		# まだ少ないうちは、まんなかから並べる
@@ -281,8 +286,11 @@ func _process(delta: float) -> void:
 			var b: Obake3D = walkers[j].o
 			var d := Vector3(a.position.x - b.position.x, 0, a.position.z - b.position.z)
 			var l := d.length()
-			if l < 0.7 and l > 0.001:
-				var push := d / l * (0.7 - l) * 1.5 * delta
+			var want := 0.7
+			if a.species in WIDE_RARES or b.species in WIDE_RARES:
+				want = 1.05 # 横に広い子のまわりは、少しあける
+			if l < want and l > 0.001:
+				var push := d / l * (want - l) * 1.5 * delta
 				a.position += push
 				b.position -= push
 	for w in walkers:
