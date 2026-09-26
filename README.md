@@ -55,4 +55,4 @@ pnpm dev:api
 - 勤怠の修正と採用・評価の変更は監査ログへ残す。
 - GodotとTypeScriptの実装コードを無理に共有せず、API契約と宣言的なゲーム定義を共有する。
 
-詳しい構成は [アーキテクチャ](docs/architecture/monorepo.md)、既存ワーカーアプリの仕様は [ワーカーアプリREADME](apps/worker/README.md) を参照してください。
+詳しい構成は [アーキテクチャ](docs/architecture/monorepo.md)、既存ワーカーアプリの仕様は [ワーカーアプリREADME](apps/worker/README.md) を参照してください。3分ピッチの背景・課題に使う調査結果と出典は [ピッチ用の調査メモ](docs/pitch-evidence.md) にまとめています。
