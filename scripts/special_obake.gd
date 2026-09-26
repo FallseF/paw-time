@@ -33,7 +33,9 @@ static func pet_name(my: Dictionary = {}) -> String:
 	var d: Dictionary = my if not my.is_empty() or gs == null else gs.my_obake
 	var kind: String = d.get("special", "")
 	if kind == "":
-		return I18n.t("ONB_PARTNER")
+		# ふつうの子は、診断のタイプ名（「あいぼう」は、まだ診断を受けていないときだけ）
+		var tid: String = d.get("type_id", "")
+		return QuizData.type_name(tid) if QuizData.TYPES.has(tid) else I18n.t("ONB_PARTNER")
 	return I18n.t("SPECIAL_%s_PET" % kind.to_upper())
 
 

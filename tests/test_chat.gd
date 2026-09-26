@@ -180,6 +180,30 @@ func _run() -> void:
 	ChatMe.persist = false
 	ChatMe.path = ChatMe.PATH
 
+	# 6b. What your cat remembers: fixed topics only, never health/family/crisis, nothing in "Just between us"
+	_check(ChatSignals.from_chip("prob_break") == ["break_hard"] and ChatSignals.from_chip("today_good").is_empty(), "chip topics")
+	_check(ChatSignals.from_text("There was no break today") == ["break_hard"], "keyword topic %s" % [ChatSignals.from_text("There was no break today")])
+	_check(ChatSignals.from_text("I want more hours, and the customers were nice").size() == 2, "two topics")
+	_check(ChatSignals.from_text("もっと働きたい") == ["want_more_hours"], "ja keyword topic")
+	_check(ChatSignals.from_text("my mom is in hospital so I want fewer hours").is_empty(), "family/health talk is never tagged")
+	_check(ChatSignals.from_text("体調が悪くてシフトを減らしたい").is_empty(), "ja health talk is never tagged")
+	_check(ChatSignals.from_text("I want to disappear, too busy").is_empty(), "crisis talk is never tagged")
+	for tp in ChatSignals.TOPICS:
+		_check(tp in ["break_hard", "yelled_at", "pay_late", "unclear_instructions", "too_busy", "nervous_new_role", "liked_team",
+			"liked_customers", "want_more_hours", "want_fewer_hours", "prefer_backstage", "prefer_customer_facing"], "fixed topic %s" % tp)
+	ChatMe.clear()
+	_check(ChatMe.needs_consent(), "consent asked on first open")
+	ChatMe.set_consent(true)
+	_check(ChatMe.is_private() and not ChatMe.needs_consent(), "just between us")
+	ChatMe.say_text("There was no break today")
+	_check(ChatSignals.counts().is_empty(), "private mode remembers nothing")
+	ChatMe.set_private(false)
+	ChatMe.say_text("There was no break today")
+	_check(int(ChatSignals.counts().get("break_hard", 0)) == 1, "shared mode remembers the topic %s" % [ChatSignals.counts()])
+	_check(not JSON.stringify(ChatSignals.counts()).contains("There was"), "only topics, never words")
+	ChatMe.clear()
+	_check(ChatSignals.counts().is_empty() and not ChatMe.is_private() and not ChatMe.needs_consent(), "delete chat clears memory, keeps the choice")
+
 	# 7. Strings in both languages and in the font
 	var fonts := [load("res://assets/fonts/ZenMaruGothic-Bold.ttf"), load("res://assets/fonts/ZenMaruGothic-Black.ttf")]
 	var missing := {}

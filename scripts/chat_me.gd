@@ -1,8 +1,10 @@
 class_name ChatMe
-## The private chat with your own cat. Scripted, short, warm dialogue trees (no AI, no network).
-## Only you and your cat see it: the history stays in user://chat_me.json and goes nowhere else.
-## The one thing that can leave: if you tell your cat about a problem at a shop and say "yes",
-## ChatOutbox gets {shop_id, tag} (the kind of issue only, never your words).
+## The chat with your own cat. Scripted, short, warm dialogue trees (no AI, no network).
+## The history (your words) stays in user://chat_me.json on this device and goes nowhere else.
+## What can leave, never your words:
+##   - your cat remembers a few fixed topics to find jobs that fit you (ChatSignals), unless "Just between us" is on
+##   - if you tell your cat about a problem at a shop and say "yes", ChatOutbox gets {shop_id, tag}
+## The first open asks once (consent card): "OK" or "Just between us" (private mode, can be changed in the menu).
 ##
 ## A message: {who: "me"|"cat", parts: [[key, args]] | text, mood, card, t}
 ##   card = {kind: "tell", tag, shop_id, shop, support: bool, done: "", support_done: false}
@@ -79,7 +81,7 @@ const TOPIC_WORDS := [
 	["island", ["island", "島"]],
 	["hello", ["hello", "hey", "こんにちは", "やあ"]],
 ]
-## Support resource for the crisis card. verify resource links before release
+## Support resource for the crisis card (MHLW「まもろうよ こころ」, checked live)
 const CRISIS_URL := "https://www.mhlw.go.jp/mamorouyokokoro/"
 
 static var path := PATH
@@ -87,6 +89,8 @@ static var persist := OS.get_environment("OBAKE_NOSAVE") == ""
 static var _loaded := false
 static var _messages: Array = []
 static var _node := "hello"
+static var _consent := "" # "" = not asked yet, "ok", "private"
+static var _private := false # "Just between us": nothing is remembered or sent
 
 
 static func _ensure() -> void:
@@ -99,6 +103,8 @@ static func _ensure() -> void:
 	if d is Dictionary:
 		_messages = d.get("messages", [])
 		_node = d.get("node", "hello")
+		_consent = String(d.get("consent", ""))
+		_private = bool(d.get("private", false))
 
 
 static func _save() -> void:
@@ -106,7 +112,34 @@ static func _save() -> void:
 		return
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify({"messages": _messages, "node": _node}))
+		f.store_string(JSON.stringify({"messages": _messages, "node": _node, "consent": _consent, "private": _private}))
+
+
+## The consent card has not been answered yet
+static func needs_consent() -> bool:
+	_ensure()
+	return _consent == ""
+
+
+## Answer the consent card: "OK" (private = false) or "Just between us" (private = true)
+static func set_consent(private: bool) -> void:
+	_ensure()
+	_consent = "private" if private else "ok"
+	_private = private
+	_save()
+
+
+static func is_private() -> bool:
+	_ensure()
+	return _private
+
+
+static func set_private(on: bool) -> void:
+	_ensure()
+	_private = on
+	if _consent == "":
+		_consent = "private" if on else "ok"
+	_save()
 
 
 static func history() -> Array:
@@ -114,13 +147,16 @@ static func history() -> Array:
 	return _messages
 
 
-## Delete chat: forget everything and remove the file
+## Delete chat: forget the history and what your cat remembered (the consent answer and "Just between us" stay)
 static func clear() -> void:
-	_loaded = true
+	_ensure()
 	_messages = []
 	_node = "hello"
+	ChatSignals.clear()
 	if persist and FileAccess.file_exists(path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	if _consent != "":
+		_save()
 
 
 ## First open: your cat says hello
@@ -146,6 +182,7 @@ static func pick(chip: String) -> Array:
 	if not CHIPS.has(chip) or CHIPS[chip][1] == "":
 		return []
 	var out: Array = [_add({"who": "me", "parts": [[CHIPS[chip][0], []]]})]
+	ChatSignals.record(ChatSignals.from_chip(chip), String(recent_shop().get("shop_id", "")))
 	out.append_array(_cat(CHIPS[chip][1]))
 	return out
 
@@ -156,6 +193,7 @@ static func say_text(text: String) -> Array:
 	if s == "":
 		return []
 	var out: Array = [_add({"who": "me", "text": s})]
+	ChatSignals.record(ChatSignals.from_text(s), String(recent_shop().get("shop_id", ""))) # topics only, never the words
 	out.append_array(_cat(route(s)))
 	return out
 
@@ -276,7 +314,7 @@ static func text_of(m: Dictionary) -> String:
 	return ChatShops.text_of(m)
 
 
-## Open the support page (MHLW "まもろうよ こころ"). verify resource links before release
+## Open the support page (MHLW "まもろうよ こころ")
 static func open_resources() -> void:
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("window.open('%s', '_blank')" % CRISIS_URL)

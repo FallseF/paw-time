@@ -230,9 +230,11 @@ static func ask(thread_id: String, chip: String, text := "", t := -1.0) -> Array
 	else:
 		me["parts"] = [["CS_CHIP_" + chip.to_upper(), []]]
 	var out: Array = [me]
+	# TELEMETRY:shop_message_sent {kind: late|swap|thanks|question}
 	match faq:
 		"wear", "entrance", "break":
 			out.append({"who": "shop", "kind": "auto", "parts": faq_parts(shop_id, faq), "t": at, "deliver_at": at})
+			# TELEMETRY:faq_auto_answered {topic: dress|entrance|break}
 		"late":
 			out.append({"who": "shop", "kind": "auto", "parts": [["CS_ACK_LATE", [contact_key(shop_id)]]], "t": at, "deliver_at": at})
 		"swap":

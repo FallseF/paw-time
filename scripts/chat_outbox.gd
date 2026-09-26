@@ -7,12 +7,15 @@ class_name ChatOutbox
 
 const TAGS := ["harassment", "no_break", "late_pay"]
 const SHOP_MIN := 5
+## The same issue as a chat topic (ChatSignals.TOPICS), for anon_issue_sent
+const ISSUE_TOPIC := {"harassment": "yelled_at", "no_break": "break_hard", "late_pay": "pay_late"}
 
 
 static func tell_shop(shop_id: String, tag: String) -> bool:
 	if shop_id == "" or not tag in TAGS:
 		return false
 	ChatShops._b().queue_anonymous("shop", {"shop_id": shop_id, "tag": tag})
+	# TELEMETRY:anon_issue_sent {tag: ISSUE_TOPIC[tag], shop_id}
 	return true
 
 

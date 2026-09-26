@@ -43,6 +43,13 @@ func _ready() -> void:
 		var l := ChatShops.list()
 		thread = l[0].id if not l.is_empty() else "list"
 	_build()
+	_opened()
+
+
+## A chat with your cat or a shop was opened (the list is not counted)
+func _opened() -> void:
+	if thread == "me" or thread.begins_with("shop:"):
+		pass # TELEMETRY:chat_open {kind: me|shop}
 
 
 ## Sample shifts for demos and screenshots (only when there are none): tomorrow at a café, yesterday at an izakaya
@@ -99,7 +106,7 @@ func _build() -> void:
 	var th := ChatShops.thread(thread) if shop else {}
 	var shift := ChatShops.shift_of(thread) if shop else {}
 	var title := cat_name() if not shop else String(shift.get("store", JobListings.store_name(th.shop_id)))
-	var sub := tr("CHAT_PRIVATE") if not shop else JobListings.when_text(shift)
+	var sub := mode_text() if not shop else JobListings.when_text(shift)
 	if shop and ChatShops.swap_requested(thread):
 		sub += "  ·  " + tr("CHAT_SWAP_BADGE")
 	v.add_child(_header(title, sub, not shop))
@@ -154,6 +161,45 @@ func _build() -> void:
 			stage.mood("me", h[-1].get("mood", "calm") if not h.is_empty() else "calm")
 	_refresh_chips()
 	_scroll_end()
+	if not shop and ChatMe.needs_consent():
+		_consent_card()
+
+
+## The header line of the chat with your cat: what your cat does with the chat
+static func mode_text() -> String:
+	return I18n.t("CHAT_MODE_PRIVATE") if ChatMe.is_private() else I18n.t("CHAT_MODE_SHARED")
+
+
+## First open: say honestly what your cat remembers, and let the worker choose "Just between us"
+func _consent_card() -> void:
+	var dim := ColorRect.new()
+	dim.color = Color(0.12, 0.1, 0.2, 0.55)
+	dim.size = Vector2(360, 640)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 22, 0.2, Vector2(18, 14)))
+	p.position = Vector2(24, 180)
+	p.size = Vector2(312, 0)
+	dim.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	var t := I18n.wrap(Kit.text(tr("CHAT_CONSENT_TITLE"), 17, INK, true))
+	t.custom_minimum_size = Vector2(276, 0)
+	v.add_child(t)
+	var b := I18n.wrap(Kit.text(tr("CHAT_CONSENT_BODY"), 13, SUB))
+	b.custom_minimum_size = Vector2(276, 0)
+	v.add_child(b)
+	var pick := func(private: bool):
+		ChatMe.set_consent(private)
+		dim.queue_free()
+		_build()
+	v.add_child(Kit.button(tr("CHAT_CONSENT_OK"), PURPLE, pick.bind(false), Color.WHITE, 42, 15))
+	v.add_child(_link(tr("CHAT_CONSENT_PRIVATE"), pick.bind(true), Color("3b7a57"), 14))
+	Kit.keep_fit(p, func():
+		p.size.y = 0
+		p.position.y = (640.0 - p.size.y) / 2.0)
 
 
 func _header(title: String, sub: String, private: bool) -> Control:
@@ -342,7 +388,6 @@ func _crisis_card() -> void:
 	var v := _card_panel(Color("eef6ff"))
 	v.add_child(_wrap_text(tr("CHAT_CRISIS_TITLE"), 15, INK, true))
 	v.add_child(_wrap_text(tr("CHAT_CRISIS_BODY"), 12, SUB))
-	# verify resource links before release (ChatMe.CRISIS_URL)
 	v.add_child(Kit.button(tr("CHAT_CRISIS_OPEN"), Color("3b6fd6"), ChatMe.open_resources, Color.WHITE, 40, 14))
 	v.add_child(_wrap_text(tr("CHAT_CRISIS_NOTE"), 11, SUB))
 
@@ -567,6 +612,10 @@ func _toggle_menu() -> void:
 	p.add_child(v)
 	if thread == "me":
 		v.add_child(_link(tr("CHAT_MENU_SHOPS"), func(): _open_thread("list"), INK, 14))
+		# 「ふたりだけのひみつ」：オンのあいだは、相棒は何も覚えず、何も送らない
+		v.add_child(_link(tr("CHAT_MENU_PRIVATE_ON") if ChatMe.is_private() else tr("CHAT_MENU_PRIVATE_OFF"), func():
+			ChatMe.set_private(not ChatMe.is_private())
+			_build(), Color("3b7a57"), 14))
 		v.add_child(_link(tr("CHAT_MENU_DELETE"), _confirm_delete, Color("b0463b"), 14))
 	else:
 		v.add_child(_link(tr("CHAT_MENU_ALL"), func(): _open_thread("list"), INK, 14))
@@ -644,7 +693,7 @@ func _build_list(v: VBoxContainer) -> void:
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 8)
 	m.add_child(box)
-	box.add_child(_row(cat_name(), tr("CHAT_PRIVATE"), ME_BG, tr("CHAT_TALK"), func(): _open_thread("me")))
+	box.add_child(_row(cat_name(), mode_text(), ME_BG, tr("CHAT_TALK"), func(): _open_thread("me")))
 	var list := ChatShops.list()
 	box.add_child(Kit.text(tr("CHAT_LIST_SHIFTS"), 13, SUB, true))
 	if list.is_empty():
@@ -708,6 +757,7 @@ func _open_thread(t: String) -> void:
 		thread = l[0].id if not l.is_empty() else "list"
 	busy = false
 	_build()
+	_opened()
 
 
 func _back() -> void:
