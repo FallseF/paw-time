@@ -172,6 +172,29 @@ func _run() -> void:
 	Shifts.reset()
 	Reviews.reset()
 
+	# 5c. 一緒に働いた勤務が終わったら、その場で評価へ（WorkTogether.pop_ended → Reviews.target_for_ended）
+	Shifts.reset()
+	Reviews.reset()
+	WorkTogether.reset()
+	var t0 := 1800000000.0
+	Shifts.add({"id": "wt1", "title": "Café", "place": "Café", "store": "Café", "role": "hall", "start": t0, "end": t0 + 4 * 3600})
+	WorkTogether.sync(t0 + 60)
+	_check(WorkTogether.active(), "registered shift starts working together")
+	WorkTogether.sync(t0 + 4 * 3600 + 1)
+	var tg := Reviews.target_for_ended(WorkTogether.pop_ended())
+	_check(tg.get("id", "") == "wt1", "ended shift opens the review %s" % [tg])
+	_check(Reviews.target_for_ended(WorkTogether.pop_ended()).is_empty(), "handoff happens once")
+	WorkTogether.start("hall", "", t0 + 5 * 86400)
+	WorkTogether.stop(t0 + 5 * 86400 + 3600)
+	_check(Reviews.target_for_ended(WorkTogether.pop_ended()).is_empty(), "manual session has no workplace review")
+	# 自分で入れたシフト（仕事の種類なし）でも、一緒に働く職場の種類が決まる
+	Shifts.add({"id": "wt2", "title": "Mine", "place": "", "store": "Mine", "role": "", "start": t0 + 9 * 86400, "end": t0 + 9 * 86400 + 3600, "manual": true})
+	WorkTogether.sync(t0 + 9 * 86400 + 60)
+	_check(WorkTogether.session().get("role", "") in WorkTogether.ROLES, "manual shift works with a valid role")
+	Shifts.reset()
+	Reviews.reset()
+	WorkTogether.reset()
+
 	# 6. 字（英語・日本語の両方）
 	var fonts := [load("res://assets/fonts/ZenMaruGothic-Bold.ttf"), load("res://assets/fonts/ZenMaruGothic-Black.ttf")]
 	var missing := {}

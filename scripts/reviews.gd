@@ -45,6 +45,19 @@ static func pending(now := -1.0) -> Array:
 	return Shifts.all().filter(func(s): return float(s.get("end", 0)) <= t and not is_reviewed(String(s.id)))
 
 
+## 一緒に働いた勤務（WorkTogether.pop_ended）のうち、まだ評価していない登録シフト（Shifts にあるもの）。
+## 手動の「仕事に行ってくる」は職場が無いので評価しない
+static func target_for_ended(ended: Array) -> Dictionary:
+	for e in ended:
+		var id := String(e.get("shift_id", ""))
+		if id == "" or is_reviewed(id):
+			continue
+		for sh in Shifts.all():
+			if String(sh.id) == id:
+				return sh
+	return {}
+
+
 static func add(shift: Dictionary, stars: int, tags: Array) -> void:
 	_ensure()
 	var clean: Array = tags.filter(func(x): return x in TAGS)

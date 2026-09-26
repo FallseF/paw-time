@@ -18,6 +18,7 @@ const SCREENS := {
 	"onboard": preload("res://scripts/screen_onboard.gd"),
 	"onboard_night": preload("res://scripts/screen_onboard.gd"),
 	"prefs": preload("res://scripts/screen_job_prefs.gd"),
+	"work": preload("res://scripts/screen_work.gd"),
 }
 
 var root: Control

@@ -162,8 +162,15 @@ func build_shift() -> Dictionary:
 		mins += 24 * 60
 	var title := title_edit.text.strip_edges()
 	var place := place_edit.text.strip_edges()
-	return {"title": title, "place": place, "store": place if place != "" else title, "role": "",
+	return {"title": title, "place": place, "store": place if place != "" else title, "role": _role(),
 		"start": start, "end": start + mins * 60, "manual": true}
+
+
+## 仕事の種類は聞かない（入力を増やさない）。一緒に働く職場とポイの種類は、相棒の向いてる仕事で
+func _role() -> String:
+	var gs := get_node_or_null("/root/GameState")
+	var tid: String = gs.my_obake.get("type_id", "") if gs else ""
+	return QuizData.TYPES[tid].job if QuizData.TYPES.has(tid) else "hall"
 
 
 func _refresh() -> void:

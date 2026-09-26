@@ -327,6 +327,12 @@ func _found_jobs() -> void:
 func _daily() -> void:
 	_work_pill()
 	note_top = 108
+	# 一緒に働いた勤務（WorkTogether）が終わったら、その場でひとこと評価を開く（受け渡しは pop_ended の一度だけ）
+	WorkTogether.sync()
+	var just := Reviews.target_for_ended(WorkTogether.pop_ended())
+	if not just.is_empty():
+		_open_review(just)
+		return
 	var rev := Reviews.pending()
 	if not rev.is_empty():
 		var s: Dictionary = rev[0]
