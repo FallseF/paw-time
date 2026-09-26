@@ -24,6 +24,13 @@ var rays: MeshInstance3D
 var sfx := {}
 var busy := false
 var skip_btn: Button
+var btn_row: HBoxContainer
+var rare_tease := false
+
+
+func _update_header() -> void:
+	var n := orbs.size()
+	header.text = "朝のお迎え %d / %d%s" % [mini(index, n), n, "　虹色がまじってる" if rare_tease and index < n else ""]
 
 
 func _ready() -> void:
@@ -56,21 +63,22 @@ func _ready() -> void:
 		world.add_child(o)
 		orbs.append(o)
 	var rares := GameState.hatched.filter(func(h): return h.get("rare", false)).size()
-	header.text = "朝だ。玉が %d 個%s" % [n_orbs, "（虹色がまじってる）" if rares > 0 else ""]
+	rare_tease = rares > 0
+	_update_header()
 	next_btn.text = "玉をひらく"
 	if n_orbs >= 3:
 		skip_btn = Button.new()
 		skip_btn.text = "まとめて"
-		skip_btn.position = Vector2(290, 582)
-		skip_btn.size = Vector2(62, 38)
+		skip_btn.focus_mode = Control.FOCUS_NONE
+		skip_btn.custom_minimum_size = Vector2(96, 50)
 		skip_btn.add_theme_font_override("font", font_bold)
-		skip_btn.add_theme_font_size_override("font_size", 12)
+		skip_btn.add_theme_font_size_override("font_size", 15)
 		for k in ["normal", "hover", "pressed"]:
 			skip_btn.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.85), 19))
 		skip_btn.add_theme_color_override("font_color", Color("5b4a3a"))
 		skip_btn.add_theme_color_override("font_hover_color", Color("5b4a3a"))
 		skip_btn.pressed.connect(_open_all)
-		add_child(skip_btn)
+		btn_row.add_child(skip_btn)
 
 
 func _build_world() -> void:
@@ -263,8 +271,14 @@ func _build_ui() -> void:
 	v.add_child(card_desc)
 
 	next_btn = Button.new()
-	next_btn.position = Vector2(80, 576)
-	next_btn.size = Vector2(200, 50)
+	btn_row = HBoxContainer.new()
+	btn_row.position = Vector2(16, 574)
+	btn_row.size = Vector2(328, 50)
+	btn_row.add_theme_constant_override("separation", 8)
+	add_child(btn_row)
+	next_btn.custom_minimum_size = Vector2(0, 50)
+	next_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	next_btn.focus_mode = Control.FOCUS_NONE
 	next_btn.add_theme_font_override("font", font_black)
 	next_btn.add_theme_font_size_override("font_size", 18)
 	for k in ["normal", "hover", "pressed"]:
@@ -274,7 +288,7 @@ func _build_ui() -> void:
 	next_btn.add_theme_color_override("font_color", Color.WHITE)
 	next_btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	next_btn.pressed.connect(_next)
-	add_child(next_btn)
+	btn_row.add_child(next_btn)
 
 	flash = ColorRect.new()
 	flash.color = Color("fff6d8")
@@ -368,6 +382,7 @@ func _next() -> void:
 		bump.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	index += 1
 	next_btn.text = "つぎの玉" if index < orbs.size() else "今日をはじめる"
+	_update_header()
 	if skip_btn:
 		skip_btn.visible = orbs.size() - index >= 2
 	next_btn.disabled = false

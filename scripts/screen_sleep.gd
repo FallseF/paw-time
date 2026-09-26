@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("本番はスマホの睡眠記録から（いまは選べる）", 12, Color(1, 1, 1, 0.55))
+	var note := _text("選ぶと、すぐ朝になる（本番は睡眠記録から）", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 186)
 	note.size = Vector2(360, 20)
 	add_child(note)
@@ -76,7 +76,7 @@ func _ready() -> void:
 	card.add_child(preview)
 
 	var go := Button.new()
-	go.text = "おやすみ"
+	go.text = "眠って朝へ"
 	go.position = Vector2(70, 540)
 	go.size = Vector2(220, 54)
 	go.add_theme_font_override("font", font_black)

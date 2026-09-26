@@ -74,11 +74,15 @@ func _build() -> void:
 		sh.add_child(_shard_chip(k, GameState.shards.get(k, 0)))
 	# 改良
 	col.add_child(_section("ポイの改良（ずっと効く）"))
-	for key in ["fuchi", "wa", "kami"]:
+	var ukeys := ["fuchi", "wa", "kami"]
+	ukeys.sort_custom(func(a, b): return _afford_up(a) and not _afford_up(b))
+	for key in ukeys:
 		col.add_child(_margin(_upgrade_card(key)))
 	# 特別なポイ
 	col.add_child(_section("特別なポイ（1本ずつ使い切り）"))
-	for pid in ["lure", "double", "akari"]:
+	var ckeys := ["lure", "double", "akari"]
+	ckeys.sort_custom(func(a, b): return GameState.can_pay(GameState.CRAFTS[a]) and not GameState.can_pay(GameState.CRAFTS[b]))
+	for pid in ckeys:
 		col.add_child(_margin(_craft_card(pid)))
 	# かざり
 	col.add_child(_section("休憩室のかざり（見た目だけ）"))
@@ -108,6 +112,11 @@ func _build() -> void:
 	col.add_child(pad)
 	await get_tree().process_frame
 	scroll.scroll_vertical = y
+
+
+func _afford_up(key: String) -> bool:
+	var lv: int = GameState.upgrades[key]
+	return lv < 3 and GameState.can_pay(GameState.UPGRADES[key].cost[lv])
 
 
 func _pill(bg: Color, radius := 16) -> StyleBoxFlat:
@@ -148,7 +157,7 @@ func _button(t: String, bg: Color, cb: Callable, fg := Color.WHITE) -> Button:
 	b.add_theme_color_override("font_color", fg)
 	b.add_theme_color_override("font_hover_color", fg)
 	b.add_theme_color_override("font_pressed_color", fg)
-	b.add_theme_color_override("font_disabled_color", Color("9a8e98"))
+	b.add_theme_color_override("font_disabled_color", Color("8a7e88"))
 	b.pressed.connect(cb)
 	return b
 
@@ -206,7 +215,7 @@ func _cost_row(cost: Dictionary) -> Control:
 	for k in cost:
 		var have: int = GameState.shards.get(k, 0)
 		h.add_child(_gem(k, 11))
-		h.add_child(_text("%s%d" % [GameState.SHARD_LABEL[k], cost[k]], 13, Color("2a2233") if have >= cost[k] else Color("e85a4f")))
+		h.add_child(_text("%s %d/%d" % [GameState.SHARD_LABEL[k], mini(have, cost[k]), cost[k]], 13, Color("2a2233") if have >= cost[k] else Color("e85a4f")))
 	return h
 
 
@@ -224,16 +233,17 @@ func _upgrade_card(key: String) -> Control:
 	h.add_child(v)
 	var t := HBoxContainer.new()
 	t.add_child(_text(u.name, 16, Color("2a2233"), font_black))
-	t.add_child(_text("  " + "●".repeat(lv) + "○".repeat(3 - lv), 14, Color("ff8a5b")))
+	t.add_child(_text("  改良 %d/3" % lv, 13, Color("ff8a5b")))
 	v.add_child(t)
 	var d := _text(u.desc, 12, Color("6a5f70"))
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
 	if lv < 3:
 		v.add_child(_cost_row(u.cost[lv]))
-		var b := _button("作る", Color("ff8a5b"), _do_upgrade.bind(key))
+		var ok: bool = GameState.can_pay(u.cost[lv])
+		var b := _button("作る" if ok else "かけら\n不足", Color("ff8a5b"), _do_upgrade.bind(key))
 		b.custom_minimum_size = Vector2(70, 44)
-		b.disabled = not GameState.can_pay(u.cost[lv])
+		b.disabled = not ok
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		h.add_child(b)
 	else:
@@ -267,9 +277,10 @@ func _craft_card(pid: String) -> Control:
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
 	v.add_child(_cost_row(GameState.CRAFTS[pid]))
-	var b := _button("作る", Color("5b6fc2"), _do_craft.bind(pid))
+	var ok: bool = GameState.can_pay(GameState.CRAFTS[pid])
+	var b := _button("作る" if ok else "かけら\n不足", Color("5b6fc2"), _do_craft.bind(pid))
 	b.custom_minimum_size = Vector2(70, 44)
-	b.disabled = not GameState.can_pay(GameState.CRAFTS[pid])
+	b.disabled = not ok
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(b)
 	return p
@@ -292,9 +303,10 @@ func _decor_row(key: String) -> Control:
 		v.add_child(_cost_row(d.cost))
 	h.add_child(v)
 	if not have:
-		var b := _button("かざる", Color("5fb07a"), _do_decor.bind(key))
+		var ok: bool = GameState.can_pay(d.cost)
+		var b := _button("かざる" if ok else "かけら\n不足", Color("5fb07a"), _do_decor.bind(key))
 		b.custom_minimum_size = Vector2(76, 40)
-		b.disabled = not GameState.can_pay(d.cost)
+		b.disabled = not ok
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		h.add_child(b)
 	return p

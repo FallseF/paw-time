@@ -117,7 +117,7 @@ func _section(t: String) -> Control:
 func _shelf() -> Control:
 	var box := SubViewportContainer.new()
 	box.stretch = true
-	box.custom_minimum_size = Vector2(360, 130)
+	box.custom_minimum_size = Vector2(348, 104)
 	var vp := SubViewport.new()
 	vp.own_world_3d = true
 	vp.transparent_bg = true
@@ -139,8 +139,8 @@ func _shelf() -> Control:
 	sun.light_energy = 0.6
 	w.add_child(sun)
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 0.8, 5.0)
-	cam.fov = 30
+	cam.position = Vector3(0, 0.75, 5.0)
+	cam.fov = 25
 	w.add_child(cam)
 	cam.look_at_from_position(cam.position, Vector3(0, 0.45, 0))
 	for i in NORMAL.size():
@@ -342,7 +342,7 @@ func _card(r: Dictionary) -> Control:
 	p.add_theme_stylebox_override("panel", st)
 	st.content_margin_left = 6
 	st.content_margin_right = 6
-	p.custom_minimum_size = Vector2(100, 138)
+	p.custom_minimum_size = Vector2(100, 132)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -376,7 +376,8 @@ func _card(r: Dictionary) -> Control:
 	var name_l := _text(r.name if found else "？？？", 13, Color("2a2233") if found else Color("9a8e98"), font_black)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(name_l)
-	var hint := _text(r.desc if found else r.hint, 10, Color("7a6f7c"))
+	var hint := _text("" if found else r.hint, 11, Color("5a4f5c"))
+	hint.visible = not found
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	hint.custom_minimum_size = Vector2(84, 0)

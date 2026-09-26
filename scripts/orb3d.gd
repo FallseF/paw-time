@@ -58,7 +58,7 @@ func setup(d: Dictionary) -> Orb3D:
 	halo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	halo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	halo_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	halo_mat.albedo_color = Color(col.r, col.g, col.b, 0.25)
+	halo_mat.albedo_color = Color(col.r, col.g, col.b, 0.14)
 	halo.material_override = halo_mat
 	add_child(halo)
 
@@ -75,8 +75,8 @@ func setup(d: Dictionary) -> Orb3D:
 
 	light = OmniLight3D.new()
 	light.light_color = col
-	light.light_energy = 1.2
-	light.omni_range = 1.1
+	light.light_energy = 0.8
+	light.omni_range = 1.0
 	light.position = Vector3(0, 0.15, 0)
 	add_child(light)
 	scale = Vector3.ONE * KIND_SIZE.get(kind, 1.0)
@@ -104,17 +104,17 @@ func _process(delta: float) -> void:
 	if kind == "rainbow":
 		var c := Color.from_hsv(fmod(_t * 0.35, 1.0), 0.5, 1.0)
 		core_mat.emission = c
-		halo_mat.albedo_color = Color(c.r, c.g, c.b, 0.32)
+		halo_mat.albedo_color = Color(c.r, c.g, c.b, 0.2)
 		light.light_color = c
 	elif kind == "gold":
 		pulse = 0.5 + 0.5 * sin(_t * 6.0)
 	if alarmed > 0.0:
 		alarmed -= delta
 		pulse = 1.0
-	core_mat.emission_energy_multiplier = (1.4 + pulse * 1.0) if caught else (2.4 + pulse * 1.6)
+	core_mat.emission_energy_multiplier = (1.0 + pulse * 0.6) if caught else (1.5 + pulse * 0.9)
 	halo.scale = Vector3.ONE * (0.9 + pulse * 0.25)
 	if highlight and not caught:
-		core_mat.emission_energy_multiplier = 5.0
+		core_mat.emission_energy_multiplier = 3.2
 		halo.scale = Vector3.ONE * (1.25 + 0.1 * sin(_t * 12.0))
 	if caught:
 		return

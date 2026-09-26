@@ -695,6 +695,11 @@ func _build_ui() -> void:
 	dura_bar.size = Vector2(280, 12)
 	dura_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dura_bar)
+	var dl := _text("ポイの丈夫さ", 11, Color(1, 1, 1, 0.7))
+	dl.position = Vector2(0, -15)
+	dl.size = Vector2(120, 14)
+	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	dura_bar.add_child(dl)
 	dura_back = ColorRect.new()
 	dura_back.color = Color(1, 1, 1, 0.18)
 	dura_back.size = Vector2(280, 12)
@@ -1071,6 +1076,8 @@ func _cost_of(list: Array) -> float:
 		var d := Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length() / radius
 		m *= 1.0 + 0.9 * d * d
 		cost += o.weight() * m
+	if tut_step >= 0:
+		return 0.05
 	# 長く水に入れているほど紙がふやける
 	return cost * (1.0 + minf(dip_time * 0.04, 0.5)) * mods.drain
 
@@ -1108,16 +1115,18 @@ func _lift() -> void:
 			centered_ids[o.get_instance_id()] = true
 	var special := list.size() >= 2 or list.any(func(o): return o.kind in ["rainbow", "gold"])
 	_play("lift", 0.8)
-	Engine.time_scale = 0.35 if special else 0.55
+	# ふつうの1つは手早く、まとめて・虹・金はスローモーションで見せる
+	Engine.time_scale = 0.35 if special else 1.0
+	var lift_t := 0.35 if special else 0.22
 	var cam_to := cam_base
-	cam_to.origin = cam_base.origin.lerp(poi.position + Vector3(0, 1.6, 1.3), 0.45 if special else 0.25)
+	cam_to.origin = cam_base.origin.lerp(poi.position + Vector3(0, 1.6, 1.3), 0.45 if special else 0.12)
 	var tw := create_tween().set_parallel()
-	tw.tween_property(cam, "transform", cam_to.looking_at(poi.position, Vector3.UP), 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tw.tween_property(poi, "position:y", 0.55, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(cam, "transform", cam_to.looking_at(poi.position, Vector3.UP), lift_t).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(poi, "position:y", 0.55, lift_t).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	for i in list.size():
 		var o: Orb3D = list[i]
 		var off := Vector3((i - (list.size() - 1) / 2.0) * 0.12, 0, 0)
-		tw.tween_property(o, "position", Vector3(poi.position.x, 0.58, poi.position.z) + off, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(o, "position", Vector3(poi.position.x, 0.58, poi.position.z) + off, lift_t).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	poi_target.y = 0.55
 	drops.position = poi.position
 	drops.restart()
@@ -1175,16 +1184,20 @@ func _lift() -> void:
 		title = "虹の玉！"
 	elif list.any(func(o): return o.kind == "gold"):
 		title = "金の玉！"
-	_banner(title, Color("fff2a8"))
+	if special or combo in [3, 5, 8, 10, 15, 20]:
+		_banner(title if special else "%dコンボ！" % combo, Color("fff2a8"))
+	else:
+		_float_text(title, pos2d + Vector2(0, -60), Color("fff2a8"), 22)
 	if tags.size() > 0:
 		_float_text("・".join(tags), pos2d + Vector2(0, -30), Color("b8ffcf"))
 	_combo_pop()
 	_partner_react(true)
 	var tw2 := create_tween().set_parallel()
-	tw2.tween_property(cam, "transform", cam_base, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var back_t := 0.45 if special else 0.3
+	tw2.tween_property(cam, "transform", cam_base, back_t).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	for o: Orb3D in list:
-		tw2.tween_property(o, "position", cam.project_position(Vector2(110, 30), 2.0), 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tw2.tween_property(o, "scale", Vector3.ONE * 0.2, 0.5)
+		tw2.tween_property(o, "position", cam.project_position(Vector2(110, 30), 2.0), back_t + 0.05).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw2.tween_property(o, "scale", Vector3.ONE * 0.2, back_t + 0.05)
 	await tw2.finished
 	for o: Orb3D in list:
 		o.queue_free()
@@ -1242,7 +1255,11 @@ func _tear(list: Array) -> void:
 	if GameState.partner == "receipt" and combo > 0:
 		kept = int(combo * (0.3 + 0.1 * GameState.partner_level()))
 	var lost := combo - kept
+	var left_n: int = GameState.pois.get(selected, 0)
+	var left_txt := "%s あと%d本" % [GameState.POI[selected].name, left_n] if selected != "" and GameState.POI.has(selected) else ""
 	_banner("やぶれた…" if lost < 3 else "やぶれた…\n%dコンボ" % combo, Color("ffb3a8"))
+	if left_txt != "":
+		_float_text(left_txt, Vector2(180, 330), Color(1, 1, 1, 0.95), 16)
 	combo = kept
 	in_hand = false
 	used = false
@@ -1307,6 +1324,8 @@ func _update_poi(delta: float) -> void:
 		# 速く動かすほど、紙が弱る（そっと動かせば、ほとんど減らない）
 		var over := maxf(0.0, poi_speed - 0.6)
 		var drain: float = (0.012 + 0.35 * over * over) * GameState.poi_gentle_mult() * mods.drain
+		if tut_step >= 0:
+			drain = 0.0 # はじめての1つめは、破れない
 		durability -= drain * delta
 		if durability <= 0.0:
 			_tear([])
@@ -1350,6 +1369,8 @@ func _update_orbs(delta: float) -> void:
 		elif GameState.partner == "bubble":
 			lure_r = 0.45 + 0.1 * GameState.partner_level()
 	var spd_mult: float = mods.speed * (0.55 if GameState.records.nights == 0 else 1.0)
+	if tut_step >= 0:
+		spd_mult = 0.08 # 説明の間は、玉はほとんど動かない
 	for o: Orb3D in orbs.duplicate():
 		if o.caught:
 			continue
@@ -1662,7 +1683,7 @@ func _show_result(reason: String, was_best: bool) -> void:
 		nt.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		v.add_child(nt)
 	var b := Button.new()
-	b.text = "寝て、玉をかえす"
+	b.text = "寝る準備へ"
 	b.custom_minimum_size = Vector2(0, 50)
 	b.add_theme_font_override("font", font_black)
 	b.add_theme_font_size_override("font_size", 18)
