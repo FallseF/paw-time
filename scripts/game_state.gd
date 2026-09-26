@@ -190,7 +190,7 @@ func sleep(hours: int, trap_net: String) -> void:
 	else:
 		net_strength = 1.25
 	morning_report = []
-	morning_report.append("%d時間ねた → 網を振れる回数 %d、網の強さ ×%.2f" % [hours, stamina, net_strength])
+	morning_report.append("%d時間ねた → 今日のポイの強さ ×%.2f" % [hours, net_strength])
 	for o in owned:
 		o.xp += hours * 6
 		if _level_up(o):

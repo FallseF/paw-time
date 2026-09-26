@@ -2,7 +2,8 @@ extends Node
 ## 画面の切り替え役。画面は Control を差し替え、暗転でつなぐ。
 
 const SCREENS := {
-	"morning": preload("res://scripts/screen_morning.gd"),
+	"morning": preload("res://scripts/screen_room.gd"),
+	"morning2d": preload("res://scripts/screen_morning.gd"),
 	"room": preload("res://scripts/screen_room.gd"),
 	"catch": preload("res://scripts/screen_scoop.gd"),
 	"catch3d": preload("res://scripts/screen_catch3d.gd"),
