@@ -34,8 +34,8 @@ for key, (top, bottom) in CAPS.items():
 
 im = Image.new("RGB", (720, 1280), (255, 248, 239))
 d = ImageDraw.Draw(im)
-center(d, 400, "おばけの休憩室", ImageFont.truetype(FONT, 76), INK)
-center(d, 500, "大ピーク防衛", ImageFont.truetype(FONT, 100), (255, 107, 91))
+center(d, 400, "猫おばけの店番", ImageFont.truetype(FONT, 56), INK)
+center(d, 500, "Paw Time", ImageFont.truetype(FONT, 110), (255, 107, 91))
 center(d, 720, "働いた日は、店で強くなる。", ImageFont.truetype(FONT, 42), (106, 95, 112))
 center(d, 790, "よく寝た朝は、玉がかえる。", ImageFont.truetype(FONT, 42), (106, 95, 112))
 try:

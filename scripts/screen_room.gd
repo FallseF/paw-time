@@ -225,7 +225,7 @@ func _build_ui() -> void:
 
 	# 確認用の早送り（1日すすめる：7時間ねたことにする）
 	var ff := Button.new()
-	ff.text = "早送り ▶▶"
+	ff.text = "早送り >>"
 	ff.flat = true
 	ff.add_theme_font_override("font", font_bold)
 	ff.add_theme_font_size_override("font_size", 11)

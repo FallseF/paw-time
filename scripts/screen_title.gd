@@ -63,10 +63,10 @@ func _ready() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
 	card.add_child(v)
-	var t1 := Kit.text("おばけの休憩室", 30, Kit.INK, true)
+	var t1 := Kit.text("猫おばけの店番", 16, Kit.SUB, true)
 	t1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t1)
-	var t2 := Kit.text("大ピーク防衛", 38, Color("ff6b5b"), true)
+	var t2 := Kit.text("Paw Time", 44, Color("ff6b5b"), true)
 	t2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t2)
 	var tag := Kit.text("よく寝た朝は、玉がかえる。", 13, Color("8b7bff"), true)

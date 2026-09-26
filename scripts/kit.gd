@@ -185,43 +185,6 @@ func cropped(path: String) -> Texture2D:
 	return out
 
 
-func enemy_tex(id: String) -> Texture2D:
-	return cropped("res://assets/gen/enemies/%s.png" % id)
-
-
-func rare_tex(id: String) -> Texture2D:
-	var p := RareObake3D.art_path(id)
-	return cropped(p) if p != "" else null
-
-
-## ヒャッキの小さなおばけ。絵がなければ、その場で描く
-func tiny_tex() -> Texture2D:
-	var t := cropped("res://assets/gen/c/tiny.png")
-	if t:
-		return t
-	if _tex.has("_tiny"):
-		return _tex["_tiny"]
-	var n := 48
-	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	var c := Vector2(24, 20)
-	for y in n:
-		for x in n:
-			var p := Vector2(x, y)
-			var inside := p.distance_to(c) < 15 or (y >= 20 and y < 38 + int(3 * sin(x * 0.7)) and absf(x - 24) < 15)
-			var edge := p.distance_to(c) < 18 or (y >= 20 and y < 41 + int(3 * sin(x * 0.7)) and absf(x - 24) < 18)
-			if inside:
-				img.set_pixel(x, y, Color.WHITE)
-			elif edge:
-				img.set_pixel(x, y, INK)
-	for e in [Vector2(17, 20), Vector2(25, 20)]:
-		img.fill_rect(Rect2i(int(e.x), int(e.y), 3, 3), INK)
-	img.fill_rect(Rect2i(19, 27, 6, 2), INK)
-	var tex := ImageTexture.create_from_image(img)
-	_tex["_tiny"] = tex
-	return tex
-
-
 ## おばけの顔写真（ボタン用）。ふつうのおばけは 3D を一度だけ撮って使い回す
 func portrait(id: String) -> Texture2D:
 	if _portraits.has(id):
