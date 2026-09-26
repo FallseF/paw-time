@@ -33,6 +33,7 @@ func _process(delta: float) -> void:
 		last_screen = sc
 		stuck = 0.0
 		print("[play] day %d %s phase=%s rhythm=%d garden=%d zukan=%d" % [GameState.day, sc, GameState.phase, int(GameState.rhythm), GameState.garden_level, GameState.seen.size()])
+		_snap(sc)
 	stuck += delta
 	if stuck > 60.0:
 		print("[play] STUCK on ", sc)
@@ -111,6 +112,21 @@ func _process(delta: float) -> void:
 				cool = 4.0
 		"zukan":
 			main.go("garden")
+
+
+var snap_n := 0
+
+
+## OBAKE_PLAYSHOTS=dir のとき、画面が変わるたびに少し待って撮る
+func _snap(sc: String) -> void:
+	var dir := OS.get_environment("OBAKE_PLAYSHOTS")
+	if dir == "":
+		return
+	snap_n += 1
+	var n := snap_n
+	await get_tree().create_timer(1.0).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("%s/%03d_d%d_%s.png" % [dir, n, GameState.day, sc])
 
 
 func _rares() -> int:
