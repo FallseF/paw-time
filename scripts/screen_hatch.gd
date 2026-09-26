@@ -262,6 +262,10 @@ func _next() -> void:
 	if busy:
 		return
 	if index >= orbs.size():
+		GameState.newcomers = []
+		for hh in GameState.hatched:
+			if hh.is_new and not GameState.newcomers.has(hh.id):
+				GameState.newcomers.append(hh.id)
 		GameState.hatched = []
 		GameState.save()
 		main.go("garden")

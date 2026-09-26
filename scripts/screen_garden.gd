@@ -184,7 +184,21 @@ func _build_world() -> void:
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
 		ob.position = Vector3(randf_range(-2.4, 2.4), 0, randf_range(-1.2, 1.8))
 		world.add_child(ob)
-		walkers.append({"o": ob, "id": o.id, "target": ob.position, "wait": randf_range(0.5, 3.0), "act": "", "emote": null})
+		var w := {"o": ob, "id": o.id, "target": ob.position, "wait": randf_range(0.5, 3.0), "act": "", "emote": null}
+		# けさ来た子は、縁側から出てくる
+		if GameState.newcomers.has(o.id):
+			ob.position = Vector3(randf_range(-1.0, 0.6), 0.3, -2.9)
+			w.target = Vector3(randf_range(-1.2, 1.2), 0, randf_range(0.2, 1.4))
+			w.wait = 0.8 + GameState.newcomers.find(o.id) * 0.6
+			var tag := Kit.label3d("NEW " + GameState.info(o.id).name, 30, Color("ffe27a"))
+			tag.position = Vector3(0, 1.9, 0)
+			ob.add_child(tag)
+			var tw := tag.create_tween()
+			tw.tween_interval(7.0)
+			tw.tween_property(tag, "modulate:a", 0.0, 0.8)
+			tw.tween_callback(tag.queue_free)
+		walkers.append(w)
+	GameState.newcomers = []
 
 
 ## 芝の色（リズムが低いと、少し枯れた色）
@@ -769,6 +783,9 @@ func _build_ui() -> void:
 	# リズムと庭のメーター
 	var meters := PanelContainer.new()
 	meters.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.88), 18, 0.12, Vector2(12, 6)))
+	meters.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+			_toggle_diary())
 	meters.position = Vector2(12, 58)
 	meters.size = Vector2(336, 0)
 	add_child(meters)
@@ -782,6 +799,10 @@ func _build_ui() -> void:
 	r1.add_child(rhythm_bar)
 	rhythm_label = Kit.text("", 13, Color("2a2233"), true)
 	r1.add_child(rhythm_label)
+	var sp2 := Control.new()
+	sp2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	r1.add_child(sp2)
+	r1.add_child(Kit.text("日記 ▸", 11, Color("8a5bd6")))
 	mv.add_child(r1)
 	var r2 := HBoxContainer.new()
 	r2.add_theme_constant_override("separation", 8)
@@ -860,6 +881,82 @@ func _refresh_hud() -> void:
 		poi_row.add_child(Kit.text("×%d" % n, 12))
 	var stp := Kit.text("破れにくさ ×%.2f" % GameState.poi_strength(), 12, Color("8b7bff"))
 	poi_row.add_child(stp)
+
+
+var diary: Control
+
+
+## ねむり日記：直近 7 夜の寝た時刻と起きた時刻（リズムのメーターをタップ）
+func _toggle_diary() -> void:
+	if diary:
+		diary.queue_free()
+		diary = null
+		return
+	Kit.play(self, "tap", 1.1)
+	diary = Control.new()
+	diary.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(diary)
+	var dim := ColorRect.new()
+	dim.color = Color(0.08, 0.06, 0.14, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed:
+			_toggle_diary())
+	diary.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(16, 14)))
+	p.position = Vector2(16, 120)
+	p.size = Vector2(328, 0)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	diary.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	p.add_child(v)
+	v.add_child(Kit.text("ねむり日記", 20, Color("2a2233"), true))
+	v.add_child(Kit.text("リズム %d（%s）・ いつもの時刻 %s" % [int(GameState.rhythm), GameState.tier_name(), GameState.clock(GameState.usual_bed())], 13, Color("6a5f70")))
+	var chart := Control.new()
+	chart.custom_minimum_size = Vector2(296, 190)
+	chart.draw.connect(func(): _draw_diary(chart))
+	v.add_child(chart)
+	v.add_child(Kit.wrap(Kit.text("緑の帯が「いつもの時刻」。帯の中で寝て、7〜9時間眠る夜が続くと、リズムが満ちる", 12, Color("6a5f70"))))
+	var n := GameState.sleep_hist.size()
+	var avg := 0.0
+	for h in GameState.sleep_hist.slice(-7):
+		avg += h
+	if n > 0:
+		v.add_child(Kit.text("この7夜の平均 %.1f 時間 ・ これまで %d 夜" % [avg / min(7, n), n], 13, Color("4a3f52"), true))
+
+
+func _draw_diary(c: Control) -> void:
+	var w := c.size.x
+	var left := 36.0
+	var span := 14.0 * 60.0
+	var to_x := func(m: float) -> float: return left + clampf(m / span, 0, 1) * (w - left)
+	var f := Kit.bold()
+	var u := GameState.usual_bed() - 180
+	var ux: float = to_x.call(u - 20)
+	c.draw_rect(Rect2(ux, 0, float(to_x.call(u + 20)) - ux, 170), Color("8fe0a0", 0.3))
+	for m in [0, 180, 360, 540, 720]:
+		var x: float = to_x.call(m)
+		c.draw_line(Vector2(x, 0), Vector2(x, 170), Color(0, 0, 0, 0.06))
+		c.draw_string(f, Vector2(x - 12, 186), GameState.clock(m + 180), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8a7a88"))
+	var beds: Array = GameState.bed_hist.slice(-7)
+	var hrs: Array = GameState.sleep_hist.slice(-7)
+	var goods: Array = GameState.good_hist.slice(-7)
+	var start_day := GameState.day - beds.size()
+	for i in beds.size():
+		var y := 6.0 + i * 23.0
+		var bx: float = to_x.call(beds[i] - 180)
+		var ex: float = to_x.call(beds[i] - 180 + hrs[i] * 60.0)
+		var col := Color("9fb4ff") if goods[i] else (Color("ff9a4d") if beds[i] > GameState.LATE_LINE else Color("d8cfe0"))
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = col
+		sb.set_corner_radius_all(6)
+		c.draw_style_box(sb, Rect2(bx, y, ex - bx, 14))
+		c.draw_string(f, Vector2(0, y + 12), GameState.WEEKDAYS[(start_day + i) % 7], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("4a3f52"))
+		c.draw_string(f, Vector2(ex + 4, y + 12), "%.1f" % hrs[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8a7a88"))
+	if beds.is_empty():
+		c.draw_string(f, Vector2(left, 90), "まだ記録がない。今夜から", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("8a7a88"))
 
 
 func _toggle_goals() -> void:
