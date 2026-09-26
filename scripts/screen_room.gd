@@ -157,6 +157,57 @@ func _process(delta: float) -> void:
 		ob.rotation.y = lerp_angle(ob.rotation.y, atan2(d.x, d.z), 5.0 * delta)
 
 
+# ---------- おばけをタップ ----------
+
+func _gui_input(event: InputEvent) -> void:
+	var pos := Vector2.ZERO
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		pos = event.position
+	elif event is InputEventScreenTouch and event.pressed:
+		pos = event.position
+	else:
+		return
+	var best: Dictionary = {}
+	var best_d := 46.0
+	for w in walkers:
+		var ob: Obake3D = w.o
+		var p := cam.unproject_position(ob.global_position + Vector3(0, 0.35, 0))
+		var d := p.distance_to(pos)
+		if d < best_d:
+			best_d = d
+			best = w
+	if best.is_empty():
+		return
+	var ob: Obake3D = best.o
+	best.wait = 1.5
+	var tw := create_tween()
+	tw.tween_property(ob, "position:y", 0.45, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ob, "position:y", 0.0, 0.25).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	ob.rotation.y = atan2(cam.global_position.x - ob.global_position.x, cam.global_position.z - ob.global_position.z)
+	_play_sfx("pop")
+	var id: String = ob.species
+	var info: Dictionary = GameState.info(id)
+	var line: String = info.name
+	if GameState.SPECIES.has(id):
+		line += "  Lv%d" % GameState.level_of(id)
+		if GameState.partner == id:
+			line += "（相棒）"
+	else:
+		line += "  レア・" + String(info.get("group", ""))
+	var bubble := PanelContainer.new()
+	bubble.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.95), 16))
+	bubble.add_child(_text(line, 14, Color("2a2233"), font_black))
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bubble)
+	await get_tree().process_frame
+	var p2 := cam.unproject_position(ob.global_position + Vector3(0, 1.0, 0))
+	bubble.position = Vector2(clampf(p2.x - bubble.size.x / 2, 8, 352 - bubble.size.x), p2.y - 44)
+	var tw2 := create_tween()
+	tw2.tween_interval(1.4)
+	tw2.tween_property(bubble, "modulate:a", 0.0, 0.3)
+	tw2.tween_callback(bubble.queue_free)
+
+
 # ---------- UI ----------
 
 func _pill(bg: Color, radius := 20) -> StyleBoxFlat:
@@ -394,3 +445,13 @@ func _close_report() -> void:
 	var tw := create_tween()
 	tw.tween_property(r, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(r.queue_free)
+
+
+func demo_tap() -> void:
+	if walkers.is_empty():
+		return
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_LEFT
+	e.pressed = true
+	e.position = cam.unproject_position(walkers[0].o.global_position + Vector3(0, 0.35, 0))
+	_gui_input(e)

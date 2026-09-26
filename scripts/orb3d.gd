@@ -26,6 +26,7 @@ var hop_timer := 0.0
 var life := -1.0 # 虹の玉：残り時間
 var alarmed := 0.0 # 人見知りが驚いている時間
 var sinking := false
+var highlight := false # ポイの上に乗っている
 
 
 func setup(d: Dictionary) -> Orb3D:
@@ -112,6 +113,9 @@ func _process(delta: float) -> void:
 		pulse = 1.0
 	core_mat.emission_energy_multiplier = (1.4 + pulse * 1.0) if caught else (2.4 + pulse * 1.6)
 	halo.scale = Vector3.ONE * (0.9 + pulse * 0.25)
+	if highlight and not caught:
+		core_mat.emission_energy_multiplier = 5.0
+		halo.scale = Vector3.ONE * (1.25 + 0.1 * sin(_t * 12.0))
 	if caught:
 		return
 	core.position.y = 0.06 + sin(_t * 1.7) * 0.03

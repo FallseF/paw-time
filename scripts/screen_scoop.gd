@@ -1164,6 +1164,7 @@ func _lift() -> void:
 	if tags.size() > 0:
 		_float_text("・".join(tags), pos2d + Vector2(0, -30), Color("b8ffcf"))
 	_combo_pop()
+	_partner_react(true)
 	var tw2 := create_tween().set_parallel()
 	tw2.tween_property(cam, "transform", cam_base, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	for o: Orb3D in list:
@@ -1202,8 +1203,22 @@ func _after_catch() -> void:
 		_end_night("今夜の玉は、もうおしまい")
 
 
+func _partner_react(happy: bool) -> void:
+	if partner_node == null:
+		return
+	var tw := create_tween()
+	if happy:
+		tw.tween_property(partner_node, "position:y", 0.35, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(partner_node, "position:y", 0.0, 0.2).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	else:
+		tw.tween_property(partner_node, "rotation:z", 0.35, 0.15)
+		tw.tween_interval(0.4)
+		tw.tween_property(partner_node, "rotation:z", 0.0, 0.3)
+
+
 func _tear(list: Array) -> void:
 	busy = true
+	_partner_react(false)
 	pressed = false
 	_play("tear")
 	Input.vibrate_handheld(80)
@@ -1281,6 +1296,8 @@ func _update_poi(delta: float) -> void:
 			return
 		# 乗っている玉の重さを予告する
 		var over_list := _orbs_over_poi()
+		for o: Orb3D in orbs:
+			o.highlight = over_list.has(o)
 		var c := _cost_of(over_list) if over_list.size() > 0 else 0.0
 		var frac := clampf(durability / dura_max, 0.0, 1.0)
 		var cf := clampf(c / dura_max, 0.0, frac)
@@ -1303,6 +1320,8 @@ func _update_poi(delta: float) -> void:
 			_tut_show()
 	else:
 		dura_cost.size.x = 0.0
+		for o: Orb3D in orbs:
+			o.highlight = false
 
 
 func _update_orbs(delta: float) -> void:
