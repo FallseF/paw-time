@@ -466,7 +466,7 @@ func _spawn_star() -> void:
 		l.light_energy = 1.0
 		l.omni_range = 1.2
 		n.add_child(l)
-	n.position = Vector3(randf_range(-1.6, 1.6), 3.4, 0.4)
+	n.position = Vector3(randf_range(-1.6, 1.6), 3.0, 0.4)
 	world.add_child(n)
 	stars_list.append({"node": n, "fake": fake, "speed": randf_range(1.0, 1.35) + spawned * 0.04})
 	spawned += 1

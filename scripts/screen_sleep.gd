@@ -166,7 +166,7 @@ func _ready() -> void:
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.09), 22, 0.0, Vector2(16, 12)))
 	card.position = Vector2(24, 306)
-	card.size = Vector2(312, 220)
+	card.size = Vector2(312, 150)
 	add_child(card)
 	preview = VBoxContainer.new()
 	preview.add_theme_constant_override("separation", 5)
