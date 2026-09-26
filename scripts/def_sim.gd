@@ -42,7 +42,7 @@ var swarm_queue: Array = [] # [出る時刻, lv]
 ## deck: [{id, lv}], boost: {start_energy, regen, job, job_mult}
 func setup(shop_i: int, stage_i: int, deck: Array, boost: Dictionary, lap := 1) -> void:
 	var st: Dictionary = DefData.stage(shop_i, stage_i)
-	lap_mult = DefData.lap_mult(lap) * st.get("hard", 1.0)
+	lap_mult = DefData.lap_mult(lap) * DefData.HARD[shop_i][stage_i]
 	ebase_max = st.base * lap_mult
 	ebase_hp = ebase_max
 	energy = 100.0 + boost.get("start_energy", 0.0)
@@ -146,7 +146,7 @@ func _new_entity(side: int, id: String) -> Dictionary:
 func _spawn_ally(id: String, lv: int) -> Dictionary:
 	var u: Dictionary = DefData.unit(id)
 	var e := _new_entity(0, id)
-	var m := DefData.level_mult(lv)
+	var m := DefData.level_mult(lv) * (0.8 if not DefData.UNITS.has(id) else 1.0)
 	var job: String = u.get("job", "")
 	var jm: float = job_buff.get(job, 1.0) if job != "" else 1.0
 	e.lv = lv

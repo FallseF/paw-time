@@ -143,7 +143,7 @@ func _set_hours(h: int) -> void:
 	var lines := []
 	if n > 0:
 		lines.append("光る玉 %d 個が、朝にかえる" % n)
-	lines.append("おばけみんなが育つ（経験 +%d）" % (min(hours, GameState.SLEEP_CAP_H) * 8))
+	lines.append("おばけみんなが育つ（経験 +%d）" % (min(hours, GameState.SLEEP_CAP_H) * 6))
 	lines.append("明日のやる気のたまり ×%.2f" % regen)
 	if hours >= 9:
 		lines.append("8時間より長く寝ても、育ち方は同じ")

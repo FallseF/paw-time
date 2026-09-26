@@ -298,7 +298,7 @@ func upgrade_cost(id: String) -> int:
 	if o.is_empty() or o.level >= MAX_LV:
 		return -1
 	var left: int = DefData.xp_need(o.level) - o.xp
-	return int(ceil(left * 1.5))
+	return int(ceil(left * 2.5))
 
 
 func upgrade(id: String) -> bool:
@@ -476,7 +476,7 @@ func sleep(hours: int, _trap := "") -> void:
 	morning_report.append("%d時間ねた → 今日のやる気のたまり ×%.2f" % [hours, regen_bonus])
 	var ups: Array = []
 	for o in owned:
-		o.xp += h * 8
+		o.xp += h * 6
 		if _level_up(o):
 			ups.append("%s Lv%d" % [info(o.id).name, o.level])
 	if not ups.is_empty():
@@ -501,6 +501,11 @@ func sleep(hours: int, _trap := "") -> void:
 			for id in SPECIES:
 				if not seen.has(id):
 					pool.append(id)
+			# 虹色の玉：まだいないふつうのおばけ → みんないたら、まだ会っていないレア
+			if pool.is_empty():
+				for r in Rares.LIST:
+					if not seen.has(r.id) and not r.id in rare_pending:
+						pool.append(r.id)
 			sid = pool.pick_random() if not pool.is_empty() else SPECIES.keys().pick_random()
 		else:
 			sid = species_for_type(orb.type)
@@ -508,7 +513,7 @@ func sleep(hours: int, _trap := "") -> void:
 		var o := owned_of(sid)
 		o.xp += h * 4 + (60 if orb.rare else 0)
 		_level_up(o)
-		hatched.append({"id": sid, "is_new": is_new, "level": o.level, "rare": false})
+		hatched.append({"id": sid, "is_new": is_new, "level": o.level, "rare": Rares.is_rare(sid)})
 	if orbs.size() > 0:
 		morning_report.append("光る玉が %d 個、朝日で割れた" % orbs.size())
 	orbs = []
