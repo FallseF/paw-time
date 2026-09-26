@@ -121,7 +121,8 @@ var owned := {} # id -> {level, xp, count}
 var seen := {}
 var shards := {}
 var upgrades := {"fuchi": 0, "wa": 0, "kami": 0}
-var partner := "receipt"
+var partner := "receipt" # "my" はマイおばけ猫
+var my_obake := {} # {type_id, look, answers, axes}（user://my_obake.json が正本）
 var decor := {}
 var orbs: Array = [] # 今夜すくった玉 {type, kind, quality}
 var hatched: Array = [] # 今朝かえったおばけ
@@ -163,6 +164,7 @@ func _ready() -> void:
 		ALL[id] = SPECIES[id]
 	for r in Rares.LIST:
 		ALL[r.id] = {"name": r.name, "type": "rare", "desc": r.desc, "hint": r.hint, "group": r.group}
+	my_obake = QuizResult.load_result() if not _sandboxed() else {}
 	reset()
 	if not _sandboxed():
 		load_game()
@@ -214,7 +216,7 @@ func reset() -> void:
 	seen = {"receipt": 1} # 値は「会った日 + 1」
 	shards = {"register": 0, "dish": 0, "hall": 0, "kitchen": 0, "stock": 0, "rainbow": 0}
 	upgrades = {"fuchi": 0, "wa": 0, "kami": 0}
-	partner = "receipt"
+	partner = "my" if not my_obake.is_empty() else "receipt"
 	decor = {}
 	orbs = []
 	hatched = []
@@ -375,7 +377,7 @@ func total_pois() -> int:
 
 func poi_durability_max() -> float:
 	var m: float = strength * (1.0 + 0.2 * upgrades.fuchi)
-	if partner == "box":
+	if partner_skill() == "box":
 		m *= 1.0 + 0.05 * partner_level()
 	return m
 
@@ -389,7 +391,42 @@ func poi_gentle_mult() -> float:
 
 
 func partner_level() -> int:
+	if partner == "my":
+		# マイおばけ猫は、向いている仕事の色のおばけと同じだけ育つ（最低 Lv1）
+		return maxi(1, owned.get(partner_skill(), {}).get("level", 0))
 	return owned.get(partner, {}).get("level", 0)
+
+
+## 相棒の力の種類（ふつうのおばけの ID）。マイおばけ猫は、向いている仕事の色の力
+func partner_skill() -> String:
+	if partner == "my":
+		var job: String = QuizData.TYPES.get(my_obake.get("type_id", ""), {}).get("job", "register")
+		return TYPE_SPECIES.get(job, "receipt")
+	return partner
+
+
+func partner_name() -> String:
+	if partner == "my":
+		return "マイおばけ猫"
+	return info(partner).name
+
+
+## 相棒の3Dモデル（マイおばけ猫なら診断の見た目）
+func make_partner() -> Obake3D:
+	if partner == "my" and not my_obake.is_empty():
+		return Obake3D.make_custom(my_obake.look)
+	var o := Obake3D.make(partner)
+	o.set_level(level_of(partner))
+	return o
+
+
+func set_my_obake(result: Dictionary) -> void:
+	my_obake = result.duplicate(true)
+	if not _sandboxed():
+		QuizResult.save(my_obake)
+	partner = "my" # はじめての相棒は、マイおばけ猫
+	changed.emit()
+	save_game()
 
 
 func can_pay(cost: Dictionary) -> bool:
@@ -465,7 +502,7 @@ func gift(id: String) -> String:
 
 
 func set_partner(id: String) -> void:
-	if owned.has(id) and SPECIES.has(id):
+	if (id == "my" and not my_obake.is_empty()) or (owned.has(id) and SPECIES.has(id)):
 		partner = id
 		changed.emit()
 		save_game()
@@ -1041,7 +1078,7 @@ func partner_line() -> String:
 		lines = ["今日は%sのシフトだって" % ROLE_LABEL[s.role], "働くと、色のポイがもらえる。2本まで"]
 	else:
 		lines = ["ここは休憩室。休むところ", "きのうのコンボ、見てた", "今日も、そっといこう", "玉は、真ん中ですくうといい", "新しい子が、隅でじっとしている"]
-	return info(partner).name + "「" + String(lines[day % lines.size()]) + "」"
+	return partner_name() + "「" + String(lines[day % lines.size()]) + "」"
 
 
 # ---------- 図鑑のごほうび ----------

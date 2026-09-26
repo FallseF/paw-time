@@ -78,6 +78,19 @@ func _ready() -> void:
 		for r in Rares.LIST:
 			if r.group == g:
 				grid.add_child(_card(r))
+	# 目立たない場所に：診断のやりなおし
+	var redo := Button.new()
+	redo.text = "診断をやりなおす"
+	redo.flat = true
+	redo.focus_mode = Control.FOCUS_NONE
+	redo.add_theme_font_override("font", font_bold)
+	redo.add_theme_font_size_override("font_size", 12)
+	redo.add_theme_color_override("font_color", Color("9a8e98"))
+	redo.add_theme_color_override("font_hover_color", Color("6a5f70"))
+	redo.pressed.connect(func(): main.go("quiz"))
+	var rc := CenterContainer.new()
+	rc.add_child(redo)
+	col.add_child(rc)
 	var pad := Control.new()
 	pad.custom_minimum_size = Vector2(0, 30)
 	col.add_child(pad)

@@ -368,16 +368,15 @@ func _partner_card() -> Control:
 	cam.fov = 34
 	partner_world.add_child(cam)
 	cam.look_at_from_position(cam.position, Vector3(0, 0.55, 0))
-	partner_node = Obake3D.make(GameState.partner)
-	partner_node.set_level(GameState.level_of(GameState.partner))
+	partner_node = GameState.make_partner()
 	partner_world.add_child(partner_node)
 	top.add_child(box)
 	var tv := VBoxContainer.new()
 	tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(tv)
 	var pl := GameState.partner_level()
-	tv.add_child(_text("%s  Lv%d" % [GameState.info(GameState.partner).name, pl], 18, Color("2a2233"), font_black))
-	var sk := _text(GameState.PARTNER_SKILL[GameState.partner] + "（Lvで強くなる）", 13, Color("6a5f70"))
+	tv.add_child(_text("%s  Lv%d" % [GameState.partner_name(), pl], 18, Color("2a2233"), font_black))
+	var sk := _text(GameState.PARTNER_SKILL[GameState.partner_skill()] + "（Lvで強くなる）", 13, Color("6a5f70"))
 	sk.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	tv.add_child(sk)
 	var o: Dictionary = GameState.owned.get(GameState.partner, {})
@@ -387,10 +386,17 @@ func _partner_card() -> Control:
 	row.add_theme_constant_override("h_separation", 6)
 	row.add_theme_constant_override("v_separation", 6)
 	v.add_child(row)
-	for id in GameState.NORMAL_IDS:
-		if not GameState.owned.has(id):
+	var choices: Array = (["my"] if not GameState.my_obake.is_empty() else []) + GameState.NORMAL_IDS
+	for id in choices:
+		if id != "my" and not GameState.owned.has(id):
 			continue
 		var sel: bool = id == GameState.partner
+		if id == "my":
+			var mb := _button("マイ猫", Color("8b7bff") if sel else Color("efe7f7"), _set_partner.bind(id), Color.WHITE if sel else Color("5b4a9e"))
+			mb.custom_minimum_size = Vector2(96, 36)
+			mb.add_theme_font_size_override("font_size", 13)
+			row.add_child(mb)
+			continue
 		var b := _button("%s Lv%d" % [GameState.info(id).name, GameState.level_of(id)], Color("8b7bff") if sel else Color("efe7f7"), _set_partner.bind(id), Color.WHITE if sel else Color("5b4a9e"))
 		b.custom_minimum_size = Vector2(96, 36)
 		b.add_theme_font_size_override("font_size", 13)

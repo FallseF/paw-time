@@ -202,6 +202,10 @@ func _button(t: String, bg: Color, cb: Callable, fg := Color.WHITE) -> Button:
 
 
 func _continue() -> void:
+	# はじめての人は、まず診断で自分の猫おばけを決める
+	if GameState.my_obake.is_empty():
+		main.go("quiz")
+		return
 	# 朝の玉をまだ開けていなければ、朝から
 	if GameState.phase == "morning" and GameState.hatched.size() > 0:
 		main.go("hatch")

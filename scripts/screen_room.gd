@@ -139,8 +139,14 @@ func _build_world() -> void:
 	# 相棒 → 新しく会った子（5体まで） → ふつうのおばけ → そのほか
 	ids.sort_custom(func(a, b): return _met_day(a) > _met_day(b))
 	var order: Array = []
+	# マイおばけ猫は、いつも休憩室にいる（相棒なら一番前）
+	if not GameState.my_obake.is_empty():
+		order.append("my")
 	if ids.has(GameState.partner):
 		order.append(GameState.partner)
+	if GameState.partner == "my":
+		order.erase("my")
+		order.push_front("my")
 	for id in ids.slice(0, 5):
 		if not order.has(id):
 			order.append(id)
@@ -153,8 +159,12 @@ func _build_world() -> void:
 	ids = order
 	for i in min(ids.size(), 10):
 		var id: String = ids[i]
-		var ob := Obake3D.make(id)
-		ob.set_level(GameState.level_of(id))
+		var ob: Obake3D
+		if id == "my":
+			ob = Obake3D.make_custom(GameState.my_obake.look)
+		else:
+			ob = Obake3D.make(id)
+			ob.set_level(GameState.level_of(id))
 		# レアは3Dで少し大きいので小さめに。横に広い子（行列・渡り鳥・週末）はさらに小さく
 		var sc := 0.62
 		if Rares.is_rare(id):
@@ -166,6 +176,8 @@ func _build_world() -> void:
 		var slot: int = i
 		if ids.size() <= 3:
 			slot = [1, 3, 4][i]
+		if id == "my" and GameState.partner == "my":
+			slot = 1 if ids.size() <= 3 else 0
 		var home: Vector3 = HOMES[slot] + Vector3(randf_range(-0.15, 0.15), 0, randf_range(-0.1, 0.1))
 		ob.position = home
 		world.add_child(ob)
@@ -344,7 +356,9 @@ func _gui_input(event: InputEvent) -> void:
 	var id: String = ob.species
 	var info: Dictionary = GameState.info(id)
 	var line: String = info.name
-	if GameState.SPECIES.has(id):
+	if id == "my":
+		line = "マイおばけ猫" + ("（相棒）" if GameState.partner == "my" else "")
+	elif GameState.SPECIES.has(id):
 		line += "  Lv%d" % GameState.level_of(id)
 		if GameState.partner == id:
 			line += "（相棒）"

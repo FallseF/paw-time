@@ -232,9 +232,8 @@ func _build_world() -> void:
 	world.add_child(burst)
 
 	# 相棒が、すみで見守る
-	if GameState.owned.has(GameState.partner):
-		buddy = Obake3D.make(GameState.partner)
-		buddy.set_level(GameState.level_of(GameState.partner))
+	if GameState.owned.has(GameState.partner) or GameState.partner == "my":
+		buddy = GameState.make_partner()
 		buddy.scale = Vector3.ONE * 0.28
 		buddy.position = Vector3(0.66, 0.18, -0.5)
 		buddy.rotation.y = -0.6

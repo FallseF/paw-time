@@ -32,6 +32,11 @@ static func make(id: String) -> Obake3D:
 	return Obake3D.new().setup(id)
 
 
+## マイおばけ猫（診断で決まった見た目）
+static func make_custom(look: Dictionary) -> Obake3D:
+	return MyObake3D.new().setup_look(look)
+
+
 static func toon(color: Color, rim := 0.35, emission := 0.0, grow := 0.025) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color

@@ -426,9 +426,8 @@ func _build_world() -> void:
 	world.add_child(telegraph)
 
 	# 相棒は、奥の岸で見守る
-	if GameState.owned.has(GameState.partner):
-		partner_node = Obake3D.make(GameState.partner)
-		partner_node.set_level(GameState.level_of(GameState.partner))
+	if GameState.owned.has(GameState.partner) or GameState.partner == "my":
+		partner_node = GameState.make_partner()
 		partner_node.scale = Vector3.ONE * 0.42
 		partner_node.position = Vector3(-1.05, 0, -2.45)
 		partner_node.rotation.y = 0.35
@@ -676,7 +675,7 @@ func _start_rainbow() -> void:
 func _surface_rainbow() -> void:
 	telegraph.emitting = false
 	var o := _add_orb({"type": "rare", "kind": "rainbow"}, telegraph_pos)
-	o.life = 7.0 + (0.8 * GameState.partner_level() if GameState.partner == "pan" else 0.0)
+	o.life = 7.0 + (0.8 * GameState.partner_level() if GameState.partner_skill() == "pan" else 0.0)
 	o.position.y = -0.4
 	create_tween().tween_property(o, "position:y", 0.0, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_ripple(telegraph_pos)
@@ -1247,7 +1246,7 @@ func _cost_of(list: Array) -> float:
 			m = 0.6
 		elif ptype == "rare" and o.kind == "rainbow":
 			m = 0.3
-		if o.kind == "heavy" and GameState.partner == "tray":
+		if o.kind == "heavy" and GameState.partner_skill() == "tray":
 			m *= 1.0 - 0.08 * GameState.partner_level()
 		# ふちに近い玉ほど、紙に負担がかかる（真ん中ですくうのが腕）
 		var d := Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length() / radius
@@ -1503,7 +1502,7 @@ func _tear(list: Array) -> void:
 	Input.vibrate_handheld(80)
 	_shake(0.18)
 	var kept := 0
-	if GameState.partner == "receipt" and combo > 0:
+	if GameState.partner_skill() == "receipt" and combo > 0:
 		kept = int(combo * (0.3 + 0.1 * GameState.partner_level()))
 	var lost := combo - kept
 	var left_n: int = pool.get(selected, 0)
@@ -1640,7 +1639,7 @@ func _update_orbs(delta: float) -> void:
 	if pressed and submerge <= 0.0:
 		if ptype == "lure":
 			lure_r = 1.9
-		elif GameState.partner == "bubble":
+		elif GameState.partner_skill() == "bubble":
 			lure_r = 0.45 + 0.1 * GameState.partner_level()
 	var spd_mult: float = mods.speed * (0.55 if GameState.records.nights == 0 else 1.0)
 	if tut_step >= 0:

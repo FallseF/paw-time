@@ -10,6 +10,7 @@ const SCREENS := {
 	"sleep": preload("res://scripts/screen_sleep.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"workshop": preload("res://scripts/screen_workshop.gd"),
+	"quiz": preload("res://scripts/screen_quiz.gd"),
 }
 
 var root: Control
@@ -18,7 +19,7 @@ var current_name := ""
 var fade: ColorRect
 var busy := false
 var music: AudioStreamPlayer
-const MUSIC_SCREENS := ["title", "room", "morning", "zukan", "workshop", "hatch"]
+const MUSIC_SCREENS := ["title", "room", "morning", "zukan", "workshop", "hatch", "quiz"]
 
 
 func _ready() -> void:
@@ -86,6 +87,8 @@ func go(screen_name: String, instant := false) -> void:
 	if current:
 		current.queue_free()
 	current = SCREENS[screen_name].new()
+	if screen_name == "quiz":
+		current.next_screen = "room"
 	current_name = screen_name
 	current.set_anchors_preset(Control.PRESET_FULL_RECT)
 	current.set("main", self)
