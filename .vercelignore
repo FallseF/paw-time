@@ -1,0 +1,6 @@
+# Vercel deploys (api, insights) do not need the Godot project or build outputs.
+apps/worker/
+**/node_modules
+**/dist
+**/.next
+**/.turbo

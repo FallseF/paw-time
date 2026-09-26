@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export * from "./telemetry";
+
 export const IdSchema = z.string().min(1).max(128);
 export const TimestampSchema = z.string().datetime({ offset: true });
 

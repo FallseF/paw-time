@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw Time Insights</title>
+  <meta name="description" content="Recruit view of Paw Time: aggregate daily use beyond job search, job funnel, wellbeing, reviews, post-shift signals and a pilot proposal." />
+  <!-- API origin; empty = same origin (vercel.json rewrites /v1 to the API). -->
+  <meta name="paw-time-api" content="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/assets/app.global.js" defer></script>
+</head>
+<body>
+  <header class="appbar">
+    <div class="appbar-in">
+      <div class="brand"><h1>Paw Time</h1><span data-i18n="subtitle">Recruit view</span></div>
+      <div class="seg" role="group" aria-label="Data mode">
+        <button type="button" data-mode="simulated" aria-pressed="true" data-i18n="modeSim">Simulated pilot</button>
+        <button type="button" data-mode="live" aria-pressed="false" data-i18n="modeLive">Live — demo players</button>
+      </div>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="ja" aria-pressed="false">JA</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div id="banner"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+  <footer>
+    <p><span data-i18n="footer">Aggregates only. Any cell backed by fewer than 5 installs is hidden (—).</span>
+      <a href="/privacy" data-i18n="privacy">Privacy notice</a></p>
+  </footer>
+</body>
+</html>

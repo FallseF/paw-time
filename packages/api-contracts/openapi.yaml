@@ -101,3 +101,110 @@ paths:
       responses:
         "200":
           description: 企業の家と所持品を取得
+  /v1/telemetry/events:
+    post:
+      operationId: postTelemetryEvents
+      description: >-
+        ゲームからの仮名イベントをバッチで受け取る。install_id はゲームが生成するUUIDでアカウントとは紐付かない。
+        イベント種別とpropsは許可リスト（packages/api-contracts/src/telemetry.ts）で検証し、未知の種別・props・自由記述は拒否する。
+        1バッチ最大50件・16KB、install_id ごとに毎分12バッチまで。text/plain（sendBeacon）も受け付ける。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryBatch"
+      responses:
+        "200":
+          description: 受理件数と、拒否したイベントの位置・理由
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accepted, rejected]
+                properties:
+                  accepted: { type: integer }
+                  rejected:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        i: { type: integer }
+                        reason: { type: string }
+        "400":
+          description: バッチの形式が不正
+        "413":
+          description: バッチが大きすぎる
+        "429":
+          description: レート制限
+    delete:
+      operationId: deleteTelemetryInstall
+      description: 本人の依頼による削除。install_id の全イベントを消す。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [install_id]
+              properties:
+                install_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: 削除件数
+  /v1/insights/metrics:
+    get:
+      operationId: getInsightsMetrics
+      description: >-
+        集計値のみ。5インストール未満のセルは null（非表示）。mode=simulated は乱数シード付きの合成データで、
+        レスポンスの synthetic が true になる。
+      parameters:
+        - name: mode
+          in: query
+          schema: { type: string, enum: [live, simulated], default: live }
+        - name: demo
+          in: query
+          description: 1 のとき demo_session のイベントだけを集計
+          schema: { type: string, enum: ["1"] }
+      responses:
+        "200":
+          description: InsightsMetricsResponseSchema（packages/api-contracts）
+  /v1/insights/feed:
+    get:
+      operationId: getInsightsFeed
+      description: 直近30分の匿名アクティビティ。install_id は返さない。
+      parameters:
+        - name: demo
+          in: query
+          schema: { type: string, enum: ["1"] }
+      responses:
+        "200":
+          description: InsightsFeedResponseSchema（packages/api-contracts）
+components:
+  schemas:
+    TelemetryBatch:
+      type: object
+      additionalProperties: false
+      required: [install_id, events]
+      properties:
+        install_id: { type: string, format: uuid }
+        events:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/TelemetryEvent"
+    TelemetryEvent:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        t: { type: number, description: unix秒。サーバー時刻から大きくずれる値はサーバー時刻に置き換える }
+        type:
+          type: string
+          enum: [app_open, job_cards_shown, job_card_open, job_accept, job_pass, shift_start, shift_end, cat_tired_stop,
+            review_submitted, practice_done, skill_badge_share_toggled, shop_island_visit, scoop_night, hatch,
+            island_expand, island_share, outfit_change, calendar_add, suggestions_toggled]
+        props:
+          type: object
+          description: 種別ごとの許可props（enum・整数範囲・真偽値のみ）。全種別で demo_session:boolean を許可。

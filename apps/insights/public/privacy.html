@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw Time Privacy</title>
+  <meta name="description" content="What Paw Time's game analytics collect, why, and how to opt out or delete it." />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .doc { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    .doc h1 { font-size: 22px; margin: 0 0 4px; }
+    .doc h2 { font-size: 16px; margin: 24px 0 6px; }
+    .doc section { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 20px; margin-top: 16px; }
+    .doc ul { padding-left: 20px; margin: 6px 0; }
+    .doc li { margin: 3px 0; }
+    .doc code { font-size: 12.5px; background: var(--surface-2); padding: 1px 4px; border-radius: 4px; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <p><a href="/">← Paw Time Insights</a></p>
+    <section lang="en">
+      <h1>Privacy notice — game analytics</h1>
+      <p class="muted">Short version: the game sends anonymous usage events tied to a random ID. We use them to improve the game and to show aggregated numbers. No one is identified.</p>
+      <h2>What is collected</h2>
+      <ul>
+        <li>A random ID made by the game on your device (<code>install_id</code>). It is not linked to an account, name, email or phone.</li>
+        <li>Game events with a time: for example “opened the app”, “job accepted · Register”, “shift finished · 6–7.5 h”, “the cat stopped the shift”, “review sent · 4 stars”, “visited a shop island”.</li>
+        <li>Only fixed choices and small numbers (a role, a shop from the game's sample list, an hours range, a star count). No free text.</li>
+      </ul>
+      <h2>What is never collected</h2>
+      <ul>
+        <li>Names, contact details, account IDs, photos or messages you type.</li>
+        <li>Your location (only the sample shop you interacted with in the game).</li>
+        <li>Sleep times or health data.</li>
+      </ul>
+      <p>Your IP address is used only briefly to limit abusive traffic and is not stored with events. Our hosting provider (Vercel) may keep standard access logs.</p>
+      <h2>Why</h2>
+      <ul>
+        <li>Product analytics: to see what helps and what doesn't.</li>
+        <li>To show aggregated usage (for example, to partners and contest judges). Any number based on fewer than 5 players is hidden.</li>
+      </ul>
+      <p>We do not give shops or anyone else data about you as an individual.</p>
+      <h2>Your choices</h2>
+      <ul>
+        <li><strong>Opt out:</strong> turn off “Share anonymous usage” in the game's settings. Nothing is sent after that.</li>
+        <li><strong>Delete:</strong> use “Delete my usage data” in the game, or ask the Paw Time team with your <code>install_id</code> (shown in the game's settings). All events for that ID are removed.</li>
+      </ul>
+    </section>
+
+    <section lang="ja">
+      <h1>プライバシーについて（ゲームの利用データ）</h1>
+      <p class="muted">要点：ゲームは、ランダムなIDにひもづいた匿名の利用イベントを送ります。ゲームの改善と、集計した数字の表示に使います。個人は特定しません。</p>
+      <h2>集めるもの</h2>
+      <ul>
+        <li>端末上でゲームが作るランダムなID（<code>install_id</code>）。アカウント・氏名・メールアドレス・電話番号とはひもづきません。</li>
+        <li>時刻つきのゲーム内イベント。たとえば「アプリを開いた」「仕事を受けた · レジ」「シフト終了 · 6〜7.5時間」「猫がシフトを止めた」「レビューを送った · ★4」「お店の島を訪問」など。</li>
+        <li>決められた選択肢と小さな数値だけ（職種、ゲーム内の見本の店、時間の範囲、星の数など）。自由記述は送りません。</li>
+      </ul>
+      <h2>集めないもの</h2>
+      <ul>
+        <li>氏名・連絡先・アカウントID・写真・入力した文章。</li>
+        <li>位置情報（ゲーム内で関わった見本の店のみ）。</li>
+        <li>睡眠時刻や健康に関する情報。</li>
+      </ul>
+      <p>IPアドレスは不正な大量送信を防ぐために一時的に使うだけで、イベントと一緒には保存しません。ホスティング事業者（Vercel）が通常のアクセスログを保持する場合があります。</p>
+      <h2>目的</h2>
+      <ul>
+        <li>プロダクトの分析：何が役に立ち、何が役に立たないかを知るため。</li>
+        <li>集計した利用状況の表示（例：提携先やコンテストの審査員向け）。5人未満にもとづく数字は表示しません。</li>
+      </ul>
+      <p>お店やその他の第三者に、個人単位のデータは渡しません。</p>
+      <h2>選べること</h2>
+      <ul>
+        <li><strong>送信の停止：</strong>ゲームの設定で「匿名の利用データを送る」をオフにすると、それ以降は何も送りません。</li>
+        <li><strong>削除：</strong>ゲーム内の「利用データを削除」か、設定画面に表示される <code>install_id</code> を添えて Paw Time チームに依頼してください。そのIDのイベントをすべて削除します。</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>
