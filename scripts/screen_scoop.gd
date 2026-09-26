@@ -2376,3 +2376,8 @@ func demo_fill() -> void:
 	best_combo = 6
 	clean_count = 5
 	rainbow_count = 1
+
+
+func demo_practice() -> void:
+	GameState.practice = true
+	main.go("catch")
