@@ -40,7 +40,7 @@ func _ready() -> void:
 		if force != "":
 			GameState.add_obake(force)
 			GameState.hatched.push_front({"id": force, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rare"})
-	if OS.get_environment("OBAKE_DEMO") != "":
+	if OS.get_environment("OBAKE_DEMO") != "" or OS.get_environment("OBAKE_AUTOPLAY") != "":
 		var demo = load("res://scripts/demo.gd").new()
 		add_child(demo)
 		root.add_child(fade)

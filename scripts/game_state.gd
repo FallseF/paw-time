@@ -143,7 +143,7 @@ func _ready() -> void:
 
 ## 確認・デモの起動では、セーブを読まず、書かない
 func _sandboxed() -> bool:
-	for k in ["OBAKE_FRESH", "OBAKE_SHOT", "OBAKE_DEMO", "OBAKE_NOSAVE"]:
+	for k in ["OBAKE_FRESH", "OBAKE_SHOT", "OBAKE_DEMO", "OBAKE_NOSAVE", "OBAKE_AUTOPLAY"]:
 		if OS.get_environment(k) != "":
 			return true
 	return false
@@ -407,11 +407,11 @@ func set_partner(id: String) -> void:
 # ---------- おばけ ----------
 
 func xp_to_next(level: int) -> int:
-	return 20 + level * 30
+	return 30 + level * 50
 
 
 ## おばけを1体ふやす。かぶったら経験値とかけら。{is_new, level, leveled, shard}
-func add_obake(id: String, xp := 0) -> Dictionary:
+func add_obake(id: String, xp := 0, quality := 3) -> Dictionary:
 	var is_new := not seen.has(id)
 	seen[id] = true
 	var res := {"is_new": is_new, "level": 1, "leveled": false, "shard": ""}
@@ -423,7 +423,8 @@ func add_obake(id: String, xp := 0) -> Dictionary:
 	var o: Dictionary = owned[id]
 	if SPECIES.has(id):
 		var t: String = SPECIES[id].type
-		if not is_new:
+		# ていねいにすくった（★2以上の）玉だけが、かけらを残す
+		if not is_new and quality >= 2:
 			shards[t] += 1
 			res.shard = t
 		if o.level < MAX_LEVEL:
@@ -434,7 +435,7 @@ func add_obake(id: String, xp := 0) -> Dictionary:
 				res.leveled = true
 			if o.level >= MAX_LEVEL:
 				o.xp = 0
-		elif not is_new:
+		elif not is_new and quality >= 1:
 			shards[t] += 1
 	res.level = o.level
 	return res
@@ -520,6 +521,19 @@ func next_orb_type(rng_val: float) -> String:
 	return types.pick_random()
 
 
+## 祭りの夜は、紙のポイを3本もらえる（1晩1回）
+var festival_gift_day := -1
+
+
+func festival_gift() -> int:
+	if not is_festival() or festival_gift_day == day:
+		return 0
+	festival_gift_day = day
+	pois.paper += 3
+	changed.emit()
+	return 3
+
+
 func record_scoop_night(result: Dictionary) -> void:
 	tonight = result
 	scooped_tonight = true
@@ -556,12 +570,22 @@ func sleep(hours: int) -> void:
 	sleep_hist.append(hours)
 	# 1) すくった玉がかえる。よく寝ると玉の★がひとつ増える
 	var qb := sleep_quality_bonus(hours)
+	# 群れの小さな玉は、2つでひとり分
+	var list: Array = []
+	var school := 0
 	for orb in orbs:
+		if orb.kind == "school":
+			school += 1
+			if school % 2 == 1:
+				list.append(orb)
+		else:
+			list.append(orb)
+	for orb in list:
 		var sid := normal_species_for(orb)
 		var q: int = clampi(orb.get("quality", 0) + qb, 0, 3)
-		var xp: int = 6 + q * 5 + (30 if orb.kind == "rainbow" else 0)
+		var xp: int = 4 + q * 4 + (30 if orb.kind == "rainbow" else 0)
 		var before := level_of(sid)
-		var r := add_obake(sid, xp)
+		var r := add_obake(sid, xp, q)
 		if orb.kind == "rainbow":
 			shards.rainbow += 1
 		if orb.kind == "gold":
@@ -655,6 +679,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 		"zukan_count": seen.size(),
 		"avg_sleep_month": total / max(1, recent.size()),
 		"nights": recent.size(),
+		"scooped": tonight.get("count", 0),
 	}
 
 
@@ -718,7 +743,7 @@ func reward_text(rw: Dictionary) -> String:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending"]
+const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day"]
 
 
 func save_game() -> void:

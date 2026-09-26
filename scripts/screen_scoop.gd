@@ -63,6 +63,14 @@ var multi_count := 0
 var ended := false
 var tut_step := -1
 
+# 自動ですくう（バランス確認・デモ動画用）
+var auto := false
+var auto_skill := 0.8
+var auto_state := "idle"
+var auto_t := 0.8
+var auto_target: Orb3D
+var auto_cursor: Panel
+
 var font_bold: FontFile
 var font_black: FontFile
 var jar_row: HBoxContainer
@@ -97,6 +105,7 @@ func _ready() -> void:
 	if randf() < mods.rainbow:
 		rainbow_t = randf_range(10.0, 30.0)
 	radius = POI_R * GameState.poi_radius_mult()
+	var gift := GameState.festival_gift()
 	_build_world()
 	_build_ui()
 	_build_audio()
@@ -111,6 +120,8 @@ func _ready() -> void:
 	_show_conditions()
 	if tut_step == 0:
 		_tut_show()
+	if gift > 0:
+		_float_text("祭りのふるまい：紙のポイ ×%d" % gift, Vector2(180, 150), Color("ffb35c"))
 
 
 # ---------- 世界 ----------
@@ -739,6 +750,8 @@ func _play(n: String, pitch := 1.0, vol := 0.0) -> void:
 
 
 func _poi_color(pid: String) -> Color:
+	if not GameState.POI.has(pid):
+		return Color("888888")
 	return Color(GameState.POI[pid].color)
 
 
@@ -973,11 +986,14 @@ func _cost_of(list: Array) -> float:
 	for o: Orb3D in list:
 		var m := 1.0
 		if ptype == o.data.type:
-			m = 0.5
+			m = 0.6
 		elif ptype == "rare" and o.kind == "rainbow":
 			m = 0.3
 		if o.kind == "heavy" and GameState.partner == "tray":
 			m *= 1.0 - 0.08 * GameState.partner_level()
+		# ふちに近い玉ほど、紙に負担がかかる（真ん中ですくうのが腕）
+		var d := Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length() / radius
+		m *= 1.0 + 0.9 * d * d
 		cost += o.weight() * m
 	# 長く水に入れているほど紙がふやける
 	return cost * (1.0 + minf(dip_time * 0.04, 0.5)) * mods.drain
@@ -1165,6 +1181,8 @@ func _tear(list: Array) -> void:
 func _process(delta: float) -> void:
 	ripple_t += delta
 	water_mat.set_shader_parameter("ripple_t", ripple_t)
+	if auto:
+		_auto(delta)
 	_update_poi(delta)
 	_update_orbs(delta)
 	_update_events(delta)
@@ -1194,8 +1212,8 @@ func _update_poi(delta: float) -> void:
 		else:
 			gentle_time = 0.0
 		# 速く動かすほど、紙が弱る（そっと動かせば、ほとんど減らない）
-		var over := maxf(0.0, poi_speed - 0.5)
-		var drain: float = (0.01 + 0.07 * over * over) * GameState.poi_gentle_mult() * mods.drain
+		var over := maxf(0.0, poi_speed - 0.6)
+		var drain: float = (0.012 + 0.35 * over * over) * GameState.poi_gentle_mult() * mods.drain
 		durability -= drain * delta
 		if durability <= 0.0:
 			_tear([])
@@ -1546,7 +1564,104 @@ func _rank_text() -> String:
 	return "はじめの一歩"
 
 
+# ---------- 自動ですくう ----------
+
+func _auto_pick() -> Orb3D:
+	var best: Orb3D = null
+	var best_score := -1e9
+	for o: Orb3D in orbs:
+		if not o.catchable():
+			continue
+		var e := Vector2(o.position.x / WATER_RX, (o.position.z + 0.2) / WATER_RZ).length()
+		var score := -Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length() - e * 1.5
+		if o.kind == "rainbow":
+			score += 5.0
+		elif o.kind == "gold":
+			score += 2.0
+		elif o.kind == "school":
+			score += 0.8 * auto_skill
+		elif o.kind == "heavy":
+			score -= 0.6
+		if score > best_score:
+			best_score = score
+			best = o
+	return best
+
+
+func _auto(delta: float) -> void:
+	if ended or busy:
+		return
+	auto_t -= delta
+	if auto_cursor:
+		auto_cursor.visible = true
+		auto_cursor.position = cam.unproject_position(poi.position) - Vector2(18, 18)
+		auto_cursor.modulate.a = 1.0 if pressed else 0.45
+	match auto_state:
+		"idle":
+			if auto_t > 0.0:
+				return
+			auto_target = _auto_pick()
+			if auto_target == null:
+				auto_t = 0.5
+				if supply <= 0 and telegraph_left <= 0.0:
+					_end_night("今夜の玉は、もうおしまい")
+				return
+			var entry := auto_target.position + Vector3(randf_range(-0.3, 0.3), 0, 1.0).normalized() * radius * 1.9
+			var e := Vector2(entry.x / WATER_RX, entry.z / WATER_RZ)
+			if e.length() > 0.9:
+				entry = auto_target.position + Vector3(0, 0, -1) * radius * 1.9
+			_press(Vector3(entry.x, 0, entry.z))
+			if not pressed:
+				return
+			auto_state = "approach"
+			auto_t = 7.0
+		"approach":
+			if not pressed:
+				auto_state = "idle"
+				auto_t = 0.6
+				return
+			if auto_target == null or not is_instance_valid(auto_target) or not auto_target.catchable():
+				auto_target = _auto_pick()
+				if auto_target == null:
+					_release()
+					auto_state = "idle"
+					auto_t = 0.6
+					return
+			var to := Vector3(auto_target.position.x - poi_target.x, 0, auto_target.position.z - poi_target.z)
+			var spd := lerpf(2.0, 0.6, auto_skill)
+			var step := minf(to.length(), spd * delta)
+			if to.length() > 0.001:
+				poi_target += to.normalized() * step
+			var need := lerpf(0.95, 0.35, auto_skill) * radius
+			var over := _orbs_over_poi()
+			var ok_gentle := gentle_time >= 0.22 or auto_skill < 0.5
+			if (to.length() < need and ok_gentle and submerge <= 0.0) or auto_t <= 0.0:
+				# 上手いほど、群れが重なるのを少し待つ
+				if auto_skill > 0.7 and over.size() == 1 and over[0].kind == "school" and auto_t > 5.0:
+					return
+				_release()
+				auto_state = "idle"
+				auto_t = randf_range(0.5, 1.0)
+
+
 # ---------- 確認・デモ用 ----------
+
+func start_auto(skill: float) -> void:
+	auto = true
+	auto_skill = skill
+	tut_step = -1
+	tut_ring.visible = false
+	auto_cursor = Panel.new()
+	var rs := StyleBoxFlat.new()
+	rs.bg_color = Color(1, 1, 1, 0.25)
+	rs.border_color = Color.WHITE
+	rs.set_border_width_all(3)
+	rs.set_corner_radius_all(18)
+	auto_cursor.add_theme_stylebox_override("panel", rs)
+	auto_cursor.size = Vector2(36, 36)
+	auto_cursor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(auto_cursor)
+
 
 func demo_hold() -> void:
 	# 1つ目の玉の真下にポイを入れた状態を作る
