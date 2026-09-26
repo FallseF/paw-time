@@ -372,6 +372,226 @@ func _sphere(r: float) -> SphereMesh:
 	return s
 
 
+## 円柱・円すい（y 方向に高さ h、中心が原点）。縁は丸める（bevel=-1 で太さに合わせて自動）。
+## 上の半径が 0 なら先のとがった円すい。
+func _cyl(top: float, bottom: float, h: float, seg := 20, bevel := -1.0) -> Mesh:
+	var r := maxf(top, bottom)
+	seg = maxi(seg, 48 if r >= 0.2 else (32 if r >= 0.06 else seg))
+	if bevel < 0.0:
+		bevel = minf(minf(r, h) * 0.22, 0.03)
+	return lathe(top, bottom, h, seg, bevel)
+
+
+static func lathe(top: float, bottom: float, h: float, seg: int, bevel: float) -> ArrayMesh:
+	var key := "lathe/%s/%s/%s/%d/%s" % [top, bottom, h, seg, bevel]
+	if _shared.has(key):
+		return _shared[key]
+	var y0 := -h * 0.5
+	var y1 := h * 0.5
+	var b := minf(bevel, minf(h * 0.45, maxf(bottom, top) * 0.45))
+	# 断面（r, y）を下の中心から上の中心までたどる
+	var prof: Array[Vector2] = [Vector2(0, y0)]
+	var arc := 6
+	if bottom > 0.0005:
+		var bb := minf(b, bottom * 0.9)
+		var c0 := Vector2(bottom - bb, y0 + bb)
+		for k in arc + 1:
+			var a := -PI * 0.5 + PI * 0.5 * k / arc
+			prof.append(c0 + Vector2(cos(a), sin(a)) * bb)
+	if top > b * 1.5:
+		var c1 := Vector2(top - b, y1 - b)
+		for k in arc + 1:
+			var a := PI * 0.5 * k / arc
+			prof.append(c1 + Vector2(cos(a), sin(a)) * b)
+	prof.append(Vector2(0, y1))
+	# 断面の各点の法線（となりの辺の向きから）
+	var nrm: Array[Vector2] = []
+	for i in prof.size():
+		var d := Vector2.ZERO
+		if i > 0:
+			d += (prof[i] - prof[i - 1]).normalized()
+		if i < prof.size() - 1:
+			d += (prof[i + 1] - prof[i]).normalized()
+		var n := Vector2(d.y, -d.x).normalized()
+		if i == 0:
+			n = Vector2(0, -1)
+		elif i == prof.size() - 1:
+			n = Vector2(0, 1)
+		nrm.append(n)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for j in prof.size():
+		for i in seg + 1:
+			var u := TAU * i / seg
+			var dir := Vector3(sin(u), 0, cos(u))
+			st.set_uv(Vector2(float(i) / seg, float(j) / (prof.size() - 1)))
+			st.set_normal((dir * nrm[j].x + Vector3.UP * nrm[j].y).normalized())
+			st.add_vertex(dir * prof[j].x + Vector3.UP * prof[j].y)
+	for j in prof.size() - 1:
+		for i in seg:
+			var a := j * (seg + 1) + i
+			var c := a + seg + 1
+			_quad(st, a, a + 1, c + 1, c)
+	var m := st.commit()
+	_shared[key] = m
+	return m
+
+
+## 点の列に沿った、太さの変わるなめらかな管（両端は丸くふさぐ）。key で使い回す。
+static func tube(key: String, pts: PackedVector3Array, radii: PackedFloat32Array, seg := 20) -> ArrayMesh:
+	key = "tube/" + key
+	if _shared.has(key):
+		return _shared[key]
+	# 細かく割り直す（Catmull-Rom）
+	var P := PackedVector3Array()
+	var R := PackedFloat32Array()
+	var sub := 6
+	for i in pts.size() - 1:
+		var p0 := pts[maxi(i - 1, 0)]
+		var p1 := pts[i]
+		var p2 := pts[i + 1]
+		var p3 := pts[mini(i + 2, pts.size() - 1)]
+		for k in sub:
+			var t := float(k) / sub
+			P.append(p1.cubic_interpolate(p2, p0, p3, t))
+			R.append(lerpf(radii[i], radii[i + 1], t))
+	P.append(pts[pts.size() - 1])
+	R.append(radii[radii.size() - 1])
+	var n := P.size()
+	var T: Array[Vector3] = []
+	for i in n:
+		T.append((P[mini(i + 1, n - 1)] - P[maxi(i - 1, 0)]).normalized())
+	var N: Array[Vector3] = []
+	var ref := Vector3.UP if absf(T[0].y) < 0.9 else Vector3.RIGHT
+	N.append(T[0].cross(ref).normalized())
+	for i in range(1, n):
+		var v := N[i - 1] - T[i] * N[i - 1].dot(T[i])
+		N.append(v.normalized())
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rows := []  # [中心, 接線, 法線, 半径, 前後へのふくらみの角度]
+	var cap := 5
+	for k in range(cap, 0, -1):
+		rows.append([P[0], T[0], N[0], R[0], -PI * 0.5 * k / cap])
+	for i in n:
+		rows.append([P[i], T[i], N[i], R[i], 0.0])
+	for k in range(1, cap + 1):
+		rows.append([P[n - 1], T[n - 1], N[n - 1], R[n - 1], PI * 0.5 * k / cap])
+	for j in rows.size():
+		var c: Vector3 = rows[j][0]
+		var t: Vector3 = rows[j][1]
+		var nn: Vector3 = rows[j][2]
+		var r: float = rows[j][3]
+		var ang: float = rows[j][4]
+		var bn := t.cross(nn)
+		for i in seg + 1:
+			var a := TAU * i / seg
+			var radial := nn * cos(a) + bn * sin(a)
+			var dir := radial * cos(ang) + t * sin(ang)
+			st.set_normal(dir.normalized())
+			st.set_uv(Vector2(float(i) / seg, float(j) / (rows.size() - 1)))
+			st.add_vertex(c + dir * r)
+	for j in rows.size() - 1:
+		for i in seg:
+			var a := j * (seg + 1) + i
+			var b := a + seg + 1
+			_quad(st, a, a + 1, b + 1, b)
+	var m := st.commit()
+	_shared[key] = m
+	return m
+
+
+## 四角（a→b→c→d が外から見て反時計回り）を、Godot の表向き（時計回り）の三角 2 枚にする
+static func _quad(st: SurfaceTool, a: int, b: int, c: int, d: int) -> void:
+	for id in [a, c, b, a, d, c]:
+		st.add_index(id)
+
+
+## 角を丸めた箱（中心が原点）。bevel=-1 で大きさに合わせて自動。
+func _box(size: Vector3, bevel := -1.0) -> Mesh:
+	if bevel < 0.0:
+		bevel = clampf(minf(size.x, minf(size.y, size.z)) * 0.2, 0.002, 0.035)
+	return rbox(size, bevel)
+
+
+static func rbox(size: Vector3, bevel: float) -> ArrayMesh:
+	var key := "rbox/%s/%s" % [size, bevel]
+	if _shared.has(key):
+		return _shared[key]
+	var hs := size * 0.5
+	var r := minf(bevel, minf(hs.x, minf(hs.y, hs.z)) * 0.95)
+	var inner := hs - Vector3.ONE * r
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var ts := [0.0, 0.25, 0.55, 1.0]
+	var idx := 0
+	# 6 面：法線の軸 ax、面の中の 2 軸 u, v（u × v = 法線の向き）
+	for f in [[0, 1, 2, 1.0], [0, 2, 1, -1.0], [1, 2, 0, 1.0], [1, 0, 2, -1.0], [2, 0, 1, 1.0], [2, 1, 0, -1.0]]:
+		var ax: int = f[0]
+		var ua: int = f[1]
+		var va: int = f[2]
+		var sg: float = f[3]
+		var cu := _axis_coords(hs[ua], r, ts)
+		var cv := _axis_coords(hs[va], r, ts)
+		for i in cu.size():
+			for j in cv.size():
+				var q := Vector3.ZERO
+				q[ax] = hs[ax] * sg
+				q[ua] = cu[i]
+				q[va] = cv[j]
+				var c := q.clamp(-inner, inner)
+				var n := (q - c).normalized()
+				st.set_normal(n)
+				st.set_uv(Vector2(float(i) / (cu.size() - 1), float(j) / (cv.size() - 1)))
+				st.add_vertex(c + n * r)
+		for i in cu.size() - 1:
+			for j in cv.size() - 1:
+				var a := idx + i * cv.size() + j
+				var b := a + cv.size()
+				# u × v が法線と同じ向きなら (a, b, b+1, a+1) が外から見て反時計回り
+				var e_u := Vector3.ZERO
+				e_u[ua] = 1.0
+				var e_v := Vector3.ZERO
+				e_v[va] = 1.0
+				var nn := Vector3.ZERO
+				nn[ax] = sg
+				if e_u.cross(e_v).dot(nn) > 0.0:
+					_quad(st, a, b, b + 1, a + 1)
+				else:
+					_quad(st, a, a + 1, b + 1, b)
+		idx += cu.size() * cv.size()
+	var m := st.commit()
+	_shared[key] = m
+	return m
+
+
+static func _axis_coords(h: float, r: float, ts: Array) -> Array[float]:
+	var out: Array[float] = []
+	for t in ts:
+		out.append(-h + r * float(t))
+	for k in range(ts.size() - 1, -1, -1):
+		out.append(h - r * float(ts[k]))
+	return out
+
+
+func _torus(inner: float, outer: float) -> TorusMesh:
+	var t := TorusMesh.new()
+	t.inner_radius = inner
+	t.outer_radius = outer
+	t.rings = 48
+	t.ring_segments = 16
+	return t
+
+
+func _cap(r: float, h: float) -> CapsuleMesh:
+	var c := CapsuleMesh.new()
+	c.radius = r
+	c.height = h
+	c.radial_segments = 24
+	c.rings = 8
+	return c
+
+
 func _mesh(m: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = m
@@ -386,51 +606,25 @@ func _add_prop(id: String) -> void:
 			for p in [Vector3(-0.2, 1.05, 0.1), Vector3(0.05, 1.12, 0), Vector3(0.28, 1.0, -0.05)]:
 				body.add_child(_mesh(_sphere(0.1 + randf() * 0.05), prop(Color("f4fbff"), 0.8), p))
 		"tray":
-			var tray := CylinderMesh.new()
-			tray.top_radius = 0.5
-			tray.bottom_radius = 0.46
-			tray.height = 0.05
-			body.add_child(_mesh(tray, prop(Color("c8ced6")), Vector3(0, 1.02, 0)))
-			var glass := CylinderMesh.new()
-			glass.top_radius = 0.08
-			glass.bottom_radius = 0.07
-			glass.height = 0.2
-			body.add_child(_mesh(glass, prop(Color("ffcf5a")), Vector3(0.15, 1.14, 0)))
+			body.add_child(_mesh(_cyl(0.5, 0.46, 0.05), prop(Color("c8ced6")), Vector3(0, 1.02, 0)))
+			body.add_child(_mesh(_cyl(0.08, 0.07, 0.2), prop(Color("ffcf5a")), Vector3(0.15, 1.14, 0)))
 		"receipt":
-			var r := BoxMesh.new()
-			r.size = Vector3(0.14, 0.02, 0.5)
-			var rm := _mesh(r, prop(Color("fffaf2")), Vector3(0.35, 0.05, -0.35))
+			var rm := _mesh(_box(Vector3(0.14, 0.02, 0.5)), prop(Color("fffaf2")), Vector3(0.35, 0.05, -0.35))
 			rm.rotation = Vector3(0.3, 0.6, 0)
 			body.add_child(rm)
 		"pan":
-			var pan := CylinderMesh.new()
-			pan.top_radius = 0.22
-			pan.bottom_radius = 0.2
-			pan.height = 0.06
-			body.add_child(_mesh(pan, prop(Color("4a4a52")), Vector3(0.62, 0.45, 0.1)))
+			body.add_child(_mesh(_cyl(0.22, 0.2, 0.06), prop(Color("4a4a52")), Vector3(0.62, 0.45, 0.1)))
 			body.add_child(_mesh(_sphere(0.08), prop(Color("ffd66b")), Vector3(0.62, 0.49, 0.1)))
 		"box":
-			var b := BoxMesh.new()
-			b.size = Vector3(1.2, 0.45, 1.0)
-			body.add_child(_mesh(b, prop(Color("d9a86c")), Vector3(0, 0.12, 0)))
+			body.add_child(_mesh(_box(Vector3(1.26, 0.45, 1.22)), prop(Color("d9a86c")), Vector3(0, 0.12, 0)))
 		"lantern":
-			var l := BoxMesh.new()
-			l.size = Vector3(0.18, 0.26, 0.18)
-			body.add_child(_mesh(l, prop(Color("ff9a4d"), 0.3, 1.5), Vector3(0.6, 0.55, 0.1)))
+			body.add_child(_mesh(_box(Vector3(0.18, 0.26, 0.18)), prop(Color("ff9a4d"), 0.3, 1.5), Vector3(0.6, 0.55, 0.1)))
 		"kirari":
 			for i in 5:
-				var c := CylinderMesh.new()
-				c.top_radius = 0.0
-				c.bottom_radius = 0.07
-				c.height = 0.22
 				var a := TAU * i / 5.0
-				body.add_child(_mesh(c, prop(Color("ffe27a"), 0.3, 0.8), Vector3(cos(a) * 0.22, 1.08, sin(a) * 0.22)))
+				body.add_child(_mesh(_cyl(0.0, 0.07, 0.22), prop(Color("ffe27a"), 0.3, 0.8), Vector3(cos(a) * 0.22, 1.08, sin(a) * 0.22)))
 		"nemuri":
-			var cap := CylinderMesh.new()
-			cap.top_radius = 0.0
-			cap.bottom_radius = 0.42
-			cap.height = 0.6
-			var cm := _mesh(cap, prop(Color("5b6fc2")), Vector3(0.05, 1.05, 0))
+			var cm := _mesh(_cyl(0.0, 0.42, 0.6), prop(Color("5b6fc2")), Vector3(0.05, 1.05, 0))
 			cm.rotation.z = -0.35
 			body.add_child(cm)
 

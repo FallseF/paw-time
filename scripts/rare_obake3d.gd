@@ -75,40 +75,6 @@ func _node(pos: Vector3, parent: Node3D = null, rot := Vector3.ZERO) -> Node3D:
 	return n
 
 
-func _cyl(top: float, bottom: float, h: float, seg := 20) -> CylinderMesh:
-	var c := CylinderMesh.new()
-	c.top_radius = top
-	c.bottom_radius = bottom
-	c.height = h
-	c.radial_segments = seg
-	c.rings = 1
-	return c
-
-
-func _box(size: Vector3) -> BoxMesh:
-	var b := BoxMesh.new()
-	b.size = size
-	return b
-
-
-func _torus(inner: float, outer: float) -> TorusMesh:
-	var t := TorusMesh.new()
-	t.inner_radius = inner
-	t.outer_radius = outer
-	t.rings = 24
-	t.ring_segments = 10
-	return t
-
-
-func _cap(r: float, h: float) -> CapsuleMesh:
-	var c := CapsuleMesh.new()
-	c.radius = r
-	c.height = h
-	c.radial_segments = 16
-	c.rings = 6
-	return c
-
-
 func _hemi(r: float) -> SphereMesh:
 	var s := _sphere(r)
 	s.is_hemisphere = true
@@ -541,12 +507,19 @@ func _b_kaminari() -> void:
 		_add(_cyl(0.0, 0.06, 0.13, 8), dark, Vector3(-0.08 - i * 0.14, 0.66 - i * 0.05, -0.2 - i * 0.07), null, Vector3(0, 0, 0.4))
 	var tail := _node(Vector3(-0.55, 0.26, -0.36))
 	_p.tail = tail
+	# 竜の尻尾：胴から先へ細くなる一本の管
+	var pts := PackedVector3Array()
+	var rad := PackedFloat32Array()
 	var r := 0.16
 	var p2 := Vector3.ZERO
+	pts.append(Vector3(0.22, -0.06, 0.12))
+	rad.append(0.2)
 	for i in 4:
-		_add(_sphere(r), skin, p2, tail)
+		pts.append(p2)
+		rad.append(r)
 		p2 += Vector3(-0.14, 0.08 + i * 0.03, -0.02)
 		r *= 0.8
+	_add(tube("kaminari_tail", pts, rad, 24), skin, Vector3.ZERO, tail)
 	_add(_cyl(0.0, 0.07, 0.16, 8), dark, p2 + Vector3(0.02, 0.04, 0), tail, Vector3(0, 0, 0.3))
 	var bolt := _node(Vector3(-0.3, 1.0, 0.0), null, Vector3(0, 0, -0.2))
 	bolt.scale = Vector3.ONE * 1.6
@@ -610,10 +583,8 @@ func _b_okurimono() -> void:
 	var box := _node(Vector3.ZERO)
 	_p.box = box
 	var skin := _skin(c1)
-	_add(_cyl(0.38, 0.4, 0.2, 20), skin, Vector3(0, 0.12, 0), box)
-	for i in 8:
-		var a := TAU * i / 8.0
-		_add(_sphere(0.13), skin, Vector3(cos(a) * 0.33, 0.04, sin(a) * 0.33), box)
+	# 箱の下からのぞく、波打つ裾（ふつうのおばけの体を縮めて箱の中に入れる）
+	_add(body_meshes("plain").body, skin, Vector3.ZERO, box, Vector3.ZERO, Vector3(0.8, 0.8, 0.8))
 	_add(_box(Vector3(0.9, 0.62, 0.8)), skin, Vector3(0, 0.46, 0), box)
 	box.add_child(face(Vector3(0, 0.38, -0.03), 0.9))
 	var red := _mat(c2, 0.3)
