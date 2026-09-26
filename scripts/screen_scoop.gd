@@ -736,7 +736,7 @@ func _build_ui() -> void:
 		home.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.9)))
 	home.add_theme_color_override("font_color", Color("1a1f3a"))
 	home.add_theme_color_override("font_hover_color", Color("1a1f3a"))
-	home.pressed.connect(func(): _end_night("帰り道"))
+	home.pressed.connect(_ask_home)
 	var help := Button.new()
 	help.text = "？"
 	help.focus_mode = Control.FOCUS_NONE
@@ -1854,6 +1854,54 @@ func _night_title() -> void:
 		tw.tween_interval(1.1)
 		tw.tween_property(n, "modulate:a", 0.0, 0.5)
 		tw.tween_callback(n.queue_free)
+
+
+## まだポイが残っていたら、帰る前にひとこと確かめる
+func _ask_home() -> void:
+	if ended or busy or pressed:
+		return
+	var left := 0
+	for k in pool:
+		left += pool[k]
+	if practice or left == 0:
+		_end_night("帰り道")
+		return
+	var layer := Control.new()
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.03, 0.1, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(dim)
+	var card := PanelContainer.new()
+	var st := _pill(Color(1, 0.98, 0.95, 0.97), 24)
+	st.content_margin_left = 20
+	st.content_margin_right = 20
+	st.content_margin_top = 16
+	st.content_margin_bottom = 16
+	card.add_theme_stylebox_override("panel", st)
+	card.position = Vector2(30, 220)
+	card.size = Vector2(300, 0)
+	layer.add_child(card)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	card.add_child(v)
+	v.add_child(_text("今夜はここまでにする？", 19, Color("2a2233"), font_black))
+	var sub := _text("残りのポイ %d 本は、明日も使える" % left, 14, Color("6a5f70"))
+	v.add_child(sub)
+	for pair in [["帰って寝る", Color("8b7bff"), Color.WHITE, func(): layer.queue_free(); _end_night("帰り道")], ["もう少しすくう", Color(1, 1, 1), Color("5b6fc2"), func(): layer.queue_free()]]:
+		var b := Button.new()
+		b.text = pair[0]
+		b.custom_minimum_size = Vector2(0, 46)
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_font_override("font", font_black)
+		b.add_theme_font_size_override("font_size", 16)
+		for k in ["normal", "hover", "pressed"]:
+			b.add_theme_stylebox_override(k, _pill(pair[1], 23))
+		b.add_theme_color_override("font_color", pair[2])
+		b.add_theme_color_override("font_hover_color", pair[2])
+		b.pressed.connect(pair[3])
+		v.add_child(b)
 
 
 # ---------- コツ ----------
