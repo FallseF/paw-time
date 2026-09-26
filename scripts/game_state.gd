@@ -196,6 +196,8 @@ func reset(new_mode := "data") -> void:
 	rare_pending = []
 	tut = {}
 	total_scooped = 0
+	week_start_seen = 1
+	week_start_growth = 0
 	night_plan = ""
 	lit_deco = ""
 	work_hist = []
@@ -649,7 +651,9 @@ func make_goals() -> void:
 	var sleep_goal: String = ["usual", "hours7", "early_ok"][rng.randi() % 3]
 	if bed_hist.is_empty():
 		sleep_goal = "hours7"
-	var pool := ["scoop3", "talk", "zukan"] if weekday() != 6 else ["talk", "zukan", "moon4"]
+	var pool := ["scoop3", "talk", "zukan"] if weekday() != 6 else ["talk", "zukan"]
+	if weekday() == 6 and moon_lanterns().count(true) >= 4:
+		pool.append("moon4")
 	var role_decos := decos.keys().filter(func(k): return ROLE_NET.has(k))
 	if not role_decos.is_empty() and weekday() != 6:
 		pool.append("light")
@@ -819,6 +823,8 @@ func finish_moon(lit: int, bonus_taps: int) -> Dictionary:
 	moon_nights += 1
 	var won := lit >= 4
 	moon_won_today = won
+	if lit >= 4:
+		goal("moon4")
 	var gain := lit * 4 + bonus_taps
 	growth += gain
 	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:

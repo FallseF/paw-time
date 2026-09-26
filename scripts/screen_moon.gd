@@ -242,8 +242,7 @@ func _finish() -> void:
 		return
 	done = true
 	var res := GameState.finish_moon(lit, 0)
-	if lit >= 4:
-		GameState.goal("moon4")
+
 	if res.won:
 		hint.text = ""
 		header.text = "満月！"
