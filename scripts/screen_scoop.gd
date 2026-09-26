@@ -2148,6 +2148,8 @@ func _show_result(reason: String, was_best: bool) -> void:
 	if caught.size() > 14:
 		row.add_child(_text("+%d" % (caught.size() - 14), 13, Color("8a7a88")))
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	card.reset_size()
 	# 長すぎるときは、ランクと称号の行をしまう
 	if card.size.y > 620:
@@ -2155,6 +2157,8 @@ func _show_result(reason: String, was_best: bool) -> void:
 			if c is Label and (c.text == _rank_text() or c.text.begins_with("次は")):
 				c.visible = false
 		await get_tree().process_frame
+		if not is_inside_tree():
+			return
 		card.reset_size()
 	card.size.x = 312
 	card.position.y = clampf((640.0 - card.size.y) / 2.0, 8.0, 200.0)

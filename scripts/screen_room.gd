@@ -344,6 +344,8 @@ func _gui_input(event: InputEvent) -> void:
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bubble)
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	var p2 := cam.unproject_position(ob.global_position + Vector3(0, 1.0, 0))
 	bubble.position = Vector2(clampf(p2.x - bubble.size.x / 2, 8, 352 - bubble.size.x), p2.y - 44)
 	var tw2 := create_tween()
@@ -562,6 +564,8 @@ func _render() -> void:
 
 func _fit_card() -> void:
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	if not is_instance_valid(card):
 		return
 	card.reset_size()
@@ -651,6 +655,8 @@ func _show_report() -> void:
 
 func _place_quest_btn() -> void:
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	if is_instance_valid(poi_panel):
 		quest_btn.position.y = poi_panel.position.y + poi_panel.size.y + 6
 

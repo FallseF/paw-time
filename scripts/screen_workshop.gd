@@ -117,6 +117,8 @@ func _build() -> void:
 	pad.custom_minimum_size = Vector2(0, 40)
 	col.add_child(pad)
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	scroll.scroll_vertical = y
 
 
