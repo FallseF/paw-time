@@ -63,6 +63,12 @@ func _ready() -> void:
 		_spawn_orb(d)
 	_pick_poi()
 	_refresh_ui()
+	# 今夜の川の様子を、はじめに知らせる
+	var kind := GameState.night_kind()
+	if kind != "" and not extra:
+		var kt: Array = GameState.NIGHT_KIND_TEXT[kind]
+		await get_tree().create_timer(0.5).timeout
+		_banner("%s\n%s" % [kt[0], kt[1]], Color("e8ecff"))
 
 
 # ---------- 世界 ----------
@@ -207,7 +213,7 @@ func _build_world() -> void:
 
 	# ほたる
 	var flies := CPUParticles3D.new()
-	flies.amount = 50
+	flies.amount = 140 if GameState.night_kind() == "fireflies" else 50
 	flies.lifetime = 7.0
 	flies.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	flies.emission_box_extents = Vector3(4, 0.6, 3)

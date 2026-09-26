@@ -555,12 +555,35 @@ func poi_strength() -> float:
 
 
 ## 今夜の水面に出る玉。今日の仕事の種類が多めに出る。リズムが整うと、虹の玉が混ざりやすい。
+## 今夜の川べりの様子（日ごとに決まる）
+func night_kind() -> String:
+	var w: String = today().weather
+	if w == "雨" or w == "雷":
+		return "rain"
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_base * 7 + day * 389
+	var r := rng.randf()
+	if r < 0.15:
+		return "fireflies"
+	elif r < 0.25:
+		return "bounty"
+	return ""
+
+
+const NIGHT_KIND_TEXT := {
+	"rain": ["雨の夜", "玉が重い。でも、ひとつ多い"],
+	"fireflies": ["ほたるの夜", "虹の玉が出やすい"],
+	"bounty": ["にぎやかな夜", "玉がいつもより多い"],
+}
+
+
 func tonight_orbs() -> Array:
 	var s: Dictionary = today()
 	var types := ["register", "dish", "hall", "kitchen", "stock"]
 	var out: Array = []
-	var n := randi_range(4, 5)
-	var rare_p: float = [0.04, 0.07, 0.11, 0.16][tier()] + (0.15 if s.get("first", false) else 0.0)
+	var kind := night_kind()
+	var n := randi_range(4, 5) + (1 if kind == "rain" else 0) + (2 if kind == "bounty" else 0)
+	var rare_p: float = [0.04, 0.07, 0.11, 0.16][tier()] + (0.15 if s.get("first", false) else 0.0) + (0.12 if kind == "fireflies" else 0.0)
 	for i in n:
 		var t: String = types.pick_random()
 		if s.get("role", "") != "" and randf() < 0.45:
@@ -568,7 +591,10 @@ func tonight_orbs() -> Array:
 		elif lit_deco != "" and randf() < 0.4:
 			t = lit_deco
 		var rare: bool = randf() < rare_p
-		out.append({"type": "rare" if rare else t, "rare": rare, "weight": 0.5 if rare else randf_range(0.22, 0.34)})
+		var wgt: float = 0.5 if rare else randf_range(0.22, 0.34)
+		if kind == "rain":
+			wgt *= 1.25
+		out.append({"type": "rare" if rare else t, "rare": rare, "weight": wgt})
 	return out
 
 
