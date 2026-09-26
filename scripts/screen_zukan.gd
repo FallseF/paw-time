@@ -13,6 +13,7 @@ var detail: Control
 
 
 func _ready() -> void:
+	GameState.tut["zukan_seen"] = GameState.seen.size() # 新しく会った子を見た
 	font_bold = load("res://assets/fonts/ZenMaruGothic-Bold.ttf")
 	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
 	var bg := ColorRect.new()

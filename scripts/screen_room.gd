@@ -390,7 +390,7 @@ func _build_ui() -> void:
 	var zk := _button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
 	zk.custom_minimum_size = Vector2(62, 44)
 	top.add_child(zk)
-	if GameState.claimable().size() > 0:
+	if GameState.claimable().size() > 0 or GameState.seen.size() > int(GameState.tut.get("zukan_seen", 1)):
 		var dot := _dot(Color("ff5b5b"))
 		dot.position = Vector2(50, -2)
 		zk.add_child(dot)
