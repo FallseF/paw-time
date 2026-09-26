@@ -462,12 +462,16 @@ func _render() -> void:
 	for c in poi_row.get_children():
 		c.queue_free()
 	poi_row.add_child(_text("ポイ", 12, Color("8a7a88")))
-	for id in GameState.POI_ORDER:
-		var n: int = GameState.pois.get(id, 0)
+	# 紙・色・特別の3つにまとめて見せる（くわしくは川べりの棚で）
+	var groups := [["紙", ["paper"], Color("f4efe6")], ["色", ["receipt", "bubble", "tray", "pan", "box"], Color("5fc4ff")], ["特別", ["kira", "lure", "double", "akari"], Color("fff2a8")]]
+	for g in groups:
+		var n := 0
+		for id in g[1]:
+			n += GameState.pois.get(id, 0)
 		if n <= 0:
 			continue
-		poi_row.add_child(_dot(Color(GameState.POI[id].color).darkened(0.05)))
-		poi_row.add_child(_text("%s%d" % [GameState.POI[id].short, n], 12))
+		poi_row.add_child(_dot(g[2].darkened(0.08)))
+		poi_row.add_child(_text("%s %d" % [g[0], n], 12))
 	if GameState.total_pois() == 0:
 		poi_row.add_child(_text("なし", 12, Color("8a7a88")))
 	poi_row.add_child(_text("強さ×%.2f" % GameState.strength, 12, Color("8b7bff")))
