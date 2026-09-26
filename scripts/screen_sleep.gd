@@ -148,7 +148,7 @@ func _set_hours(h: int) -> void:
 	if hours >= 9:
 		lines.append("8時間より長く寝ても、育ち方は同じ")
 	elif hours >= 7:
-		lines.append("よく眠ると、ネムリンたちが生まれやすい")
+		lines.append("よく眠ると、レアが生まれやすい")
 	elif hours <= 5:
 		lines.append("夜ふかしすると、ヨミセが寄ってくる")
 	for s in lines:
