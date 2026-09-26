@@ -35,7 +35,7 @@ func _ready() -> void:
 	v.size = Vector2(240, 140)
 	v.add_theme_constant_override("separation", 10)
 	add_child(v)
-	var has_save: bool = FileAccess.file_exists(GameState.SAVE_PATH) and GameState.records.nights > 0
+	var has_save: bool = GameState.has_save() and GameState.records.nights > 0
 	if has_save:
 		v.add_child(_button("つづきから（第%d週 %s曜）" % [GameState.week_no(), GameState.dow()], Color("ff8a5b"), _continue))
 		v.add_child(_button("はじめから", Color(1, 1, 1, 0.9), _ask_reset, Color("5b6fc2")))
@@ -211,6 +211,8 @@ func _ask_reset() -> void:
 
 
 func _demo() -> void:
+	# デモはセーブを上書きしない（本当の進み具合はそのまま残る）
+	GameState.demo_mode = true
 	GameState.reset()
 	GameState.fast_forward(20)
 	main.go("room")

@@ -15,6 +15,9 @@ func _initialize() -> void:
 	gs.upgrades["wa"] = 2
 	gs.partner = "box"
 	gs.orbs = [{"type": "dish", "kind": "school", "quality": 2}]
+	gs.day = 12 # 土曜
+	gs.worked_today = false
+	gs.finish_shift()
 	var before := {}
 	for k in gs.SAVE_KEYS:
 		before[k] = JSON.stringify(gs.get(k))
@@ -31,6 +34,10 @@ func _initialize() -> void:
 	if typeof(gs.day) != TYPE_INT or typeof(gs.pois.paper) != TYPE_INT or typeof(gs.owned.receipt.level) != TYPE_INT:
 		fails += 1
 		print("TYPE MISMATCH")
+	# 土日の出勤の記録が、ロード後も判定に使えるか
+	if gs.today().role != "" and not gs.weekend_work.has("5"):
+		fails += 1
+		print("WEEKEND KEY LOST ", gs.weekend_work)
 	# ロード後もそのまま1晩進められるか
 	gs.sleep(7)
 	print("load=", ok, " fails=", fails, " day=", gs.day)

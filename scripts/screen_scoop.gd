@@ -37,6 +37,7 @@ var partner_node: Obake3D
 
 # ポイ
 var selected := "paper"
+var parked := {} # 持ち替えて置いた、使いかけのポイ {id: 丈夫さ}
 var in_hand := false
 var used := false
 var durability := 1.0
@@ -814,7 +815,7 @@ func _refresh_ui() -> void:
 		c.queue_free()
 	for pid in GameState.POI_ORDER:
 		var n: int = GameState.pois.get(pid, 0)
-		var here: bool = in_hand and pid == selected
+		var here: bool = (in_hand and pid == selected) or parked.has(pid)
 		if n <= 0 and not here:
 			continue
 		tray.add_child(_chip(pid, n, pid == selected))
@@ -838,7 +839,7 @@ func _chip(pid: String, n: int, sel: bool) -> Control:
 	b.add_theme_color_override("font_color", fg)
 	b.add_theme_color_override("font_hover_color", fg)
 	b.add_theme_color_override("font_pressed_color", fg)
-	var hand := "\n手に" if (in_hand and pid == selected) else ""
+	var hand := "\n手に" if (in_hand and pid == selected) else ("\n使いかけ" if parked.has(pid) else "")
 	b.text = "%s\n×%d%s" % [GameState.POI[pid].short, n, hand]
 	b.pressed.connect(_select_poi.bind(pid))
 	return b
@@ -879,9 +880,12 @@ func _tip(kind: String) -> void:
 
 
 func _pick_default_poi() -> void:
-	if GameState.pois.get(selected, 0) > 0:
+	if GameState.pois.get(selected, 0) > 0 or parked.has(selected):
 		return
 	# 仕事のポイ → 紙 → 工房のポイ の順に
+	for pid in parked:
+		selected = pid
+		return
 	for pid in ["receipt", "bubble", "tray", "pan", "box", "paper", "double", "lure", "kira", "akari"]:
 		if GameState.pois.get(pid, 0) > 0:
 			selected = pid
@@ -893,8 +897,9 @@ func _select_poi(pid: String) -> void:
 	if busy or pressed or pid == selected:
 		return
 	if in_hand and used:
-		# 使いかけは、丈夫さを持ち越したまま棚へもどす（持ち替えで回復はしない）
-		_toast("使いかけのポイは置いた")
+		# 使いかけは、丈夫さを持ち越したまま脇に置く（持ち替えで回復はしない）
+		parked[selected] = durability
+		_toast("使いかけは脇に置いた。戻せば続きから")
 	elif in_hand:
 		GameState.pois[selected] += 1
 	in_hand = false
@@ -913,6 +918,15 @@ func _show_poi_desc() -> void:
 
 func _take_poi() -> bool:
 	if in_hand:
+		return true
+	if parked.has(selected):
+		# 脇に置いた使いかけから使う
+		durability = parked[selected]
+		parked.erase(selected)
+		dura_max = GameState.poi_durability_max() * (1.9 if selected == "double" else 1.0) * (1.3 if GameState.records.nights == 0 else 1.0)
+		in_hand = true
+		used = true
+		_refresh_ui()
 		return true
 	if selected == "" or GameState.pois.get(selected, 0) <= 0:
 		_pick_default_poi()
@@ -1568,6 +1582,9 @@ func _end_night(reason: String) -> void:
 		return
 	ended = true
 	pressed = false
+	# すくい上げの途中なら、終わるのを待ってから記録する
+	while busy:
+		await get_tree().process_frame
 	Engine.time_scale = 1.0
 	if in_hand and not used:
 		GameState.pois[selected] += 1

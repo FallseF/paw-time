@@ -63,7 +63,9 @@ func _initialize() -> void:
 				o.position = Vector3(2.0 if o.position.x >= 0 else -2.0, 0, -1.5)
 		await process_frame
 	_mouse(scr, goal_px, false)
+	# すくい上げの途中で「帰る」を押しても、その1つが記録に残ること
+	scr._end_night("test")
 	await create_timer(3.0).timeout
-	var ok: bool = scr.count == 1 and gs.orbs.size() == 1 and gs.pois.paper == before - 1
-	print("count=", scr.count, " orbs=", gs.orbs.size(), " paper ", before, "→", gs.pois.paper, " durability=", snappedf(scr.durability, 0.01), " → ", "PASS" if ok else "FAIL")
+	var ok: bool = scr.count == 1 and gs.orbs.size() == 1 and gs.pois.paper == before - 1 and gs.records.total == 1 and gs.tonight.get("count", 0) == 1
+	print("count=", scr.count, " orbs=", gs.orbs.size(), " paper ", before, "→", gs.pois.paper, " durability=", snappedf(scr.durability, 0.01), " recorded=", gs.records.total, " → ", "PASS" if ok else "FAIL")
 	quit(0 if ok else 1)

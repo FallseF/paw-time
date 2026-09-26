@@ -123,6 +123,7 @@ var coworker_count := {}
 var morning_shifts := 0
 var bands_week := {}
 var weekend_work := {}
+var work_hist: Array = [] # 実際に働いた日か（日ごと）
 var first_role_today := false
 var first_store_today := false
 var gifted := false
@@ -144,11 +145,14 @@ func _ready() -> void:
 
 ## 確認・デモの起動では、セーブを読まず、書かない
 var force_save := false
+var demo_mode := false # タイトルの「デモ」で遊んでいるあいだは、セーブしない
 
 
 func _sandboxed() -> bool:
 	if force_save:
 		return false
+	if demo_mode:
+		return true
 	for k in ["OBAKE_FRESH", "OBAKE_SHOT", "OBAKE_DEMO", "OBAKE_NOSAVE", "OBAKE_AUTOPLAY"]:
 		if OS.get_environment(k) != "":
 			return true
@@ -183,6 +187,8 @@ func reset() -> void:
 	claimed = {}
 	tut = {}
 	week_snap = {"total": 0, "seen": 1}
+	festival_gift_day = -1
+	work_hist = []
 	sleep_hist = []
 	roles_seen = {}
 	stores_seen = {}
@@ -294,7 +300,7 @@ func finish_shift() -> Array:
 	if s.band == "朝":
 		morning_shifts += 1
 	if day % 7 >= 5:
-		weekend_work[day % 7] = true
+		weekend_work[str(day % 7)] = true
 	var old_friend := ""
 	for c in s.coworkers:
 		coworker_count[c] = coworker_count.get(c, 0) + 1
@@ -675,6 +681,7 @@ func sleep(hours: int) -> void:
 		add_obake(rid)
 		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rare"})
 	# 3) 次の日へ
+	work_hist.append(worked_today)
 	var n_orbs := orbs.size()
 	orbs = []
 	scooped_tonight = false
@@ -710,8 +717,8 @@ func sleep(hours: int) -> void:
 func rare_context(s: Dictionary, hours: int) -> Dictionary:
 	var worked: bool = worked_today and s.get("role", "") != ""
 	var streak := 0
-	for d in range(day - 1, max(-1, day - 8), -1):
-		if shift_for(d).role == "":
+	for i in range(work_hist.size() - 1, -1, -1):
+		if not work_hist[i]:
 			break
 		streak += 1
 	var same_max := 0
@@ -749,7 +756,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 		"received": received,
 		"battle_won": festival_cleared and is_festival(),
 		"worked_streak_before": streak if not worked else 0,
-		"weekend_both": weekend_work.has(5) and weekend_work.has(6),
+		"weekend_both": weekend_work.has("5") and weekend_work.has("6"),
 		"normal_all": normal_all,
 		"zukan_count": seen.size(),
 		"avg_sleep_month": total / max(1, recent.size()),
@@ -818,7 +825,7 @@ func reward_text(rw: Dictionary) -> String:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap"]
+const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist"]
 
 
 func save_game() -> void:
@@ -827,19 +834,44 @@ func save_game() -> void:
 	var d := {"v": 1}
 	for k in SAVE_KEYS:
 		d[k] = get(k)
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if f:
-		f.store_string(JSON.stringify(d))
+	# いったん別のファイルに書いて、書けたことを確かめてから入れ替える（前のセーブは .bak に残す）
+	var tmp := SAVE_PATH + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		push_warning("セーブを書けなかった: %s" % FileAccess.get_open_error())
+		return
+	f.store_string(JSON.stringify(d))
+	f.close()
+	if typeof(_read_save(tmp)) != TYPE_DICTIONARY:
+		push_warning("セーブの書き込みを確かめられなかった")
+		return
+	var dir := DirAccess.open("user://")
+	if FileAccess.file_exists(SAVE_PATH):
+		dir.rename(SAVE_PATH.get_file(), SAVE_PATH.get_file() + ".bak")
+	dir.rename(tmp.get_file(), SAVE_PATH.get_file())
+
+
+func _read_save(path: String):
+	if not FileAccess.file_exists(path):
+		return null
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return null
+	var d = JSON.parse_string(f.get_as_text())
+	if typeof(d) != TYPE_DICTIONARY or d.get("v", 0) != 1:
+		return null
+	return d
+
+
+func has_save() -> bool:
+	return _read_save(SAVE_PATH) != null or _read_save(SAVE_PATH + ".bak") != null
 
 
 func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return false
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if f == null:
-		return false
-	var d = JSON.parse_string(f.get_as_text())
-	if typeof(d) != TYPE_DICTIONARY or d.get("v", 0) != 1:
+	var d = _read_save(SAVE_PATH)
+	if d == null:
+		d = _read_save(SAVE_PATH + ".bak")
+	if d == null:
 		return false
 	for k in SAVE_KEYS:
 		if not d.has(k):
@@ -899,8 +931,9 @@ func _fix_ints() -> void:
 
 
 func wipe_save() -> void:
-	if FileAccess.file_exists(SAVE_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	for p in [SAVE_PATH, SAVE_PATH + ".bak", SAVE_PATH + ".tmp"]:
+		if FileAccess.file_exists(p):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(p))
 	reset()
 
 
