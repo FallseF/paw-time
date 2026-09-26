@@ -93,7 +93,8 @@ func _build_world() -> void:
 
 	cam = Camera3D.new()
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
-	cam.position = Vector3(0, 7.2, 7.4)
+	# 島が広がるほど、少し引いて全体を入れる
+	cam.position = Vector3(0, 7.2, 7.4) * lerpf(1.0, 1.28, clampf(_L() / 10.0, 0, 1))
 	cam.fov = 52
 	cam.v_offset = -1.6
 	world.add_child(cam)
@@ -516,13 +517,26 @@ var host_node: Obake3D
 func _build_host(id: String) -> void:
 	if host_node and is_instance_valid(host_node):
 		host_node.queue_free()
-	host_node = Obake3D.make(id)
-	host_node.scale = Vector3.ONE * (0.46 if Rares.is_rare(id) else 0.62)
-	host_node.position = Vector3(0.9, 0, -2.15)
+	if id == "my":
+		var tid: String = V.get("my_type", "") if _vis() else GameState.my_obake.get("type_id", "")
+		host_node = Obake3D.make_custom(QuizData.TYPES[tid].look) if QuizData.TYPES.has(tid) else Obake3D.make("receipt")
+	else:
+		host_node = Obake3D.make(id)
+	host_node.scale = Vector3.ONE * (0.6 if Rares.is_rare(id) else 0.82)
+	host_node.position = Vector3(0.9, 0, -1.9)
 	world.add_child(host_node)
-	var l := Kit.label3d("あるじ", 26, Color("ffe27a"))
-	l.pixel_size = 0.006
-	l.position = Vector3(0, 1.75 if not Rares.is_rare(id) else 2.4, 0)
+	# あるじの札（いつも手前に描く）
+	var nm := "あるじ"
+	if id == "my":
+		var tid2: String = V.get("my_type", "") if _vis() else GameState.my_obake.get("type_id", "")
+		if QuizData.TYPES.has(tid2):
+			nm = QuizData.TYPES[tid2].name
+	var l := Kit.label3d(nm, 34, Color("ffe27a"))
+	l.pixel_size = 0.009
+	l.no_depth_test = true
+	l.render_priority = 20
+	l.outline_render_priority = 19
+	l.position = Vector3(0, 1.9 if not Rares.is_rare(id) else 2.5, 0)
 	host_node.add_child(l)
 
 

@@ -145,7 +145,12 @@ func _new(mode: String) -> void:
 		return
 	GameState.reset(mode)
 	GameState.save()
-	main.go("garden")
+	_begin()
+
+
+## はじめての人は、まずマイおばけ猫の診断から（終わると島へ）
+func _begin() -> void:
+	main.go("quiz" if GameState.my_obake.is_empty() else "garden")
 
 
 func _confirm(mode: String) -> void:
@@ -169,7 +174,7 @@ func _confirm(mode: String) -> void:
 	v.add_child(Kit.button("はじめから", Color("e85a4f"), func():
 		GameState.reset(mode)
 		GameState.save()
-		main.go("garden")))
+		_begin()))
 	v.add_child(Kit.button("やめる", Color(1, 1, 1, 0.9), func():
 		confirm.queue_free()
 		confirm = null, Color("4a3f52"), 40, 14))
@@ -234,3 +239,7 @@ func _ask_code() -> void:
 	v.add_child(Kit.button("やめる", Color(1, 1, 1, 0.9), func():
 		confirm.queue_free()
 		confirm = null, Color("4a3f52"), 40, 14))
+
+
+func _new_data() -> void:
+	_new("data")

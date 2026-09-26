@@ -13,6 +13,7 @@ const SCREENS := {
 	"dream": preload("res://scripts/screen_dream.gd"),
 	"moon": preload("res://scripts/screen_moon.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
+	"quiz": preload("res://scripts/screen_quiz.gd"),
 }
 
 var root: Control
@@ -179,6 +180,8 @@ func go(screen_name: String, instant := false) -> void:
 	if current:
 		current.queue_free()
 	current = SCREENS[screen_name].new()
+	if screen_name == "quiz":
+		current.set("next_screen", "garden")
 	current.set_anchors_preset(Control.PRESET_FULL_RECT)
 	current.set("main", self)
 	root.add_child(current)

@@ -139,6 +139,7 @@ var nickname := ""
 var host_id := "" # 島のあるじ（マイおばけ猫が決まったら、ここに入れる）。空なら最初の子
 var keepsakes: Array = [] # おでかけ先に置いてきたおばけ {owner, id, day}
 var visit := {} # いま、おでかけ中の島（空なら自分の島）
+var my_obake := {} # マイおばけ猫 {type_id, look, answers, axes}。正本は user://my_obake.json
 var week_start_seen := 1
 var pending_toasts: Array = [] # 寝ている間に達成しためあての知らせ
 var week_start_growth := 0
@@ -155,6 +156,7 @@ func _ready() -> void:
 	for r in Rares.LIST:
 		ALL[r.id] = {"name": r.name, "type": "rare", "desc": r.desc, "hint": r.hint, "group": r.group}
 	reset()
+	my_obake = QuizResult.load_result()
 
 
 func info(id: String) -> Dictionary:
@@ -1003,7 +1005,18 @@ func species_list() -> Array:
 	return out
 
 
+func set_my_obake(result: Dictionary) -> void:
+	my_obake = result.duplicate(true)
+	QuizResult.save(my_obake)
+	changed.emit()
+
+
+## 島のあるじ。マイおばけ猫がいればその子（"my"）
 func host() -> String:
+	if host_id == "" and not my_obake.is_empty():
+		return "my"
+	if host_id == "my" and not my_obake.is_empty():
+		return "my"
 	if host_id != "" and seen.has(host_id):
 		return host_id
 	return owned[0].id if not owned.is_empty() else "receipt"
@@ -1012,7 +1025,7 @@ func host() -> String:
 ## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）
 func island_code(items_present: Array) -> String:
 	var b := PackedByteArray()
-	b.append(1)
+	b.append(2)
 	b.append(garden_level)
 	b.append(tier())
 	var nm := (nickname if nickname != "" else "ななし").to_utf8_buffer()
@@ -1021,7 +1034,9 @@ func island_code(items_present: Array) -> String:
 	b.append(nm.size())
 	b.append_array(nm)
 	var sl := species_list()
-	b.append(maxi(0, sl.find(host())))
+	b.append(255 if host() == "my" else maxi(0, sl.find(host())))
+	var tids: Array = QuizData.TYPES.keys()
+	b.append(tids.find(my_obake.type_id) if not my_obake.is_empty() and tids.has(my_obake.type_id) else 255)
 	var res: Array = []
 	for o in owned.slice(-12):
 		res.append(maxi(0, sl.find(o.id)))
@@ -1060,7 +1075,7 @@ func decode_island(code: String) -> Dictionary:
 	while code.length() % 4 != 0:
 		code += "="
 	var b := Marshalls.base64_to_raw(code)
-	if b.size() < 6 or b[0] != 1:
+	if b.size() < 6 or (b[0] != 1 and b[0] != 2):
 		return {}
 	var i := 1
 	var d := {"level": b[1], "tier": clampi(b[2], 0, 3)}
@@ -1072,8 +1087,16 @@ func decode_island(code: String) -> Dictionary:
 	d.name = b.slice(i, i + n).get_string_from_utf8()
 	i += n
 	var sl := species_list()
-	d.host = sl[clampi(b[i], 0, sl.size() - 1)]
+	d.host = "my" if b[i] == 255 else sl[clampi(b[i], 0, sl.size() - 1)]
 	i += 1
+	d.my_type = ""
+	if b[0] >= 2:
+		var tids: Array = QuizData.TYPES.keys()
+		if b[i] < tids.size():
+			d.my_type = tids[b[i]]
+		i += 1
+	if d.host == "my" and d.my_type == "":
+		d.host = "receipt"
 	var rn: int = b[i]
 	i += 1
 	d.residents = []

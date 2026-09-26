@@ -128,3 +128,10 @@ godot --headless --path . -s tests/sim_b.gd
 - あるじの受け口：GameState.host_id（空なら最初の子）。縁側の前に「あるじ」として立ち、シェアにも入る。マイおばけ猫が決まったら host_id に入れるだけでよい
 - テスト：tests/island_code.gd（encode → decode で段・名前・あるじ・住人・位置（±0.05）・向き・しまった物・飾りの段が戻るか、壊れたコードは空）→ OK
 - 未確認：Web で #island= を読む部分と navigator.share はブラウザで試していない（デスクトップではコード貼り付けと OBAKE_VISIT で確認）
+
+## 16. マイおばけ猫（診断）を島のあるじに
+- feature/my-obake-quiz の quiz_data / quiz_result / my_obake3d / quiz_card / screen_quiz とテストを取り込み（docs/quiz_integration.md どおり）。Obake3D.make_custom、GameState.my_obake / set_my_obake、main の "quiz"（終わると島へ）
+- はじめての人：タイトル → 診断 → 島。マイおばけ猫が島のあるじ（host() が "my"）で、縁側の前にタイプ名の札つきで立つ
+- シェアのコードは版2：あるじが "my" のときはタイプ（16種の番号）も入れ、おでかけ画面でその見た目で出す（版1のコードも読める）
+- シェアカードの軸の棒：どの答えでも 8〜92% に丸めていたのをやめ、ほんとうの割合（3問中2問なら67%）に
+- 島が広がっても全体が入るよう、段に合わせてカメラを引く。おでかけ画面のあるじの札を大きく、いつも手前に
