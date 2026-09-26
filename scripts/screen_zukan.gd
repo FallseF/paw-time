@@ -142,7 +142,7 @@ func _shelf() -> Control:
 	cam.position = Vector3(0, 0.8, 5.0)
 	cam.fov = 30
 	w.add_child(cam)
-	cam.look_at(Vector3(0, 0.45, 0))
+	cam.look_at_from_position(cam.position, Vector3(0, 0.45, 0))
 	for i in NORMAL.size():
 		var id: String = NORMAL[i]
 		var pos := Vector3((i - 2) * 1.05, 0, 0)
@@ -195,10 +195,19 @@ func _records() -> Control:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(l)
 		h.add_child(v)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 2)
+	var tl := _text("称号：" + GameState.title_name(), 15, Color("e8603c"), font_black)
+	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	outer.add_child(tl)
+	outer.add_child(p)
+	var nt := _text(GameState.next_title_text(), 11, Color("9a8e98"))
+	nt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	outer.add_child(nt)
 	var m := MarginContainer.new()
 	m.add_theme_constant_override("margin_left", 12)
 	m.add_theme_constant_override("margin_right", 12)
-	m.add_child(p)
+	m.add_child(outer)
 	return m
 
 

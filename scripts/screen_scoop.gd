@@ -62,6 +62,7 @@ var rainbow_count := 0
 var gold_count := 0
 var multi_count := 0
 var ended := false
+var title_before := 0
 var tut_step := -1
 var goal: Dictionary
 var goal_done := false
@@ -1596,6 +1597,7 @@ func _end_night(reason: String) -> void:
 		GameState.pois[selected] += 1
 	in_hand = false
 	var was_best: bool = best_combo > GameState.records.best_combo and best_combo >= 3
+	title_before = GameState.title_index()
 	GameState.record_scoop_night({"count": count, "best_combo": best_combo, "clean": clean_count, "rainbow": rainbow_count, "festival": mods.festival, "gold": gold_count})
 	await get_tree().create_timer(0.4).timeout
 	_show_result(reason, was_best)
@@ -1652,6 +1654,13 @@ func _show_result(reason: String, was_best: bool) -> void:
 	for line in lines:
 		v.add_child(_text(line, 15, Color("4a3f52")))
 	v.add_child(_text(_rank_text(), 14, Color("8b7bff")))
+	if GameState.title_index() > title_before:
+		var tl := _text("称号が「%s」になった！" % GameState.title_name(), 17, Color("e8603c"), font_black)
+		v.add_child(tl)
+	else:
+		var nt := _text(GameState.next_title_text(), 11, Color("9a8e98"))
+		nt.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		v.add_child(nt)
 	var b := Button.new()
 	b.text = "寝て、玉をかえす"
 	b.custom_minimum_size = Vector2(0, 50)

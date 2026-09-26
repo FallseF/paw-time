@@ -634,6 +634,44 @@ func festival_gift() -> int:
 	return 3
 
 
+## すくいの称号（腕前の目じるし）
+const TITLES := [
+	{"name": "見習い", "total": 0, "combo": 0, "rainbow": 0},
+	{"name": "かけだし", "total": 20, "combo": 3, "rainbow": 0},
+	{"name": "一人前", "total": 60, "combo": 5, "rainbow": 1},
+	{"name": "名人", "total": 150, "combo": 8, "rainbow": 4},
+	{"name": "達人", "total": 300, "combo": 12, "rainbow": 10},
+]
+
+
+func title_index() -> int:
+	var idx := 0
+	for i in TITLES.size():
+		var t: Dictionary = TITLES[i]
+		if records.total >= t.total and records.best_combo >= t.combo and records.rainbow >= t.rainbow:
+			idx = i
+	return idx
+
+
+func title_name() -> String:
+	return "すくい" + String(TITLES[title_index()].name)
+
+
+func next_title_text() -> String:
+	var i := title_index()
+	if i + 1 >= TITLES.size():
+		return "いちばん上の称号"
+	var t: Dictionary = TITLES[i + 1]
+	var parts: Array = []
+	if records.total < t.total:
+		parts.append("すくった玉 あと%d" % (t.total - records.total))
+	if records.best_combo < t.combo:
+		parts.append("%dコンボ" % t.combo)
+	if records.rainbow < t.rainbow:
+		parts.append("虹の玉 あと%d" % (t.rainbow - records.rainbow))
+	return "次は「%s」：%s" % [t.name, "・".join(parts)]
+
+
 func record_scoop_night(result: Dictionary) -> void:
 	tonight = result
 	scooped_tonight = true
