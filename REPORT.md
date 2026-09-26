@@ -142,3 +142,9 @@ godot --headless --path . -s tests/sim_b.gd
 - 既定は英語。タイトル右上の「日本語 / EN」で切りかえ、user://settings.cfg に残す（ゲームのセーブとは別）。OBAKE_LANG=ja/en でも指定できる
 - 英語の長さに合わせて：折り返しを単語単位に（AUTOWRAP_WORD_SMART）、孵化のカードを上へ、診断の結果で英語名を二重に出さない、シェア文も英語
 - 確認：EN で全画面（タイトル・昼・夜・すくい・寝る前（ほかの過ごし方）・夢・孵化・朝・シフト・島をつくる・シェア・おでかけ・図鑑・満月・診断）を撮って見た。CSV の文字はすべてフォントにある
+
+## 18. AAA の見た目を取り込み（feature/aaa-look e651745 をマージ）
+- shaders（character / eye / outline / face_decal / orb_*）、assets/models/*.glb、tools/blender/、scripts/look.gd、aaa 版の obake3d.gd・rare_obake3d.gd・orb_model.gd・orb3d.gd・assets/gen/rares3d、master 765f7fd の my_obake3d.gd（部品関数の改名）を取り込み
+- こちらの変更を上にのせ直し：Obake3D.make_custom、Orb3D の hop（はねる玉）、図鑑の棚は Look "studio" とカードのミップマップ
+- Look のプリセットを追加（island / dream / moon / title）し、島・夢・満月・タイトルの光を Look.apply に。孵化は aaa 側の "hatch"、図鑑は "studio"。島の昼夜の切りかえは Look のキーと環境光を動かす
+- 庭の住人（setup を通さない入れ物）で接地影の処理が落ちていたので、body が無いときは飛ばす

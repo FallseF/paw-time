@@ -20,22 +20,7 @@ func _ready() -> void:
 	box.add_child(vp)
 	var w := Node3D.new()
 	vp.add_child(w)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("141a3a")
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("7a84c8")
-	env.ambient_light_energy = 0.6
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	env.glow_enabled = false
-	var we := WorldEnvironment.new()
-	we.environment = env
-	w.add_child(we)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-35, 30, 0)
-	sun.light_color = Color("c8d4ff")
-	sun.light_energy = 0.5
-	w.add_child(sun)
+	var rig := Look.apply(w, "title", Color("141a3a"), false, false)
 	var cam := Camera3D.new()
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
 	cam.position = Vector3(0, 1.2, 6.0)

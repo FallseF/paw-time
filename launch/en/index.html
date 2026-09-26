@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paw Time</title>
+<meta name="description" content="Worked a shift? More nets. Slept well? Your orbs hatch. A game for people who work. Recruit Innovation Cup 2026 / Team Dry Grape">
+<meta property="og:title" content="Paw Time">
+<meta property="og:description" content="Worked a shift? More nets. Slept well? Your orbs hatch.">
+<meta property="og:image" content="../img/og.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{
+  --cream:#f6efe6; --paper:#fffaf3; --ink:#2a2233; --sub:#6a5f70; --line:#e6dbcd;
+  --orange:#ff8a5b; --orange-d:#e56a3c; --night:#141a3a; --night2:#232b5c; --lav:#8b7bff; --gold:#ffd23f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px}
+section{padding-block:72px}
+h1,h2,h3{line-height:1.3;margin:0;text-wrap:balance}
+h2{font-size:clamp(26px,4vw,38px);font-weight:900}
+.eyebrow{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--orange-d)}
+.lead{color:var(--sub);max-width:60ch;margin-top:12px}
+
+/* hero */
+.hero{background:radial-gradient(120% 90% at 50% 0%,#2e3778 0%,var(--night) 60%);color:#f3eeff;padding-block:48px 80px;overflow:hidden;position:relative}
+.stars{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 12% 20%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 30% 70%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 62% 18%,#fffb 50%,transparent 51%),radial-gradient(1px 1px at 82% 44%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 90% 12%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 48% 36%,#fff7 50%,transparent 51%)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;position:relative}
+.hero h1{font-size:clamp(40px,7vw,72px);font-weight:900;letter-spacing:.02em}
+.hero .tag{font-size:clamp(18px,2.6vw,24px);font-weight:700;margin-top:18px;color:#fff}
+.hero .tag span{color:var(--gold)}
+.hero p.sub{color:#c9c3ec;margin-top:14px;max-width:44ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:900;text-decoration:none;font-size:16px;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn-main{background:var(--orange);color:#fff;box-shadow:0 6px 0 var(--orange-d)}
+.btn-ghost{background:#ffffff1a;color:#fff;border:2px solid #ffffff55}
+.phone{width:min(300px,100%);margin-inline:auto;border-radius:34px;background:#0b0e22;padding:10px;box-shadow:0 30px 60px #0008,0 0 0 2px #ffffff22 inset}
+.phone video{border-radius:26px;aspect-ratio:9/16;width:100%;height:auto;background:#000;object-fit:cover}
+.float{position:absolute;width:120px;pointer-events:none;filter:drop-shadow(0 8px 12px #0006)}
+.f1{left:-30px;bottom:-10px;transform:rotate(-8deg)}
+.f2{right:-20px;top:20px;width:110px;transform:rotate(6deg)}
+@media (prefers-reduced-motion:no-preference){
+  .float{animation:hop 2.6s ease-in-out infinite}
+  .f2{animation-delay:.8s}
+  @keyframes hop{0%,100%{translate:0 0}50%{translate:0 -10px}}
+}
+
+/* loop */
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:32px}
+.step{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:18px 14px;text-align:center}
+.step b{display:block;font-size:13px;color:var(--orange-d);letter-spacing:.1em}
+.step h3{font-size:18px;margin-top:6px}
+.step p{font-size:13px;color:var(--sub);margin:6px 0 0}
+.step.night{background:var(--night2);color:#f3eeff;border-color:var(--night2)}
+.step.night p{color:#c9c3ec}.step.night b{color:var(--gold)}
+
+/* boosts */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.pillar{background:var(--paper);border-radius:22px;padding:24px;border:2px solid var(--line)}
+.pillar h3{font-size:20px}
+.pillar .num{font-size:40px;font-weight:900;color:var(--orange)}
+.pillar p{color:var(--sub);font-size:15px;margin:8px 0 0}
+
+/* variants */
+.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
+.v{background:var(--paper);border-radius:26px;padding:18px;border:2px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.v video{border-radius:18px;aspect-ratio:9/16;width:100%;height:auto;object-fit:cover;background:#111}
+.v .badge{align-self:flex-start;font-size:12px;font-weight:900;padding:3px 12px;border-radius:999px;background:var(--ink);color:#fff}
+.v h3{font-size:22px}
+.v p{color:var(--sub);font-size:14px;margin:0}
+.v ul{margin:0;padding-left:1.2em;font-size:14px;color:var(--ink)}
+.v .btn{justify-content:center;margin-top:auto}
+
+/* rares */
+.rare-sec{background:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.filters button{font:inherit;font-weight:700;font-size:14px;padding:6px 16px;border-radius:999px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.filters button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.filters button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:22px}
+.card{background:var(--cream);border-radius:20px;padding:12px;text-align:center}
+.card img{width:100%;aspect-ratio:1;object-fit:contain}
+.card h4{margin:6px 0 0;font-size:16px}
+.card small{display:block;color:var(--sub);font-size:12px;line-height:1.5;margin-top:4px}
+.card .g{display:inline-block;font-size:11px;font-weight:700;color:var(--orange-d)}
+
+/* fair */
+.fair{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.fair div{border-left:4px solid var(--orange);padding:4px 0 4px 16px}
+.fair h3{font-size:18px}.fair p{color:var(--sub);font-size:14px;margin:6px 0 0}
+
+footer{background:var(--night);color:#c9c3ec;padding-block:40px;font-size:14px}
+footer b{color:#fff}
+
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr}
+  .loop{grid-template-columns:1fr 1fr}
+  .pillars,.variants,.fair{grid-template-columns:1fr}
+  .float{display:none}
+}
+
+.lang{position:absolute;top:16px;right:20px;z-index:2;font-size:14px;font-weight:700;color:#fff;text-decoration:none;border:2px solid #ffffff55;border-radius:999px;padding:4px 14px}
+.lang:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="stars"></div>
+  <a class="lang" href="../" hreflang="ja">日本語</a>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow" style="color:#ffd23f">RECRUIT INNOVATION CUP 2026 ・ TEAM DRY GRAPE</div>
+      <h1 style="margin-top:14px">Paw Time</h1><p style="margin:6px 0 0;font-weight:700;color:#c9c3ec">A breakroom full of cat-ghosts</p>
+      <p class="tag">Worked a shift? <span>More nets.</span><br>Slept well? <span>Your orbs hatch.</span></p>
+      <p class="sub">The kind of work you do and the nights you sleep well become boosts in the game. Working longer hours never pays more. A game for people who work, worth opening every day.</p>
+      <div class="cta">
+        <a class="btn btn-main" href="#play">Play the 3 prototypes</a>
+        <a class="btn btn-ghost" href="#rares">See the 30 rares</a>
+      </div>
+    </div>
+    <div style="position:relative">
+      <img class="float f1" src="../img/rares/amagasa.webp" alt="">
+      <img class="float f2" src="../img/rares/kaminari.webp" alt="">
+      <div class="phone"><video src="../video/promo_c.mp4" poster="../img/poster_c.jpg" autoplay muted loop playsinline></video></div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">A DAY IN THE GAME</div>
+    <h2>Work, scoop, sleep, and meet them in the morning.</h2>
+    <p class="lead">Your real shifts and sleep connect to a day in the game. You can play every day without any records; connecting them just makes things a little better.</p>
+    <div class="loop">
+      <div class="step"><b>DAY</b><h3>Shift</h3><p>Nets matching your job arrive. Same amount, however long you work.</p></div>
+      <div class="step night"><b>NIGHT</b><h3>Obake scooping</h3><p>Gently scoop glowing orbs from the riverside pond.</p></div>
+      <div class="step night"><b>SLEEP</b><h3>Rest</h3><p>How long, and how regular. Good sleep makes stronger nets.</p></div>
+      <div class="step"><b>MORNING</b><h3>Orbs hatch</h3><p>One by one they crack open, and an obake is born.</p></div>
+      <div class="step"><b>ALWAYS</b><h3>Collection</h3><p>5 common + 30 rare obake. Only a hint shows until you meet them.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="eyebrow">HOW IT WORKS</div>
+    <h2>Work and sleep are boost items.</h2>
+    <div class="pillars">
+      <div class="pillar"><div class="num">2 nets</div><h3>A shift pays the same</h3><p>Four hours or ten, it is the same. What matters is the kind of work: register, dishes, floor, kitchen or stocking each attract different obake.</p></div>
+      <div class="pillar"><div class="num">×1.25</div><h3>Good sleep, stronger mornings</h3><p>Sleep 7+ hours and your net tears less and your orbs hatch better. Staying up late has its own night obake, so there is no single right answer.</p></div>
+      <div class="pillar"><div class="num">30 rares</div><h3>Rares come from how you live</h3><p>A rainy shift, a full-moon night, a first day at a new shop, a real rest after a busy stretch. Variety, rest and people, never sheer hours.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="play" style="background:#efe6da">
+  <div class="wrap">
+    <div class="eyebrow">THREE PROTOTYPES IN ONE NIGHT</div>
+    <h2>Same world, different ways to play.</h2>
+    <p class="lead">Three prototypes built on the same obake and the same rules, each with a different core. They run in your browser (the first load takes a few dozen seconds). The in-game text is in Japanese.</p>
+    <div class="variants">
+      <article class="v">
+        <span class="badge">A</span>
+        <video src="../video/promo_a.mp4" poster="../img/poster_a.jpg" controls muted playsinline preload="metadata"></video>
+        <h3>Scoop &amp; Collect</h3>
+        <p>Scooping skill and filling the collection.</p>
+        <ul><li>Keep it steady, aim for the center, check the weight</li><li>Weather, nightly goals, Saturday festival</li><li>Titles, medals and obake that visibly grow</li></ul>
+        <a class="btn btn-main" href="https://obake-breakroom-a-scoop.vercel.app" target="_blank" rel="noopener">Play A</a>
+      </article>
+      <article class="v">
+        <span class="badge">B</span>
+        <video src="../video/promo_b.mp4" poster="../img/poster_b.jpg" controls muted playsinline preload="metadata"></video>
+        <h3>Sleep Rhythm</h3>
+        <p>Sleep at your usual time and a night garden grows.</p>
+        <ul><li>Sleep scored by length and regularity</li><li>Choose how to spend the evening (even a night market)</li><li>Sheep-counting dreams and full-moon nights</li></ul>
+        <a class="btn btn-main" href="https://obake-breakroom-b-sleep.vercel.app" target="_blank" rel="noopener">Play B</a>
+      </article>
+      <article class="v">
+        <span class="badge">C</span>
+        <video src="../video/promo_c.mp4" poster="../img/poster_c.jpg" controls muted playsinline preload="metadata"></video>
+        <h3>Rush Hour</h3>
+        <p>Keep the shop running when trouble piles up.</p>
+        <ul><li>Your kind of work becomes your strategy</li><li>Rares bring odd, helpful skills</li><li>Three shops and the big Friday rush</li></ul>
+        <a class="btn btn-main" href="https://obake-breakroom-c-defense.vercel.app" target="_blank" rel="noopener">Play C</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="rares" class="rare-sec">
+  <div class="wrap">
+    <div class="eyebrow">30 RARE OBAKE</div>
+    <h2>Born from invisible work and good rest.</h2>
+    <p class="lead">Until you meet one, the collection shows just a one-line hint. Collecting them becomes practice for working and sleeping well.</p>
+    <div class="filters" role="group" aria-label="Filter by group" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">WHAT THE DESIGN PROTECTS</div>
+    <h2>Not a game that makes you work more.</h2>
+    <div class="fair">
+      <div><h3>Longer hours never pay more</h3><p>Shift rewards are fixed. What counts is the kind of work, and taking breaks in between.</p></div>
+      <div><h3>No sleep, no strength</h3><p>Sleep decides how strong your net is and how well your orbs hatch. Some rares only come on days off.</p></div>
+      <div><h3>No leaderboards</h3><p>You compare with yesterday's you and the people on your shift. Coworkers gift obake to each other.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>Paw Time</b> ・ Team Dry Grape (Keigo Oyama, Yuto Aoki, Risa Koyanagi) ・ Recruit Innovation Cup 2026<br>
+    All prototypes were built during the event. Made with Godot 4; every cat-obake is an in-game 3D model.
+  </div>
+</footer>
+
+<script>
+const RARES = [{"id": "nemurin", "name": "Nemurin", "group": "Sleep", "desc": "Born the morning after 7+ hours of sleep. Breathes softly."}, {"id": "yumemi", "name": "Yumemi", "group": "Sleep", "desc": "After 8+ hours of sleep. The color of last night's dream."}, {"id": "asayake", "name": "Asayake", "group": "Sleep", "desc": "Three good nights in a row. Sunrise-colored."}, {"id": "yomise", "name": "Yomise", "group": "Sleep", "desc": "After a night under 5 hours. Carries a lantern through the dark."}, {"id": "hirunen", "name": "Hirunen", "group": "Sleep", "desc": "Sleep 9 hours on a day off. Smells like sunshine."}, {"id": "totonou", "name": "Totonou", "group": "Sleep", "desc": "Go to bed at the same time three nights running. Always calm."}, {"id": "kirari", "name": "Kirari", "group": "Firsts", "desc": "Your first shift at a new shop."}, {"id": "hajimete", "name": "Hajimete", "group": "Firsts", "desc": "Your first time doing a new kind of job. Still a little clumsy."}, {"id": "wataridori", "name": "Wataridori", "group": "Firsts", "desc": "Try all five kinds of work. Can go anywhere."}, {"id": "mitsuboshi", "name": "Mitsuboshi", "group": "Firsts", "desc": "Work at three different shops in one week."}, {"id": "hatsukoe", "name": "Hatsukoe", "group": "Firsts", "desc": "Your first shift with a new coworker. Great at greetings."}, {"id": "yonaki", "name": "Yonaki", "group": "Time of day", "desc": "A late-night shift. Likes quiet places."}, {"id": "asatsuyu", "name": "Asatsuyu", "group": "Time of day", "desc": "Three morning shifts. Made of dewdrops."}, {"id": "tsukimi", "name": "Tsukimi", "group": "Time of day", "desc": "A shift on a full-moon night."}, {"id": "tasogare", "name": "Tasogare", "group": "Time of day", "desc": "Day and night shifts in the same week."}, {"id": "shinya", "name": "Mayonaka", "group": "Time of day", "desc": "Restocking shelves late at night. Loves box corners."}, {"id": "amagasa", "name": "Amagasa", "group": "Weather", "desc": "A shift on a rainy day. Sings under its umbrella."}, {"id": "yukimi", "name": "Yukimi", "group": "Weather", "desc": "A shift on a snowy day. A little chilly."}, {"id": "kaminari", "name": "Kaminari", "group": "Weather", "desc": "A shift during a thunderstorm. A bit impatient."}, {"id": "sakura", "name": "Sakura", "group": "Weather", "desc": "A shift in spring. Wrapped in petals."}, {"id": "nakayoshi", "name": "Nakayoshi", "group": "Together", "desc": "Three shifts with the same coworker."}, {"id": "okurimono", "name": "Okurimono", "group": "Together", "desc": "Give an obake to a coworker."}, {"id": "morattan", "name": "Morattan", "group": "Together", "desc": "Receive an obake from a coworker."}, {"id": "teamwork", "name": "Te-wo-tsunagu", "group": "Together", "desc": "Get through the big rush together."}, {"id": "senpai", "name": "Senpai", "group": "Together", "desc": "Share a shift with someone on their first day."}, {"id": "yasumijouzu", "name": "Yasumi-jozu", "group": "Rhythm", "desc": "Rest properly after two days of work. A master of breaks."}, {"id": "shuumatsu", "name": "Shumatsu", "group": "Rhythm", "desc": "Work both days of a weekend."}, {"id": "hyakki", "name": "Hyakki", "group": "Rhythm", "desc": "Collect every common obake. Leads the night parade."}, {"id": "kazoeuta", "name": "Kazoeuta", "group": "Rhythm", "desc": "Your collection passes ten. Sings the numbers."}, {"id": "mangetsu", "name": "Mangetsu", "group": "Rhythm", "desc": "Average 7+ hours of sleep for a month."}];
+const groups = ["All", "Sleep", "Firsts", "Time of day", "Weather", "Together", "Rhythm"];
+const grid = document.getElementById("grid");
+const filters = document.getElementById("filters");
+function render(g){
+  grid.innerHTML = "";
+  for (const r of RARES){
+    if (g !== "All" && r.group !== g) continue;
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `<img src="../img/rares/${r.id}.webp" alt="${r.name}"><span class="g">${r.group}</span><h4>${r.name}</h4><small>${r.desc}</small>`;
+    grid.appendChild(c);
+  }
+  for (const b of filters.children) b.setAttribute("aria-pressed", String(b.dataset.g === g));
+}
+for (const g of groups){
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = g; b.dataset.g = g;
+  b.addEventListener("click", () => render(g));
+  filters.appendChild(b);
+}
+render("All");
+</script>
+</body>
+</html>

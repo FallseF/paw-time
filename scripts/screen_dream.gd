@@ -62,23 +62,7 @@ func _build_world() -> void:
 	box.add_child(vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("2d2350")
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("d8c8ff")
-	env.ambient_light_energy = 0.55
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	env.glow_enabled = false
-	env.glow_intensity = 0.9
-	var we := WorldEnvironment.new()
-	we.environment = env
-	world.add_child(we)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-30, 20, 0)
-	sun.light_color = Color("ffe0f0")
-	sun.light_energy = 0.55
-	world.add_child(sun)
+	var rig := Look.apply(world, "dream", Color("2d2350"), false, false)
 	cam = Camera3D.new()
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
 	cam.position = Vector3(0, 1.2, 4.2)

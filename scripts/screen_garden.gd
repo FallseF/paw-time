@@ -75,21 +75,9 @@ func _build_world() -> void:
 	world = Node3D.new()
 	vp.add_child(world)
 
-	env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	env.glow_enabled = false
-	env.glow_intensity = 0.8
-	env.glow_bloom = 0.1
-	env.glow_hdr_threshold = 0.9
-	var we := WorldEnvironment.new()
-	we.environment = env
-	world.add_child(we)
-	sun = DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-42, 30, 0)
-	sun.shadow_enabled = true
-	world.add_child(sun)
+	var rig := Look.apply(world, "island", Color("e9d6c2"), false, true)
+	env = rig.env
+	sun = rig.key
 
 	cam = Camera3D.new()
 	cam.keep_aspect = Camera3D.KEEP_WIDTH

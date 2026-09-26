@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paw Time</title>
+<meta name="description" content="働いた日は、ポイが増える。よく寝た朝は、玉がかえる。働く人のためのゲーム。Recruit Innovation Cup 2026 / Team Dry Grape">
+<meta property="og:title" content="Paw Time">
+<meta property="og:description" content="働いた日は、ポイが増える。よく寝た朝は、玉がかえる。">
+<meta property="og:image" content="img/og.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{
+  --cream:#f6efe6; --paper:#fffaf3; --ink:#2a2233; --sub:#6a5f70; --line:#e6dbcd;
+  --orange:#ff8a5b; --orange-d:#e56a3c; --night:#141a3a; --night2:#232b5c; --lav:#8b7bff; --gold:#ffd23f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px}
+section{padding-block:72px}
+h1,h2,h3{line-height:1.3;margin:0;text-wrap:balance}
+h2{font-size:clamp(26px,4vw,38px);font-weight:900}
+.eyebrow{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--orange-d)}
+.lead{color:var(--sub);max-width:60ch;margin-top:12px}
+
+/* hero */
+.hero{background:radial-gradient(120% 90% at 50% 0%,#2e3778 0%,var(--night) 60%);color:#f3eeff;padding-block:48px 80px;overflow:hidden;position:relative}
+.stars{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 12% 20%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 30% 70%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 62% 18%,#fffb 50%,transparent 51%),radial-gradient(1px 1px at 82% 44%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 90% 12%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 48% 36%,#fff7 50%,transparent 51%)}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;position:relative}
+.hero h1{font-size:clamp(40px,7vw,72px);font-weight:900;letter-spacing:.02em}
+.hero .tag{font-size:clamp(18px,2.6vw,24px);font-weight:700;margin-top:18px;color:#fff}
+.hero .tag span{color:var(--gold)}
+.hero p.sub{color:#c9c3ec;margin-top:14px;max-width:44ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:900;text-decoration:none;font-size:16px;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn-main{background:var(--orange);color:#fff;box-shadow:0 6px 0 var(--orange-d)}
+.btn-ghost{background:#ffffff1a;color:#fff;border:2px solid #ffffff55}
+.phone{width:min(300px,100%);margin-inline:auto;border-radius:34px;background:#0b0e22;padding:10px;box-shadow:0 30px 60px #0008,0 0 0 2px #ffffff22 inset}
+.phone video{border-radius:26px;aspect-ratio:9/16;width:100%;height:auto;background:#000;object-fit:cover}
+.float{position:absolute;width:120px;pointer-events:none;filter:drop-shadow(0 8px 12px #0006)}
+.f1{left:-30px;bottom:-10px;transform:rotate(-8deg)}
+.f2{right:-20px;top:20px;width:110px;transform:rotate(6deg)}
+@media (prefers-reduced-motion:no-preference){
+  .float{animation:hop 2.6s ease-in-out infinite}
+  .f2{animation-delay:.8s}
+  @keyframes hop{0%,100%{translate:0 0}50%{translate:0 -10px}}
+}
+
+/* loop */
+.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:32px}
+.step{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:18px 14px;text-align:center}
+.step b{display:block;font-size:13px;color:var(--orange-d);letter-spacing:.1em}
+.step h3{font-size:18px;margin-top:6px}
+.step p{font-size:13px;color:var(--sub);margin:6px 0 0}
+.step.night{background:var(--night2);color:#f3eeff;border-color:var(--night2)}
+.step.night p{color:#c9c3ec}.step.night b{color:var(--gold)}
+
+/* boosts */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.pillar{background:var(--paper);border-radius:22px;padding:24px;border:2px solid var(--line)}
+.pillar h3{font-size:20px}
+.pillar .num{font-size:40px;font-weight:900;color:var(--orange)}
+.pillar p{color:var(--sub);font-size:15px;margin:8px 0 0}
+
+/* variants */
+.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
+.v{background:var(--paper);border-radius:26px;padding:18px;border:2px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.v video{border-radius:18px;aspect-ratio:9/16;width:100%;height:auto;object-fit:cover;background:#111}
+.v .badge{align-self:flex-start;font-size:12px;font-weight:900;padding:3px 12px;border-radius:999px;background:var(--ink);color:#fff}
+.v h3{font-size:22px}
+.v p{color:var(--sub);font-size:14px;margin:0}
+.v ul{margin:0;padding-left:1.2em;font-size:14px;color:var(--ink)}
+.v .btn{justify-content:center;margin-top:auto}
+
+/* rares */
+.rare-sec{background:#fff}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.filters button{font:inherit;font-weight:700;font-size:14px;padding:6px 16px;border-radius:999px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.filters button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.filters button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:22px}
+.card{background:var(--cream);border-radius:20px;padding:12px;text-align:center}
+.card img{width:100%;aspect-ratio:1;object-fit:contain}
+.card h4{margin:6px 0 0;font-size:16px}
+.card small{display:block;color:var(--sub);font-size:12px;line-height:1.5;margin-top:4px}
+.card .g{display:inline-block;font-size:11px;font-weight:700;color:var(--orange-d)}
+
+/* fair */
+.fair{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.fair div{border-left:4px solid var(--orange);padding:4px 0 4px 16px}
+.fair h3{font-size:18px}.fair p{color:var(--sub);font-size:14px;margin:6px 0 0}
+
+.lang{position:absolute;top:16px;right:20px;z-index:2;font-size:14px;font-weight:700;color:#fff;text-decoration:none;border:2px solid #ffffff55;border-radius:999px;padding:4px 14px}
+.lang:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+footer{background:var(--night);color:#c9c3ec;padding-block:40px;font-size:14px}
+footer b{color:#fff}
+
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:1fr}
+  .loop{grid-template-columns:1fr 1fr}
+  .pillars,.variants,.fair{grid-template-columns:1fr}
+  .float{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="stars"></div>
+  <a class="lang" href="en/" hreflang="en">English</a>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow" style="color:#ffd23f">RECRUIT INNOVATION CUP 2026 ・ TEAM DRY GRAPE</div>
+      <h1 style="margin-top:14px">Paw Time</h1><p style="margin:6px 0 0;font-weight:700;color:#c9c3ec">猫おばけの休憩室</p>
+      <p class="tag">働いた日は、<span>ポイが増える</span>。<br>よく寝た朝は、<span>玉がかえる</span>。</p>
+      <p class="sub">仕事の種類と、ぐっすり眠った夜が、ゲームのブーストになる。長く働いても得はしない。働く人のための、毎日ひらきたくなるゲーム。</p>
+      <div class="cta">
+        <a class="btn btn-main" href="#play">3つの試作を遊ぶ</a>
+        <a class="btn btn-ghost" href="#rares">レア30体を見る</a>
+      </div>
+    </div>
+    <div style="position:relative">
+      <img class="float f1" src="img/rares/amagasa.webp" alt="">
+      <img class="float f2" src="img/rares/kaminari.webp" alt="">
+      <div class="phone"><video src="video/promo_c.mp4" poster="img/poster_c.jpg" autoplay muted loop playsinline></video></div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">1日の流れ</div>
+    <h2>働いて、すくって、眠って、朝に会う。</h2>
+    <p class="lead">現実のシフトと睡眠が、ゲームの中の1日とつながります。記録がなくても毎日遊べて、記録とつなぐと、少しだけ良くなる。</p>
+    <div class="loop">
+      <div class="step"><b>昼</b><h3>シフト</h3><p>仕事の種類のポイが届く。何時間働いても量は同じ</p></div>
+      <div class="step night"><b>夜</b><h3>おばけすくい</h3><p>川べりの光る玉を、ポイでそっとすくう</p></div>
+      <div class="step night"><b>寝る</b><h3>眠り</h3><p>量と、いつもの時刻。よく眠るほどポイは強い</p></div>
+      <div class="step"><b>朝</b><h3>玉がかえる</h3><p>1つずつ割れて、おばけが生まれる</p></div>
+      <div class="step"><b>ずっと</b><h3>図鑑とレア</h3><p>ふつう5種＋レア30体。条件はヒントだけ</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="eyebrow">しくみ</div>
+    <h2>仕事と睡眠は、ブーストアイテム。</h2>
+    <div class="pillars">
+      <div class="pillar"><div class="num">2本</div><h3>シフトのポイは一定</h3><p>4時間でも10時間でも同じ。効くのは時間ではなく、仕事の種類。レジ・皿洗い・ホール・キッチン・品出しで、寄ってくるおばけが変わる。</p></div>
+      <div class="pillar"><div class="num">×1.25</div><h3>よく寝た朝は強い</h3><p>7時間以上ねむると、ポイが破れにくく、玉がよくかえる。夜ふかしにも夜のおばけという得があるから、正解は一つじゃない。</p></div>
+      <div class="pillar"><div class="num">30体</div><h3>レアは暮らしの記録から</h3><p>雨の日のシフト、満月の夜、はじめての店、連勤のあとの休み。量ではなく、種類と休みとつながりで生まれる。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="play" style="background:#efe6da">
+  <div class="wrap">
+    <div class="eyebrow">ひと晩で3つの試作</div>
+    <h2>同じ世界、ちがう遊び方。</h2>
+    <p class="lead">同じおばけ、同じ仕組みの上に、少しずつ違う遊びの芯を置いた3案です。ブラウザでそのまま遊べます（最初の読み込みは数十秒）。</p>
+    <div class="variants">
+      <article class="v">
+        <span class="badge">A</span>
+        <video src="video/promo_a.mp4" poster="img/poster_a.jpg" controls muted playsinline preload="metadata"></video>
+        <h3>すくいと収集</h3>
+        <p>おばけすくいの腕前と、図鑑を埋める楽しさが芯。</p>
+        <ul><li>揺らさず、真ん中で、重さを見て上げる</li><li>天気・お題・土曜の大すくい祭り</li><li>称号とメダル、育つと増える飾り</li></ul>
+        <a class="btn btn-main" href="https://obake-breakroom-a-scoop.vercel.app" target="_blank" rel="noopener">A を遊ぶ</a>
+      </article>
+      <article class="v">
+        <span class="badge">B</span>
+        <video src="video/promo_b.mp4" poster="img/poster_b.jpg" controls muted playsinline preload="metadata"></video>
+        <h3>眠りのリズム</h3>
+        <p>いつもの時刻に眠るほど、夜の庭が育つ。</p>
+        <ul><li>睡眠を量と時刻のそろい具合で採点</li><li>寝る前に過ごし方を選ぶ（夜店もある）</li><li>羊かぞえの夢、満月の夜</li></ul>
+        <a class="btn btn-main" href="https://obake-breakroom-b-sleep.vercel.app" target="_blank" rel="noopener">B を遊ぶ</a>
+      </article>
+      <article class="v">
+        <span class="badge">C</span>
+        <video src="video/promo_c.mp4" poster="img/poster_c.jpg" controls muted playsinline preload="metadata"></video>
+        <h3>大ピーク防衛</h3>
+        <p>店の困りごとを、おばけの仲間で迎え撃つ。</p>
+        <ul><li>仕事の種類が、そのまま戦術になる</li><li>レアは振り切った姿で、変な技を持つ</li><li>3店×4面と、金曜の大ピーク</li></ul>
+        <a class="btn btn-main" href="https://obake-breakroom-c-defense.vercel.app" target="_blank" rel="noopener">C を遊ぶ</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="rares" class="rare-sec">
+  <div class="wrap">
+    <div class="eyebrow">レア30体</div>
+    <h2>見えない仕事と、良い休みから生まれる。</h2>
+    <p class="lead">図鑑では、会うまでヒント一文だけ。集めることが、そのまま「良い働き方と眠り方」の練習になります。</p>
+    <div class="filters" role="group" aria-label="まとまりで絞り込む" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">設計で守っていること</div>
+    <h2>働かせるゲームにしない。</h2>
+    <div class="fair">
+      <div><h3>長く働いても得をしない</h3><p>シフトの報酬は時間によらず一定。効くのは仕事の種類と、休みを挟むこと。</p></div>
+      <div><h3>寝ないと強くならない</h3><p>睡眠がポイの強さと、朝にかえる玉の質を決める。休みの日だけのレアもいる。</p></div>
+      <div><h3>ランキングを出さない</h3><p>比べる相手は昨日の自分と、同じシフトの仲間。同僚とはおばけを贈り合う。</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>Paw Time</b> ・ Team Dry Grape（大山慶悟・青木悠登・小柳璃紗）・ Recruit Innovation Cup 2026<br>
+    試作はすべて大会期間中に制作。ゲームエンジン Godot 4。おばけはすべてゲーム内の 3D モデル。
+  </div>
+</footer>
+
+<script>
+const RARES = [{"id": "nemurin", "name": "ネムリン", "group": "睡眠", "desc": "7時間以上ねむった朝に生まれる。寝息がやさしい"}, {"id": "yumemi", "name": "ユメミ", "group": "睡眠", "desc": "8時間以上ねむった朝に。見た夢の色をしている"}, {"id": "asayake", "name": "アサヤケ", "group": "睡眠", "desc": "3日続けて7時間以上ねむると生まれる。朝焼けの色"}, {"id": "yomise", "name": "ヨミセ", "group": "睡眠", "desc": "5時間以下の睡眠の朝に。提灯をさげて夜を歩く"}, {"id": "hirunen", "name": "ヒルネン", "group": "睡眠", "desc": "休みの日に9時間ねむると生まれる。日だまりの匂い"}, {"id": "totonou", "name": "トトノウ", "group": "睡眠", "desc": "3日続けて同じ時間ねむると生まれる。いつも落ち着いている"}, {"id": "kirari", "name": "キラリ", "group": "はじめて", "desc": "はじめての店で働いた日に生まれる"}, {"id": "hajimete", "name": "ハジメテ", "group": "はじめて", "desc": "はじめての種類の仕事をした日に。まだ少しぎこちない"}, {"id": "wataridori", "name": "ワタリドリ", "group": "はじめて", "desc": "5種類の仕事をぜんぶ経験すると生まれる。どこへでも行ける"}, {"id": "mitsuboshi", "name": "ミツボシ", "group": "はじめて", "desc": "1週間で3つの店で働くと生まれる"}, {"id": "hatsukoe", "name": "ハツコエ", "group": "はじめて", "desc": "はじめての同僚とシフトに入った日に。あいさつが上手"}, {"id": "yonaki", "name": "ヨナキ", "group": "時間帯", "desc": "深夜のシフトの日に生まれる。静かな場所が好き"}, {"id": "asatsuyu", "name": "アサツユ", "group": "時間帯", "desc": "朝のシフトに3回入ると生まれる。露のしずくでできている"}, {"id": "tsukimi", "name": "ツキミ", "group": "時間帯", "desc": "満月の夜のシフトで生まれる。うさぎの耳のような裾"}, {"id": "tasogare", "name": "タソガレ", "group": "時間帯", "desc": "同じ週に昼と夜のシフトに入ると生まれる"}, {"id": "shinya", "name": "マヨナカ", "group": "時間帯", "desc": "深夜の品出しをした日に。箱の角が好き"}, {"id": "amagasa", "name": "アマガサ", "group": "天気", "desc": "雨の日のシフトで生まれる。傘の下で歌う"}, {"id": "yukimi", "name": "ユキミ", "group": "天気", "desc": "雪の日のシフトで生まれる。ひんやりしている"}, {"id": "kaminari", "name": "カミナリ", "group": "天気", "desc": "雷の日のシフトで生まれる。ちょっとせっかち"}, {"id": "sakura", "name": "サクラ", "group": "天気", "desc": "春のシフトで生まれる。花びらをまとう"}, {"id": "nakayoshi", "name": "ナカヨシ", "group": "つながり", "desc": "同じ同僚と3回シフトに入ると生まれる"}, {"id": "okurimono", "name": "オクリモノ", "group": "つながり", "desc": "同僚におばけを贈ると生まれる"}, {"id": "morattan", "name": "モラッタン", "group": "つながり", "desc": "同僚からおばけを贈られると生まれる"}, {"id": "teamwork", "name": "テヲツナグ", "group": "つながり", "desc": "大ピークを乗り切ると生まれる"}, {"id": "senpai", "name": "センパイ", "group": "つながり", "desc": "はじめて入る人と同じシフトに入ると生まれる。頼られると伸びる"}, {"id": "yasumijouzu", "name": "ヤスミジョウズ", "group": "リズム", "desc": "2日以上働いたあとに休むと生まれる。休み方の名人"}, {"id": "shuumatsu", "name": "シュウマツ", "group": "リズム", "desc": "週末の両方でシフトに入ると生まれる"}, {"id": "hyakki", "name": "ヒャッキ", "group": "リズム", "desc": "ふつうのおばけを全種類あつめると生まれる。百鬼夜行の先頭"}, {"id": "kazoeuta", "name": "カゾエウタ", "group": "リズム", "desc": "図鑑が10種類をこえると生まれる。数を歌う"}, {"id": "mangetsu", "name": "マンゲツ", "group": "リズム", "desc": "ひと月の平均睡眠が7時間をこえると生まれる"}];
+const groups = ["すべて", "睡眠", "はじめて", "時間帯", "天気", "つながり", "リズム"];
+const grid = document.getElementById("grid");
+const filters = document.getElementById("filters");
+function render(g){
+  grid.innerHTML = "";
+  for (const r of RARES){
+    if (g !== "すべて" && r.group !== g) continue;
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `<img src="img/rares/${r.id}.webp" alt="${r.name}"><span class="g">${r.group}</span><h4>${r.name}</h4><small>${r.desc}</small>`;
+    grid.appendChild(c);
+  }
+  for (const b of filters.children) b.setAttribute("aria-pressed", String(b.dataset.g === g));
+}
+for (const g of groups){
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = g; b.dataset.g = g;
+  b.addEventListener("click", () => render(g));
+  filters.appendChild(b);
+}
+render("すべて");
+</script>
+</body>
+</html>

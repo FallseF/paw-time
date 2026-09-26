@@ -50,7 +50,9 @@ func _ready() -> void:
 		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": Rares.is_rare(h.id) or h.get("big", false), "weight": 0.3})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
-		o.light.light_energy = 0.5
+		# 生まれたおばけが主役なので、棚の玉は控えめに光らせる（照らす光は特に弱く）
+		o.energy_scale = 0.7
+		o.light_scale = 0.2
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
@@ -75,26 +77,11 @@ func _build_world() -> void:
 	world = Node3D.new()
 	vp.add_child(world)
 
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("2a2233")
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("c9a8b8")
-	env.ambient_light_energy = 0.25
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	var rig := Look.apply(world, "hatch", Color("2a2233"), false, true)
+	var env: Environment = rig.env
 	env.glow_enabled = true
 	env.glow_intensity = 0.5
 	env.glow_hdr_threshold = 1.2
-	var we := WorldEnvironment.new()
-	we.environment = env
-	world.add_child(we)
-
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-30, 40, 0)
-	sun.light_color = Color("ffc98f")
-	sun.light_energy = 0.6
-	sun.shadow_enabled = true
-	world.add_child(sun)
 
 	cam = Camera3D.new()
 	cam.position = Vector3(0, 1.35, 3.1)
