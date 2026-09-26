@@ -129,6 +129,7 @@ var night_plan := "" # "" / extra（もうひと玉）/ market（夜店）
 var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい）
 var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
+var quiet := false # 早送り中は知らせを出さない
 var newcomers: Array = [] # けさ初めて来た子（庭で縁側から出てくる）
 var work_hist: Array = [] # その日に実際に働いたか
 var tonight_caught := 0
@@ -611,7 +612,8 @@ func goal(id: String) -> void:
 			var all := goals.all(func(x): return x.done)
 			if all:
 				nets["kira"] += 1
-			goal_completed.emit(g.text, all)
+			if not quiet:
+				goal_completed.emit(g.text, all)
 			changed.emit()
 			return
 

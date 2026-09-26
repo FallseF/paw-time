@@ -143,6 +143,10 @@ func _wait(t: float) -> void:
 	await get_tree().create_timer(t, true, false, true).timeout
 
 
+func _mark(tag: String) -> void:
+	print("[promo] %s frame=%d" % [tag, Engine.get_process_frames()])
+
+
 func _go(screen: String, instant := false) -> void:
 	while main.busy:
 		await get_tree().process_frame
@@ -152,6 +156,7 @@ func _go(screen: String, instant := false) -> void:
 func _promo() -> void:
 	await get_tree().process_frame
 	# 1) すくい（スロー）
+	_mark("1)")
 	GameState.reset("data")
 	GameState.nets["plain"] = 3
 	await _go("catch", true)
@@ -161,21 +166,26 @@ func _promo() -> void:
 	main.current.call("demo_lift")
 	await _wait(3.0)
 	# 2) おやすみ → 夢へ（リズムが整っている夜）
+	_mark("2)")
 	GameState.rhythm = 88
 	GameState.bed_hist = [330, 330, 330]
 	GameState.scooped_tonight = true
 	await _go("sleep")
-	await _wait(1.6)
+	await _wait(0.8)
+	main.current.call("_choose", "usual")
+	await _wait(0.8)
 	main.current.call("_sleep")
 	await _wait(2.4)
 	# 3) 羊かぞえの夢
+	_mark("3)")
 	if main.current.has_method("demo_auto"):
 		main.current.call("demo_auto")
-	await _wait(7.0)
+	await _wait(4.2)
 	if main.current.has_method("_finish"):
 		main.current.call("_finish")
-	await _wait(1.8)
+	await _wait(1.3)
 	# 4) 朝の孵化（レア）
+	_mark("4)")
 	GameState.add_obake("yumemi")
 	GameState.hatched.push_front({"id": "yumemi", "is_new": true, "level": 1, "rare": true})
 	await _go("hatch")
@@ -183,6 +193,7 @@ func _promo() -> void:
 	main.current.call("_next")
 	await _wait(3.6)
 	# 5) 庭が育つ
+	_mark("5)")
 	main.fast_forward(6)
 	GameState.garden_seen_level = GameState.garden_level - 1
 	GameState.phase = "morning"
@@ -192,16 +203,19 @@ func _promo() -> void:
 	main.current.call("_after_morning")
 	await _wait(4.0)
 	# 6) 満月の夜
+	_mark("6)")
 	await _go("moon")
 	await _wait(0.6)
 	main.current.call("demo_light_all")
-	await _wait(5.5)
+	await _wait(4.6)
 	# 7) 育った夜の庭
+	_mark("7)")
 	main.fast_forward(24)
 	GameState.phase = "evening"
 	await _go("garden")
 	await _wait(3.5)
 	# 8) 図鑑
+	_mark("8)")
 	await _go("zukan")
 	await _wait(1.0)
 	for c in main.current.get_children():
@@ -210,6 +224,7 @@ func _promo() -> void:
 			tw.tween_property(c, "scroll_vertical", 1100, 2.6).set_trans(Tween.TRANS_SINE)
 	await _wait(3.0)
 	# 9) タイトル
+	_mark("9)")
 	await _go("title")
 	await _wait(3.0)
 	get_tree().quit()

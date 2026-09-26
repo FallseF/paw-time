@@ -23,6 +23,11 @@ var demo: Node
 
 
 func _ready() -> void:
+	# 宣伝動画の撮影用：ウィンドウの大きさを指定（OBAKE_WINDOW=720x1280）
+	var win := OS.get_environment("OBAKE_WINDOW")
+	if win != "":
+		var wh := win.split("x")
+		DisplayServer.window_set_size(Vector2i(int(wh[0]), int(wh[1])))
 	root = Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.theme = UI.make_theme()
@@ -117,6 +122,7 @@ func _seed_for(start: String) -> void:
 
 ## 何日か自動で進める（よく眠る日が多め）。監査・宣伝用
 func fast_forward(days: int) -> void:
+	GameState.quiet = true
 	for i in days:
 		var s := GameState.today()
 		if s.role != "":
@@ -136,6 +142,8 @@ func fast_forward(days: int) -> void:
 	GameState.garden_seen_level = GameState.garden_level
 	GameState.phase = "day"
 	GameState.hatched = []
+	GameState.newcomers = []
+	GameState.quiet = false
 
 
 func go(screen_name: String, instant := false) -> void:
