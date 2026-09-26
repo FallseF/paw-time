@@ -199,16 +199,19 @@ func set_level(lv: int) -> void:
 	extras = Node3D.new()
 	body.add_child(extras)
 	var base: Color = COLORS.get(species, Color.WHITE)
+	# 頭にお盆を乗せている子は、頭の飾りを少し上に。箱に入っている子は、首巻きと名札を箱の上に
+	var head_up := 0.1 if species == "tray" else 0.0
+	var neck_up := 0.14 if species == "box" else 0.0
 	if lv >= 2:
 		var scarf := TorusMesh.new()
 		scarf.inner_radius = 0.42
 		scarf.outer_radius = 0.56
-		var sm := _mesh(scarf, toon(base.darkened(0.45), 0.2), Vector3(0, 0.3, 0))
+		var sm := _mesh(scarf, toon(base.darkened(0.45), 0.2), Vector3(0, 0.3 + neck_up, 0))
 		sm.scale = Vector3(1, 0.7, 1)
 		extras.add_child(sm)
 		var tail := BoxMesh.new()
 		tail.size = Vector3(0.12, 0.28, 0.05)
-		var tm := _mesh(tail, toon(base.darkened(0.45), 0.2), Vector3(0.28, 0.18, 0.46))
+		var tm := _mesh(tail, toon(base.darkened(0.45), 0.2), Vector3(0.28, 0.18 + neck_up, 0.46))
 		tm.rotation.z = 0.3
 		extras.add_child(tm)
 	if lv >= 3:
@@ -216,9 +219,9 @@ func set_level(lv: int) -> void:
 		stem.top_radius = 0.02
 		stem.bottom_radius = 0.025
 		stem.height = 0.16
-		extras.add_child(_mesh(stem, toon(Color("4f8a5b"), 0.2), Vector3(0, 1.05, 0)))
+		extras.add_child(_mesh(stem, toon(Color("4f8a5b"), 0.2), Vector3(0, 1.05 + head_up, 0)))
 		for x in [-1, 1]:
-			var leaf := _mesh(_sphere(0.09), toon(Color("7bc96f"), 0.2), Vector3(x * 0.09, 1.13, 0))
+			var leaf := _mesh(_sphere(0.09), toon(Color("7bc96f"), 0.2), Vector3(x * 0.09, 1.13 + head_up, 0))
 			leaf.scale = Vector3(1.3, 0.45, 0.8)
 			leaf.rotation.z = x * 0.4
 			extras.add_child(leaf)
@@ -227,7 +230,7 @@ func set_level(lv: int) -> void:
 		tag.top_radius = 0.09
 		tag.bottom_radius = 0.09
 		tag.height = 0.03
-		var badge := _mesh(tag, toon(Color("fff4d6"), 0.2), Vector3(-0.2, 0.22, 0.5))
+		var badge := _mesh(tag, toon(Color("fff4d6"), 0.2), Vector3(-0.2, 0.22 + neck_up * 1.6, 0.5))
 		badge.rotation.x = PI / 2
 		extras.add_child(badge)
 	if lv >= 5:
@@ -235,11 +238,11 @@ func set_level(lv: int) -> void:
 		ring.top_radius = 0.2
 		ring.bottom_radius = 0.18
 		ring.height = 0.12
-		extras.add_child(_mesh(ring, toon(Color("ffc93d"), 0.3, 0.3), Vector3(0.05, 1.02, 0)))
+		extras.add_child(_mesh(ring, toon(Color("ffc93d"), 0.3, 0.3), Vector3(0.05, 1.02 + head_up, 0)))
 		for i in 5:
 			var c := CylinderMesh.new()
 			c.top_radius = 0.0
 			c.bottom_radius = 0.06
 			c.height = 0.14
 			var a := TAU * i / 5.0
-			extras.add_child(_mesh(c, toon(Color("ffc93d"), 0.3, 0.3), Vector3(0.05 + cos(a) * 0.15, 1.14, sin(a) * 0.15)))
+			extras.add_child(_mesh(c, toon(Color("ffc93d"), 0.3, 0.3), Vector3(0.05 + cos(a) * 0.15, 1.14 + head_up, sin(a) * 0.15)))

@@ -529,3 +529,11 @@ func _show_detail(r: Dictionary) -> void:
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
+
+
+func demo_normal_tray() -> void:
+	_show_normal("tray")
+
+
+func demo_normal_box() -> void:
+	_show_normal("box")
