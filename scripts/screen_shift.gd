@@ -30,6 +30,7 @@ var cam_base := Vector3.ZERO
 var rings := {} # 持ち場 → 床の輪
 var views := {} # おばけ uid → {root, ob, t}
 var bubbles := {} # 困りごと uid → Control
+var props := {} # 困りごと uid → 持ち場に置く小さな3Dの小物
 var chips := {} # 持ち場 → ボタン
 var burst: CPUParticles3D
 
@@ -542,6 +543,12 @@ func _refresh() -> void:
 
 
 func _sync(delta: float) -> void:
+	for uid in props:
+		var pr: Node3D = props[uid]
+		for j in 3:
+			var p2 := pr.get_node_or_null("puff%d" % j)
+			if p2:
+				p2.position.y = 0.62 + j * 0.1 + sin(_t * 6.0 + j) * 0.03
 	for c in sim.crew:
 		if not views.has(c.uid):
 			var root := Node3D.new()
@@ -603,10 +610,17 @@ func _handle(evs: Array) -> void:
 		match ev.type:
 			"trouble":
 				_make_bubble(ev.uid, ev.kind, ev.station)
+				_make_prop(ev.uid, ev.kind, ev.station)
 				if not demo:
 					GameState.enemies_seen[ev.kind] = true
 				Kit.sfx("c_pop", 1.5, -8)
 			"solved":
+				if props.has(ev.uid):
+					var pr: Node3D = props[ev.uid]
+					props.erase(ev.uid)
+					var tp := pr.create_tween()
+					tp.tween_property(pr, "scale", Vector3(1.3, 0.1, 1.3), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+					tp.tween_callback(pr.queue_free)
 				if bubbles.has(ev.uid):
 					var b: Control = bubbles[ev.uid]
 					bubbles.erase(ev.uid)
@@ -663,6 +677,99 @@ func _crew_index(uid: int) -> int:
 		if sim.crew[i].uid == uid:
 			return i
 	return 0
+
+
+## 困りごとの小物（トゥーンの3D）。行列は小さなお客さん、洗い物は皿の山、品切れは空の箱…
+func _make_prop(uid: int, kind: String, sid: String) -> void:
+	var d: Dictionary = ShopData.STATIONS[sid]
+	var k := 0
+	for tr in sim.troubles:
+		if tr.station == sid and tr.uid != uid:
+			k += 1
+	var n := Node3D.new()
+	var on_top := kind in ["chuumon", "araimono"]
+	var base := Vector3(d.pos.x, 0.0, d.pos.y)
+	if on_top:
+		n.position = base + Vector3(-0.5 + (k % 4) * 0.35, 0.82, -0.55)
+	else:
+		n.position = base + Vector3(-0.9 + (k % 4) * 0.6, 0.0, 0.8)
+	world.add_child(n)
+	match kind:
+		"gyouretsu":
+			for i in 3:
+				_customer(n, Vector3(i * 0.2 - 0.2, 0, i * 0.12), Color("9fb0c8").lerp(Color("c8a8b8"), i / 2.0), 0.8)
+		"kakekomi":
+			var c := _customer(n, Vector3.ZERO, Color("7fb8ff"), 0.9)
+			c.rotation.z = -0.35
+		"iraira":
+			_customer(n, Vector3.ZERO, Color("c8b0a8"), 0.85)
+			for j in 3:
+				var puff := _prop_sphere(n, 0.06 + j * 0.02, Vector3(0.05 * j, 0.62 + j * 0.1, 0), Color("ff6b5b"))
+				puff.name = "puff%d" % j
+		"mizu":
+			var pud := _cyl(0.3, 0.02, Vector3(0, 0.012, 0), Color("8fd0ff"), n)
+			pud.scale = Vector3(1.3, 1, 0.8)
+			_prop_sphere(n, 0.05, Vector3(0.28, 0.05, 0.12), Color("8fd0ff"))
+			_cyl(0.08, 0.14, Vector3(-0.3, 0.07, -0.1), Color("f4f1ea"), n).rotation.z = 1.4
+		"denwa":
+			_box(Vector3(0.28, 0.16, 0.2), Vector3(0, 0.08, 0), Color("e85a4f"), n)
+			var hs := _cyl(0.04, 0.3, Vector3(0, 0.22, 0), Color("2e222f"), n)
+			hs.rotation.z = PI / 2
+		"chuumon":
+			for i in 3:
+				var t := _box(Vector3(0.18, 0.01, 0.26), Vector3(0, 0.02 + i * 0.03, 0), Color("fffaf2"), n)
+				t.rotation.y = (i - 1) * 0.35
+			_box(Vector3(0.06, 0.03, 0.03), Vector3(0.0, 0.12, -0.1), Color("ffd23f"), n)
+		"araimono":
+			for i in 4:
+				_cyl(0.16 - i * 0.01, 0.04, Vector3(0, 0.02 + i * 0.05, 0), Color("f4f7fa"), n)
+			_prop_sphere(n, 0.05, Vector3(0.12, 0.25, 0.05), Color("cfeeff"))
+			_prop_sphere(n, 0.04, Vector3(-0.1, 0.28, 0.0), Color("cfeeff"))
+		"shinagire":
+			_box(Vector3(0.4, 0.03, 0.3), Vector3(0, 0.015, 0), Color("d9a86c"), n)
+			for q in [[Vector3(0.4, 0.2, 0.03), Vector3(0, 0.1, 0.14)], [Vector3(0.4, 0.2, 0.03), Vector3(0, 0.1, -0.14)], [Vector3(0.03, 0.2, 0.3), Vector3(0.19, 0.1, 0)], [Vector3(0.03, 0.2, 0.3), Vector3(-0.19, 0.1, 0)]]:
+				_box(q[0], q[1], Color("d9a86c"), n)
+			_box(Vector3(0.1, 0.06, 0.01), Vector3(0.12, 0.2, 0.16), Color("e85a4f"), n)
+		"wasuremono":
+			var um := _cyl(0.02, 0.5, Vector3(0, 0.12, 0), Color("5b6fc2"), n)
+			um.rotation.z = 1.2
+			_box(Vector3(0.18, 0.14, 0.1), Vector3(0.18, 0.07, 0.1), Color("ffd23f"), n)
+	n.scale = Vector3(1.4, 0.1, 1.4)
+	n.create_tween().tween_property(n, "scale", Vector3.ONE * 1.4, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	props[uid] = n
+
+
+## 小さなお客さん（丸い頭と胴だけ。顔は描かない）
+func _customer(parent: Node3D, at: Vector3, col: Color, s := 1.0) -> Node3D:
+	var c := Node3D.new()
+	c.position = at
+	c.scale = Vector3.ONE * s
+	parent.add_child(c)
+	var body := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = 0.1
+	cm.bottom_radius = 0.14
+	cm.height = 0.36
+	body.mesh = cm
+	body.position = Vector3(0, 0.18, 0)
+	body.material_override = Obake3D.toon(col, 0.1)
+	c.add_child(body)
+	_prop_sphere(c, 0.12, Vector3(0, 0.46, 0), Color("f3dcc8"))
+	return c
+
+
+func _prop_sphere(parent: Node3D, r: float, pos: Vector3, col: Color) -> MeshInstance3D:
+	var m := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2
+	sm.radial_segments = 12
+	sm.rings = 6
+	m.mesh = sm
+	m.position = pos
+	m.material_override = Obake3D.toon(col, 0.1)
+	parent.add_child(m)
+	return m
 
 
 func _make_bubble(uid: int, kind: String, sid: String) -> void:

@@ -750,6 +750,8 @@ func load_game() -> bool:
 	Kit.set_music_on(settings.get("music", true))
 	for k in coworker_count:
 		coworker_count[k] = int(coworker_count[k])
+	for k in stage_stars:
+		stage_stars[k] = int(stage_stars[k])
 	for i in sleep_hist.size():
 		sleep_hist[i] = int(sleep_hist[i])
 	if boost.has("hours"):
