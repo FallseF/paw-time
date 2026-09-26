@@ -1,8 +1,10 @@
 extends SceneTree
-## マイおばけ猫 16 タイプのシェアカード（1080x1350）を撮り、一覧（コンタクトシート）も作る。
+## マイおばけ猫 16 タイプのシェアカード（1080x1350）を撮り、一覧（コンタクトシート）も作る。英語と日本語の 2 組。
 ## 画面が要るので、ウィンドウ付きで起動する:
 ##   godot --path . --resolution 360x640 -s tests/render_quiz_cards.gd
+## 出力: <出力先>/en/<ID>.png, <出力先>/ja/<ID>.png と、それぞれの _sheet.png
 ## 環境変数: QUIZ_CARD_OUT=/tmp/dir … 出力先（既定は res://ui_review/quiz_cards）
+##          QUIZ_CARD_LANGS=en … 一部の言語だけ
 ##          QUIZ_CARD_IDS=OPHK,IFMY … 一部だけ撮る
 
 
@@ -19,16 +21,24 @@ func _run() -> void:
 	var only := OS.get_environment("QUIZ_CARD_IDS")
 	if only != "":
 		ids = Array(only.split(","))
-	var shots: Array[Image] = []
-	for id in ids:
-		var r := QuizData.score(QuizData.answers_for(id))
-		assert(r.type_id == id)
-		var img: Image = await QuizCard.render(root, r)
-		img.save_png(out.path_join("%s.png" % id))
-		shots.append(img)
-		print("rendered ", id)
-	if shots.size() > 1:
-		_sheet(shots).save_png(out.path_join("_sheet.png"))
+	var langs: Array = QuizData.LOCALES.duplicate()
+	if OS.get_environment("QUIZ_CARD_LANGS") != "":
+		langs = Array(OS.get_environment("QUIZ_CARD_LANGS").split(","))
+	for loc in langs:
+		QuizData.locale = loc
+		QuizData.setup_i18n()
+		var dir := out.path_join(loc)
+		DirAccess.make_dir_recursive_absolute(dir)
+		var shots: Array[Image] = []
+		for id in ids:
+			var r := QuizData.score(QuizData.answers_for(id))
+			assert(r.type_id == id)
+			var img: Image = await QuizCard.render(root, r)
+			img.save_png(dir.path_join("%s.png" % id))
+			shots.append(img)
+			print("rendered ", loc, " ", id)
+		if shots.size() > 1:
+			_sheet(shots).save_png(dir.path_join("_sheet.png"))
 	quit()
 
 

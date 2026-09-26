@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://icx8jqu23fw4"
+
+[deps]
+
+files=["res://i18n/quiz.en.translation", "res://i18n/quiz.ja.translation"]
+
+source_file="res://i18n/quiz.csv"
+dest_files=["res://i18n/quiz.en.translation", "res://i18n/quiz.ja.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

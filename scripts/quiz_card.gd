@@ -11,6 +11,7 @@ const CREAM := Color("fbf3ea")
 
 
 static func render(host: Node, result: Dictionary) -> Image:
+	QuizData.setup_i18n()
 	var type_id: String = result.type_id
 	var t: Dictionary = QuizData.TYPES[type_id]
 	var col := QuizData.tone(type_id)
@@ -35,7 +36,7 @@ static func render(host: Node, result: Dictionary) -> Image:
 	logo.size = Vector2(W, 80)
 	logo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vp.add_child(logo)
-	var kicker := _label("マイおばけ猫 診断", bold, 32, col.darkened(0.45))
+	var kicker := _label(QuizData.t("QUIZ_CARD_KICKER"), bold, 32, col.darkened(0.45))
 	kicker.position = Vector2(0, 136)
 	kicker.size = Vector2(W, 44)
 	kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -63,29 +64,35 @@ static func render(host: Node, result: Dictionary) -> Image:
 	box.add_child(vp3)
 	var ob := _stage3d(vp3, t.look)
 	# 舞台の中の小さなタグ（向いてる仕事）
-	var job := _chip("向いてる仕事  " + QuizData.JOBS[t.job].ja, bold, 30, Color.WHITE, col.darkened(0.35))
+	var job := _chip(QuizData.t("QUIZ_CARD_JOB") % QuizData.job_name(t.job), bold, 30, Color.WHITE, col.darkened(0.35))
 	job.position = Vector2(126, 238)
 	vp.add_child(job)
 
-	# タイプ名と一言
-	var pre := _label("わたしのマイおばけ猫は", bold, 34, SUB)
+	# タイプ名と一言。英語の長い名前は幅に合わせて文字を小さくする。
+	var pre := _label(QuizData.t("QUIZ_CARD_MINE"), bold, 34, SUB)
 	pre.position = Vector2(0, 790)
 	pre.size = Vector2(W, 48)
 	pre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vp.add_child(pre)
-	var name_l := _label(t.name, black, 84 if t.name.length() <= 9 else 72, INK)
+	var name_text := QuizData.type_name(type_id)
+	var name_l := _label(name_text, black, QuizData.fit_size(black, name_text, W - 120, 84, 52), INK)
 	name_l.position = Vector2(0, 836)
 	name_l.size = Vector2(W, 112)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	vp.add_child(name_l)
-	var en := _label(t.en_name, bold, 30, col.darkened(0.4))
-	en.position = Vector2(0, 946)
-	en.size = Vector2(W, 42)
-	en.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vp.add_child(en)
-	var line := _label(t.line, bold, 42, INK)
-	line.position = Vector2(0, 1000)
+	# 日本語のときだけ、英語の名前を小見出しに添える（英語のときは一言を少し上げる）
+	var line_y := 962
+	if QuizData.is_ja():
+		var en := _label(QuizData.type_name_en(type_id), bold, 30, col.darkened(0.4))
+		en.position = Vector2(0, 946)
+		en.size = Vector2(W, 42)
+		en.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vp.add_child(en)
+		line_y = 1000
+	var line_text := QuizData.type_line(type_id)
+	var line := _label(line_text, bold, QuizData.fit_size(bold, line_text, W - 120, 42, 30), INK)
+	line.position = Vector2(0, line_y)
 	line.size = Vector2(W, 60)
 	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vp.add_child(line)
@@ -117,38 +124,13 @@ static func render(host: Node, result: Dictionary) -> Image:
 static func _stage3d(vp3: SubViewport, look: Dictionary) -> MyObake3D:
 	var world := Node3D.new()
 	vp3.add_child(world)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_CLEAR_COLOR
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("fff2e6")
-	env.ambient_light_energy = 0.45
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	var we := WorldEnvironment.new()
-	we.environment = env
-	world.add_child(we)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-35, 30, 0)
-	sun.light_color = Color("fff0dc")
-	sun.light_energy = 0.8
-	world.add_child(sun)
+	# 図鑑カードと同じ明るいスタジオの光（Look）。背景は透明にして、カードの色の舞台を透かす。
+	Look.apply(world, "studio", Color(0, 0, 0, 0), true)
 	var cam := Camera3D.new()
-	cam.fov = 27
+	cam.fov = 29
 	cam.position = Vector3(0, 0.95, 3.4)
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.6, 0))
-	var shadow := MeshInstance3D.new()
-	var sm := CylinderMesh.new()
-	sm.top_radius = 0.5
-	sm.bottom_radius = 0.5
-	sm.height = 0.005
-	shadow.mesh = sm
-	var smat := StandardMaterial3D.new()
-	smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	smat.albedo_color = Color(0.16, 0.13, 0.2, 0.14)
-	shadow.material_override = smat
-	shadow.scale = Vector3(1.1, 1, 0.5)
-	world.add_child(shadow)
+	cam.look_at(Vector3(0, 0.64, 0))
 	var ob := MyObake3D.new().setup_look(look)
 	ob.rotation.y = 0.35
 	world.add_child(ob)
@@ -181,13 +163,12 @@ static func _chip(text: String, font: FontFile, size: int, bg: Color, fg: Color)
 
 ## 軸の棒。上に「外へ ◯◯% / 内へ」、下に 2 色の棒。reveal 画面でも使うので寸法を渡せるようにする。
 static func _axis_bar(axis: int, ratio: float, col: Color, font: FontFile, size: int, bar_size: Vector2) -> VBoxContainer:
-	var ax: Dictionary = QuizData.AXES[axis]
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", int(size * 0.2))
 	var row := HBoxContainer.new()
 	var lean_a := ratio >= 0.5
-	var la := _label(ax.a, font, size, INK if lean_a else SUB.lightened(0.3))
-	var lb := _label(ax.b, font, size, INK if not lean_a else SUB.lightened(0.3))
+	var la := _label(QuizData.axis_label(axis, "A"), font, size, INK if lean_a else SUB.lightened(0.3))
+	var lb := _label(QuizData.axis_label(axis, "B"), font, size, INK if not lean_a else SUB.lightened(0.3))
 	var pct := _label("%d%%" % roundi((ratio if lean_a else 1.0 - ratio) * 100), font, size, col.darkened(0.35))
 	pct.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pct.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -218,12 +199,12 @@ static func _axis_bar(axis: int, ratio: float, col: Color, font: FontFile, size:
 
 ## 画像を手元に届ける。web はダウンロード、それ以外は user:// に保存。戻り値は画面に出す案内文。
 static func deliver(img: Image, type_id: String) -> String:
-	var file := "paw_time_my_obake_%s.png" % type_id
+	var file := "paw_time_my_obake_%s_%s.png" % [type_id, TranslationServer.get_locale().left(2)]
 	if OS.has_feature("web"):
 		JavaScriptBridge.download_buffer(img.save_png_to_buffer(), file, "image/png")
-		return "画像をダウンロードしました"
+		return QuizData.t("QUIZ_UI_DOWNLOADED")
 	var path := "user://" + file
 	var err := img.save_png(path)
 	if err != OK:
-		return "保存できませんでした（%s）" % error_string(err)
-	return "保存しました：" + ProjectSettings.globalize_path(path)
+		return QuizData.t("QUIZ_UI_SAVE_FAILED") % error_string(err)
+	return QuizData.t("QUIZ_UI_SAVED") % ProjectSettings.globalize_path(path)

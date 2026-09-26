@@ -1,0 +1,118 @@
+keys,en,ja
+QUIZ_Q1,Day off. You're…,休みの日は？
+QUIZ_Q1_A,Out and about,外へおでかけ
+QUIZ_Q1_B,Cozy at home,家でまったり
+QUIZ_Q2,"Before a shift, you…",シフトの前に、まず
+QUIZ_Q2_A,Make a plan,段取りを決める
+QUIZ_Q2_B,Wing it on site,現場で考える
+QUIZ_Q3,Your shift superpower?,シフトで得意なのは？
+QUIZ_Q3_A,Talking to people,人と話す
+QUIZ_Q3_B,Heads-down work,黙々と作業
+QUIZ_Q4,Right before bed?,寝る前は？
+QUIZ_Q4_A,Out like a light,すぐ寝る
+QUIZ_Q4_B,One more scroll…,ついスマホ
+QUIZ_Q5,Invited out after work?,バイト終わりに誘われた
+QUIZ_Q5_A,I'm in!,行く行く！
+QUIZ_Q5_B,Heading home,今日は帰る
+QUIZ_Q6,Rush hour hits!,ピークが来た！
+QUIZ_Q6_A,Stick to the steps,手順どおりに回す
+QUIZ_Q6_B,Improvise it,ひらめきで乗りきる
+QUIZ_Q7,What makes your day?,うれしいのは？
+QUIZ_Q7_A,"A warm ""thank you""",ありがとうの一言
+QUIZ_Q7_B,A perfectly neat shelf,きれいに並んだ棚
+QUIZ_Q8,Meet at 6. You show up…,集合時間には
+QUIZ_Q8_A,10 minutes early,10分前に着く
+QUIZ_Q8_B,Right at 6,ちょうどに着く
+QUIZ_Q9,What recharges you?,元気が出るのは？
+QUIZ_Q9_A,Seeing people,人と会った日
+QUIZ_Q9_B,Time alone,ひとりの時間
+QUIZ_Q10,Making the staff meal?,まかないを作るなら
+QUIZ_Q10_A,Follow the recipe,レシピどおり
+QUIZ_Q10_B,Ask the fridge,冷蔵庫と相談
+QUIZ_Q11,Stuck on something?,困ったときは
+QUIZ_Q11_A,Ask a senior,先輩に聞く
+QUIZ_Q11_B,Read the manual,マニュアルを読む
+QUIZ_Q12,Your 15-min break?,休憩15分の使い方
+QUIZ_Q12_A,Exactly 15 minutes,時計を見てきっちり
+QUIZ_Q12_B,"Oops, dozed off",気づけばうとうと
+QUIZ_AX0_A,Out,外へ
+QUIZ_AX0_B,In,内へ
+QUIZ_AX1_A,Plan,段取り
+QUIZ_AX1_B,Spark,ひらめき
+QUIZ_AX2_A,People,人
+QUIZ_AX2_B,Things,モノ
+QUIZ_AX3_A,Tidy,きっちり
+QUIZ_AX3_B,Easy,ゆったり
+QUIZ_JOB_REGISTER,Register,レジ
+QUIZ_JOB_DISH,Dish,皿洗い
+QUIZ_JOB_HALL,Hall,ホール
+QUIZ_JOB_KITCHEN,Kitchen,キッチン
+QUIZ_JOB_STOCK,Stock,品出し
+QUIZ_T_OPHK_NAME,The Floor Commander,ホールの司令塔
+QUIZ_T_OPHK_LINE,Spots an empty glass three tables away.,3卓先のお冷やまで見えている。
+QUIZ_T_OPHY_NAME,Keeper of the Regulars,常連さんの記憶係
+QUIZ_T_OPHY_LINE,Knows 'the usual' before you say it.,『いつもの』で、全部わかる。
+QUIZ_T_OPMK_NAME,Captain of the Shelves,棚の整列隊長
+QUIZ_T_OPMK_LINE,Every label faces front. Every one.,ラベルは全部、こっち向き。
+QUIZ_T_OPMY_NAME,The Staff-Meal Master,まかないの達人
+QUIZ_T_OPMY_LINE,Turns leftovers into a feast.,余りもので、ごちそうを作る。
+QUIZ_T_OFHK_NAME,Register Sunshine,笑顔のレジ番長
+QUIZ_T_OFHK_LINE,Hands back change with a kind word.,おつりと一緒に、ひと言そえる。
+QUIZ_T_OFHY_NAME,The Break-Room Mood Maker,休憩室のムードメーカー
+QUIZ_T_OFHY_LINE,"Shares snacks, lifts the whole room.",お菓子を配ると、場がなごむ。
+QUIZ_T_OFMK_NAME,The New-Menu Researcher,新メニュー研究員
+QUIZ_T_OFMK_LINE,Allows exactly three test batches.,試作は3回まで、と決めている。
+QUIZ_T_OFMY_NAME,The Easygoing Inventor,のんびり発明家
+QUIZ_T_OFMY_LINE,Still perfecting the art of the cart.,台車の押し方を、日々改良中。
+QUIZ_T_IPHK_NAME,Guardian of the Rota,シフト表の守り神
+QUIZ_T_IPHK_LINE,Knows who is off when. Mostly.,誰がいつ休みか、だいたい知ってる。
+QUIZ_T_IPHY_NAME,The Good Listener,聞き上手のおばけ
+QUIZ_T_IPHY_LINE,Everyone's go-to for a quiet chat.,バイト仲間の相談、だいたい受ける。
+QUIZ_T_IPMK_NAME,The Late-Night Artisan,深夜のひとり職人
+QUIZ_T_IPMK_LINE,Scrubs in silence until plates shine.,皿がひかるまで、黙って洗う。
+QUIZ_T_IPMY_NAME,Keeper of the Stockroom,在庫の番人
+QUIZ_T_IPMY_LINE,Knows what's in the box. Unopened.,箱の中身、開けなくてもわかる。
+QUIZ_T_IFHK_NAME,The Tidy Ninja,気配り忍者
+QUIZ_T_IFHK_LINE,Cleaned up before you even noticed.,気づいた時には、もう片付いている。
+QUIZ_T_IFHY_NAME,The Calm Companion,そばにいる癒やし係
+QUIZ_T_IFHY_LINE,Just being nearby makes it better.,となりにいるだけで、落ちつく。
+QUIZ_T_IFMK_NAME,The Prep Perfectionist,こだわりの仕込み番
+QUIZ_T_IFMK_LINE,Slices onions with total devotion.,玉ねぎの薄さに、命をかける。
+QUIZ_T_IFMY_NAME,Master of the Power Nap,おやすみ上手
+QUIZ_T_IFMY_LINE,Fully recharged in a 15-minute break.,休憩15分で、しっかり回復。
+QUIZ_UI_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
+QUIZ_UI_TITLE,"Find your
+obake cat","あなたのおばけ猫を
+さがそう"
+QUIZ_UI_SUB,"12 quick questions pick your partner.
+All about part-time life and rest.","12の質問で、相棒の猫おばけが決まる。
+バイトと休みの、ゆるい質問だよ。"
+QUIZ_UI_START,Start,はじめる
+QUIZ_UI_NOTE,About 1 min · You can retake it later,1分くらい ・ 答えはあとで変えられる
+QUIZ_UI_QNUM,Q%d,Q%d
+QUIZ_UI_BACK,Back,ひとつ戻る
+QUIZ_UI_YOURS,Your obake cat is…,あなたのマイおばけ猫は
+QUIZ_UI_JOB,Best job: %s,向いてる仕事：%s
+QUIZ_UI_MATCH,Best buddy: %s,相性のいいタイプ：%s
+QUIZ_UI_BEGIN,Start with this cat,この子と はじめる
+QUIZ_UI_SHARE,Share result,結果をシェア
+QUIZ_UI_SHARE_TITLE,Share your result,結果をシェア
+QUIZ_UI_SAVE,Save image,画像を保存
+QUIZ_UI_COPY,Copy share text,シェア文をコピー
+QUIZ_UI_MAKING,Making your card…,カードを作っています…
+QUIZ_UI_READY,Save it and post it!,画像を保存して、SNSに貼ってね
+QUIZ_UI_COPIED,Share text copied!,シェア文をコピーしました
+QUIZ_UI_DOWNLOADED,Image downloaded!,画像をダウンロードしました
+QUIZ_UI_SAVED,Saved: %s,保存しました：%s
+QUIZ_UI_SAVE_FAILED,Couldn't save (%s),保存できませんでした（%s）
+QUIZ_UI_CLOSE,Close,とじる
+QUIZ_CARD_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
+QUIZ_CARD_JOB,Best job  %s,向いてる仕事  %s
+QUIZ_CARD_MINE,My obake cat is,わたしのマイおばけ猫は
+QUIZ_SHARE_TEXT,"My obake cat is ""%s""!
+%s
+#PawTime #MyObakeCat
+%s","わたしのマイおばけ猫は「%s」！
+%s
+#PawTime #マイおばけ猫
+%s"

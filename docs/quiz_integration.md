@@ -3,11 +3,15 @@
 はじめて起動したときに 12 問の診断をして、プレイヤー自身の猫おばけ（相棒）を決める。
 結果は 1080x1350 のカード画像と短い文面でシェアできる。
 
+**英語が既定**。画面・カード・シェア文の文字はすべて `i18n/quiz.csv`（列 `keys,en,ja`）にあり、
+`QuizData.t()`（中身は `TranslationServer.translate()`）で引く。日本語は `QuizData.locale = "ja"` か `OBAKE_LANG=ja` で切り替える。
+
 ## 1. コピーするファイル
 
 | ファイル | 役割 |
 |---|---|
-| `scripts/quiz_data.gd` (`QuizData`) | 12 問・4 軸・16 タイプの中身、採点 `score()`、シェア文 `share_text()`、差し色 `tone()` |
+| `scripts/quiz_data.gd` (`QuizData`) | 12 問・4 軸・16 タイプの中身（仕事・相性・見た目）、採点 `score()`、シェア文 `share_text()`、差し色 `tone()`、言語 `setup_i18n()` / `t()` |
+| `i18n/quiz.csv`（と `.import`・`quiz.en.translation`・`quiz.ja.translation`） | 文字の正本（英語・日本語）。文言を直すのはここだけ |
 | `scripts/quiz_result.gd` (`QuizResult`) | 結果を `user://my_obake.json` に保存・読み込み（ゲーム本体のセーブとは別ファイル） |
 | `scripts/my_obake3d.gd` (`MyObake3D`) | 見た目の辞書（色・持ち物・しぐさ）から猫おばけを組む。`Obake3D` を継承 |
 | `scripts/quiz_card.gd` (`QuizCard`) | シェアカードの描画 `render()` と保存 `deliver()`（web はダウンロード） |
@@ -16,12 +20,14 @@
 | `tests/render_quiz_cards.gd` | 16 枚のカードと一覧を撮る（任意） |
 
 `.gd.uid` も一緒にコピーする。`class_name` を使っているので、コピー後に一度
-`godot --headless --path . --import` を通す。
+`godot --headless --path . --import` を通す（CSV から `.translation` もここで作り直される）。
+翻訳は `QuizData.setup_i18n()` がコードから読み込むので、`project.godot` の翻訳一覧に登録しなくてよい。
 
 前提として、variant 側に次があること（master にはある）。
 
 - `scripts/obake3d.gd` の `Obake3D`（`ghost()` / `face()` / `toon()` / `_mesh()` / `_sphere()` / `eyes` / `body` / `_t` / `bob`）
 - `scripts/orb_model.gd` の `OrbModel`（`setup()` / `set_energy()` / `core_mat` / `shell_mat` / `light`）
+- `scripts/look.gd` の `Look.apply()`（光は `studio` のプリセットを使う）と、AAA 版の `Obake3D`（`skin()` / `prop()` / `_box()` / `_cyl()` / `_torus()`）
 - `assets/fonts/ZenMaruGothic-Bold.ttf` と `-Black.ttf`
 - `assets/sfx/hatch.wav` `sparkle.wav` `chime.wav` `lift.wav`
 - autoload の `GameState`
@@ -99,8 +105,10 @@ if not GameState.my_obake.is_empty():
 - variant-a の `partner`（捕まえたおばけの ID）とは別物。相棒枠を 1 つにしたいなら、
   `partner == "my"` を「マイおばけ猫」として扱い、表示だけ `MyObake3D` に差し替えるのが一番小さい。
 - 撮影用に動きを止めたいときは `me.hold_still()`。
-- `MyObake3D` は体・顔・材質を `ghost()` / `face()` / `toon()` 経由で作るので、
-  feature/aaa-look の体の作り替えを取り込むと自動でその見た目になる（持ち物の位置は頭 半径 0.5・中心 y=0.5 を前提にしている）。
+- `MyObake3D` は体・顔を `ghost()` / `face()`、持ち物の材質を `prop()`、形を `_box()` / `_cyl()` / `_torus()` で作るので、
+  Obake3D の見た目を変えるとそのまま追従する。持ち物の位置は Blender 製の体（頭 ≈ 半径 0.5・中心 y=0.5、頭頂 y≈1.02、
+  耳先 x±0.33・y≈1.11、裾は y0.1〜0.2 で半径≈0.56）に合わせてある。体の形を大きく変えたら 16 枚のカードを撮り直して確かめる。
+- 3D の舞台には `Look.apply(world, "studio", 背景色)` を使うと、図鑑やカードと同じ光になる。
 
 ## 5. シェア
 
@@ -108,6 +116,7 @@ if not GameState.my_obake.is_empty():
 - `QuizCard.deliver(image, type_id)`: web（`OS.has_feature("web")`）では `JavaScriptBridge.download_buffer` で PNG をダウンロード、
   それ以外は `user://paw_time_my_obake_<TYPE>.png` に保存してフルパスを返す。
 - シェア文は `QuizData.share_text(type_id)` を `DisplayServer.clipboard_set()` でコピー。URL は `QuizData.SITE_URL`。
+- カードもシェア文も、その時の言語（既定は英語）で作られる。
 
 ## 6. 確かめ方
 
@@ -117,7 +126,8 @@ godot --headless --path . -s tests/test_quiz.gd                # 採点・16 タ
 OBAKE_START=quiz godot --path .                                 # 画面を触る
 OBAKE_START=quiz OBAKE_QUIZ_AUTO=ABBAABBAABBA OBAKE_SHOT=wait6 \
   OBAKE_SHOT_PATH=/tmp/q.png godot --path . --resolution 360x640 --quit-after 30000
-godot --path . --resolution 360x640 -s tests/render_quiz_cards.gd   # ui_review/quiz_cards/
+godot --path . --resolution 360x640 -s tests/render_quiz_cards.gd   # ui_review/quiz_cards/en と /ja
+OBAKE_LANG=ja OBAKE_START=quiz godot --path .                   # 日本語で確かめる
 ```
 
 - `OBAKE_QUIZ_AUTO` は A/B を 12 個まで。12 個そろうと結果の演出まで進む（約 4 秒）。途中までならその問題で止まる。
@@ -126,7 +136,9 @@ godot --path . --resolution 360x640 -s tests/render_quiz_cards.gd   # ui_review/
 
 ## 7. タイプ一覧
 
-| ID | 名前 | 仕事 | 持ち物 | しぐさ | 相性 |
+名前と一言の英語・日本語は `i18n/quiz.csv` の `QUIZ_T_<ID>_NAME` / `_LINE`。
+
+| ID | 名前（日本語） | 仕事 | 持ち物 | しぐさ | 相性 |
 |---|---|---|---|---|---|
 | OPHK | ホールの司令塔 | hall | headphones | scan | IPHY |
 | OPHY | 常連さんの記憶係 | register | bell | sway | IPHK |
@@ -145,5 +157,6 @@ godot --path . --resolution 360x640 -s tests/render_quiz_cards.gd   # ui_review/
 | IFMK | こだわりの仕込み番 | kitchen | beret | bob | OFMY |
 | IFMY | おやすみ上手 | stock | towel | doze | OFMK |
 
-軸: O 外へ / I 内へ、P 段取り / F ひらめき、H 人 / M モノ、K きっちり / Y ゆったり。
+軸: O 外へ Out / I 内へ In、P 段取り Plan / F ひらめき Spark、H 人 People / M モノ Things、K きっちり Tidy / Y ゆったり Easy。
+結果画面とカードの棒は、各軸 3 問のうち前の極を選んだ割合（0 / 33 / 67 / 100%）を、多い側から見た値で出す。
 相性は「外へ↔内へ」「きっちり↔ゆったり」を入れ替えた相手（相互）。
