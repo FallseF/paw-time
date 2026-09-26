@@ -347,14 +347,17 @@ func _daily() -> void:
 	_notify(0, tr("NOTE_DAILY") % [SpecialObake.pet_name(), left.size()], tr("NOTE_DAILY_SUB") % JobListings.wage_text(left[0]), role_color(left[0].role), _open_viewer)
 
 
-## 島の左上（日付の下）の小さな「しごと」ボタン：自分でシフトを入れる・働く条件（求人の知らせの On/Off）
+## 島の右上（図鑑の下）の小さな「しごと」ボタン：自分でシフトを入れる・働く条件（求人の知らせの On/Off）
 func _work_pill() -> void:
 	if work_btn and is_instance_valid(work_btn):
 		return
-	work_btn = Kit.button(tr("WORK_PILL"), Color(1, 0.99, 0.97, 0.94), open_work_menu, Color("6a5bd6"), 36, 13)
-	work_btn.position = Vector2(16, 62)
-	work_btn.size = Vector2(0, 36)
+	work_btn = Kit.button(tr("WORK_PILL"), Color(1, 0.99, 0.97, 0.94), open_work_menu, Color("6a5bd6"), 32, 13)
+	work_btn.size = Vector2(0, 32)
 	add_child(work_btn)
+	# 右上（図鑑の下）。左上はキセカエの札
+	await get_tree().process_frame
+	if is_instance_valid(work_btn):
+		work_btn.position = Vector2(348 - work_btn.size.x, 58)
 
 
 func open_work_menu() -> void:

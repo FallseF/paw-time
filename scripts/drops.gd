@@ -1,8 +1,8 @@
 class_name Drops
 ## すくった玉の中身：おばけ／島の材料／服。玉の中にヒント（小さな影）を見せ、朝の孵化で明かす。
-## 割合は下の W_MATERIAL / W_CLOTH / W_CAT。いまは仮の中身。wardrobe / island-kit のブランチを取り込んだら、下の 2 か所を差しかえるだけでよい：
-##   _roll_cloth()    → Wardrobe.random_drop()      grant の cloth → Wardrobe.grant(id)
-##   _roll_material() → IslandKit.random_drop()     grant の material → IslandKit.grant_material(id)
+## 割合は下の W_MATERIAL / W_CLOTH / W_CAT。玉の中身を決めるのはここだけ（Wardrobe などは別に引かない）。
+##   服   → Wardrobe.random_drop("common"|"rare") で選び、Wardrobe.grant で持ち物に（新しい服は朝の庭で OutfitReveal）
+##   材料 → いまは仮（MATERIALS）。island-kit を取り込んだら IslandKit.random_drop() / grant_material() に
 
 ## 玉の中身の割合（持ち主の決定：玉はほぼ材料、おばネコはレア）。合計は何でもよい（比で引く）
 const W_MATERIAL := 70
@@ -38,7 +38,7 @@ static func roll(orb_type: String, rare: bool) -> Dictionary:
 	if r < W_MATERIAL:
 		c = _roll_material()
 	elif r < W_MATERIAL + W_CLOTH:
-		c = _roll_cloth()
+		c = _roll_cloth("rare" if rare else "common")
 	else:
 		return {"kind": "obake"}
 	c["tier"] = "rare" if rare else "common"
@@ -54,8 +54,11 @@ static func _roll_material() -> Dictionary:
 	return {"kind": "material", "id": id}
 
 
-static func _roll_cloth() -> Dictionary:
-	var id: String = CLOTHES.keys().pick_random()
+## 服はキセカエの「玉から」の服（持っていない物）。全部そろっていたら材料にする
+static func _roll_cloth(rarity := "common") -> Dictionary:
+	var id := Wardrobe.random_drop(rarity)
+	if id == "":
+		return _roll_material()
 	return {"kind": "cloth", "id": id}
 
 
@@ -63,15 +66,27 @@ static func info(c: Dictionary) -> Dictionary:
 	if c.get("kind", "") == "material":
 		return MATERIALS.get(c.id, {"name": c.id, "color": Color.WHITE})
 	if c.get("kind", "") == "cloth":
+		var it := WardrobeData.item(c.id)
+		if not it.is_empty():
+			return {"name": it.name, "color": Color(it.c)}
 		return CLOTHES.get(c.id, {"name": c.id, "color": Color.WHITE})
 	return {}
 
 
-## 手に入れる。いまは GameState.stash に数を数えるだけ（取り込み後はそれぞれのモジュールへ）
+## 手に入れる。服はキセカエの持ち物へ（新しければ朝の庭で見せる）。材料はいまは GameState.stash に数える
 static func grant(c: Dictionary) -> bool:
+	# GameState は名前で引く（tests の -s 実行では、自動読み込みより先にこのスクリプトが読まれるため）
+	var gs = Engine.get_main_loop().root.get_node_or_null("GameState")
+	if c.kind == "cloth" and not WardrobeData.item(c.id).is_empty():
+		var got := Wardrobe.grant(c.id)
+		if got and gs:
+			gs.new_outfits.append(c.id)
+		return got
+	if gs == null:
+		return false
 	var key: String = "%s:%s" % [c.kind, c.id]
-	var is_new: bool = not GameState.stash.has(key)
-	GameState.stash[key] = int(GameState.stash.get(key, 0)) + 1
+	var is_new: bool = not gs.stash.has(key)
+	gs.stash[key] = int(gs.stash.get(key, 0)) + 1
 	return is_new
 
 

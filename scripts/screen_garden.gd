@@ -60,6 +60,22 @@ func _ready() -> void:
 		_show_morning()
 	else:
 		_show_card()
+	_reveal_outfits()
+
+
+## 届いた服（仕事・眠り・図鑑の条件、光る玉の中身）を、ひとつずつ見せる
+func _reveal_outfits() -> void:
+	var list: Array = GameState.new_outfits.duplicate()
+	GameState.new_outfits.clear()
+	list.append_array(Wardrobe.check_unlocks())
+	if list.is_empty():
+		return
+	await get_tree().create_timer(1.2).timeout
+	for id in list:
+		if not is_inside_tree():
+			return
+		var r := OutfitReveal.open(self, id, GameState.host())
+		await r.closed
 
 
 # ---------- 3D の庭 ----------
@@ -216,7 +232,7 @@ func _build_world() -> void:
 	for o in res:
 		if o.id == host_id:
 			continue
-		var ob := Obake3D.make(o.id)
+		var ob := Outfit.make(o.id, _vis_outfit(o.id))
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
 		if Rares.is_rare(o.id):
 			# レアは少し大きい作りなので、庭では小さめに（横に広い子はさらに）
@@ -504,16 +520,33 @@ var host_node: Obake3D
 
 
 ## 島のあるじ（縁側の前で出むかえる）。マイおばけ猫が決まったら GameState.host_id に入れるだけでよい
+## おでかけ先の島では、その島のコードに入っていた服を着せる。自分の島なら自分の服
+func _vis_outfit(id: String):
+	if not _vis():
+		return null
+	return V.get("outfits", {}).get(id, {})
+
+
 func _build_host(id: String) -> void:
 	if host_node and is_instance_valid(host_node):
 		host_node.queue_free()
 	if id == "my":
 		var tid: String = V.get("my_type", "") if _vis() else GameState.my_obake.get("type_id", "")
-		# 自分の島なら保存した look（とくべつな印つき）、おでかけ先ならタイプの look
-		var look: Dictionary = GameState.my_obake.get("look", {}) if not _vis() and not GameState.my_obake.is_empty() else (QuizData.TYPES[tid].look if QuizData.TYPES.has(tid) else {})
-		host_node = Obake3D.make_custom(look) if not look.is_empty() else Obake3D.make("receipt")
+		host_node = Obake3D.make_custom(QuizData.TYPES[tid].look) if QuizData.TYPES.has(tid) else Obake3D.make("receipt")
+		if not _vis():
+			host_node.queue_free()
+			host_node = Outfit.make("my")
+		else:
+			var vo: Dictionary = V.get("outfits", {}).get("my", {})
+			var t := WardrobeData.tint(vo.get("tint", ""))
+			if t.c != "" and QuizData.TYPES.has(tid):
+				var lk: Dictionary = QuizData.TYPES[tid].look.duplicate()
+				lk["color"] = t.c
+				host_node.queue_free()
+				host_node = Obake3D.make_custom(lk)
+			Outfit.dress(host_node, vo)
 	else:
-		host_node = Obake3D.make(id)
+		host_node = Outfit.make(id, _vis_outfit(id))
 	host_node.scale = Vector3.ONE * (0.6 if Rares.is_rare(id) else 0.82)
 	host_node.position = Vector3(0.9, 0, -1.9)
 	world.add_child(host_node)
@@ -1273,6 +1306,12 @@ func _build_ui() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
+	# キセカエ（2日目から、または新しい服が届いたら）。上の3つとは別に、左下の小さな札
+	if (GameState.day >= 1 or not Wardrobe.fresh.is_empty()) and not _vis():
+		var wd := Kit.button(tr("Wardrobe") + ("  NEW" if not Wardrobe.fresh.is_empty() else ""), Color(1, 1, 1, 0.92), func(): main.go("wardrobe"), Color("ff8a5b"), 32, 13)
+		wd.position = Vector2(12, 58)
+		wd.size = Vector2(0, 32)
+		add_child(wd)
 	var zk := Kit.button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"), 38, 15)
 	zk.custom_minimum_size.x = 64
 	top.add_child(zk)

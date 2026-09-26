@@ -632,32 +632,36 @@ func _mesh(m: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
 
 
 func _add_prop(id: String) -> void:
+	# 持ち物はまとめて "Prop" に入れる（キセカエで同じ場所に服を着たら隠す。Outfit.PROP_SLOT）
+	var prop_root := Node3D.new()
+	prop_root.name = "Prop"
+	body.add_child(prop_root)
 	match id:
 		"bubble":
 			for p in [Vector3(-0.2, 1.05, 0.1), Vector3(0.05, 1.12, 0), Vector3(0.28, 1.0, -0.05)]:
-				body.add_child(_mesh(_sphere(0.1 + randf() * 0.05), prop(Color("f4fbff"), 0.8), p))
+				prop_root.add_child(_mesh(_sphere(0.1 + randf() * 0.05), prop(Color("f4fbff"), 0.8), p))
 		"tray":
-			body.add_child(_mesh(_cyl(0.5, 0.46, 0.05), prop(Color("c8ced6")), Vector3(0, 1.02, 0)))
-			body.add_child(_mesh(_cyl(0.08, 0.07, 0.2), prop(Color("ffcf5a")), Vector3(0.15, 1.14, 0)))
+			prop_root.add_child(_mesh(_cyl(0.5, 0.46, 0.05), prop(Color("c8ced6")), Vector3(0, 1.02, 0)))
+			prop_root.add_child(_mesh(_cyl(0.08, 0.07, 0.2), prop(Color("ffcf5a")), Vector3(0.15, 1.14, 0)))
 		"receipt":
 			var rm := _mesh(_box(Vector3(0.14, 0.02, 0.5)), prop(Color("fffaf2")), Vector3(0.35, 0.05, -0.35))
 			rm.rotation = Vector3(0.3, 0.6, 0)
-			body.add_child(rm)
+			prop_root.add_child(rm)
 		"pan":
-			body.add_child(_mesh(_cyl(0.22, 0.2, 0.06), prop(Color("4a4a52")), Vector3(0.62, 0.45, 0.1)))
-			body.add_child(_mesh(_sphere(0.08), prop(Color("ffd66b")), Vector3(0.62, 0.49, 0.1)))
+			prop_root.add_child(_mesh(_cyl(0.22, 0.2, 0.06), prop(Color("4a4a52")), Vector3(0.62, 0.45, 0.1)))
+			prop_root.add_child(_mesh(_sphere(0.08), prop(Color("ffd66b")), Vector3(0.62, 0.49, 0.1)))
 		"box":
-			body.add_child(_mesh(_box(Vector3(1.26, 0.45, 1.22)), prop(Color("d9a86c")), Vector3(0, 0.12, 0)))
+			prop_root.add_child(_mesh(_box(Vector3(1.26, 0.45, 1.22)), prop(Color("d9a86c")), Vector3(0, 0.12, 0)))
 		"lantern":
-			body.add_child(_mesh(_box(Vector3(0.18, 0.26, 0.18)), prop(Color("ff9a4d"), 0.3, 1.5), Vector3(0.6, 0.55, 0.1)))
+			prop_root.add_child(_mesh(_box(Vector3(0.18, 0.26, 0.18)), prop(Color("ff9a4d"), 0.3, 1.5), Vector3(0.6, 0.55, 0.1)))
 		"kirari":
 			for i in 5:
 				var a := TAU * i / 5.0
-				body.add_child(_mesh(_cyl(0.0, 0.07, 0.22), prop(Color("ffe27a"), 0.3, 0.8), Vector3(cos(a) * 0.22, 1.08, sin(a) * 0.22)))
+				prop_root.add_child(_mesh(_cyl(0.0, 0.07, 0.22), prop(Color("ffe27a"), 0.3, 0.8), Vector3(cos(a) * 0.22, 1.08, sin(a) * 0.22)))
 		"nemuri":
 			var cm := _mesh(_cyl(0.0, 0.42, 0.6), prop(Color("5b6fc2")), Vector3(0.05, 1.05, 0))
 			cm.rotation.z = -0.35
-			body.add_child(cm)
+			prop_root.add_child(cm)
 
 
 func _process(delta: float) -> void:

@@ -220,6 +220,7 @@ func _garden_list() -> Control:
 	return m
 
 
+## カードの絵。3D で撮った assets/gen/rares3d/<id>.png を優先する（無ければ古い平たい絵）
 func _card_texture(id: String) -> Texture2D:
 	var path := RareObake3D.art_path(id)
 	return load(path) if path != "" else null
