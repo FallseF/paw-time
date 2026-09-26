@@ -20,7 +20,7 @@ END=$(python3 -c "import subprocess;print(float(subprocess.check_output(['/opt/h
 # (字幕, 開始, 終了, 高さ割合)
 CAPS=(
   "hook $(t 0 0.1) $(t 1 -0.1) 0.40"
-  "scoop $(t 1 0.3) $(t 2 -0.1) 0.36"
+  "scoop $(t 1 0.3) $(t 2 -0.1) 0.78"
   "sleep $(t 2 0.2) $(t 3 -0.1) 0.36"
   "dream $(t 3 0.2) $(t 4 -0.1) 0.72"
   "hatch $(t 4 0.2) $(t 5 -0.1) 0.36"
