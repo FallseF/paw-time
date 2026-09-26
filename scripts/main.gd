@@ -4,7 +4,8 @@ extends Node
 const SCREENS := {
 	"morning": preload("res://scripts/screen_morning.gd"),
 	"room": preload("res://scripts/screen_room.gd"),
-	"catch": preload("res://scripts/screen_catch.gd"),
+	"catch": preload("res://scripts/screen_catch3d.gd"),
+	"catch2d": preload("res://scripts/screen_catch.gd"),
 	"sleep": preload("res://scripts/screen_sleep.gd"),
 	"battle": preload("res://scripts/screen_battle.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
@@ -27,7 +28,8 @@ func _ready() -> void:
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade.modulate.a = 0.0
-	go("morning", true)
+	var start := OS.get_environment("OBAKE_START")
+	go(start if SCREENS.has(start) else "morning", true)
 	root.add_child(fade)
 	_maybe_autoshot()
 
