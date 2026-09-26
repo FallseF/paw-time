@@ -1481,6 +1481,10 @@ func _show_morning() -> void:
 	card_box.add_child(btn)
 	if GameState.day == 1:
 		_guide("同じころに寝て、7〜9時間眠るとリズムが上がる。リズムが高いほど庭がよく育つ")
+	elif GameState.day == 3:
+		_guide("上のリズムのメーターをタップすると、ねむり日記が見られる")
+	elif GameState.day == 5:
+		_guide("庭をよこになぞると、ぐるっと見回せる")
 	_card_fit()
 	_pop_card()
 	await get_tree().create_timer(0.4).timeout
