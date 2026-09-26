@@ -74,6 +74,17 @@ static func wrap(l: Label) -> Label:
 	return l
 
 
+## 中身の大きさが変わるたびに fit を呼ぶ（パネルを縮め直して、置き直す係）。
+## 折り返すラベルの高さは、幅が決まったあとのフレームで決まる。Web ではその順番が前後して、
+## 「2 フレーム待ってから縮める」だけだと縦に伸びたまま残ることがある。遅れて変わっても、そのつど合わせ直す。
+static func keep_fit(content: Control, fit: Callable) -> void:
+	var f := func():
+		if is_instance_valid(content) and content.is_inside_tree() and not content.is_queued_for_deletion():
+			fit.call()
+	content.minimum_size_changed.connect(f, CONNECT_DEFERRED)
+	f.call_deferred()
+
+
 static func button(t: String, bg: Color, cb: Callable, fg := Color.WHITE, h := 50, size := 17) -> Button:
 	var b := Button.new()
 	b.text = t

@@ -364,8 +364,7 @@ func _card(it: Dictionary) -> Control:
 	else:
 		sub = tr("Locked")
 	var nl := Kit.text(tr(it.name), 10, INK, true, HORIZONTAL_ALIGNMENT_CENTER)
-	nl.position = Vector2(0, 60)
-	nl.size = Vector2(81, 14)
+	_name_row(nl)
 	nl.clip_text = true
 	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(nl)
@@ -383,6 +382,19 @@ func _card(it: Dictionary) -> Control:
 		b.add_child(nb)
 	b.pressed.connect(func(): _pick(it))
 	return b
+
+
+## 札の名前の行（札の幅いっぱい・写真の下）。入らない長さなら字を小さくして全部見せる（日本語の長い名前が切れないように）。
+## 幅は札に合わせる（アンカー）。木に入る前のラベルは既定の字の大きさで測られて、固定の幅だと横に伸びたまま残るため
+func _name_row(l: Label) -> void:
+	var f := l.get_theme_font("font")
+	var fs := l.get_theme_font_size("font_size")
+	while fs > 7 and f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > 77:
+		fs -= 1
+	l.add_theme_font_size_override("font_size", fs)
+	l.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	l.offset_top = 60
+	l.offset_bottom = 74
 
 
 func _tint_card(t: Dictionary) -> Control:
@@ -406,8 +418,7 @@ func _tint_card(t: Dictionary) -> Control:
 	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(dot)
 	var nl := Kit.text(tr(t.name), 10, INK, true, HORIZONTAL_ALIGNMENT_CENTER)
-	nl.position = Vector2(0, 60)
-	nl.size = Vector2(81, 14)
+	_name_row(nl)
 	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(nl)
 	var p: PackedStringArray = String(t.src).split(":")

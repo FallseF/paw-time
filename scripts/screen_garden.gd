@@ -1603,6 +1603,11 @@ func _build_ui() -> void:
 	card_box = VBoxContainer.new()
 	card_box.add_theme_constant_override("separation", 8)
 	card.add_child(card_box)
+	# 中身の高さが遅れて決まっても（Web）、そのつど縮めて下にそろえ直す
+	Kit.keep_fit(card, func():
+		card.size.y = 0
+		card.position.y = 626 - card.size.y
+		_place_handle())
 
 
 func _refresh_hud() -> void:
@@ -2411,10 +2416,9 @@ func _build_edit_ui() -> void:
 	row2.add_child(done)
 	v.add_child(row2)
 	v.add_child(_link("島をシェアする", _share))
-	await get_tree().process_frame
-	p.size.y = 0
-	await get_tree().process_frame
-	p.position.y = 628 - p.size.y
+	Kit.keep_fit(p, func():
+		p.size.y = 0
+		p.position.y = 628 - p.size.y)
 
 
 func _edit_input(event: InputEvent) -> void:
@@ -2915,6 +2919,7 @@ func _ask_name() -> void:
 		GameState.save()
 		share_ui.queue_free()
 		_share()))
+	box.add_child(_link("やめる", func(): share_ui.queue_free())) # 名前を決めずに、島づくりへ戻る
 
 
 func _style_edit(le: LineEdit) -> void:
@@ -3060,7 +3065,8 @@ func _go_home() -> void:
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("history.replaceState(null, '', location.pathname)")
 	if GameState.has_save() and GameState.load_game():
-		main.go("garden")
+		# はじめての人（シェアのリンクから来た・診断の前）は、診断から。途中なら、その続きから
+		main.go(Onboarding.resume_screen())
 	else:
 		main.go("title")
 

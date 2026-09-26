@@ -195,6 +195,26 @@ func _run() -> void:
 	Reviews.reset()
 	WorkTogether.reset()
 
+	# 5d. 開き直したとき：今日の求人を全部決めてあれば、毎日の知らせは出さない（undecided() は保存を読んでから数える）
+	# 保存を読む流れなので、この段だけ OBAKE_NOSAVE を外す（もとの user://job_board.json は戻す）
+	var jd = load("res://scripts/job_desk.gd") # JobDesk は GameState（autoload）を使うので、読み込みは実行時に
+	var had_board := FileAccess.file_exists(jd.BOARD_PATH)
+	var kept_board := FileAccess.get_file_as_string(jd.BOARD_PATH) if had_board else ""
+	OS.set_environment("OBAKE_NOSAVE", "")
+	jd._board = {}
+	var today: Array = jd.today_jobs()
+	for j in today:
+		jd.decide(j.id, "pass")
+	jd._board = {} # 開き直し（メモリは空、保存には「全部決めた」）
+	var left_after: Array = jd.undecided()
+	_check(not today.is_empty() and left_after.is_empty(), "undecided after reopen should be empty, got %d of %d" % [left_after.size(), today.size()])
+	if had_board:
+		FileAccess.open(jd.BOARD_PATH, FileAccess.WRITE).store_string(kept_board)
+	else:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(jd.BOARD_PATH))
+	jd._board = {}
+	OS.set_environment("OBAKE_NOSAVE", "1")
+
 	# 6. 字（英語・日本語の両方）
 	var fonts := [load("res://assets/fonts/ZenMaruGothic-Bold.ttf"), load("res://assets/fonts/ZenMaruGothic-Black.ttf")]
 	var missing := {}

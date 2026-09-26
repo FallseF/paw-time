@@ -28,6 +28,7 @@ var accepted := 0
 var busy := false
 var note_top := 108 # 知らせのカードの一段目（上の段の札・キセカエ・しごとの下から）
 var work_btn: Button
+var onboard_end := false # はじめての流れの最後（見つけた仕事）を見ているところ
 
 
 func _ready() -> void:
@@ -107,8 +108,9 @@ static func today_jobs() -> Array:
 
 
 static func undecided() -> Array:
+	var list := today_jobs() # 先に今日の顔ぶれ（保存）を読む。開き直した直後は _board が空
 	var dec: Dictionary = _board.get("decided", {})
-	return today_jobs().filter(func(j): return not dec.has(j.id))
+	return list.filter(func(j): return not dec.has(j.id))
 
 
 static func decide(job_id: String, what: String) -> void:
@@ -161,13 +163,18 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 		sheet.queue_free()
 	sheet = PanelContainer.new()
 	sheet.add_theme_stylebox_override("panel", Kit.pill(PAPER, 24, 0.18, Vector2(16, 14)))
-	sheet.position = Vector2(14, 420)
+	sheet.position = Vector2(14, 660) # 画面の下から。高さが決まったら _sheet_fit で下にそろえる
 	sheet.size = Vector2(332, 0)
 	add_child(sheet)
+	# 画面より高くならないように（長い文でも、ボタンが画面の外へ出ない。はみ出す分はスクロール）
+	var sc := ScrollContainer.new()
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.custom_minimum_size = Vector2(300, 0)
+	sheet.add_child(sc)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
-	v.custom_minimum_size = Vector2(300, 0)
-	sheet.add_child(v)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(v)
 	var top := HBoxContainer.new()
 	top.add_child(_text(who, 12, Color("8a5bd6"), true))
 	var sp := Control.new()
@@ -182,18 +189,31 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 	v.add_child(b)
 	for l in links: # [文字, Callable] の小さなリンク
 		v.add_child(_link(l[0], l[1]))
+	var s := sheet
+	Kit.keep_fit(v, func(): _sheet_fit(s, sc, v))
 	await get_tree().process_frame
-	if not is_instance_valid(sheet):
+	if is_instance_valid(b):
+		Kit.nudge(b)
+
+
+const SHEET_MAX_H := 600.0
+var sheet_tw: Tween
+
+
+## シートを中身の高さに縮めて、下（626）にそろえる。中身の高さが変わるたびに呼ばれる（Kit.keep_fit）
+func _sheet_fit(s: PanelContainer, sc: ScrollContainer, v: Control) -> void:
+	if s != sheet or s.is_queued_for_deletion():
 		return
-	sheet.size.y = 0
-	await get_tree().process_frame
-	if not is_instance_valid(sheet):
+	var pad := s.get_theme_stylebox("panel").get_minimum_size().y
+	sc.custom_minimum_size.y = minf(v.get_combined_minimum_size().y, SHEET_MAX_H - pad)
+	s.size = Vector2(332, 0)
+	var y := 626.0 - s.size.y
+	if is_equal_approx(s.position.y, y):
 		return
-	sheet.position.y = 626 - sheet.size.y
-	var y := sheet.position.y
-	sheet.position.y = 660
-	create_tween().tween_property(sheet, "position:y", y, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	Kit.nudge(b)
+	if sheet_tw:
+		sheet_tw.kill()
+	sheet_tw = create_tween()
+	sheet_tw.tween_property(s, "position:y", y, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## 相棒の、画面の上での位置（知らせのカードはここから飛んでくる）
@@ -358,6 +378,10 @@ func _work_pill() -> void:
 	await get_tree().process_frame
 	if is_instance_valid(work_btn):
 		work_btn.position = Vector2(348 - work_btn.size.x, 58)
+		# 2 日目からの「めあて」（庭の右上）は、しごとの左どなりへ（重ならないように）
+		var goals = garden.get("goals_btn")
+		if goals and is_instance_valid(goals):
+			goals.position.x = work_btn.position.x - 6 - goals.size.x
 
 
 func open_work_menu() -> void:
@@ -446,6 +470,7 @@ func _open_viewer() -> void:
 		return
 	if Onboarding.at("found"):
 		Onboarding.advance("done")
+		onboard_end = true
 	jobs = undecided()
 	index = 0
 	accepted = 0
@@ -460,6 +485,9 @@ func _clear_card() -> void:
 
 ## 折り返しの高さが決まってから、中身に合わせて縮める（2 フレーム待つ。庭の _card_fit と同じ）
 func _fit(p: Control) -> void:
+	if not p.has_meta("keep_fit"):
+		p.set_meta("keep_fit", true)
+		Kit.keep_fit(p, func(): p.size.y = 0)
 	for i in 2:
 		await get_tree().process_frame
 		if is_instance_valid(p):
@@ -580,6 +608,10 @@ func _close_viewer() -> void:
 		viewer.queue_free()
 		viewer = null
 	_garden_card(true)
+	# はじめての流れが終わったところ：開き直さなくても、毎日の形（しごとボタン・知らせ）に
+	if onboard_end:
+		onboard_end = false
+		_daily()
 
 
 # ---------------------------------------------------------------- 働いたあとの、ひとこと評価（10 秒）
