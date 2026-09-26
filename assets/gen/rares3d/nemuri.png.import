@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bmubphf41nvwj"
-path="res://.godot/imported/box.png-cb0152a2bde19d19819a61ad81208f23.ctex"
+uid="uid://hglp05nk0ou0"
+path="res://.godot/imported/nemuri.png-6c279b2b6a359c391da5805c8dfbd932.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gen/rares3d/box.png"
-dest_files=["res://.godot/imported/box.png-cb0152a2bde19d19819a61ad81208f23.ctex"]
+source_file="res://assets/gen/rares3d/nemuri.png"
+dest_files=["res://.godot/imported/nemuri.png-6c279b2b6a359c391da5805c8dfbd932.ctex"]
 
 [params]
 
