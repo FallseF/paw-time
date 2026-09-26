@@ -681,8 +681,8 @@ func _slot_button(i: int) -> Button:
 
 
 func _refresh_ui() -> void:
-	e_lbl.text = "困りごとの渦 %d" % int(ceil(sim.ebase_hp))
-	a_lbl.text = "お店 %d" % int(ceil(sim.base_hp))
+	e_lbl.text = "困りごとの渦 %d" % maxi(0, int(ceil(sim.ebase_hp)))
+	a_lbl.text = "お店 %d" % maxi(0, int(ceil(sim.base_hp)))
 	e_hp.value = sim.ebase_hp / sim.ebase_max
 	a_hp.value = sim.base_hp / sim.base_max
 	var mx := sim.energy_max()

@@ -223,6 +223,20 @@ func _build_ui() -> void:
 	zk.custom_minimum_size = Vector2(64, 40)
 	top.add_child(zk)
 
+	# 確認用の早送り（1日すすめる：7時間ねたことにする）
+	var ff := Button.new()
+	ff.text = "早送り ▶▶"
+	ff.flat = true
+	ff.add_theme_font_override("font", font_bold)
+	ff.add_theme_font_size_override("font_size", 11)
+	ff.add_theme_color_override("font_color", Color(0.3, 0.2, 0.3, 0.45))
+	ff.position = Vector2(270, 330)
+	ff.size = Vector2(80, 24)
+	ff.pressed.connect(func():
+		GameState.sleep(7, "")
+		main.go("hatch" if GameState.hatched.size() > 0 else "morning"))
+	add_child(ff)
+
 	var pp := PanelContainer.new()
 	pp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.85), 18))
 	pp.position = Vector2(14, 72)

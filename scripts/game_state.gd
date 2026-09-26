@@ -386,7 +386,7 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 	var r := {"won": won, "shop": si, "stage": st, "coins": 0, "first": false, "orb": false, "lap_up": false, "stats": stats, "daily": false, "join": ""}
 	if won:
 		var first: bool = cleared.get(key, 0) == 0
-		var base: int = int(stg.reward * DefData.lap_mult(lap))
+		var base: int = int(stg.reward * DefData.lap_mult(lap) * (1.5 if stg.get("boss_stage", false) and weekday() == "金" else 1.0))
 		# くり返しは半分、その日4勝目からは4分の1（何度でも遊べるが、稼ぎは逓減）
 		var mult := 1.0 if first else (0.5 if wins_today < 3 else 0.25)
 		r.coins = int(base * mult)

@@ -106,8 +106,25 @@ func _shop_card(si: int, boost_shop: String) -> Control:
 	hs.content_margin_top = 10
 	hs.content_margin_bottom = 10
 	hb.add_theme_stylebox_override("panel", hs)
+	var bgp := "res://assets/gen/c/bg_%s.png" % shop.id
+	if ResourceLoader.exists(bgp):
+		var tex: Texture2D = load(bgp)
+		var at := AtlasTexture.new()
+		at.atlas = tex
+		at.region = Rect2(0, tex.get_height() * 0.12, tex.get_width() * 0.62, tex.get_height() * 0.62)
+		var st := StyleBoxTexture.new()
+		st.texture = at
+		st.content_margin_left = 16
+		st.content_margin_right = 12
+		st.content_margin_top = 44
+		st.content_margin_bottom = 8
+		st.modulate_color = Color(0.85, 0.85, 0.85)
+		hb.add_theme_stylebox_override("panel", st)
 	var hr := HBoxContainer.new()
-	hr.add_child(Kit.text(shop.name, 18, Color.WHITE, true))
+	var nm := Kit.text(shop.name, 18, Color.WHITE, true)
+	nm.add_theme_color_override("font_outline_color", Kit.INK)
+	nm.add_theme_constant_override("outline_size", 7)
+	hr.add_child(nm)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hr.add_child(sp)
@@ -165,6 +182,8 @@ func _stage_row(si: int, st: int) -> Control:
 	var sub := "まかない %d" % int(stage.reward * DefData.lap_mult(GameState.lap))
 	if done:
 		sub = "クリア ×%d ・ " % GameState.clear_count(si, st) + sub
+	if stage.get("boss_stage", false) and GameState.weekday() == "金":
+		sub = "金曜なのでまかない1.5倍 ・ " + sub
 	var ds := GameState.daily_stage()
 	if done and not GameState.daily_done and not ds.is_empty() and ds[0] == si and ds[1] == st:
 		sub = "今日のお手伝い +60 ・ " + sub

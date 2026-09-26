@@ -104,7 +104,7 @@ const ENEMIES := {
 		"line": "くずすと、持ち主のイライラが2つ出てくる"},
 	"kakekomi": {"name": "閉店間際の駆け込み", "weak": "register", "hp": 140, "atk": 28, "rate": 1.0, "range": 0.8, "speed": 2.6, "kb": 1, "drop": 60, "h": 1.0,
 		"line": "終わりぎわに、すごい速さでやってくる"},
-	"oopiku": {"name": "金曜の大ピーク", "weak": "", "hp": 6000, "atk": 90, "rate": 3.0, "range": 1.5, "speed": 0.3, "kb": 5, "drop": 600, "h": 2.4, "area": true, "boss": true,
+	"oopiku": {"name": "金曜の大ピーク", "weak": "", "hp": 6000, "atk": 90, "rate": 3.0, "range": 1.5, "speed": 0.3, "kb": 5, "drop": 600, "h": 3.1, "area": true, "boss": true,
 		"line": "すべての困りごとが、ひとつになってやってくる"},
 }
 
