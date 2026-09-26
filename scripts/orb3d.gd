@@ -119,4 +119,11 @@ func _process(delta: float) -> void:
 	if caught:
 		return
 	core.position.y = 0.06 + sin(_t * 1.7) * 0.03
+	# 跳ねる玉は、跳ぶ前にぐっと縮む（見ていれば読める）
+	if kind == "jumper" and air <= 0.0 and hop_timer < 0.45:
+		core.scale = Vector3(1.25, 0.65, 1.25)
+	else:
+		core.scale = Vector3.ONE
+	# 人見知りは、驚くと震える
+	core.position.x = sin(_t * 60.0) * 0.025 if alarmed > 0.0 else 0.0
 	halo.position.y = core.position.y
