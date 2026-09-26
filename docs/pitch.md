@@ -1,6 +1,6 @@
 # Paw Time ピッチ原稿（3分）
 
-話すのは英語、日本語は意味の確認用。1分あたり約130語で、合計約390語。
+話すのは英語、日本語は意味の確認用。1分あたり約130語で、合計約390語（3分）。
 公開審査項目は「Potential Impact」「Creativity and Innovation」「Technical Architecture & Viability」。背景の出典・数値の対象・主張できる範囲は [ピッチ用の調査メモ](pitch-evidence.md) を参照。
 
 > 発表前の確認：現在のデモ用ゲーム処理は勤務時間に応じて網が増える。下記の「Working longer never earns more」は現行実装と一致しないため、報酬ルールまたは原稿を揃える。
@@ -31,10 +31,10 @@
 > During your real shift, your cat works too — in its own tiny shop.
 > But it gets tired. After seven and a half hours it says, *"Let's both head home."*
 > Working longer never earns more. Resting does.
-> After work, a ten-second review. At night, you scoop glowing orbs, and in the morning they hatch.
-> Build your island, dress up your cat, and visit a friend's island by raft or helicopter.
+> Then a ten-second review, a night scoop, a morning hatch.
+> Build your island and visit friends by raft or helicopter.
 
-（おばネコが毎朝、合う求人を3〜4件持ってくる。受ければカレンダーに入る。本物のシフト中はおばネコも働くが、疲れて「一緒に帰ろ」と言う。長く働いても得をしない。休むと得をする。勤務後に10秒のレビュー、夜にすくい、朝に孵化。島とキセカエ、友達の島へ。）
+（おばネコが毎朝、合う求人を3〜4件持ってくる。受ければカレンダーに入る。本物のシフト中はおばネコも働くが、疲れて「一緒に帰ろ」と言う。長く働いても得をしない。休むと得をする。10秒のレビュー、夜のすくい、朝の孵化。島をつくって、いかだやヘリで友達の島へ。）
 
 ## 1:10–1:45 なぜゲームか
 
@@ -60,12 +60,13 @@
 
 > Our rules: workers never pay, wages are never touched, and we only sell cosmetics.
 > Shops never get a score on a person — only results and aggregates.
+> Workers can talk to their cat. **Your cat never passes your words to the shop** — only anonymous totals, or what you choose to tell.
 > Shop islands only grow from real worker reviews; money can't buy them, and nothing bad is ever shown.
 > **Our ask: a four-week pilot with three to five shops.**
 > We'll measure daily use, fill rate, no-shows, repeat rate — and whether the next-day signal predicts who comes back.
 > Paw Time. Make work a little brighter.
 
-（守る線：働く人は払わない、賃金には触らない、売るのは見た目だけ。お店に人の点数は渡さない、渡すのは結果と集計だけ。店の島はレビューだけで育ち、お金では買えず、悪いものは出さない。お願い：お店3〜5軒で4週間の試験運用。毎日開く率、埋まる率、急なお休み、また来る率、そして翌日の信号が「また来る人」を当てるかを測る。）
+（守る線：働く人は払わない、賃金には触らない、売るのは見た目だけ。お店に人の点数は渡さない、渡すのは結果と集計だけ。おばネコに話せる。**おばネコは、あなたの言葉をお店に渡さない**。届くのは名前を伏せた集計か、本人が伝えると決めたことだけ。店の島はレビューだけで育ち、お金では買えず、悪いものは出さない。お願い：お店3〜5軒で4週間の試験運用。毎日開く率、埋まる率、急なお休み、また来る率、そして翌日の信号が「また来る人」を当てるかを測る。）
 
 ---
 
@@ -77,9 +78,11 @@
 | なぜゲーム？ | 毎日開く理由と、キャラクターが言うと人が休むこと。どちらも普通の求人アプリには真似できない |
 | データは大丈夫？ | 人の点数はお店に渡さない。外に出るのは本人が選んだものと集計だけ。5人未満は出さない。社内での利用は公表した目的の範囲 |
 | 本当に毎日開く？ | 今は仮説。デモの Live は試遊者の本物、12週間の数字はシミュレーションと明記している。試験運用で確かめる |
+| おばネコとのチャットは何に使う？ | 社内では合う仕事探しと改善に使う（初回に同意、「ないしょモード」なら何も使わない）。お店に渡すのは5人以上そろった集計と、本人が伝えると決めた困りごとだけ。生の文は渡さない。健康などの話は取り出さない |
 | 長期のバイトに移ったら？ | 遊びの芯は登録したシフトで動く。求人の知らせは切れる。お店に長期で採られて「卒業」する形も用意する |
 | 収益は？ | お店側：求人掲載、急な穴埋め、改善レポート、長期採用の成功報酬。働く人からは見た目の品の買い切りのみ（任意） |
 
 ## 言わないこと
+- 「おばネコは告げ口しない」「自分とおばネコだけが見る」（社内では使うので不正確）。代わりに「おばネコは、あなたの言葉をお店に渡さない」。
 - タウンワークスキマの中止理由の推測（公表されている「開発優先順位」以上は言わない）。
 - シミュレーションの数字を実績のように言うこと。
