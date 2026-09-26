@@ -151,7 +151,7 @@ func _shelf() -> Control:
 	cam.position = Vector3(0, 0.8, 5.0)
 	cam.fov = 30
 	w.add_child(cam)
-	cam.look_at(Vector3(0, 0.45, 0))
+	cam.look_at_from_position(cam.position, Vector3(0, 0.45, 0))
 	for i in NORMAL.size():
 		var id: String = NORMAL[i]
 		var pos := Vector3((i - 2) * 1.05, 0, 0)
