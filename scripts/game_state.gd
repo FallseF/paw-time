@@ -61,6 +61,9 @@ var gifted := false
 var rare_pending: Array = [] # 条件を満たしたが、まだ生まれていないレア（1晩2体まで）
 const RARES_PER_NIGHT := 2
 var received := false
+## マイおばけ猫（はじめての診断で決まる相棒）。{type_id, look, answers, axes}。未診断なら空。
+## 週のやり直し（reset）では消えない。user://my_obake.json（QuizResult）に保存する。
+var my_obake := {}
 
 
 func _ready() -> void:
@@ -69,6 +72,7 @@ func _ready() -> void:
 	for r in Rares.LIST:
 		ALL[r.id] = {"name": r.name, "type": "rare", "desc": r.desc, "hint": r.hint, "group": r.group}
 	reset()
+	my_obake = QuizResult.load_result()
 
 
 func info(id: String) -> Dictionary:
@@ -331,3 +335,10 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 		"avg_sleep_month": total / max(1, sleep_hist.size()),
 		"nights": sleep_hist.size(),
 	}
+
+
+## 診断の結果を相棒として決めて、保存する
+func set_my_obake(result: Dictionary) -> void:
+	my_obake = result.duplicate(true)
+	QuizResult.save(my_obake)
+	changed.emit()

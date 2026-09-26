@@ -13,6 +13,7 @@ const SCREENS := {
 	"battle": preload("res://scripts/screen_battle.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"summary": preload("res://scripts/screen_summary.gd"),
+	"quiz": preload("res://scripts/screen_quiz.gd"), # マイおばけ猫 診断（OBAKE_START=quiz）
 }
 
 var root: Control
