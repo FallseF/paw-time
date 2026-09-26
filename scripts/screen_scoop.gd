@@ -1390,6 +1390,7 @@ func _tear_after_catch() -> void:
 	_refresh_ui()
 	busy = false
 	if selected == "":
+		_check_pond_clear()
 		_end_night("ポイを使い切った")
 	else:
 		_after_catch()
@@ -1419,15 +1420,24 @@ func _after_catch() -> void:
 	if mods.festival and count >= 20 and count - 1 < 20:
 		_play("fanfare")
 		_banner("特賞！", Color("ffd23f"))
-	if _visible_count() == 0 and supply <= 0 and telegraph_left <= 0.0:
-		# 池の玉をぜんぶすくいきった（虹も逃さず）
-		if sunk == 0 and not practice:
-			pond_cleared = true
-			GameState.grant({"shards": {"rainbow": 1}})
-			_play("fanfare")
-			_banner("池をすくいきった！", Color("b8ffcf"))
+	if _pond_empty():
+		_check_pond_clear()
 		await get_tree().create_timer(1.2).timeout
 		_end_night("今夜の玉は、ぜんぶすくった" if pond_cleared else "今夜の玉は、もうおしまい")
+
+
+func _pond_empty() -> bool:
+	return _visible_count() == 0 and supply <= 0 and telegraph_left <= 0.0
+
+
+## 池の玉をぜんぶすくいきった（虹も逃さず）
+func _check_pond_clear() -> void:
+	if pond_cleared or sunk > 0 or practice or not _pond_empty():
+		return
+	pond_cleared = true
+	GameState.grant({"shards": {"rainbow": 1}})
+	_play("fanfare")
+	_banner("池をすくいきった！", Color("b8ffcf"))
 
 
 func _partner_react(happy: bool) -> void:
@@ -1929,6 +1939,7 @@ func _end_night(reason: String) -> void:
 	if practice:
 		GameState.practice = false
 		GameState.records["practice_best"] = max(GameState.records.get("practice_best", 0), best_combo)
+		GameState.save_game()
 		await get_tree().create_timer(0.4).timeout
 		_show_result("練習おしまい", false)
 		return
@@ -1968,7 +1979,8 @@ func _show_result(reason: String, was_best: bool) -> void:
 	var row := HFlowContainer.new()
 	row.alignment = FlowContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("h_separation", 4)
-	for o in caught:
+	for i in mini(caught.size(), 14):
+		var o: Dictionary = caught[i]
 		var dot := Panel.new()
 		dot.custom_minimum_size = Vector2(18, 18)
 		var sb := StyleBoxFlat.new()
@@ -2038,8 +2050,17 @@ func _show_result(reason: String, was_best: bool) -> void:
 		GameState.practice = true
 		main.go("catch"))
 	v.add_child(pr)
+	if caught.size() > 14:
+		row.add_child(_text("+%d" % (caught.size() - 14), 13, Color("8a7a88")))
 	await get_tree().process_frame
 	card.reset_size()
+	# 長すぎるときは、ランクと称号の行をしまう
+	if card.size.y > 620:
+		for c in v.get_children():
+			if c is Label and (c.text == _rank_text() or c.text.begins_with("次は")):
+				c.visible = false
+		await get_tree().process_frame
+		card.reset_size()
 	card.size.x = 312
 	card.position.y = clampf((640.0 - card.size.y) / 2.0, 8.0, 200.0)
 	card.scale = Vector2(0.85, 0.85)
@@ -2245,7 +2266,7 @@ func demo_end() -> void:
 
 
 func demo_fill() -> void:
-	for t in ["register", "dish", "hall", "kitchen", "stock", "dish", "hall"]:
+	for t in ["register", "dish", "hall", "kitchen", "stock", "dish", "hall", "register", "dish", "hall", "kitchen", "stock", "dish", "hall", "register", "dish", "hall", "kitchen", "stock", "dish", "hall", "stock", "dish", "hall", "kitchen"]:
 		GameState.orbs.append({"type": t, "kind": GameState.orb_kind_for(t), "quality": 2})
 	GameState.orbs.append({"type": "rare", "kind": "rainbow", "quality": 1})
 	count = GameState.orbs.size()

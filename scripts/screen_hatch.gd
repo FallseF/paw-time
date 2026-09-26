@@ -323,6 +323,7 @@ func _next() -> void:
 	for i in orbs.size():
 		if i != index and is_instance_valid(orbs[i]):
 			orbs[i].visible = false
+	orb.visible = true
 	# 玉が前に出て、震える
 	var tw := create_tween()
 	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

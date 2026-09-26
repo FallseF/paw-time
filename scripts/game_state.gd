@@ -813,6 +813,13 @@ func sleep(hours: int) -> void:
 	first_role_today = false
 	first_store_today = false
 	tonight = {}
+	# 週が変わる前に、できていた「今週のおねがい」は受け取っておく
+	var auto_claimed := 0
+	if (day + 1) % 7 == 0:
+		for q in week_quests():
+			if quest_done(q) and not claimed.has(q.key):
+				claim_quest(q)
+				auto_claimed += 1
 	day += 1
 	if day % 7 == 0:
 		stores_week = {}
@@ -831,6 +838,8 @@ func sleep(hours: int) -> void:
 		morning_report.append("紙のポイは %d 本でいっぱい（使わないと増えない）" % FREE_POI_CAP)
 	if rare_pending.size() > 0:
 		morning_report.append("まだかえっていないレアの気配が %d つ…" % rare_pending.size())
+	if auto_claimed > 0:
+		morning_report.append("先週のおねがい %d つのごほうびを受け取った" % auto_claimed)
 	if day % 7 == 0:
 		morning_report.push_front("第%d週のまとめ：すくった玉 %d・新しい出会い %d" % [week_no() - 1, records.total - int(week_snap.total), seen.size() - int(week_snap.seen)])
 		week_snap = _make_snap()
@@ -914,6 +923,9 @@ func week_quests() -> Array:
 		{"id": "festival", "n": 10, "text": "祭りで10こすくう"},
 		{"id": "seen", "n": 2, "text": "新しいおばけに2体会う"},
 	]
+	# 図鑑がほぼ埋まっていたら「新しい出会い」は出さない
+	if ALL.size() - int(week_snap.get("seen", seen.size())) < 3:
+		pool = pool.filter(func(q): return q.id != "seen")
 	var out: Array = []
 	var idx: Array = range(pool.size())
 	for i in 3:
