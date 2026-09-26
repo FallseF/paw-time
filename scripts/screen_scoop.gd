@@ -821,13 +821,19 @@ func _process(delta: float) -> void:
 			m.emission_enabled = true
 			m.emission = Color("ffd23f")
 			m.emission_energy_multiplier = 2.2
+			hint.text = "ぴったり。いま離す！"
+			hint.add_theme_color_override("font_color", Color("ffe27a"))
 		elif near < POI_R:
 			m.emission_enabled = true
 			m.emission = Color("ffffff")
 			m.emission_energy_multiplier = 0.9
+			hint.text = "離せばすくえる。まんなかなら、ぴったり"
+			hint.add_theme_color_override("font_color", Color.WHITE)
 		else:
 			m.emission = rim_col
 			m.emission_energy_multiplier = 0.4
+			hint.text = "押したまま、玉の下へ"
+			hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
 	water_mat.set_shader_parameter("ripple_t", ripple_t)
 	var ps: Array[Vector4] = []
 	var cs: Array[Vector4] = []

@@ -793,7 +793,7 @@ func _start_act(w: Dictionary) -> void:
 		w.target = sp.pos + Vector3(randf_range(-0.12, 0.12), 0, randf_range(-0.12, 0.12))
 		w.next_act = sp.act
 	else:
-		w.target = Vector3(randf_range(-2.6, 2.6), 0, randf_range(-1.2, 2.2))
+		w.target = Vector3(randf_range(-2.8, 2.8), 0, randf_range(-1.0, 2.8))
 		w.next_act = ""
 
 
@@ -808,6 +808,7 @@ func _end_act(w: Dictionary) -> void:
 
 ## 庭のおばけをタップすると、跳ねてひとこと
 var orbit := 0.0
+var cam_v := -1.6
 
 
 ## 庭をよこになぞると、ぐるっと少し回して見られる
@@ -1113,6 +1114,11 @@ func _card_fit() -> void:
 	await get_tree().process_frame
 	card.position.y = 626 - card.size.y
 	_place_handle()
+	# カードが低いときは、庭を画面のまんなかへ
+	if not busy and not card_hidden:
+		var k := clampf((card.size.y - 140.0) / 150.0, 0.0, 1.0)
+		cam_v = lerpf(-0.7, -1.6, k)
+		create_tween().tween_property(cam, "v_offset", cam_v, 0.4).set_trans(Tween.TRANS_SINE)
 
 
 var handle: Button
@@ -1146,7 +1152,7 @@ func _toggle_card() -> void:
 	card.visible = not card_hidden
 	_place_handle()
 	var tw := create_tween().set_parallel()
-	tw.tween_property(cam, "v_offset", -0.7 if card_hidden else -1.6, 0.4).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(cam, "v_offset", -0.7 if card_hidden else cam_v, 0.4).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(cam, "fov", 42.0 if card_hidden else 52.0, 0.4).set_trans(Tween.TRANS_SINE)
 
 
@@ -1154,7 +1160,7 @@ func _pop_card() -> void:
 	if card_hidden:
 		card_hidden = false
 		card.visible = true
-		cam.v_offset = -1.6
+		cam.v_offset = cam_v
 		cam.fov = 52.0
 	card.pivot_offset = Vector2(166, 200)
 	card.scale = Vector2(0.96, 0.96)
@@ -1401,7 +1407,7 @@ func _focus(at: Vector3, mode: int) -> void:
 		to = to.looking_at(at + Vector3(0, 0.4, 0), Vector3.UP)
 	var tw := create_tween().set_parallel()
 	tw.tween_property(cam, "transform", to, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_property(cam, "v_offset", -0.4 if mode == 1 else -1.6, 0.7)
+	tw.tween_property(cam, "v_offset", -0.4 if mode == 1 else cam_v, 0.7)
 	await tw.finished
 
 

@@ -56,6 +56,10 @@ func _ready() -> void:
 		orbs.append(o)
 	header.text = "朝だ。光る玉が %d 個" % n_orbs
 	next_btn.text = "玉をひらく"
+	# 最初の玉は、待たずにひらく
+	await get_tree().create_timer(0.7).timeout
+	if index == 0 and not busy and is_inside_tree():
+		_next()
 
 
 func _build_world() -> void:
