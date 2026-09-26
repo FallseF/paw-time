@@ -131,6 +131,7 @@ var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい�
 var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
 var stall_claimed := false
+var force_dream := false # 宣伝動画用
 var quiet := false # 早送り中は知らせを出さない
 var newcomers: Array = [] # けさ初めて来た子（庭で縁側から出てくる）
 var work_hist: Array = [] # その日に実際に働いたか
@@ -690,6 +691,9 @@ func sleep(bed: int, wake: int) -> void:
 		last_night.visitor = "lantern"
 	# 夢：リズムが整っていて、よく眠った夜
 	dream_pending = h >= 7.0 and ((tier() >= 3 and randf() < 0.75) or (tier() == 2 and randf() < 0.45))
+	if force_dream:
+		dream_pending = true
+		force_dream = false
 	# 条件を満たしたレアが生まれる
 	var have := seen.duplicate()
 	for rid in rare_pending:

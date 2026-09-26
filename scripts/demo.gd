@@ -178,6 +178,7 @@ func _promo() -> void:
 	# 2) おやすみ → 夢へ（リズムが整っている夜）
 	_mark("2)")
 	GameState.rhythm = 88
+	GameState.force_dream = true
 	GameState.bed_hist = [330, 330, 330]
 	GameState.scooped_tonight = true
 	await _go("sleep")
