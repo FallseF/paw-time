@@ -77,6 +77,14 @@ func _ready() -> void:
 		for r in Rares.LIST:
 			if r.group == g:
 				grid.add_child(_card(r))
+	var tm := MarginContainer.new()
+	tm.add_theme_constant_override("margin_left", 90)
+	tm.add_theme_constant_override("margin_right", 90)
+	tm.add_theme_constant_override("margin_top", 10)
+	tm.add_child(Kit.button("タイトルへ（保存ずみ）", Color(1, 1, 1, 0.9), func():
+		GameState.save()
+		main.go("title"), Color("8a7a88"), 36, 12))
+	col.add_child(tm)
 	var pad := Control.new()
 	pad.custom_minimum_size = Vector2(0, 30)
 	col.add_child(pad)
