@@ -172,9 +172,103 @@ func _shelf() -> Control:
 		var l := _text(("%s\nLv%d" % [GameState.info(id).name, GameState.level_of(id)]) if GameState.seen.has(id) else "？？？", 11, Color("6a5f70"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.custom_minimum_size = Vector2(66, 18)
+		if GameState.seen.has(id):
+			l.mouse_filter = Control.MOUSE_FILTER_STOP
+			l.gui_input.connect(func(e):
+				if (e is InputEventMouseButton or e is InputEventScreenTouch) and e.pressed:
+					_show_normal(id))
 		names.add_child(l)
 	v.add_child(names)
+	var tip := _text("名前をタップで くわしく", 11, Color("9a8e98"))
+	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(tip)
 	return v
+
+
+## ふつうのおばけの、育ち具合
+func _show_normal(id: String) -> void:
+	if detail:
+		detail.queue_free()
+	detail = Control.new()
+	detail.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(detail)
+	var dim := ColorRect.new()
+	dim.color = Color(0.1, 0.08, 0.15, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(e):
+		if e is InputEventMouseButton and e.pressed:
+			detail.queue_free()
+			detail = null)
+	detail.add_child(dim)
+	var p := PanelContainer.new()
+	var st := _pill(Color.WHITE, 24)
+	st.content_margin_top = 16
+	st.content_margin_bottom = 18
+	p.add_theme_stylebox_override("panel", st)
+	p.position = Vector2(30, 130)
+	p.size = Vector2(300, 0)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	detail.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	p.add_child(v)
+	var box := SubViewportContainer.new()
+	box.stretch = true
+	box.custom_minimum_size = Vector2(276, 150)
+	var vp := SubViewport.new()
+	vp.own_world_3d = true
+	vp.transparent_bg = true
+	vp.msaa_3d = Viewport.MSAA_4X
+	box.add_child(vp)
+	var w := Node3D.new()
+	vp.add_child(w)
+	var env := Environment.new()
+	env.background_mode = Environment.BG_CLEAR_COLOR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("fff1e0")
+	env.ambient_light_energy = 0.45
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	var we := WorldEnvironment.new()
+	we.environment = env
+	w.add_child(we)
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-35, 25, 0)
+	sun.light_energy = 0.6
+	w.add_child(sun)
+	var cam := Camera3D.new()
+	cam.position = Vector3(0, 0.9, 3.4)
+	cam.fov = 32
+	w.add_child(cam)
+	cam.look_at_from_position(cam.position, Vector3(0, 0.6, 0))
+	var o := Obake3D.new().setup(id)
+	o.set_level(GameState.level_of(id))
+	w.add_child(o)
+	v.add_child(box)
+	var info: Dictionary = GameState.info(id)
+	var own: Dictionary = GameState.owned.get(id, {"level": 1, "xp": 0, "count": 1})
+	var n := _text("%s  Lv%d" % [info.name, own.level], 24, Color("2a2233"), font_black)
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(n)
+	var lines: Array = []
+	if own.level < GameState.MAX_LEVEL:
+		lines.append("次のLvまで あと %d（ていねいな玉ほど育つ）" % (GameState.xp_to_next(own.level) - own.xp))
+	else:
+		lines.append("Lv5（王冠）。かぶると、かけらになる")
+	lines.append("これまでに %d 体" % own.count)
+	lines.append("相棒にすると：" + GameState.PARTNER_SKILL[id])
+	for t in lines:
+		var l := _text(t, 13, Color("6a5f70"))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		v.add_child(l)
+	var d := _text(info.desc, 14, Color("4a3f52"))
+	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	v.add_child(d)
+
+
+func demo_normal() -> void:
+	_show_normal("receipt")
 
 
 func _records() -> Control:
