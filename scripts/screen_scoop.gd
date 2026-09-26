@@ -1353,7 +1353,7 @@ func _lift() -> void:
 	_partner_react(true)
 	if not practice and not record_announced and combo > GameState.records.best_combo and combo >= 3 and GameState.records.nights > 0:
 		record_announced = true
-		_float_text("最高コンボ更新！", Vector2(180, 180), Color("ffd23f"), 20)
+		_float_text("最高コンボ更新！", Vector2(180, 215), Color("ffd23f"), 20)
 	var tw2 := create_tween().set_parallel()
 	var back_t := 0.45 if special else 0.3
 	tw2.tween_property(cam, "transform", cam_base, back_t).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -1412,11 +1412,11 @@ func _after_catch() -> void:
 	# コンボのごほうび
 	if combo >= 5 and not rainbow_done_combo:
 		rainbow_done_combo = true
-		_float_text("5コンボ！虹の気配", Vector2(180, 150), Color("fff2a8"))
+		_float_text("5コンボ！虹の気配", Vector2(180, 230), Color("fff2a8"))
 		await get_tree().create_timer(0.8).timeout
 		_start_rainbow()
 	if combo == 8 or combo == 9:
-		_float_text("名人！", Vector2(180, 170), Color("ffd23f"))
+		_float_text("名人！", Vector2(180, 245), Color("ffd23f"))
 	if mods.festival and count >= 12 and count - 1 < 12:
 		_play("fanfare")
 		_banner("祭り達成！", Color("ffb35c"))
@@ -1777,7 +1777,7 @@ func _banner_small(text: String, color: Color) -> void:
 
 
 func _toast(text: String) -> void:
-	_float_text(text, Vector2(180, 460), Color(1, 1, 1, 0.9), 14)
+	_float_text(text, Vector2(180, 412), Color(1, 1, 1, 0.9), 14)
 
 
 func _float_text(text: String, at: Vector2, color: Color, size := 18) -> void:
