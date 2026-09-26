@@ -1303,11 +1303,16 @@ func _lift() -> void:
 			q += 1
 		if q >= 2:
 			clean_count += 1
+		# 5コンボ以上の玉は、★がもうひとつ（続けるほど育つ）
+		if combo >= 5:
+			q = mini(q + 1, 3)
 		if o.kind == "rainbow":
 			rainbow_count += 1
 		if o.kind == "gold":
 			gold_count += 1
 		caught.append({"type": o.data.type, "kind": o.kind, "quality": q})
+	if combo >= 5:
+		tags.append("コンボ★")
 	if gentle:
 		tags.append("そっと")
 	if not centered_ids.is_empty():
