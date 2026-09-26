@@ -252,6 +252,8 @@ func _build_ui() -> void:
 	next_btn.add_theme_font_size_override("font_size", 18)
 	for k in ["normal", "hover", "pressed"]:
 		next_btn.add_theme_stylebox_override(k, _pill(Color("ff8a5b"), 25))
+	next_btn.add_theme_stylebox_override("disabled", _pill(Color(1.0, 0.54, 0.36, 0.55), 25))
+	next_btn.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.8))
 	next_btn.add_theme_color_override("font_color", Color.WHITE)
 	next_btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	next_btn.pressed.connect(_next)
