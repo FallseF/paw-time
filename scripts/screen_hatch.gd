@@ -476,7 +476,9 @@ func _open_all() -> void:
 			lvups += 1
 		var l := _text("● %s%s%s" % [GameState.info(id).name, (" ×%d" % a.n) if a.n > 1 else "", tag], 14, Color("e85a4f") if a.new else Color("2a2233"))
 		l.autowrap_mode = TextServer.AUTOWRAP_OFF
-		l.custom_minimum_size = Vector2(145, 0)
+		l.custom_minimum_size = Vector2(138, 0)
+		l.clip_text = true
+		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		grid.add_child(l)
 	if lvups > 0:

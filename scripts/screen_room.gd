@@ -29,6 +29,7 @@ func _ready() -> void:
 		_show_report()
 	if GameState.phase == "morning":
 		GameState.phase = "room"
+		GameState.save_game() # 朝を見終えたことを残す（開き直しても朝をくり返さない）
 
 
 # ---------- 3D の休憩室 ----------

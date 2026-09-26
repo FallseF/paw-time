@@ -1263,6 +1263,7 @@ func _lift() -> void:
 	jar.scale = Vector2(1.08, 1.08)
 	create_tween().tween_property(jar, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if last_gasp:
+		_refresh_ui() # おだいのごほうびを先に受け取ってから、次のポイを選ぶ
 		_float_text("ぎりぎりセーフ！でも紙が…", Vector2(180, 300), Color("ffd6a8"), 18)
 		await get_tree().create_timer(0.35).timeout
 		_tear_after_catch()
@@ -1814,7 +1815,10 @@ func _show_result(reason: String, was_best: bool) -> void:
 	elif goal_done:
 		lines.append("おだい達成：%s" % GameState.reward_text(goal.reward))
 	for line in lines:
-		v.add_child(_text(line, 15, Color("4a3f52")))
+		var ll := _text(line, 15, Color("4a3f52"))
+		ll.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		ll.custom_minimum_size = Vector2(268, 0)
+		v.add_child(ll)
 	v.add_child(_text(_rank_text(), 14, Color("8b7bff")))
 	if GameState.title_index() > title_before:
 		var tl := _text("称号が「%s」になった！" % GameState.title_name(), 17, Color("e8603c"), font_black)
@@ -2036,3 +2040,13 @@ func demo_rainbow() -> void:
 
 func demo_end() -> void:
 	_end_night("帰り道")
+
+
+func demo_fill() -> void:
+	for t in ["register", "dish", "hall", "kitchen", "stock", "dish", "hall"]:
+		GameState.orbs.append({"type": t, "kind": GameState.orb_kind_for(t), "quality": 2})
+	GameState.orbs.append({"type": "rare", "kind": "rainbow", "quality": 1})
+	count = GameState.orbs.size()
+	best_combo = 6
+	clean_count = 5
+	rainbow_count = 1
