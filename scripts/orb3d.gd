@@ -5,7 +5,7 @@ extends Node3D
 ##   normal 素直 / school 群れ（小さい） / shy 人見知り（速いポイから逃げる） / jumper 跳ねる / heavy 重い
 ##   rainbow 虹（少しのあいだだけ浮かぶ） / gold 祭りの金の玉
 
-const KIND_SIZE := {"normal": 1.0, "school": 0.62, "shy": 0.9, "jumper": 0.95, "heavy": 1.35, "rainbow": 1.1, "gold": 1.15}
+const KIND_SIZE := {"normal": 1.0, "school": 0.72, "shy": 0.9, "jumper": 0.95, "heavy": 1.35, "rainbow": 1.1, "gold": 1.15}
 const KIND_WEIGHT := {"normal": 0.4, "school": 0.17, "shy": 0.34, "jumper": 0.36, "heavy": 0.7, "rainbow": 0.45, "gold": 0.4}
 const KIND_SPEED := {"normal": 0.32, "school": 0.4, "shy": 0.3, "jumper": 0.36, "heavy": 0.16, "rainbow": 0.5, "gold": 0.4}
 
