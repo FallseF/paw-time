@@ -1013,6 +1013,8 @@ func _build_ui() -> void:
 	zk.custom_minimum_size.x = 64
 	top.add_child(zk)
 	flow_label = RichTextLabel.new() # 使わない（互換のため）
+	flow_label.visible = false
+	add_child(flow_label)
 
 	# くわしく（リズムのことばをタップしたときだけ）
 	meters = PanelContainer.new()
@@ -1073,7 +1075,7 @@ func _build_ui() -> void:
 
 func _refresh_hud() -> void:
 	top_day.text = GameState.day_label()
-	rhythm_chip.text = "%s %s" % [["☁", "☾", "☽", "★"][GameState.tier()], GameState.tier_name()]
+	rhythm_chip.text = "眠り：%s" % GameState.tier_name()
 	for k in ["normal", "hover", "pressed", "focus"]:
 		rhythm_chip.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.92), 19, 0.14, Vector2(12, 4)))
 	rhythm_chip.add_theme_color_override("font_color", GameState.TIER_COLOR[GameState.tier()].darkened(0.35))
