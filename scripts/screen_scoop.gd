@@ -927,16 +927,36 @@ func _process(delta: float) -> void:
 	for o: Orb3D in orbs:
 		if o.caught:
 			continue
-		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta
+		# 玉にも性格がある（色＝仕事の種類）
+		#  レジ：ピッと急に動いて止まる／泡：ふわふわ、あまり逃げない／お盆：まっすぐ滑る
+		#  キッチン：小刻みにはねる／品出し：重くて、ほとんど動かない／虹：ゆっくり輪をかく
+		var t: String = o.data.type
+		var noise: float = {"hall": 0.15, "stock": 0.25, "dish": 0.8, "kitchen": 1.2}.get(t, 0.6)
+		var flee: float = {"dish": 0.4, "stock": 0.1, "hall": 1.3, "register": 1.2}.get(t, 1.0)
+		var vmax: float = {"stock": 0.45, "dish": 0.8, "hall": 1.25}.get(t, 1.0)
+		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta * noise
+		if t == "rare":
+			steer += Vector3(-o.position.z, 0, o.position.x).normalized() * 0.4 * delta
 		# 水中でポイが近くにあると、少し逃げる
 		if pressed and not o.data.get("dream", false):
 			var away: Vector3 = o.position - poi.position
 			away.y = 0
 			var d: float = away.length()
 			if d < 0.7 and d > 0.001:
-				steer += away.normalized() * (0.7 - d) * 1.0 * delta
-		o.vel = (o.vel + steer).limit_length([0.32, 0.26, 0.21, 0.17][GameState.tier()]) # よく眠ると、水面がしずか
+				steer += away.normalized() * (0.7 - d) * flee * delta
+		var cap: float = [0.32, 0.26, 0.21, 0.17][GameState.tier()] * vmax # よく眠ると、水面がしずか
+		if t == "register":
+			var dt: float = o.get_meta("dash", randf() * 2.0) - delta
+			if dt <= 0:
+				dt = randf_range(1.4, 2.4)
+				o.vel += Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized() * 0.5
+			o.set_meta("dash", dt)
+			cap *= 1.0 if dt > 1.1 else 2.2
+			o.vel *= 1.0 - 1.5 * delta
+		o.vel = (o.vel + steer).limit_length(cap)
 		o.position += o.vel * delta
+		if t == "kitchen":
+			o.core.position.y = 0.06 + absf(sin(_bt * 7.0 + o.position.x * 5.0)) * 0.07
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
 		if e.length() > 0.8:
 			o.vel -= Vector3(e.x, 0, e.y).normalized() * 0.6 * delta * 10.0
