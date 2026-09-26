@@ -53,6 +53,8 @@ func _setup_rich() -> void:
 		for st in DefData.shop(si).stages.size():
 			GameState.cleared[DefData.stage_key(si, st)] = 1
 	GameState.regen_bonus = 1.25
+	GameState.total_battles = 12
+	GameState.scooped_tonight = false
 
 
 func _process(_d: float) -> void:
