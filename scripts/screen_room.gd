@@ -16,6 +16,9 @@ var card_body: Label
 var actions: VBoxContainer
 var report: PanelContainer
 var card: PanelContainer
+var quest_btn: Button
+var quest_panel: Control
+var poi_panel: PanelContainer
 
 
 func _ready() -> void:
@@ -393,6 +396,7 @@ func _build_ui() -> void:
 		zk.add_child(dot)
 
 	var pp := PanelContainer.new()
+	poi_panel = pp
 	pp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.85), 18))
 	pp.position = Vector2(12, 66)
 	add_child(pp)
@@ -402,6 +406,17 @@ func _build_ui() -> void:
 	poi_row.add_theme_constant_override("v_separation", 0)
 	pp.add_child(poi_row)
 
+	quest_btn = Button.new()
+	quest_btn.focus_mode = Control.FOCUS_NONE
+	quest_btn.position = Vector2(12, 112)
+	quest_btn.add_theme_font_override("font", font_black)
+	quest_btn.add_theme_font_size_override("font_size", 13)
+	for k in ["normal", "hover", "pressed"]:
+		quest_btn.add_theme_stylebox_override(k, _pill(Color(0.16, 0.13, 0.22, 0.85), 16))
+	quest_btn.add_theme_color_override("font_color", Color("ffe27a"))
+	quest_btn.add_theme_color_override("font_hover_color", Color("ffe27a"))
+	quest_btn.pressed.connect(_show_quests)
+	add_child(quest_btn)
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.97), 24))
 	card.position = Vector2(12, 400)
@@ -435,6 +450,15 @@ func _dot(c: Color) -> Panel:
 
 
 func _render() -> void:
+	var qs := GameState.week_quests()
+	var done := 0
+	for q in qs:
+		if GameState.claimed.has(q.key):
+			done += 1
+	var ready := GameState.quests_claimable()
+	quest_btn.text = "今週のおねがい %d/3%s" % [done, "  受け取れる！" if ready > 0 else ""]
+	quest_btn.visible = GameState.records.nights > 0
+	_place_quest_btn()
 	for c in poi_row.get_children():
 		c.queue_free()
 	poi_row.add_child(_text("ポイ", 12, Color("8a7a88")))
@@ -557,6 +581,80 @@ func _show_report() -> void:
 	tw.tween_callback(_close_report)
 
 
+func _place_quest_btn() -> void:
+	await get_tree().process_frame
+	if is_instance_valid(poi_panel):
+		quest_btn.position.y = poi_panel.position.y + poi_panel.size.y + 6
+
+
+## 今週のおねがい（3つ。そろうと、おまけ）
+func _show_quests() -> void:
+	if quest_panel:
+		quest_panel.queue_free()
+	quest_panel = Control.new()
+	quest_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(quest_panel)
+	var dim := ColorRect.new()
+	dim.color = Color(0.1, 0.08, 0.15, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(e):
+		if (e is InputEventMouseButton or e is InputEventScreenTouch) and e.pressed:
+			quest_panel.queue_free()
+			quest_panel = null)
+	quest_panel.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.98), 24))
+	p.position = Vector2(16, 130)
+	p.size = Vector2(328, 0)
+	quest_panel.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(_text("第%d週のおねがい" % GameState.week_no(), 19, Color("2a2233"), font_black))
+	var sub := _text("ひとつにつき 虹のかけら・きらきらポイ。3つそろうと、おまけ", 12, Color("8a7a88"))
+	sub.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	sub.custom_minimum_size = Vector2(296, 0)
+	v.add_child(sub)
+	for q in GameState.week_quests():
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var prog := mini(GameState.quest_progress(q), q.n)
+		var qt := _text(q.text, 15, Color("2a2233"), font_black)
+		qt.clip_text = true
+		col.add_child(qt)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(0, 8)
+		bar.max_value = q.n
+		bar.value = prog
+		bar.show_percentage = false
+		var bg := StyleBoxFlat.new()
+		bg.bg_color = Color(0, 0, 0, 0.1)
+		bg.set_corner_radius_all(4)
+		var fg := StyleBoxFlat.new()
+		fg.bg_color = Color("ffb35c")
+		fg.set_corner_radius_all(4)
+		bar.add_theme_stylebox_override("background", bg)
+		bar.add_theme_stylebox_override("fill", fg)
+		col.add_child(bar)
+		col.add_child(_text("%d / %d" % [prog, q.n], 11, Color("8a7a88")))
+		row.add_child(col)
+		if GameState.claimed.has(q.key):
+			row.add_child(_text("受け取りずみ", 12, Color("b07a3a")))
+		elif GameState.quest_done(q):
+			var b := _button("受け取る", Color("ff8a5b"), func():
+				var rw := GameState.claim_quest(q)
+				if not rw.is_empty():
+					_play_sfx("fanfare")
+					_show_quests())
+			b.custom_minimum_size = Vector2(92, 40)
+			b.add_theme_font_size_override("font_size", 14)
+			row.add_child(b)
+		v.add_child(row)
+	v.add_child(_text("タップで閉じる", 11, Color("9a8e98")))
+
+
 ## 相棒が真顔でひとこと
 func _partner_says() -> void:
 	var w: Dictionary = {}
@@ -582,7 +680,7 @@ func _partner_says() -> void:
 	var ob: Obake3D = w.o
 	var p := cam.unproject_position(ob.global_position + Vector3(0, 1.0, 0))
 	bubble.reset_size()
-	bubble.position = Vector2(clampf(p.x - bubble.size.x / 2, 8, 352 - bubble.size.x), clampf(p.y - bubble.size.y - 6, 116, 330))
+	bubble.position = Vector2(clampf(p.x - bubble.size.x / 2, 8, 352 - bubble.size.x), clampf(p.y - bubble.size.y - 6, 158, 330))
 	var tw := create_tween()
 	tw.tween_property(bubble, "modulate:a", 1.0, 0.25)
 	tw.tween_interval(3.8)
@@ -609,3 +707,7 @@ func demo_tap() -> void:
 	e.pressed = true
 	e.position = cam.unproject_position(walkers[0].o.global_position + Vector3(0, 0.35, 0))
 	_gui_input(e)
+
+
+func demo_quests() -> void:
+	_show_quests()

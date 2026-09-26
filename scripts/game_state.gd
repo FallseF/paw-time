@@ -132,6 +132,7 @@ var claimed := {} # 図鑑のごほうび（グループ・節目）
 var tut := {} # はじめての説明を見たか
 var practice := false # 練習ですくう（保存しない）
 var week_snap := {"total": 0, "seen": 1}
+var week_best := {"combo": 0, "festival": 0} # 今週いちばん
 var ALL := {}
 
 # レアの判定用の記録
@@ -209,7 +210,8 @@ func reset() -> void:
 	records = {"best_combo": 0, "total": 0, "nights": 0, "rainbow": 0, "festival_best": 0, "clean": 0}
 	claimed = {}
 	tut = {}
-	week_snap = {"total": 0, "seen": 1}
+	week_snap = _make_snap()
+	week_best = {"combo": 0, "festival": 0}
 	festival_gift_day = -1
 	work_hist = []
 	sleep_hist = []
@@ -689,6 +691,11 @@ func next_title_text() -> String:
 
 func record_scoop_night(result: Dictionary) -> void:
 	tonight = result
+	for t in result.get("types", {}):
+		records["t_" + t] = records.get("t_" + t, 0) + result.types[t]
+	week_best.combo = max(week_best.combo, result.get("best_combo", 0))
+	if result.get("festival", false):
+		week_best.festival = max(week_best.festival, result.get("count", 0))
 	scooped_tonight = true
 	records.nights += 1
 	records.total += result.get("count", 0)
@@ -809,7 +816,8 @@ func sleep(hours: int) -> void:
 		morning_report.append("まだかえっていないレアの気配が %d つ…" % rare_pending.size())
 	if day % 7 == 0:
 		morning_report.push_front("第%d週のまとめ：すくった玉 %d・新しい出会い %d" % [week_no() - 1, records.total - int(week_snap.total), seen.size() - int(week_snap.seen)])
-		week_snap = {"total": records.total, "seen": seen.size()}
+		week_snap = _make_snap()
+		week_best = {"combo": 0, "festival": 0}
 	changed.emit()
 	save_game()
 
@@ -863,6 +871,94 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 		"nights": recent.size(),
 		"scooped": tonight.get("count", 0),
 	}
+
+
+# ---------- 今週のおねがい（週に3つ） ----------
+
+func _make_snap() -> Dictionary:
+	var d := {"total": records.get("total", 0), "seen": seen.size(), "rainbow": records.get("rainbow", 0), "clean": records.get("clean", 0), "nights": records.get("nights", 0)}
+	for t in TYPE_LABEL:
+		d["t_" + t] = records.get("t_" + t, 0)
+	return d
+
+
+func week_quests() -> Array:
+	var w := week_no()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = w * 977 + 5
+	var types: Array = TYPE_LABEL.keys()
+	var t: String = types[rng.randi() % types.size()]
+	var pool := [
+		{"id": "rainbow", "n": 1, "text": "虹の玉を1つすくう"},
+		{"id": "combo", "n": 5 + mini(w, 4), "text": "%dコンボを出す" % (5 + mini(w, 4))},
+		{"id": "clean", "n": 8 + w * 2, "text": "ていねいな玉を%dこ" % (8 + w * 2)},
+		{"id": "type", "type": t, "n": 5, "text": "%sの玉を5こ" % TYPE_LABEL[t]},
+		{"id": "nights", "n": 4, "text": "4つの夜にすくう"},
+		{"id": "festival", "n": 10, "text": "祭りで10こすくう"},
+		{"id": "seen", "n": 2, "text": "新しいおばけに2体会う"},
+	]
+	var out: Array = []
+	var idx: Array = range(pool.size())
+	for i in 3:
+		var k: int = idx[rng.randi() % idx.size()]
+		idx.erase(k)
+		var q: Dictionary = pool[k].duplicate()
+		q["key"] = "w%d:%s" % [w, q.id]
+		out.append(q)
+	return out
+
+
+func quest_progress(q: Dictionary) -> int:
+	var sn: Dictionary = week_snap
+	match q.id:
+		"rainbow":
+			return records.rainbow - int(sn.get("rainbow", 0))
+		"combo":
+			return week_best.combo
+		"clean":
+			return records.clean - int(sn.get("clean", 0))
+		"type":
+			return records.get("t_" + q.type, 0) - int(sn.get("t_" + q.type, 0))
+		"nights":
+			return records.nights - int(sn.get("nights", 0))
+		"festival":
+			return week_best.festival
+		"seen":
+			return seen.size() - int(sn.get("seen", 0))
+	return 0
+
+
+func quest_done(q: Dictionary) -> bool:
+	return quest_progress(q) >= q.n
+
+
+const QUEST_REWARD := {"shards": {"rainbow": 1}, "poi": {"kira": 1}}
+const QUEST_ALL_REWARD := {"shards": {"rainbow": 2}, "poi": {"akari": 1, "double": 1}}
+
+
+func quests_claimable() -> int:
+	var n := 0
+	for q in week_quests():
+		if quest_done(q) and not claimed.has(q.key):
+			n += 1
+	return n
+
+
+func claim_quest(q: Dictionary) -> Dictionary:
+	if claimed.has(q.key) or not quest_done(q):
+		return {}
+	claimed[q.key] = true
+	grant(QUEST_REWARD)
+	var rw := QUEST_REWARD.duplicate(true)
+	var all := true
+	for x in week_quests():
+		if not claimed.has(x.key):
+			all = false
+	if all:
+		grant(QUEST_ALL_REWARD)
+		rw = {"shards": {"rainbow": 3}, "poi": {"kira": 1, "akari": 1, "double": 1}}
+	save_game()
+	return rw
 
 
 # ---------- 相棒のひとこと（真顔で） ----------
@@ -949,7 +1045,7 @@ func reward_text(rw: Dictionary) -> String:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist", "decor", "drought"]
+const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap", "work_hist", "decor", "drought", "week_best"]
 
 
 func save_game() -> void:
@@ -1070,7 +1166,7 @@ func fast_forward(days: int, sleep_pattern := [7, 8, 6, 7, 9, 7, 5]) -> void:
 		if s.role != "":
 			finish_shift()
 		var n := randi_range(3, 5) + (4 if is_festival() else 0)
-		var result := {"count": 0, "best_combo": 0, "rainbow": 0, "clean": 0, "festival": is_festival()}
+		var result := {"count": 0, "best_combo": 0, "rainbow": 0, "clean": 0, "festival": is_festival(), "types": {}}
 		var combo := 0
 		for k in n:
 			var t := next_orb_type(randf())
@@ -1081,6 +1177,7 @@ func fast_forward(days: int, sleep_pattern := [7, 8, 6, 7, 9, 7, 5]) -> void:
 				result.rainbow += 1
 			var q := randi_range(0, 2)
 			orbs.append({"type": t, "kind": kind, "quality": q})
+			result.types[t] = result.types.get(t, 0) + 1
 			combo += 1
 			result.count += 1
 			if q == 2:

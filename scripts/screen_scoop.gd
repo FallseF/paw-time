@@ -1774,7 +1774,10 @@ func _end_night(reason: String) -> void:
 		return
 	var was_best: bool = best_combo > GameState.records.best_combo and best_combo >= 3
 	title_before = GameState.title_index()
-	GameState.record_scoop_night({"count": count, "best_combo": best_combo, "clean": clean_count, "rainbow": rainbow_count, "festival": mods.festival, "gold": gold_count})
+	var types := {}
+	for o in caught:
+		types[o.type] = types.get(o.type, 0) + 1
+	GameState.record_scoop_night({"count": count, "best_combo": best_combo, "clean": clean_count, "rainbow": rainbow_count, "festival": mods.festival, "gold": gold_count, "types": types})
 	await get_tree().create_timer(0.4).timeout
 	_show_result(reason, was_best)
 
