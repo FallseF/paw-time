@@ -41,7 +41,7 @@ var swarm_queue: Array = [] # [出る時刻, lv]
 ## deck: [{id, lv}], boost: {start_energy, regen, job, job_mult}
 func setup(shop_i: int, stage_i: int, deck: Array, boost: Dictionary, lap := 1) -> void:
 	var st: Dictionary = DefData.stage(shop_i, stage_i)
-	lap_mult = DefData.lap_mult(lap)
+	lap_mult = DefData.lap_mult(lap) * st.get("hard", 1.0)
 	ebase_max = st.base * lap_mult
 	ebase_hp = ebase_max
 	energy = 100.0 + boost.get("start_energy", 0.0)

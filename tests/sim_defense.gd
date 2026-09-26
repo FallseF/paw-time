@@ -15,6 +15,9 @@ func _initialize() -> void:
 	for si in DefData.SHOPS.size():
 		var shop: Dictionary = DefData.SHOPS[si]
 		for st in shop.stages.size():
+			var only := OS.get_environment("SIM_ONLY")
+			if only != "" and not ("%d-%d" % [si, st]) in only.split(","):
+				continue
 			var deck_ids: Array = decks[si][0]
 			if si == 0 and st >= 1:
 				deck_ids = ["receipt", "box", "tray", "bubble"] if st >= 2 else ["receipt", "box", "tray"]

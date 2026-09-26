@@ -48,6 +48,7 @@ func _ready() -> void:
 		demo.main = self
 		add_child(demo)
 		root.add_child(fade)
+		_maybe_autoshot()
 		return
 	go(start if SCREENS.has(start) else "morning", true)
 	root.add_child(fade)
