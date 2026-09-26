@@ -43,6 +43,22 @@ func _ready() -> void:
 		v.add_child(_button("はじめから", Color(1, 1, 1, 0.9), _ask_reset, Color("5b6fc2")))
 	else:
 		v.add_child(_button("はじめる", Color("ff8a5b"), _continue))
+	var mute := Button.new()
+	mute.focus_mode = Control.FOCUS_NONE
+	mute.text = "音：%s" % ("OFF" if AudioServer.is_bus_mute(0) else "ON")
+	mute.position = Vector2(284, 14)
+	mute.size = Vector2(64, 32)
+	mute.add_theme_font_override("font", font_bold)
+	mute.add_theme_font_size_override("font_size", 12)
+	for k in ["normal", "hover", "pressed"]:
+		mute.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.16), 16))
+	mute.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	mute.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0.85))
+	mute.pressed.connect(func():
+		AudioServer.set_bus_mute(0, not AudioServer.is_bus_mute(0))
+		GameState.tut["mute"] = AudioServer.is_bus_mute(0)
+		mute.text = "音：%s" % ("OFF" if AudioServer.is_bus_mute(0) else "ON"))
+	add_child(mute)
 	var demo := _button("デモ：3週間すすめた状態で遊ぶ", Color(1, 1, 1, 0.14), _demo, Color(1, 1, 1, 0.8))
 	demo.custom_minimum_size = Vector2(0, 36)
 	demo.add_theme_font_size_override("font_size", 12)

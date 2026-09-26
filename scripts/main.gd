@@ -38,6 +38,7 @@ func _ready() -> void:
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade.modulate.a = 0.0
+	AudioServer.set_bus_mute(0, GameState.tut.get("mute", false))
 	var ff := OS.get_environment("OBAKE_FF")
 	if ff != "":
 		GameState.fast_forward(int(ff))
