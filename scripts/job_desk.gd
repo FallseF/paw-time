@@ -26,7 +26,7 @@ var jobs: Array = []
 var index := 0
 var accepted := 0
 var busy := false
-var note_top := 108 # 知らせのカードの一段目（上の段の札・キセカエ・しごとの下から）
+var note_top := 140 # 知らせのカードの一段目（上の段の札・キセカエ・しごと・その下のマイスキルの下から）
 var work_btn: Button
 var onboard_end := false # はじめての流れの最後（見つけた仕事）を見ているところ
 
@@ -346,7 +346,7 @@ func _found_jobs() -> void:
 
 func _daily() -> void:
 	_work_pill()
-	note_top = 108
+	note_top = 140
 	# 一緒に働いた勤務（WorkTogether）が終わったら、その場でひとこと評価を開く（受け渡しは pop_ended の一度だけ）
 	WorkTogether.sync()
 	var just := Reviews.target_for_ended(WorkTogether.pop_ended())
@@ -539,7 +539,10 @@ func _clear_card() -> void:
 func _fit(p: Control) -> void:
 	if not p.has_meta("keep_fit"):
 		p.set_meta("keep_fit", true)
-		Kit.keep_fit(p, func(): p.size.y = 0)
+		Kit.keep_fit(p, func():
+			p.size.y = 0
+			if p == card: # 長いカードは、下の「見本の求人です」（614）にかからないよう、上へずらす
+				card.position.y = minf(222.0, 606.0 - card.size.y))
 	for i in 2:
 		await get_tree().process_frame
 		if is_instance_valid(p):
@@ -576,12 +579,19 @@ func _show_job() -> void:
 	card_box.add_child(top)
 	card_box.add_child(I18n.wrap(_text(j.title, 21, INK, true)))
 	card_box.add_child(I18n.wrap(_text(j.place, 14, SUB)))
+	var when_t := JobListings.when_text(j)
+	var wage_t := JobListings.wage_text(j)
 	var row := HBoxContainer.new()
-	row.add_child(_text(JobListings.when_text(j), 15, INK, true))
+	row.add_child(_text(when_t, 15, INK, true))
 	var sp2 := Control.new()
 	sp2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(sp2)
-	row.add_child(_text(JobListings.wage_text(j), 20, Color("e0663a"), true))
+	# 日付と時給が一行に入らない（日本語の「〜」「／時」など）ときは、時給を次の行の右へ。カードが横にはみ出さないように
+	if Kit.black().get_string_size(when_t, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + Kit.black().get_string_size(wage_t, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x + 8 > 292:
+		card_box.add_child(row)
+		row = HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_child(_text(wage_t, 20, Color("e0663a"), true))
 	card_box.add_child(row)
 	# 働いた人の声（見本の集計＋自分の評価）
 	var voice := PanelContainer.new()
@@ -604,7 +614,16 @@ func _invite_chip(top: HBoxContainer, j: Dictionary) -> void:
 
 ## 「このお店の島を見にいく」（お店の島：働いた人の評価で育つ島）
 func _visit_island_link(j: Dictionary) -> void:
-	card_box.add_child(_link(tr("JOB_VISIT_ISLAND") + "  ›", func(): _visit_shop(j.listing), Color("3b8a7a")))
+	card_box.add_child(_small_link(tr("JOB_VISIT_ISLAND") + "  ›", func(): _visit_shop(j.listing), Color("3b8a7a")))
+
+
+## カードの中の小さなリンク（おさらい・お店の島）。長ければ折り返して、カードの幅を広げない
+func _small_link(t: String, cb: Callable, color: Color) -> Button:
+	var b := _link(t, cb, color)
+	b.custom_minimum_size = Vector2(0, 26)
+	b.add_theme_font_size_override("font_size", 12)
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return b
 
 
 ## スキルの記録（feature/skills）：その仕事の自分のバッジ（例: Register ★2 · 3 shifts）。
@@ -619,7 +638,7 @@ func _skill_row(j: Dictionary) -> void:
 		row.add_child(_text(tr("SK_CARD_YOURS") % txt, 12, Color("3b5ba5"), true))
 		card_box.add_child(row)
 	if Skills.suggest_practice(role):
-		card_box.add_child(_link(tr("SK_CARD_SUGGEST"), func():
+		card_box.add_child(_small_link(tr("SK_CARD_SUGGEST"), func():
 			Skills.practice_role = role
 			_go("practice"), Color("3b5ba5")))
 

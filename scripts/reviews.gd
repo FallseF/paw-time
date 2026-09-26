@@ -85,9 +85,25 @@ static func mock_base(listing_id: String) -> Dictionary:
 	rng.seed = hash(listing_id)
 	var n := rng.randi_range(6, 38)
 	var avg := rng.randf_range(3.6, 4.8)
+	# 店ごとに、声の集まり方をちがえる（お店の島の育ち方が、ひと目でちがって見えるように）。
+	# 見本のおさそいの店（cafe_komorebi）は、どのタグも 3 段までそろった島。ほかは目印 2〜3 個の店から、5 個ほどの店まで
+	var full := listing_id == "cafe_komorebi"
+	var strong: int = TAGS.size() if full else [2, 2, 3, 3, 4, 5][rng.randi() % 6]
+	var order := TAGS.duplicate()
+	for i in range(order.size() - 1, 0, -1): # 店ごとに決まった順で、目印が立つタグを選ぶ
+		var k := rng.randi() % (i + 1)
+		var t = order[i]
+		order[i] = order[k]
+		order[k] = t
 	var tags := {}
-	for tg in TAGS:
-		tags[tg] = int(n * rng.randf_range(0.15, 0.85))
+	for i in order.size():
+		if full:
+			tags[order[i]] = rng.randi_range(16, 24)
+		elif i < strong:
+			tags[order[i]] = rng.randi_range(3, 14)
+		else:
+			tags[order[i]] = rng.randi_range(0, 2) # 目印はまだ（1〜2 票なら芽）
+		n = maxi(n, int(tags[order[i]]))
 	return {"count": n, "sum": avg * n, "tags": tags}
 
 
