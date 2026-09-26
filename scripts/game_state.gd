@@ -132,6 +132,8 @@ var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
 var stall_claimed := false
 var force_dream := false # 宣伝動画用
+var week_start_seen := 1
+var week_start_growth := 0
 var quiet := false # 早送り中は知らせを出さない
 var newcomers: Array = [] # けさ初めて来た子（庭で縁側から出てくる）
 var work_hist: Array = [] # その日に実際に働いたか
@@ -741,6 +743,8 @@ func sleep(bed: int, wake: int) -> void:
 	moon_won_today = false
 	day += 1
 	if weekday() == 0:
+		week_start_seen = seen.size()
+		week_start_growth = growth
 		stores_week = {}
 		bands_week = {}
 		weekend_shifts = {}
@@ -883,7 +887,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth"]
 
 
 func save() -> void:
