@@ -23,12 +23,10 @@ window/handheld/orientation=1
 
 [gui]
 
-theme/custom_font="res://assets/fonts/DotGothic16-Regular.ttf"
-theme/default_font_antialiasing=0
+theme/custom_font="res://assets/fonts/ZenMaruGothic-Bold.ttf"
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.15, 0.12, 0.16, 1)

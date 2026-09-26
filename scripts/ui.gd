@@ -94,7 +94,6 @@ static func background(name: String) -> TextureRect:
 	t.texture = load("res://assets/sprites/%s.png" % name)
 	t.set_anchors_preset(Control.PRESET_FULL_RECT)
 	t.stretch_mode = TextureRect.STRETCH_SCALE
-	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return t
 
@@ -105,5 +104,4 @@ static func icon(path: String, px := 32) -> TextureRect:
 	t.custom_minimum_size = Vector2(px, px)
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	t.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	return t

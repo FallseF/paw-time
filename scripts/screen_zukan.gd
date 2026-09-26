@@ -323,6 +323,10 @@ func _play(n: String) -> void:
 
 
 func _card_texture(id: String) -> Texture2D:
+	# 図鑑のカードは小さいので、縮小ずみの絵を使う（線がとぎれないように）
+	var thumb := "res://assets/gen/rares_thumb/%s.png" % id
+	if ResourceLoader.exists(thumb):
+		return load(thumb)
 	var path := RareObake3D.art_path(id)
 	return load(path) if path != "" else null
 
