@@ -677,6 +677,8 @@ func _surface_rainbow() -> void:
 	_ripple(telegraph_pos)
 	_play("sparkle")
 	_banner("虹の玉！", Color("fff2a8"))
+	if pool.get("kira", 0) > 0 and selected != "kira" and not auto:
+		_toast("きらきらポイに持ち替えると、虹は逃げない")
 
 
 # ---------- UI ----------
