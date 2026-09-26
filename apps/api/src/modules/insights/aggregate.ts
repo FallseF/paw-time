@@ -6,6 +6,9 @@ import {
   INSIGHTS_K_MIN,
   TELEMETRY_HOURS_LE_7_5 as HOURS_LE_7_5,
   TELEMETRY_HOURS_OVERTIME as HOURS_OVERTIME,
+  TELEMETRY_BACKSTAGE_ROLES as BACKSTAGE_ROLES,
+  TELEMETRY_CHAT_POSITIVE_TOPICS as POSITIVE_TOPICS,
+  TELEMETRY_CHAT_PREFERENCE_TOPICS as PREFERENCE_TOPICS,
   type InsightsAggregate,
   type TelemetryEvent,
 } from "@paw-time/api-contracts";
@@ -189,6 +192,27 @@ export function aggregate(events: FlatEvent[], opts: AggregateOptions): Insights
   const invPassBy = new Map<string, Map<string, number>>(); // shop -> install -> passes
   const reviewsAt = new Map<string, number>(); // shop -> reviews
   const practiced = new Set<string>();
+  // Chat (internal) and the shop-facing aggregate.
+  const chatOpens = new Keyed();
+  const chatSignals = new Counter();
+  const chatTopics = new Keyed();
+  const faq = new Keyed();
+  const shopMessages = new Keyed();
+  const anonIssues = new Counter();
+  const prefsOf = new Map<string, Set<string>>(); // install -> preference topics told
+  const decisions = new Map<string, { accepted: number; passed: number; roles: string[] }>();
+  const decisionOf = (id: string) => {
+    let x = decisions.get(id);
+    if (!x) decisions.set(id, (x = { accepted: 0, passed: 0, roles: [] }));
+    return x;
+  };
+  const shopTags = new Map<string, Map<string, Set<string>>>(); // shop -> tag -> distinct installs
+  const shopTag = (shop: string, tag: string, id: string) => {
+    if (!shopTags.has(shop)) shopTags.set(shop, new Map());
+    const m = shopTags.get(shop)!;
+    if (!m.has(tag)) m.set(tag, new Set());
+    m.get(tag)!.add(id);
+  };
   const weekly = Array.from({ length: nWeeks }, () => ({
     ended: new Counter(),
     le75: new Counter(),
@@ -222,9 +246,12 @@ export function aggregate(events: FlatEvent[], opts: AggregateOptions): Insights
         accepted.add(id);
         (p.invited === true ? invAccepted : norAccepted).add(id);
         if (typeof p.role === "string") acceptByRole.add(p.role, id);
+        decisionOf(id).accepted++;
+        if (typeof p.role === "string") decisionOf(id).roles.push(p.role);
         break;
       case "job_pass":
         passed.add(id);
+        decisionOf(id).passed++;
         (p.invited === true ? invPassed : norPassed).add(id);
         if (p.invited === true && typeof p.shop_id === "string") {
           if (!invPassBy.has(p.shop_id)) invPassBy.set(p.shop_id, new Map());
@@ -271,6 +298,29 @@ export function aggregate(events: FlatEvent[], opts: AggregateOptions): Insights
           if (!islandVisits.has(id)) islandVisits.set(id, []);
           islandVisits.get(id)!.push({ t: e.t, shop: p.shop_id });
         }
+        break;
+      case "chat_open":
+        if (typeof p.kind === "string") chatOpens.add(p.kind, id);
+        break;
+      case "chat_signal":
+        if (typeof p.topic !== "string") break;
+        chatSignals.add(id);
+        chatTopics.add(p.topic, id);
+        if ((PREFERENCE_TOPICS as readonly string[]).includes(p.topic)) {
+          if (!prefsOf.has(id)) prefsOf.set(id, new Set());
+          prefsOf.get(id)!.add(p.topic);
+        }
+        if ((POSITIVE_TOPICS as readonly string[]).includes(p.topic) && typeof p.shop_id === "string") shopTag(p.shop_id, p.topic, id);
+        break;
+      case "anon_issue_sent":
+        anonIssues.add(id);
+        if (typeof p.tag === "string" && typeof p.shop_id === "string") shopTag(p.shop_id, p.tag, id);
+        break;
+      case "faq_auto_answered":
+        if (typeof p.topic === "string") faq.add(p.topic, id);
+        break;
+      case "shop_message_sent":
+        if (typeof p.kind === "string") shopMessages.add(p.kind, id);
         break;
     }
     if (offDay && e.type !== "app_open") offDayActs.add(e.type, id);
@@ -350,6 +400,51 @@ export function aggregate(events: FlatEvent[], opts: AggregateOptions): Insights
     rows.sort((a, b) => b.shifts - a.shifts);
     return { rows, hidden_shops: hidden };
   }
+  // Work preferences told to the cat vs what those workers then accept. Hypothesis only.
+  function chatPreferences() {
+    const fits = (pref: string, role: string) => (pref === "prefer_backstage" ? BACKSTAGE_ROLES.includes(role) : !BACKSTAGE_ROLES.includes(role));
+    const all = [...decisions.values()];
+    const sum = (xs: typeof all, k: "accepted" | "passed") => xs.reduce((s, x) => s + x[k], 0);
+    const allAcc = sum(all, "accepted");
+    const baselineAccept = rate(allAcc, allAcc + sum(all, "passed"), all.length);
+    const allRoles = all.flatMap((x) => x.roles);
+    return PREFERENCE_TOPICS.map((key) => {
+      const ids = [...prefsOf.entries()].filter(([, s]) => s.has(key)).map(([id]) => id);
+      const mine = ids.map((id) => decisions.get(id)).filter((x): x is NonNullable<typeof x> => !!x);
+      const acc = sum(mine, "accepted");
+      const roleFit = key === "prefer_backstage" || key === "prefer_customer_facing";
+      const myRoles = mine.flatMap((x) => x.roles);
+      return {
+        key,
+        workers: gate(ids.length, ids.length),
+        accept_rate: rate(acc, acc + sum(mine, "passed"), mine.length),
+        baseline_accept_rate: baselineAccept,
+        fit_share: roleFit ? rate(myRoles.filter((r) => fits(key, r)).length, myRoles.length, mine.length) : null,
+        baseline_fit_share: roleFit ? rate(allRoles.filter((r) => fits(key, r)).length, allRoles.length, all.length) : null,
+      };
+    });
+  }
+
+  // What a shop would see: only tags backed by K_MIN+ distinct workers, over the whole
+  // window (no dates finer than a week). Tags below the threshold are omitted, not nulled,
+  // so a shop cannot even tell that one or two people spoke up.
+  function shopView() {
+    const shops = [];
+    for (const [shop, tags] of shopTags) {
+      const items = [...tags.entries()]
+        .filter(([, who]) => who.size >= K_MIN)
+        .map(([key, who]) => ({ key, workers: who.size }))
+        .sort((a, b) => b.workers - a.workers);
+      const positives = items.filter((x) => (POSITIVE_TOPICS as readonly string[]).includes(x.key));
+      const issues = items.filter((x) => !(POSITIVE_TOPICS as readonly string[]).includes(x.key));
+      if (issues.length || positives.length) shops.push({ shop, issues, positives });
+    }
+    shops.sort((a, b) => a.shop.localeCompare(b.shop));
+    return { period: { start: weekName(0), end: weekName(nWeeks - 1) }, shops };
+  }
+
+  const chatters = new Set([...chatOpens.map.values()].flatMap((c) => [...c.who])).size;
+  const chatOpenCount = [...chatOpens.map.values()].reduce((s, c) => s + c.n, 0);
   const badgeOn = [...badgeLatest.entries()].filter(([id, v]) => v.on && practiced.has(id)).length;
 
   return {
@@ -423,6 +518,17 @@ export function aggregate(events: FlatEvent[], opts: AggregateOptions): Insights
       visits: shopVisits.rows(),
       invites: { opened: invOpened.cell(), accepted: invAccepted.cell() },
     },
+    chat: {
+      opens: gate(chatOpenCount, chatters),
+      chatters: gate(chatters, chatters),
+      signals: chatSignals.cell(),
+      topics: chatTopics.rows(),
+      preferences: chatPreferences(),
+      faq: faq.rows(),
+      shop_messages: shopMessages.rows(),
+      anon_issues: anonIssues.cell(),
+    },
+    shop_view: shopView(),
   };
 }
 

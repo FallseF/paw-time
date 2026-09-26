@@ -3,6 +3,8 @@
 // with exactly the same code as live data. Internal consistency by construction:
 // shifts only exist after a job_accept, reviews only after a shift_end, etc.
 import {
+  TELEMETRY_BACKSTAGE_ROLES as BACKSTAGE_ROLES,
+  TELEMETRY_FAQ_TOPICS as FAQ_TOPICS,
   TELEMETRY_REVIEW_TAGS as REVIEW_TAGS,
   TELEMETRY_ROLES as ROLES,
   TELEMETRY_SHOP_IDS as SHOP_IDS,
@@ -52,6 +54,22 @@ export function generateSimulated(opts: { seed?: number; installs?: number } = {
   const overtimeAt: Record<Shop, number> = { cafe_komorebi: 0.6, izk_torimaru: 1.8, cvs_machikado: 1.0, bk_komugi: 0.8 };
   const tags = REVIEW_TAGS;
   const events: FlatEvent[] = [];
+  // Chat is drawn from its own stream so adding it leaves every other synthetic number unchanged.
+  const crnd = mulberry32((opts.seed ?? SIM_SEED) ^ 0x5eed_c4a7);
+  const cchance = (p: number) => crnd() < p;
+  const cpick = <T>(xs: readonly T[]): T => xs[Math.floor(crnd() * xs.length)]!;
+  const cweighted = <T>(pairs: [T, number][]) => {
+    let r = crnd() * pairs.reduce((s, [, w]) => s + w, 0);
+    for (const [v, w] of pairs) if ((r -= w) <= 0) return v;
+    return pairs[pairs.length - 1]![0];
+  };
+  // What tends to go wrong at each shop: the same hidden culture, plus its own flavour.
+  const issueMix: Record<Shop, [string, number][]> = {
+    cafe_komorebi: [["too_busy", 3], ["unclear_instructions", 2], ["break_hard", 1], ["pay_late", 0.3], ["yelled_at", 0.3]],
+    izk_torimaru: [["too_busy", 4], ["break_hard", 4], ["yelled_at", 3], ["unclear_instructions", 2], ["pay_late", 1]],
+    cvs_machikado: [["unclear_instructions", 4], ["too_busy", 2], ["pay_late", 2], ["break_hard", 1.5], ["yelled_at", 1]],
+    bk_komugi: [["too_busy", 3], ["break_hard", 2], ["unclear_instructions", 1.5], ["pay_late", 0.5], ["yelled_at", 0.5]],
+  };
   const sinceBucket = (h: number) => (h < 24 ? "lt24" : h <= 72 ? "24to72" : "gt72");
 
   for (let i = 0; i < total; i++) {
@@ -78,6 +96,16 @@ export function generateSimulated(opts: { seed?: number; installs?: number } = {
     let churned = false;
     let lastShift: { day: number; t: number; shop: Shop } | null = null;
     let islandPull: { shop: Shop; until: number } | null = null;
+    // Chat habits (own stream). "Just between us" users keep most chats fully private.
+    const chatty = crnd();
+    const privateShare = cchance(0.2) ? 0.85 : 0.1;
+    const consentAnon = 0.2 + 0.35 * crnd();
+    const backstage = myRoles.filter((r) => BACKSTAGE_ROLES.includes(r)).length;
+    // What people say they prefer only loosely matches the roles they end up applying for.
+    const leanBack = backstage === 2 ? 0.8 : backstage === 0 ? 0.2 : 0.5;
+    const rolePref = cchance(0.6) ? (cchance(leanBack) ? "prefer_backstage" : "prefer_customer_facing") : null;
+    const hoursPref = appetite >= 3 ? "want_more_hours" : appetite === 1 ? "want_fewer_hours" : null;
+    const workedRoles = new Set<string>();
 
     for (let d = join; d < SIM_DAYS && !churned; d++) {
       const age = d - join;
@@ -179,6 +207,43 @@ export function generateSimulated(opts: { seed?: number; installs?: number } = {
       if (chance(0.035)) emit("island_expand");
       if (chance(0.02)) emit("island_share");
       if (age === 0 && chance(0.15)) emit("suggestions_toggled", { on: chance(0.5) });
+
+      // Chat with the cat. Only fixed tags are ever emitted; a private chat emits nothing.
+      const cemit = (type: TelemetryEventType, props: Record<string, PropValue> = {}) => {
+        clock += 30 + Math.floor(crnd() * 600);
+        events.push({ install_id: id, t: Math.min(clock, dayStart + DAY - 1), type, props });
+      };
+      const justWorked = lastShift && lastShift.day >= d - 1 ? lastShift.shop : null;
+      if (cchance(0.12 + 0.3 * chatty + (justWorked ? 0.25 : 0)) && !cchance(privateShare)) {
+        cemit("chat_open", { kind: "me" });
+        const signal = (topic: string, shop?: Shop) => cemit("chat_signal", { topic, private_mode: false, ...(shop ? { shop_id: shop } : {}) });
+        if (justWorked) {
+          const c = culture[justWorked];
+          if (cchance(0.7 * (1 - c) + 0.05)) {
+            const tag = cweighted(issueMix[justWorked]);
+            signal(tag, justWorked);
+            if (cchance(consentAnon)) cemit("anon_issue_sent", { tag, shop_id: justWorked });
+          }
+          if (cchance(0.6 * c)) signal(cchance(0.55) ? "liked_team" : "liked_customers", justWorked);
+        }
+        const next = scheduled.get(d + 1);
+        if (next && !workedRoles.has(next.role) && cchance(0.35)) signal("nervous_new_role");
+        if (rolePref && cchance(0.12)) signal(rolePref);
+        if (hoursPref && cchance(0.1)) signal(hoursPref);
+      }
+      if (shift && lastShift?.day === d) workedRoles.add(shift.role);
+      // The shop's cat: auto-answers before a shift, short fixed messages to the shop.
+      if (scheduled.has(d + 1) && cchance(0.4)) {
+        cemit("chat_open", { kind: "shop" });
+        cemit("faq_auto_answered", { topic: cpick(FAQ_TOPICS) });
+        if (cchance(0.12)) cemit("shop_message_sent", { kind: "question" });
+      }
+      if (shift && lastShift?.day === d) {
+        if (cchance(0.03)) cemit("shop_message_sent", { kind: "late" });
+        if (cchance(0.25 * culture[shift.shop])) cemit("shop_message_sent", { kind: "thanks" });
+      } else if (upcoming && cchance(0.02)) {
+        cemit("shop_message_sent", { kind: "swap" });
+      }
     }
   }
   events.sort((a, b) => a.t - b.t);

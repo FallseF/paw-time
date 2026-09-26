@@ -1,6 +1,7 @@
 // Origins allowed to call the telemetry and insights endpoints from a browser.
 // Extra origins can be added with TELEMETRY_ALLOWED_ORIGINS (comma separated).
-const DEFAULT_ORIGINS = ["https://obake-breakroom-b-sleep.vercel.app"];
+// paw-time-play is the public game; obake-breakroom-b-sleep is its earlier URL, kept for old links.
+const DEFAULT_ORIGINS = ["https://paw-time-play.vercel.app", "https://obake-breakroom-b-sleep.vercel.app"];
 const LOCAL_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
 export function allowedOrigin(origin: string, env: NodeJS.ProcessEnv = process.env): string | null {

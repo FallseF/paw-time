@@ -60,7 +60,10 @@ export async function liveMetrics(store: TelemetryStore, demoOnly: boolean, now 
 }
 
 // Props safe and useful to show in the anonymous feed (all are enums/small numbers).
-const FEED_PROPS = ["day_type", "n", "role", "pay_style", "invited", "hours_bucket", "stars", "tag_count", "level", "on", "shop_id", "orbs", "kind"];
+const FEED_PROPS = ["day_type", "n", "role", "pay_style", "invited", "hours_bucket", "stars", "tag_count", "level", "on", "shop_id", "orbs", "kind", "topic"];
+// Chat topics and anonymous issues are internal-only and never shown per event, not even
+// anonymously: the feed shows that one happened, without topic, tag or shop.
+const FEED_REDACTED_TYPES = new Set(["chat_signal", "anon_issue_sent"]);
 export const FEED_WINDOW_MS = 30 * 60_000;
 
 export async function liveFeed(store: TelemetryStore, demoOnly: boolean, now = Date.now()): Promise<InsightsFeedResponse> {
@@ -83,7 +86,7 @@ export async function liveFeed(store: TelemetryStore, demoOnly: boolean, now = D
     // No install_id leaves the server: only type, whitelisted props and relative time.
     items: events.slice(0, 40).map((e) => {
       const props: Record<string, TelemetryPropValue> = {};
-      for (const k of FEED_PROPS) {
+      if (!FEED_REDACTED_TYPES.has(e.type)) for (const k of FEED_PROPS) {
         const v = e.props[k];
         if (v !== undefined) props[k] = v;
       }

@@ -24,6 +24,25 @@ export const TELEMETRY_SHOP_IDS = [
   "ot_awa",
 ] as const;
 
+/**
+ * Chat with the cat-obake. Raw text never leaves the device: the game maps a chat
+ * to at most a few of these fixed tags locally. Sensitive categories (health,
+ * religion, beliefs, family, etc.) are deliberately not tags.
+ */
+export const TELEMETRY_CHAT_ISSUE_TOPICS = ["break_hard", "yelled_at", "pay_late", "unclear_instructions", "too_busy"] as const;
+export const TELEMETRY_CHAT_POSITIVE_TOPICS = ["liked_team", "liked_customers"] as const;
+export const TELEMETRY_CHAT_PREFERENCE_TOPICS = ["want_more_hours", "want_fewer_hours", "prefer_backstage", "prefer_customer_facing"] as const;
+export const TELEMETRY_CHAT_TOPICS = [
+  ...TELEMETRY_CHAT_ISSUE_TOPICS,
+  "nervous_new_role",
+  ...TELEMETRY_CHAT_POSITIVE_TOPICS,
+  ...TELEMETRY_CHAT_PREFERENCE_TOPICS,
+] as const;
+export const TELEMETRY_FAQ_TOPICS = ["dress", "entrance", "break"] as const;
+export const TELEMETRY_SHOP_MESSAGE_KINDS = ["late", "swap", "thanks", "question"] as const;
+/** Roles counted as "backstage" for prefer_backstage; the rest are customer-facing. */
+export const TELEMETRY_BACKSTAGE_ROLES: readonly string[] = ["dish", "kitchen", "stock"];
+
 /** Buckets counted as "shift ended at 7.5 h or less" and as overtime (> 8 h). */
 export const TELEMETRY_HOURS_LE_7_5: readonly string[] = ["lt4", "4to6", "6to7_5"];
 export const TELEMETRY_HOURS_OVERTIME: readonly string[] = ["8to10", "gt10"];
@@ -65,6 +84,19 @@ export const TelemetryPropSchemas = {
   outfit_change: props({}),
   calendar_add: props({ kind: z.enum(["google", "ics"]) }),
   suggestions_toggled: props({ on: bool }),
+  chat_open: props({ kind: z.enum(["me", "shop"]) }),
+  // Internal use only (matching, product). Sent only when the worker is not in private
+  // mode ("Just between us"); the flag must be stated and false.
+  chat_signal: z.strictObject({
+    ...common,
+    topic: z.enum(TELEMETRY_CHAT_TOPICS),
+    private_mode: z.literal(false),
+    shop_id: shop.optional(),
+  }),
+  // The worker explicitly agreed to tell this shop, anonymously. Issues only.
+  anon_issue_sent: z.strictObject({ ...common, tag: z.enum(TELEMETRY_CHAT_ISSUE_TOPICS), shop_id: shop }),
+  faq_auto_answered: props({ topic: z.enum(TELEMETRY_FAQ_TOPICS) }),
+  shop_message_sent: props({ kind: z.enum(TELEMETRY_SHOP_MESSAGE_KINDS) }),
 } as const;
 
 export type TelemetryEventType = keyof typeof TelemetryPropSchemas;
@@ -130,6 +162,24 @@ export const InsightsAfterShiftRowSchema = z.object({
   review_rate: cell,
 });
 
+/** Acceptance of workers who told their cat a work preference vs all workers (hypothesis). */
+export const InsightsChatPreferenceRowSchema = z.object({
+  key: z.string(),
+  workers: cell,
+  accept_rate: cell,
+  baseline_accept_rate: cell,
+  /** prefer_backstage / prefer_customer_facing only: share of their accepted jobs that match. */
+  fit_share: cell,
+  baseline_fit_share: cell,
+});
+
+const shopViewItem = z.object({ key: z.string(), workers: z.number().int() });
+export const InsightsShopViewRowSchema = z.object({
+  shop: z.string(),
+  issues: z.array(shopViewItem),
+  positives: z.array(shopViewItem),
+});
+
 export const InsightsAggregateSchema = z.object({
   installs: cell,
   window: z.object({ start: z.string(), end: z.string(), weeks: z.number().int() }),
@@ -169,6 +219,22 @@ export const InsightsAggregateSchema = z.object({
   skills: z.object({ practice_by_role: z.array(keyedRow), badge_opt_in_rate: cell }),
   after_shift: z.object({ rows: z.array(InsightsAfterShiftRowSchema), hidden_shops: z.number().int() }),
   shops: z.object({ visits: z.array(keyedRow), invites: z.object({ opened: cell, accepted: cell }) }),
+  /** Internal only: what workers tell their cat, as fixed tags. */
+  chat: z.object({
+    opens: cell,
+    chatters: cell,
+    signals: cell,
+    topics: z.array(keyedRow),
+    preferences: z.array(InsightsChatPreferenceRowSchema),
+    faq: z.array(keyedRow),
+    shop_messages: z.array(keyedRow),
+    anon_issues: cell,
+  }),
+  /** What a shop would see: >= K_MIN distinct workers per tag, whole window, week granularity. */
+  shop_view: z.object({
+    period: z.object({ start: z.string(), end: z.string() }),
+    shops: z.array(InsightsShopViewRowSchema),
+  }),
 });
 
 export const InsightsMetricsResponseSchema = z.object({
@@ -196,6 +262,8 @@ export const InsightsFeedResponseSchema = z.object({
 
 export type InsightsAggregate = z.infer<typeof InsightsAggregateSchema>;
 export type InsightsAfterShiftRow = z.infer<typeof InsightsAfterShiftRowSchema>;
+export type InsightsChatPreferenceRow = z.infer<typeof InsightsChatPreferenceRowSchema>;
+export type InsightsShopViewRow = z.infer<typeof InsightsShopViewRowSchema>;
 export type InsightsMetricsResponse = z.infer<typeof InsightsMetricsResponseSchema>;
 export type InsightsFeedResponse = z.infer<typeof InsightsFeedResponseSchema>;
 export type InsightsStorageStatus = z.infer<typeof InsightsStorageStatusSchema>;

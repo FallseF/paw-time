@@ -20,7 +20,8 @@ const ICONS: Record<string, string> = {
   app_open: "📱", job_cards_shown: "🐾", job_card_open: "🗂️", job_accept: "✅", job_pass: "↩️", shift_start: "▶️",
   shift_end: "⏹️", cat_tired_stop: "😿", review_submitted: "⭐", practice_done: "🎯", skill_badge_share_toggled: "🏅",
   shop_island_visit: "🏝️", scoop_night: "🌙", hatch: "🥚", island_expand: "🌱", island_share: "🔗", outfit_change: "👕",
-  calendar_add: "📅", suggestions_toggled: "💡",
+  calendar_add: "📅", suggestions_toggled: "💡", chat_open: "💬", chat_signal: "🏷️", anon_issue_sent: "✉️",
+  faq_auto_answered: "❓", shop_message_sent: "📨",
 };
 
 const state = {
@@ -154,7 +155,7 @@ function render() {
   }
 
   const a = payload.data;
-  grid.innerHTML = (isSim() ? "" : livePanelHtml()) + sectionsHtml(a) + pilotHtml();
+  grid.innerHTML = (isSim() ? "" : livePanelHtml()) + sectionsHtml(a) + chatHtml(a) + shopViewHtml(a) + pilotHtml();
   if (!isSim()) renderFeed();
   drawCharts(a);
 }
@@ -211,6 +212,52 @@ function afterShiftHtml(a: InsightsAggregate): string {
     .map((row) => `<tr><td>${esc(labelOf(t.shops, row.shop))}</td><td>${n(row.workers)}</td><td>${pct(row.next_day_open)}<br><span class="muted">${pct(row.baseline)}</span></td><td class="${(row.delta ?? 0) < 0 ? "neg" : "pos"}">${fmtPp(row.delta)}</td><td>${pct(row.visit_3d)}</td><td${suppressedAttr(row.repeat_pass)}>${pct(row.repeat_pass)}</td><td>${pct(row.review_rate)}</td></tr>`)
     .join("")}</tbody></table></div>`;
   return card("c-after", t.afterTitle, t.afterSub, `<div class="after-grid"><div>${table}${hidden}</div><div><p class="sub">${esc(t.afterChart)}</p>${canvas("ch-after", "short")}</div></div>${hypotheses}`, "wide", hyp);
+}
+
+// Internal only: chat tags. Never shown to shops as-is.
+function chatHtml(a: InsightsAggregate): string {
+  const t = d();
+  const c = a.chat;
+  const internal = `<span class="chip internal">${esc(t.internalChip)}</span>`;
+  const hyp = `<span class="chip hyp">${esc(t.hypothesisChip)}</span>`;
+  let html = `<h2 class="section-title">${esc(t.secChat)}</h2>`;
+  html += card("c-chat", t.chatTitle, t.chatSub,
+    `<div class="tiles">
+      ${tile(t.chatOpens, n(c.opens), t.chatOpensNote, "", c.opens)}
+      ${tile(t.chatters, n(c.chatters), "", "", c.chatters)}
+      ${tile(t.chatSignals, n(c.signals), t.chatSignalsNote, "", c.signals)}
+      ${tile(t.anonIssues, n(c.anon_issues), t.anonIssuesNote, "", c.anon_issues)}
+    </div><p class="sub">${esc(t.topicsTitle)} · ${esc(t.topicsSub)}</p>${c.topics.length ? canvas("ch-topics", "tall") : `<p class="empty">—</p>`}`, "wide", internal);
+  const fitCell = (r: InsightsAggregate["chat"]["preferences"][number]) =>
+    r.key.startsWith("prefer_")
+      ? `<td${suppressedAttr(r.fit_share)}>${pct(r.fit_share)}<br><span class="muted">${esc(t.prefBase)} ${pct(r.baseline_fit_share)}</span></td>`
+      : `<td class="muted">${esc(t.prefFitNA)}</td>`;
+  const prefRows = c.preferences
+    .map((r) => `<tr><td>${esc(labelOf(t.topics, r.key))}</td><td${suppressedAttr(r.workers)}>${n(r.workers)}</td><td${suppressedAttr(r.accept_rate)}>${pct(r.accept_rate)}<br><span class="muted">${esc(t.prefBase)} ${pct(r.baseline_accept_rate)}</span></td>${fitCell(r)}</tr>`)
+    .join("");
+  html += card("c-pref", t.prefTitle, t.prefSub,
+    `<div class="table-wrap"><table><thead><tr><th>${esc(t.prefTag)}</th><th>${esc(t.prefWorkers)}</th><th>${esc(t.prefAccept)}</th><th>${esc(t.prefFit)}</th></tr></thead><tbody>${prefRows}</tbody></table></div>
+    <ol class="hyps"><li><strong>${esc(t.hypothesisLabel)}:</strong> ${esc(t.prefHyp)}</li></ol>`, "", hyp + internal);
+  html += card("c-faq", t.faqTitle, t.faqSub, canvas("ch-faq", "short") + `<p class="sub">${esc(t.msgTitle)} · ${esc(t.msgSub)}</p>` + canvas("ch-msg", "short"), "", internal);
+  return html;
+}
+
+// What we would provide to an employer: consented anonymous issues + positive topics, 5+ workers each.
+function shopViewHtml(a: InsightsAggregate): string {
+  const t = d();
+  const sv = a.shop_view;
+  const period = fillTemplate(t.shopViewPeriod, { start: sv.period.start, end: sv.period.end });
+  const list = (items: { key: string; workers: number }[], cls: string) =>
+    items.length
+      ? `<ul class="sv-list ${cls}">${items.map((x) => `<li><span>${esc(labelOf(t.topics, x.key))}</span><span class="sv-n">${esc(fillTemplate(t.workersN, { n: n(x.workers) }))}</span></li>`).join("")}</ul>`
+      : `<p class="muted">${esc(t.shopViewNone)}</p>`;
+  const body = sv.shops.length
+    ? `<div class="sv-grid">${sv.shops
+        .map((s) => `<div class="sv-shop"><h3>${esc(labelOf(t.shops, s.shop))}</h3><p class="muted">${esc(period)}</p><h4>${esc(t.shopViewPositives)}</h4>${list(s.positives, "pos")}<h4>${esc(t.shopViewIssues)}</h4>${list(s.issues, "neg")}</div>`)
+        .join("")}</div>`
+    : `<p class="empty">${esc(t.shopViewEmpty)}</p>`;
+  return `<h2 class="section-title">${esc(t.secShop)}</h2>` +
+    card("c-shopview", t.shopViewTitle, t.shopViewSub, `${body}<p class="note">${esc(t.shopViewNever)}</p>`, "wide shop-view");
 }
 
 function retentionTable(rows: InsightsAggregate["retention"]): string {
@@ -284,6 +331,21 @@ function drawCharts(a: InsightsAggregate) {
       },
     });
   }
+  const topicColor = (k: string) => (["liked_team", "liked_customers"].includes(k) ? s3 : k.startsWith("want_") || k.startsWith("prefer_") ? s1 : s2);
+  const topicKeys = a.chat.topics.map((x) => x.key);
+  if (topicKeys.length) {
+    makeChart("ch-topics", {
+      type: "bar",
+      data: { labels: topicKeys.map((k) => labelOf(t.topics, k)), datasets: [bar("", a.chat.topics.map((x) => x.value), topicKeys.map(topicColor))] },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => n(c.raw as number) } } },
+        scales: { x: axisY(), y: { grid: { display: false }, ticks: { color: css("--text-2") }, border: { color: css("--line") } } },
+      },
+    });
+  }
+  hbar("ch-faq", a.chat.faq.map((x) => labelOf(t.faqTopics, x.key)), a.chat.faq.map((x) => x.value), s1);
+  hbar("ch-msg", a.chat.shop_messages.map((x) => labelOf(t.msgKinds, x.key)), a.chat.shop_messages.map((x) => x.value), s3);
   hbar("ch-skill", a.skills.practice_by_role.map((x) => labelOf(t.roles, x.key)), a.skills.practice_by_role.map((x) => x.value), s1);
   hbar("ch-shop", a.shops.visits.map((x) => labelOf(t.shops, x.key)), a.shops.visits.map((x) => x.value), s2);
 }

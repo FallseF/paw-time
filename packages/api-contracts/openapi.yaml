@@ -204,7 +204,11 @@ components:
           type: string
           enum: [app_open, job_cards_shown, job_card_open, job_accept, job_pass, shift_start, shift_end, cat_tired_stop,
             review_submitted, practice_done, skill_badge_share_toggled, shop_island_visit, scoop_night, hatch,
-            island_expand, island_share, outfit_change, calendar_add, suggestions_toggled]
+            island_expand, island_share, outfit_change, calendar_add, suggestions_toggled, chat_open, chat_signal,
+            anon_issue_sent, faq_auto_answered, shop_message_sent]
+          description: >-
+            chat_signal は固定タグのみ（生の会話文は端末から出さない）で、private_mode:false が必須。
+            anon_issue_sent は本人がお店への匿名伝達に同意したときだけ送る。
         props:
           type: object
           description: 種別ごとの許可props（enum・整数範囲・真偽値のみ）。全種別で demo_session:boolean を許可。
