@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cgull600ljjgx"
+
+[deps]
+
+files=["res://i18n/work_together.en.translation", "res://i18n/work_together.ja.translation"]
+
+source_file="res://i18n/work_together.csv"
+dest_files=["res://i18n/work_together.en.translation", "res://i18n/work_together.ja.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1611,12 +1611,18 @@ func _show_card() -> void:
 	_clear_card()
 	var s: Dictionary = GameState.today()
 	var first := GameState.day == 0
-	if GameState.phase == "day":
+	if GameState.phase == "day" and _work_card():
+		pass
+	elif GameState.phase == "day":
 		if s.get("chore", false):
 			card_box.add_child(Kit.text("今日のおてつだい", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(GameState.CHORE_TEXT[s.role], 14, Color("6a5f70")))
 			card_box.add_child(Kit.button("おてつだいする", Color("ff8a5b"), _do_shift))
-			card_box.add_child(_link("今日はのんびりする", _rest))
+			var row := HBoxContainer.new()
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_child(_link("今日はのんびりする", _rest))
+			row.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
+			card_box.add_child(row)
 		elif s.role != "":
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text("%s・%s" % [s.store, GameState.ROLE_LABEL[s.role]], 14, Color("6a5f70")))
@@ -1632,6 +1638,7 @@ func _show_card() -> void:
 			card_box.add_child(Kit.text("よく眠ると、庭が育つ" if first else "よく眠ると、おまけがつく", 14, Color("6a5f70")))
 			var b := Kit.button("夕方まで、のんびり", Color("ff8a5b"), _rest)
 			card_box.add_child(b)
+			card_box.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 			if first and not GameState.tut.has("first"):
@@ -1667,6 +1674,23 @@ func _show_card() -> void:
 			card_box.add_child(Kit.button("寝る", Color("8b7bff"), func(): main.go("sleep")))
 	_card_fit()
 	_pop_card()
+
+
+## While your cat-obake is at work (a registered shift, or you pressed "I'm going to work"),
+## the day card shows that instead. Returns true if it drew the card.
+func _work_card() -> bool:
+	WorkTogether.sync()
+	if not WorkTogether.active():
+		return false
+	var st := WorkTogether.status()
+	card_box.add_child(Kit.text(tr("At work together"), 18, Color("2a2233"), true))
+	card_box.add_child(Kit.text(WorkTogether.line(st), 14, Color("6a5f70")))
+	card_box.add_child(Kit.button(tr("Peek at work"), Color("ff8a5b"), func(): main.go("work")))
+	card_box.add_child(_link(tr("Back home"), func():
+		var r := WorkTogether.stop()
+		_toast(tr("Shift's over!"), tr("+%d Paw Coins") % r.get("coins", 0))
+		_show_card()))
+	return true
 
 
 func _gift() -> void:
@@ -1740,6 +1764,11 @@ func _do_shift() -> void:
 	busy = true
 	GameState.tut["shift"] = true
 	var got := GameState.finish_shift()
+	var s0: Dictionary = GameState.today()
+	if not s0.get("chore", false) and s0.get("role", "") != "":
+		var w := WorkTogether.credit_recorded(s0.role, float(s0.get("hours", 0)), s0.get("store", ""))
+		if int(w.coins) > 0:
+			got.push_front({"kind": "coins", "id": s0.role, "text": tr("Your cat-obake worked too: +%d Paw Coins") % w.coins})
 	_clear_card()
 	card_box.add_child(Kit.text("おつかれさま！", 18, Color("2a2233"), true))
 	_card_fit()
@@ -1752,7 +1781,7 @@ func _do_shift() -> void:
 		var dot := Panel.new()
 		var st := StyleBoxFlat.new()
 		st.set_corner_radius_all(8)
-		st.bg_color = GameState.TYPE_COLOR.get(GameState.NETS[g.id].type, Color.WHITE) if g.kind == "poi" else Color("8fd18a")
+		st.bg_color = GameState.TYPE_COLOR.get(GameState.NETS[g.id].type, Color.WHITE) if g.kind == "poi" else (Color("ffc93d") if g.kind == "coins" else Color("8fd18a"))
 		dot.add_theme_stylebox_override("panel", st)
 		dot.custom_minimum_size = Vector2(16, 16)
 		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
