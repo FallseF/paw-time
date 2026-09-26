@@ -3,7 +3,7 @@ class_name ShopData
 ## 床の座標は x（左右）と z（奥が −、手前が +）。休憩室の隅は手前のまん中。
 
 const STATIONS := {
-	"register": {"name": "レジ", "job": "register", "pos": Vector2(-2.3, 1.2)},
+	"register": {"name": "レジ", "job": "register", "pos": Vector2(-1.9, 1.2)},
 	"tables": {"name": "客席", "job": "hall", "pos": Vector2(0.6, -0.4)},
 	"sink": {"name": "洗い場", "job": "dish", "pos": Vector2(2.4, -3.0)},
 	"kitchen": {"name": "キッチン", "job": "kitchen", "pos": Vector2(-1.4, -3.1)},

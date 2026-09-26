@@ -446,8 +446,9 @@ func _to_station(sid: String) -> void:
 func _on_floor_input(ev: InputEvent) -> void:
 	if not (ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT):
 		return
-	var from := cam.project_ray_origin(ev.position)
-	var dir := cam.project_ray_normal(ev.position)
+	var at: Vector2 = ev.position + Vector2(0, 60) # 押した場所（画面の座標）
+	var from := cam.project_ray_origin(at)
+	var dir := cam.project_ray_normal(at)
 	if absf(dir.y) < 1e-4:
 		return
 	var p := from + dir * (-from.y / dir.y)
@@ -514,7 +515,7 @@ func _refresh() -> void:
 	for sid in chips:
 		var chip: Button = chips[sid]
 		var d: Dictionary = ShopData.STATIONS[sid]
-		var sp := cam.unproject_position(Vector3(d.pos.x, 1.3, d.pos.y - 0.4))
+		var sp := cam.unproject_position(Vector3(d.pos.x, 0.0, d.pos.y + 0.15))
 		chip.reset_size()
 		chip.position = sp - Vector2(chip.size.x / 2, chip.size.y / 2)
 		var ring: MeshInstance3D = rings[sid]
@@ -530,8 +531,9 @@ func _refresh() -> void:
 		var k: int = per.get(tr.station, 0)
 		per[tr.station] = k + 1
 		var d2: Dictionary = ShopData.STATIONS[tr.station]
-		var sp2 := cam.unproject_position(Vector3(d2.pos.x, 1.0, d2.pos.y + 0.3))
-		bub.position = bub.position.lerp(sp2 + Vector2(-58 + k * 38, -64) , 0.3)
+		var sp2 := cam.unproject_position(Vector3(d2.pos.x, 1.4, d2.pos.y - 0.4))
+		var n_here: int = sim.count_at(tr.station)
+		bub.position = bub.position.lerp(sp2 + Vector2(-18 + (k - (n_here - 1) / 2.0) * 38, -64), 0.3)
 		bub.set_meta("frac", clampf(tr.patience / tr.max_patience, 0.0, 1.0))
 		bub.set_meta("work", clampf(tr.left / tr.work, 0.0, 1.0))
 		bub.set_meta("late", tr.late)
