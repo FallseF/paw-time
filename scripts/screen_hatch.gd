@@ -43,7 +43,9 @@ func _ready() -> void:
 		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": h.id == "kirari", "weight": 0.3})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
-		o.light.light_energy = 0.5
+		# 生まれたおばけが主役なので、棚の玉は控えめに光らせる（照らす光は特に弱く）
+		o.energy_scale = 0.7
+		o.light_scale = 0.2
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
