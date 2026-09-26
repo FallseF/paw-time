@@ -142,7 +142,7 @@ func _shelf() -> Control:
 	var cam := Camera3D.new()
 	cam.fov = 30
 	w.add_child(cam)
-	cam.look_at_from_position(Vector3(0, 0.8, 5.0), Vector3(0, 0.45, 0))
+	cam.look_at_from_position(Vector3(0, 0.9, 5.8), Vector3(0, 0.62, 0))
 	for i in NORMAL.size():
 		var id: String = NORMAL[i]
 		var pos := Vector3((i - 3) * 1.0, 0, 0)
@@ -277,6 +277,7 @@ func _card(r: Dictionary) -> Control:
 
 
 func _show_detail(r: Dictionary) -> void:
+	Kit.play(self, "tap", 1.1)
 	if not GameState.seen.has(r.id):
 		GameState.goal("zukan")
 	if detail:
