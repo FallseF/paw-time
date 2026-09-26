@@ -1472,7 +1472,8 @@ func _show_morning() -> void:
 		pc.add_child(Kit.text("%s %d" % [p[0], p[1]], 12, Color("c0473b")))
 		parts.add_child(pc)
 	if bad == 0:
-		card_box.add_child(Kit.text(["いい夜だった", "いつもどおり、ぐっすり", "よく眠れた。庭もそう言っている"].pick_random(), 14, Color("3f7d4f"), true))
+		var good_line: String = ["いい夜だった", "いつもどおり、ぐっすり", "よく眠れた。庭もそう言っている"].pick_random() if ln.score >= 18 else "まあまあの夜だった"
+		card_box.add_child(Kit.text(good_line, 14, Color("3f7d4f"), true))
 	else:
 		card_box.add_child(parts)
 	var r := HBoxContainer.new()
