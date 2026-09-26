@@ -1911,6 +1911,8 @@ func _tut_follow() -> void:
 	for o: Orb3D in orbs:
 		if o.catchable():
 			var d := Vector2(o.position.x, o.position.z + 0.6).length()
+			if o.kind != "normal":
+				d += 1.5 # 説明では、素直な黄の玉をねらう
 			if d < best:
 				best = d
 				target = o
