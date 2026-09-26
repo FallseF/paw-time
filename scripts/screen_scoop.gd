@@ -74,6 +74,8 @@ var sunk := 0
 var pond_cleared := false
 var tut_step := -1
 var tut_label: Label
+var tut_target: Orb3D
+var goal_pill: PanelContainer
 var goal: Dictionary
 var goal_done := false
 var goal_label: Label
@@ -147,6 +149,9 @@ func _ready() -> void:
 		tut_step = 0
 	for i in first:
 		_spawn_orb(true)
+	if tut_step == 0:
+		# 説明用に、池のまんなかに素直な黄の玉をひとつ
+		tut_target = _add_orb({"type": "register", "kind": "normal"}, Vector3(0.15, 0, -0.35))
 	_pick_default_poi()
 	_refresh_ui()
 	_show_conditions()
@@ -757,6 +762,7 @@ func _build_ui() -> void:
 	goal_label = _text("", 13, Color("ffe7a8"))
 	gp.add_child(goal_label)
 	add_child(gp)
+	goal_pill = gp
 
 	tip_pill = PanelContainer.new()
 	tip_pill.add_theme_stylebox_override("panel", _pill(Color(1, 0.98, 0.93, 0.95), 16))
@@ -1405,6 +1411,8 @@ func _after_catch() -> void:
 		tut_ring.visible = false
 		if tut_label:
 			tut_label.visible = false
+		if goal_pill:
+			goal_pill.visible = true
 		GameState.tut["scoop"] = true
 		hint.text = "できた！ゆっくり動かすほど、ポイは長持ち"
 	else:
@@ -1888,6 +1896,8 @@ func _show_help() -> void:
 
 func _tut_show() -> void:
 	tut_ring.visible = true
+	if goal_pill:
+		goal_pill.visible = false # 説明のあいだは、おだいは隠す
 	if tut_label == null:
 		tut_label = _text("", 17, Color.WHITE, font_black)
 		tut_label.add_theme_color_override("font_outline_color", Color("0b1026"))
@@ -1911,8 +1921,15 @@ func _tut_show() -> void:
 func _tut_follow() -> void:
 	# 池のまんなかに近い玉をねらう（手前すぎると説明の文字と重なる）
 	var target: Orb3D = null
+	if tut_target and is_instance_valid(tut_target) and tut_target.catchable():
+		target = tut_target
+		tut_target.vel = Vector3.ZERO
+	else:
+		target = null
 	var best := 1e9
 	for o: Orb3D in orbs:
+		if tut_target and is_instance_valid(tut_target) and tut_target.catchable():
+			break
 		if o.catchable():
 			var d := Vector2(o.position.x, o.position.z + 0.6).length()
 			if o.kind != "normal":
@@ -1925,7 +1942,7 @@ func _tut_follow() -> void:
 	var p := cam.unproject_position(target.position + Vector3(0, 0, 0.5 if tut_step == 0 else 0.0))
 	tut_ring.position = p - Vector2(26, 26)
 	if tut_label:
-		tut_label.position = p + Vector2(-100, 30)
+		tut_label.position = Vector2(clampf(p.x - 100, 8, 152), p.y - 64)
 
 
 # ---------- 夜のおわり ----------

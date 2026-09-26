@@ -732,7 +732,7 @@ func _partner_says() -> void:
 	bubble.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.95), 16))
 	var l := _text(line, 13, Color("2a2233"))
 	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	l.custom_minimum_size = Vector2(200, 0)
+	l.custom_minimum_size = Vector2(236, 0)
 	bubble.add_child(l)
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bubble.modulate.a = 0.0
