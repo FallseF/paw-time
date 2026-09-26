@@ -1843,7 +1843,7 @@ func _show_help() -> void:
 	v.add_theme_constant_override("separation", 7)
 	card.add_child(v)
 	v.add_child(_text("すくいのコツ", 20, Color("2a2233"), font_black))
-	for t in ["押すと水に入る。離すとすくう", "そっと動かすほど、ポイは長持ち", "玉の真上ではなく、少し手前から入れる", "内側の輪が金色のとき離すと★", "ゲージの黄色は乗った玉の重さ。赤は危ない", "同じ色のポイは、その色の玉を寄せて軽くする", "破らずに続けるとコンボ。5コンボで虹の玉"]:
+	for t in ["押すと水に入る。離すとすくう", "そっと動かすほど、ポイは長持ち", "玉の真上ではなく、少し手前から入れる", "内側の輪が金色のとき離すと★", "ゲージの黄色は乗った玉の重さ。赤は危ない", "同じ色のポイは、その色の玉を寄せて軽くする", "破らずに続けるとコンボ。5コンボで虹の玉、そこからの玉は★がひとつ多い"]:
 		var l := _text("・" + t, 14, Color("4a3f52"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
