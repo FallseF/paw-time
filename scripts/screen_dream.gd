@@ -26,12 +26,23 @@ var burst: CPUParticles3D
 var beat_t := 0.0
 var fence: Node3D
 var marker: Label3D
+var game := "sheep"
+var catcher: Obake3D
+var target_x := 0.0
+var stars_list: Array = [] # {node, fake, speed}
+var sub: Label
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# 夢は日ごとに変わる：羊かぞえ／星ひろい
+	game = "stars" if GameState.day % 2 == 0 else "sheep"
+	if OS.get_environment("OBAKE_DREAM") != "":
+		game = OS.get_environment("OBAKE_DREAM")
 	_build_world()
 	_build_ui()
+	if game == "stars":
+		_setup_stars()
 	Kit.play(self, "dream", 1.0, -6)
 	await get_tree().create_timer(0.8).timeout
 	running = true
@@ -197,7 +208,7 @@ func _build_ui() -> void:
 	counter.size = Vector2(360, 60)
 	counter.pivot_offset = Vector2(180, 30)
 	add_child(counter)
-	var sub := Kit.text("羊をかぞえる夢", 16, Color("e8e2ff"), true, HORIZONTAL_ALIGNMENT_CENTER)
+	sub = Kit.text("羊をかぞえる夢", 16, Color("e8e2ff"), true, HORIZONTAL_ALIGNMENT_CENTER)
 	sub.position = Vector2(0, 108)
 	sub.size = Vector2(360, 24)
 	add_child(sub)
@@ -232,6 +243,9 @@ func _spawn() -> void:
 
 func _process(delta: float) -> void:
 	if not running or finished:
+		return
+	if game == "stars":
+		_process_stars(delta)
 		return
 	spawn_t -= delta
 	if spawn_t <= 0 and spawned < TOTAL:
@@ -277,6 +291,12 @@ func _process(delta: float) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if not running or finished:
+		return
+	if game == "stars":
+		if event is InputEventMouseButton or event is InputEventMouseMotion or event is InputEventScreenTouch or event is InputEventScreenDrag:
+			if event is InputEventMouseMotion and not (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
+				return
+			target_x = clampf((event.position.x / size.x - 0.5) * 4.2, -1.8, 1.8)
 		return
 	var tap: bool = (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT) or (event is InputEventScreenTouch and event.pressed)
 	if not tap:
@@ -360,11 +380,11 @@ func _finish() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
-	v.add_child(Kit.text("%d ひき かぞえた" % count, 24, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(("%d ひき かぞえた" if game == "sheep" else "%d こ ひろった") % count, 24, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.text("スヤリの玉 ×%d" % res.orbs, 16, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.text("庭のめぐみ +%d" % res.growth, 15, Color("3f7d4f"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	if res.flower:
-		v.add_child(Kit.wrap(Kit.text("ぜんぶかぞえた。庭に夢見草が一輪咲く", 13, Color("8a5bd6"), false, HORIZONTAL_ALIGNMENT_CENTER)))
+		v.add_child(Kit.wrap(Kit.text("ぜんぶそろった。庭に夢見草が一輪咲く", 13, Color("8a5bd6"), false, HORIZONTAL_ALIGNMENT_CENTER)))
 	v.add_child(Kit.button("目をさます", Color("ff8a5b"), func(): main.go("hatch")))
 	p.pivot_offset = Vector2(150, 120)
 	p.scale = Vector2(0.7, 0.7)
@@ -382,6 +402,106 @@ func demo_auto() -> void:
 func _physics_process(_d: float) -> void:
 	if not auto or not running or finished:
 		return
+	if game == "stars":
+		var best = null
+		for st in stars_list:
+			if not st.fake and (best == null or st.node.position.y < best.node.position.y):
+				best = st
+		if best:
+			target_x = best.node.position.x
+		return
 	for s in sheep:
 		if not s.counted and not s.missed and not s.fake and absf(s.x) < 0.08:
 			_tap()
+
+
+# ---------- 星ひろいの夢 ----------
+
+func _setup_stars() -> void:
+	fence.visible = false
+	marker.visible = false
+	sub.text = "星をひろう夢"
+	counter.text = "0 こ"
+	hint.text = "左右になぞって、星を受けとめる"
+	catcher = Obake3D.new().setup("nemuri")
+	catcher.scale = Vector3.ONE * 0.5
+	catcher.position = Vector3(0, 0.05, 0.4)
+	world.add_child(catcher)
+	# 頭の上の枕
+	var pillow := MeshInstance3D.new()
+	var pm := BoxMesh.new()
+	pm.size = Vector3(1.3, 0.22, 0.8)
+	pillow.mesh = pm
+	pillow.material_override = Obake3D.toon(Color("fffaf0"), 0.3)
+	pillow.position = Vector3(0, 1.45, 0)
+	catcher.add_child(pillow)
+
+
+func _spawn_star() -> void:
+	var fake := spawned == 3 or spawned == 7 or spawned == 10
+	var n := Node3D.new()
+	if fake:
+		# 雨雲（受けとめると、しょんぼり）
+		for i in 3:
+			var c := MeshInstance3D.new()
+			var cm := SphereMesh.new()
+			cm.radius = 0.16
+			cm.height = 0.3
+			c.mesh = cm
+			c.material_override = Obake3D.toon(Color("6a6880"), 0.2)
+			c.position = Vector3((i - 1) * 0.16, 0, 0)
+			n.add_child(c)
+	else:
+		var st := Kit.label3d("★", 90, Color("ffe27a"))
+		st.outline_size = 14
+		n.add_child(st)
+		var l := OmniLight3D.new()
+		l.light_color = Color("ffe27a")
+		l.light_energy = 1.0
+		l.omni_range = 1.2
+		n.add_child(l)
+	n.position = Vector3(randf_range(-1.6, 1.6), 3.4, 0.4)
+	world.add_child(n)
+	stars_list.append({"node": n, "fake": fake, "speed": randf_range(1.0, 1.35) + spawned * 0.04})
+	spawned += 1
+
+
+func _process_stars(delta: float) -> void:
+	spawn_t -= delta
+	if spawn_t <= 0 and spawned < TOTAL:
+		_spawn_star()
+		spawn_t = lerpf(1.3, 0.9, float(spawned) / TOTAL)
+	catcher.position.x = move_toward(catcher.position.x, target_x, 4.0 * delta)
+	for st in stars_list:
+		var n: Node3D = st.node
+		n.position.y -= st.speed * delta
+		n.rotation.z += delta * 2.0
+		if n.position.y < 0.95 and n.position.y > 0.55 and absf(n.position.x - catcher.position.x) < 0.5:
+			st.done = true
+			if st.fake:
+				combo = 0
+				_pop("…ぬれた", Color("b8c4ff"))
+				Kit.play(self, "splash", 0.8, -4)
+				var tw := create_tween()
+				tw.tween_property(catcher, "scale", Vector3(0.6, 0.38, 0.5), 0.1)
+				tw.tween_property(catcher, "scale", Vector3.ONE * 0.5, 0.3).set_trans(Tween.TRANS_ELASTIC)
+			else:
+				count += 1
+				combo += 1
+				_pop("ひろった" if combo < 3 else "ひろった ×%d" % combo, Color("fff2a8"))
+				Kit.play(self, "chime", 0.9 + min(combo, 8) * 0.06, -4)
+				burst.position = n.position
+				burst.restart()
+				burst.emitting = true
+				counter.text = "%d こ" % count
+				counter.scale = Vector2(1.25, 1.25)
+				create_tween().tween_property(counter, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK)
+			n.queue_free()
+		elif n.position.y < -0.3:
+			st.done = true
+			if not st.fake:
+				combo = 0
+			n.queue_free()
+	stars_list = stars_list.filter(func(x): return not x.get("done", false))
+	if spawned >= TOTAL and stars_list.is_empty():
+		_finish()

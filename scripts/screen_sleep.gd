@@ -270,7 +270,7 @@ func _set_time(b: int, w: int) -> void:
 	if ns.late:
 		preview.add_child(Kit.wrap(Kit.text("夜ふかし：夜のおばけが寄ってくる。でも庭はしおれる", 13, Color("ffc28a"))))
 	elif h >= 7.0 and t_after >= 2:
-		preview.add_child(Kit.text("夢を見そう（羊をかぞえる夢）", 13, Color("c9bdf5")))
+		preview.add_child(Kit.text("今夜は夢を見そう", 13, Color("c9bdf5")))
 
 
 func _sleep() -> void:
