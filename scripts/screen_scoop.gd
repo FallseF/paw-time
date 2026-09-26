@@ -40,6 +40,10 @@ var partner_node: Obake3D
 # ポイ
 var selected := "paper"
 var parked := {} # 持ち替えて置いた、使いかけのポイ {id: 丈夫さ}
+# 練習（その夜のポイを使い切ったあと）：紙のポイは使い放題、玉は持ち帰れない
+var practice := false
+var pool: Dictionary
+var caught: Array
 var in_hand := false
 var used := false
 var durability := 1.0
@@ -118,19 +122,22 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	font_bold = load("res://assets/fonts/ZenMaruGothic-Bold.ttf")
 	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
+	practice = GameState.practice
+	pool = {"paper": 999} if practice else GameState.pois
+	caught = [] if practice else GameState.orbs
 	mods = GameState.night_mods()
 	supply = mods.supply
 	rainbow_left = mods.rainbow_max
 	if randf() < mods.rainbow:
 		rainbow_t = randf_range(10.0, 30.0)
 	radius = POI_R * GameState.poi_radius_mult()
-	var gift := GameState.festival_gift()
-	goal = GameState.night_goal()
+	var gift := 0 if practice else GameState.festival_gift()
+	goal = {} if practice else GameState.night_goal()
 	_build_world()
 	_build_ui()
 	_build_audio()
 	var first := 5 if not mods.festival else 7
-	if GameState.records.nights == 0:
+	if GameState.records.nights == 0 and not practice:
 		first = 4
 		tut_step = 0
 	for i in first:
@@ -843,7 +850,7 @@ func _poi_color(pid: String) -> Color:
 func _refresh_ui() -> void:
 	for c in jar_row.get_children():
 		c.queue_free()
-	var shown: Array = GameState.orbs.slice(-8)
+	var shown: Array = caught.slice(-8)
 	for o in shown:
 		var dot := Panel.new()
 		dot.custom_minimum_size = Vector2(12, 12)
@@ -862,7 +869,7 @@ func _refresh_ui() -> void:
 	combo_label.text = ("%d" % combo) if combo >= 2 else ""
 	combo_sub.text = "コンボ" if combo >= 2 else ("最高 %d" % best_combo if best_combo >= 2 else "")
 	# ポイの丈夫さ
-	var frac := clampf(durability / max(dura_max, 0.01), 0.0, 1.0) if in_hand else (1.0 if GameState.pois.get(selected, 0) > 0 else 0.0)
+	var frac := clampf(durability / max(dura_max, 0.01), 0.0, 1.0) if in_hand else (1.0 if pool.get(selected, 0) > 0 else 0.0)
 	dura_fill.size.x = 280.0 * frac
 	dura_fill.color = Color("7bdc6b") if frac > 0.5 else (Color("ffd23f") if frac > 0.25 else Color("ff6b5b"))
 	poi_film_mat.albedo_color = Color(1, 1, 1, 0.12 + 0.45 * frac)
@@ -871,7 +878,7 @@ func _refresh_ui() -> void:
 	for c in tray.get_children():
 		c.queue_free()
 	for pid in GameState.POI_ORDER:
-		var n: int = GameState.pois.get(pid, 0)
+		var n: int = pool.get(pid, 0)
 		var here: bool = (in_hand and pid == selected) or parked.has(pid)
 		if n <= 0 and not here:
 			continue
@@ -913,11 +920,14 @@ func _goal_progress() -> int:
 		"multi":
 			return multi_count
 		"type":
-			return GameState.orbs.filter(func(o): return o.type == goal.type).size()
+			return caught.filter(func(o): return o.type == goal.type).size()
 	return 0
 
 
 func _update_goal() -> void:
+	if goal.is_empty():
+		goal_label.text = "練習（玉は持ち帰れない）"
+		return
 	var p := mini(_goal_progress(), goal.n)
 	goal_label.text = "おだい：%s  %d/%d%s" % [goal.text, p, goal.n, "  達成！" if goal_done else ""]
 	if not goal_done and p >= goal.n:
@@ -937,14 +947,14 @@ func _tip(kind: String) -> void:
 
 
 func _pick_default_poi() -> void:
-	if GameState.pois.get(selected, 0) > 0 or parked.has(selected):
+	if pool.get(selected, 0) > 0 or parked.has(selected):
 		return
 	# 仕事のポイ → 紙 → 工房のポイ の順に
 	for pid in parked:
 		selected = pid
 		return
 	for pid in ["receipt", "bubble", "tray", "pan", "box", "paper", "double", "lure", "kira", "akari"]:
-		if GameState.pois.get(pid, 0) > 0:
+		if pool.get(pid, 0) > 0:
 			selected = pid
 			return
 	selected = ""
@@ -958,7 +968,7 @@ func _select_poi(pid: String) -> void:
 		parked[selected] = durability
 		_toast("使いかけは脇に置いた。戻せば続きから")
 	elif in_hand:
-		GameState.pois[selected] += 1
+		pool[selected] += 1
 	in_hand = false
 	used = false
 	selected = pid
@@ -985,11 +995,11 @@ func _take_poi() -> bool:
 		used = true
 		_refresh_ui()
 		return true
-	if selected == "" or GameState.pois.get(selected, 0) <= 0:
+	if selected == "" or pool.get(selected, 0) <= 0:
 		_pick_default_poi()
 		if selected == "":
 			return false
-	GameState.pois[selected] -= 1
+	pool[selected] -= 1
 	in_hand = true
 	used = false
 	dura_max = GameState.poi_durability_max()
@@ -1214,7 +1224,7 @@ func _lift() -> void:
 			rainbow_count += 1
 		if o.kind == "gold":
 			gold_count += 1
-		GameState.orbs.append({"type": o.data.type, "kind": o.kind, "quality": q})
+		caught.append({"type": o.data.type, "kind": o.kind, "quality": q})
 	if gentle:
 		tags.append("そっと")
 	if not centered_ids.is_empty():
@@ -1346,7 +1356,7 @@ func _tear(list: Array) -> void:
 	if GameState.partner == "receipt" and combo > 0:
 		kept = int(combo * (0.3 + 0.1 * GameState.partner_level()))
 	var lost := combo - kept
-	var left_n: int = GameState.pois.get(selected, 0)
+	var left_n: int = pool.get(selected, 0)
 	var left_txt := "%s あと%d本" % [GameState.POI[selected].name, left_n] if selected != "" and GameState.POI.has(selected) else ""
 	_banner("やぶれた…" if lost < 3 else "やぶれた…\n%dコンボ" % combo, Color("ffb3a8"))
 	if left_txt != "":
@@ -1754,8 +1764,14 @@ func _end_night(reason: String) -> void:
 		await get_tree().process_frame
 	Engine.time_scale = 1.0
 	if in_hand and not used:
-		GameState.pois[selected] += 1
+		pool[selected] += 1
 	in_hand = false
+	if practice:
+		GameState.practice = false
+		GameState.records["practice_best"] = max(GameState.records.get("practice_best", 0), best_combo)
+		await get_tree().create_timer(0.4).timeout
+		_show_result("練習おしまい", false)
+		return
 	var was_best: bool = best_combo > GameState.records.best_combo and best_combo >= 3
 	title_before = GameState.title_index()
 	GameState.record_scoop_night({"count": count, "best_combo": best_combo, "clean": clean_count, "rainbow": rainbow_count, "festival": mods.festival, "gold": gold_count})
@@ -1789,7 +1805,7 @@ func _show_result(reason: String, was_best: bool) -> void:
 	var row := HFlowContainer.new()
 	row.alignment = FlowContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("h_separation", 4)
-	for o in GameState.orbs:
+	for o in caught:
 		var dot := Panel.new()
 		dot.custom_minimum_size = Vector2(18, 18)
 		var sb := StyleBoxFlat.new()
@@ -1802,7 +1818,9 @@ func _show_result(reason: String, was_best: bool) -> void:
 		row.add_child(dot)
 	v.add_child(row)
 	var lines: Array = []
-	var pv := _hatch_preview()
+	var pv := "" if practice else _hatch_preview()
+	if practice:
+		lines.append("練習の最高コンボ %d" % GameState.records.get("practice_best", 0))
 	if pv != "":
 		lines.append(pv)
 	lines.append("最高コンボ %d%s" % [best_combo, "  新記録！" if was_best else ""])
@@ -1838,6 +1856,20 @@ func _show_result(reason: String, was_best: bool) -> void:
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 	b.pressed.connect(func(): main.go("sleep"))
 	v.add_child(b)
+	# ポイを使い切ったあとも、もう少しすくいたい人へ
+	var pr := Button.new()
+	pr.text = "練習ですくう（玉は持ち帰れない）"
+	pr.custom_minimum_size = Vector2(0, 40)
+	pr.add_theme_font_override("font", font_bold)
+	pr.add_theme_font_size_override("font_size", 14)
+	for k in ["normal", "hover", "pressed"]:
+		pr.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 1), 20))
+	pr.add_theme_color_override("font_color", Color("5b6fc2"))
+	pr.add_theme_color_override("font_hover_color", Color("5b6fc2"))
+	pr.pressed.connect(func():
+		GameState.practice = true
+		main.go("catch"))
+	v.add_child(pr)
 	await get_tree().process_frame
 	card.reset_size()
 	card.size.x = 312
@@ -1860,7 +1892,7 @@ func _hatch_preview() -> String:
 	var xp := {}
 	var school := 0
 	var mystery := 0
-	for o in GameState.orbs:
+	for o in caught:
 		if o.kind in ["rainbow", "gold"]:
 			mystery += 1
 			continue

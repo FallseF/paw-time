@@ -130,6 +130,7 @@ var tonight := {} # 今夜のすくいの結果 {count, best_combo, clean}
 var records := {"best_combo": 0, "total": 0, "nights": 0, "rainbow": 0, "festival_best": 0, "clean": 0}
 var claimed := {} # 図鑑のごほうび（グループ・節目）
 var tut := {} # はじめての説明を見たか
+var practice := false # 練習ですくう（保存しない）
 var week_snap := {"total": 0, "seen": 1}
 var ALL := {}
 
