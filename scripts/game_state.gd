@@ -275,7 +275,15 @@ func add_obake(species_id: String) -> bool:
 			_level_up(o)
 			changed.emit()
 			return is_new
-	owned.append({"id": species_id, "level": 1, "xp": 0})
+	# あとから来た仲間も、すぐ戦えるように：編成のまん中の Lv − 1（最大10）
+	var start_lv := 1
+	var lvs: Array = []
+	for o in owned:
+		lvs.append(o.level)
+	if not lvs.is_empty():
+		lvs.sort()
+		start_lv = clampi(int(lvs[lvs.size() / 2]) - 1, 1, 10)
+	owned.append({"id": species_id, "level": start_lv, "xp": 0})
 	if deck.size() < DECK_MAX and not DefData.unit(species_id).is_empty():
 		deck.append(species_id)
 	changed.emit()
@@ -426,7 +434,7 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 			if lap == best_lap:
 				best_lap += 1
 				r.lap_up = true
-	elif stats.get("time", 0.0) >= 30.0 and stats.get("kills", 0) >= 3 and not consolation_done:
+	elif not stats.get("retreat", false) and stats.get("time", 0.0) >= 30.0 and stats.get("kills", 0) >= 3 and not consolation_done:
 		# ちゃんと戦って負けたら、1日1回だけ少しもらえる（詰まないように。すぐ帰るのは0）
 		consolation_done = true
 		r.coins = int(stg.reward * 0.2)

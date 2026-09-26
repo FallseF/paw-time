@@ -129,13 +129,18 @@ func fire_cannon() -> bool:
 		return false
 	cannon = 0.0
 	var hit := 0
+	var stun := false
 	for e in entities:
 		if e.side == 1 and e.x >= L - CANNON_REACH:
 			hit += 1
 			_damage(e, 60.0 + e.max_hp * 0.06, null)
 			if e.hp > 0 and not e.boss:
 				_knock(e)
-	events.append({"type": "cannon", "hit": hit})
+			elif e.hp > 0 and e.boss:
+				# 大ピークは押し返せないが、チャイムで1.5秒ひるむ
+				e.sleep = 1.5
+				stun = true
+	events.append({"type": "cannon", "hit": hit, "boss_stun": stun})
 	return true
 
 

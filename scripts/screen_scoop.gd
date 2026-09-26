@@ -657,6 +657,7 @@ func _lift() -> void:
 	stars.emitting = true
 	Engine.time_scale = 1.0
 	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
+	GameState.save_game()
 	caught_count += 1
 	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
@@ -680,6 +681,7 @@ func _tear(target: Orb3D) -> void:
 	Input.vibrate_handheld(80)
 	_banner("やぶれた…", Color("ffb3a8"))
 	GameState.nets[poi_type] -= 1
+	GameState.save_game()
 	var tw := create_tween().set_parallel()
 	tw.tween_property(poi_film_mat, "albedo_color:a", 0.0, 0.2)
 	tw.tween_property(cam, "transform", cam_base, 0.5)

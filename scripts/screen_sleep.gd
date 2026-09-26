@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("本番ではスマホの睡眠記録から自動で入ります", 12, Color(1, 1, 1, 0.55))
+	var note := _text("よく寝た朝は、おばけが育って、やる気がたまりやすい", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 186)
 	note.size = Vector2(360, 20)
 	add_child(note)

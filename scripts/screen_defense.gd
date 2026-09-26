@@ -56,6 +56,9 @@ var hint_label: Label
 var hint_target: Control
 var hint_key := ""
 var overlay: Control
+var retreated := false
+var weak_label: Label3D
+var weak_uid := -1
 var boss_bar: PanelContainer
 var boss_hp: ProgressBar
 var speed_btn: Button
@@ -755,6 +758,16 @@ func _refresh_ui() -> void:
 		b.modulate = Color.WHITE if ok else Color(0.82, 0.8, 0.84)
 		var cost: Label = b.get_node("cost")
 		cost.add_theme_color_override("font_color", Kit.INK if sim.energy >= s.cost else Color("d9534f"))
+		if s.left > 0:
+			cost.text = "%.0f秒" % ceil(s.left)
+		elif sim.energy < s.cost:
+			cost.text = "あと%d" % int(ceil(s.cost - sim.energy))
+		else:
+			cost.text = str(s.cost)
+		# 前の困りごとに効く仕事なら、枠を光らせる
+		var job: String = DefData.unit(s.id).get("job", "")
+		var glow := weak_job != "" and job == weak_job
+		b.self_modulate = Color(1.0, 0.92, 0.75) if glow and sin(_t * 8.0) > 0 else Color.WHITE
 		var pic: TextureRect = b.get_node("pic")
 		if pic.texture == null:
 			pic.texture = Kit.portrait(s.id)
@@ -768,10 +781,39 @@ func _refresh_ui() -> void:
 	else:
 		cannon_btn.scale = Vector2.ONE
 	minimap.queue_redraw()
+	_update_weak_label()
 	var boss := sim.find(sim.boss_uid) if sim.boss_uid >= 0 else {}
 	boss_bar.visible = not boss.is_empty()
 	if not boss.is_empty():
 		boss_hp.value = boss.hp / boss.max_hp
+
+
+var weak_job := ""
+
+
+## いちばん前の困りごとの頭に、弱点をひと言だけ出す
+func _update_weak_label() -> void:
+	var front := {}
+	for e in sim.entities:
+		if e.side == 1 and (front.is_empty() or e.x > front.x):
+			front = e
+	weak_job = ""
+	if front.is_empty() or not views.has(front.uid) or front.weak == "":
+		if weak_label:
+			weak_label.visible = false
+		return
+	weak_job = front.weak
+	if weak_label == null:
+		weak_label = _label3d("", Color.WHITE, 34)
+		world.add_child(weak_label)
+	var v: Dictionary = views[front.uid]
+	var h: float = DefData.ENEMIES[front.id].h
+	weak_label.visible = true
+	weak_label.text = "弱点 %s" % GameState.ROLE_LABEL[front.weak]
+	weak_label.modulate = Color.WHITE
+	weak_label.outline_modulate = DefData.job_color(front.weak).darkened(0.1)
+	weak_label.outline_size = 16
+	weak_label.position = v.root.position + Vector3(0, h + 0.35, 0.3)
 
 
 func _draw_minimap() -> void:
@@ -871,9 +913,6 @@ func _deploy(i: int) -> void:
 		if not GameState.tutorial.has("t_energy"):
 			_show_hint("t_energy", "やる気は勝手にたまる。どんどん出そう", energy_bar)
 			get_tree().create_timer(3.5).timeout.connect(func(): _hide_hint("t_energy"))
-		# カメラを店の前へ少し寄せる
-		if cam_hold <= 0:
-			cam_x = maxf(cam_x, DefData.LANE - 4.0)
 	elif i < sim.slots.size():
 		Kit.sfx("c_deny")
 		_shake_ui(slot_btns[i])
@@ -934,6 +973,38 @@ func _callout(id: String) -> void:
 	tw.tween_property(p, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(p.queue_free)
 	Kit.sfx("c_whoosh", 1.2)
+
+
+## はじめて会う困りごと：絵と弱点をひと言
+func _enemy_intro(id: String) -> void:
+	var d: Dictionary = DefData.ENEMIES[id]
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color(0.16, 0.13, 0.2, 0.92), 18, 0.2))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	var pic := TextureRect.new()
+	pic.texture = Kit.enemy_tex(id)
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.custom_minimum_size = Vector2(48, 48)
+	h.add_child(pic)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", -2)
+	v.add_child(Kit.text("はじめての困りごと：" + d.name, 14, Color.WHITE, true))
+	var sk := Kit.text(d.line, 11, Color("e8e2ff"))
+	sk.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	sk.custom_minimum_size = Vector2(230, 0)
+	v.add_child(sk)
+	h.add_child(v)
+	p.add_child(h)
+	p.position = Vector2(380, 104)
+	add_child(p)
+	var tw := p.create_tween()
+	tw.tween_property(p, "position:x", 14.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(2.6)
+	tw.tween_property(p, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(p.queue_free)
 
 
 func _shake_ui(c: Control) -> void:
@@ -999,6 +1070,7 @@ func _pause() -> void:
 		overlay.queue_free()
 		overlay = null
 		paused = false
+		retreated = true
 		sim.base_hp = 0
 		sim.tick(0.0)))
 
@@ -1087,6 +1159,8 @@ func _handle_events(evs: Array) -> void:
 			"spawn":
 				var se := sim.find(ev.uid)
 				if not se.is_empty() and se.side == 1 and not demo:
+					if not GameState.enemies_seen.has(se.id) and not se.boss:
+						_enemy_intro(se.id)
 					GameState.enemies_seen[se.id] = true
 				if ev.get("boss", false):
 					_boss_arrives()
@@ -1140,6 +1214,8 @@ func _handle_events(evs: Array) -> void:
 				_flash(0.12, Color("ff6b5b"))
 			"cannon":
 				_cannon_fx()
+				if ev.get("boss_stun", false):
+					_popup("ひるんだ！", Vector3(cam_x, 3.2, 0.5), Color("ff8a3d"), 60)
 				if ev.hit >= 3:
 					_banner("%d体、押し返した！" % ev.hit, Color("fff6e0"))
 				else:
@@ -1248,7 +1324,7 @@ func _boss_arrives() -> void:
 	shake = 1.0
 	_banner("金曜の大ピーク、\n来た。", Color("ff8a3d"))
 	cam_x = 3.0
-	cam_hold = 2.5
+	cam_hold = 1.5
 
 
 func _banner(t: String, c: Color) -> void:
@@ -1274,7 +1350,7 @@ func _end(won: bool) -> void:
 	ended = true
 	_hide_hint(hint_key)
 	Kit.music("")
-	var stats := {"time": sim.t, "kills": sim.kills, "deployed": sim.deployed, "base": sim.base_hp / sim.base_max}
+	var stats := {"time": sim.t, "kills": sim.kills, "deployed": sim.deployed, "base": sim.base_hp / sim.base_max, "retreat": retreated}
 	var r: Dictionary = GameState.record_battle(si, st, won, stats) if not demo else {"won": won, "coins": stage.reward, "first": true, "orb": false, "lap_up": false, "stats": stats}
 	if won:
 		Kit.sfx("c_fanfare")
