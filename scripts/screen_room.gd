@@ -8,6 +8,7 @@ var vp: SubViewport
 var world: Node3D
 var cam: Camera3D
 var walkers: Array = []
+const TABLE := Vector3(-1.2, 0, -1.55)  # ちゃぶ台の場所（床の上）
 var font_bold: FontFile
 var font_black: FontFile
 var poi_row: HBoxContainer
@@ -48,10 +49,11 @@ func _build_world() -> void:
 	Look.apply(world, "room", Color("e9d6c2"), false, true)
 
 	cam = Camera3D.new()
-	cam.position = Vector3(0, 5.2, 8.2)
-	cam.fov = 34
+	# おばけが主役：上下のパネルの間（画面の中ほど）に、おばけが大きく入るよう寄せる
+	cam.position = Vector3(0, 3.6, 6.9)
+	cam.fov = 32
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.6, -0.6))
+	cam.look_at(Vector3(0, 0.55, -1.0))
 
 	_box(Vector3(12, 0.1, 12), Vector3(0, -0.05, 0), Color("b98258"))
 	# 床板の目地
@@ -82,21 +84,21 @@ func _build_world() -> void:
 	# ちゃぶ台と座布団
 	var table := MeshInstance3D.new()
 	var tm := CylinderMesh.new()
-	tm.top_radius = 0.75
-	tm.bottom_radius = 0.75
+	tm.top_radius = 0.56
+	tm.bottom_radius = 0.56
 	tm.height = 0.08
 	table.mesh = tm
-	table.position = Vector3(-0.3, 0.42, 0.3)
+	table.position = TABLE + Vector3(0, 0.42, 0)
 	table.material_override = Obake3D.toon(Color("8a5a3a"), 0.1)
 	world.add_child(table)
-	_box(Vector3(0.08, 0.4, 0.08), Vector3(-0.3, 0.2, 0.3), Color("6b4430"))
+	_box(Vector3(0.08, 0.4, 0.08), TABLE + Vector3(0, 0.2, 0), Color("6b4430"))
 	var cup := MeshInstance3D.new()
 	var cm := CylinderMesh.new()
 	cm.top_radius = 0.08
 	cm.bottom_radius = 0.07
 	cm.height = 0.14
 	cup.mesh = cm
-	cup.position = Vector3(-0.1, 0.53, 0.2)
+	cup.position = TABLE + Vector3(0.15, 0.53, -0.08)
 	cup.material_override = Obake3D.toon(Color("f4f1ea"), 0.2)
 	world.add_child(cup)
 	_box(Vector3(0.8, 0.1, 0.8), Vector3(1.4, 0.05, 1.0), Color("c9454a"))
@@ -106,10 +108,19 @@ func _build_world() -> void:
 	for i in n:
 		var o: Dictionary = GameState.owned[i]
 		var ob := Obake3D.make(o.id)
-		ob.scale = Vector3.ONE * 0.62
-		ob.position = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
+		ob.scale = Vector3.ONE * 0.8
+		ob.position = _walk_target()
 		world.add_child(ob)
 		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0)})
+
+
+## 歩き回る先：パネルに隠れない床の真ん中あたりで、ちゃぶ台とは重ならない所
+func _walk_target() -> Vector3:
+	for i in 12:
+		var p := Vector3(randf_range(-1.0, 1.0), 0, randf_range(-1.6, -0.65))
+		if Vector2(p.x - TABLE.x, p.z - TABLE.z).length() > 0.95:
+			return p
+	return Vector3(0.9, 0, -1.0)
 
 
 func _box(size: Vector3, pos: Vector3, c: Color) -> void:
@@ -131,7 +142,7 @@ func _process(delta: float) -> void:
 		var to: Vector3 = w.target
 		var d := to - ob.position
 		if d.length() < 0.05:
-			w.target = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
+			w.target = _walk_target()
 			w.wait = randf_range(1.0, 4.0)
 			continue
 		ob.position += d.normalized() * min(d.length(), 0.5 * delta)
