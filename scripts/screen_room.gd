@@ -314,6 +314,8 @@ func _render() -> void:
 	else:
 		card_title.text = "今日は休み"
 		card_body.text = "よく寝た朝は、やる気のたまりが速い。ゆっくり守ろう"
+	if GameState.focus != "" and GameState.wins_today == 0 and GameState.total_battles > 0:
+		card_body.text += "\n今日の最初の勝ちで、%sに経験 +%d" % [GameState.info(GameState.focus).name, GameState.FOCUS_XP]
 	if GameState.orbs.size() > 0:
 		card_body.text += "\n光る玉 %d 個：寝て起きると、かえる" % GameState.orbs.size()
 	var ds := GameState.daily_stage()

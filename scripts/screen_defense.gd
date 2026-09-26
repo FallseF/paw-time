@@ -1502,6 +1502,8 @@ func _result(r: Dictionary) -> void:
 		if r.get("join", "") != "":
 			var ju: Dictionary = DefData.unit(r.join)
 			notes.append(["%sが仲間になった（%s：%s）" % [GameState.info(r.join).name, ju.role, ju.line], Color("8b7bff")])
+		if r.get("focus", "") != "":
+			notes.append(["%sに経験 +%d（育てたい一体）" % [GameState.info(r.focus).name, GameState.FOCUS_XP], Color("8b7bff")])
 		if r.get("daily", false):
 			notes.append(["今日のお手伝い +60", Color("e8792f")])
 		if r.orb:

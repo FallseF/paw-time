@@ -41,7 +41,7 @@ func _ready() -> void:
 	var dv := VBoxContainer.new()
 	dv.add_theme_constant_override("separation", 2)
 	dp.add_child(dv)
-	dv.add_child(Kit.text("出撃するおばけ（%d体まで）" % GameState.DECK_MAX, 11, Kit.SUB, true))
+	dv.add_child(Kit.text("出撃するおばけ（%d体まで）・☆＝育てたい一体（毎日の初勝利で経験+%d）" % [GameState.DECK_MAX, GameState.FOCUS_XP], 9, Kit.SUB, true))
 	deck_row = HBoxContainer.new()
 	deck_row.add_theme_constant_override("separation", 2)
 	dv.add_child(deck_row)
@@ -142,6 +142,20 @@ func _card(o: Dictionary) -> Control:
 	var tag_text: String = ("レア" if rare else "%s・%s" % [GameState.ROLE_LABEL[job], u.role])
 	tag.add_child(Kit.text(tag_text, 10, Color.WHITE, true))
 	nr.add_child(tag)
+	var is_focus: bool = GameState.focus == id
+	var fb := Button.new()
+	fb.text = "★育てる" if is_focus else "☆"
+	fb.flat = true
+	fb.tooltip_text = "育てたい一体：その日の最初の勝ちで経験 +%d" % GameState.FOCUS_XP
+	fb.add_theme_font_override("font", Kit.font_black)
+	fb.add_theme_font_size_override("font_size", 12)
+	fb.add_theme_color_override("font_color", Color("e8792f") if is_focus else Color("c9bcc8"))
+	fb.pressed.connect(func():
+		GameState.focus = "" if is_focus else id
+		GameState.save_game()
+		Kit.sfx("c_tap")
+		_render())
+	nr.add_child(fb)
 	v.add_child(nr)
 	var mult := DefData.unit_mult(o.level) * (0.8 if rare else 1.0)
 	if o.level >= DefData.VETERAN_LV:
