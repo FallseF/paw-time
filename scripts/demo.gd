@@ -164,17 +164,17 @@ func _promo() -> void:
 	GameState.phase = "evening"
 	await _go("garden", true)
 	main.current.call("_toggle_card")
-	await _wait(2.0)
+	await _wait(1.8)
 	# 1) すくい（スロー）
 	_mark("1)")
 	GameState.reset("data")
 	GameState.nets["plain"] = 3
 	await _go("catch")
-	await _wait(0.9)
-	main.current.call("demo_hold")
-	await _wait(0.5)
+	await _wait(0.6)
+	main.current.call("demo_still")
+	await _wait(2.6)
 	main.current.call("demo_lift")
-	await _wait(3.0)
+	await _wait(2.6)
 	# 2) おやすみ → 夢へ（リズムが整っている夜）
 	_mark("2)")
 	GameState.rhythm = 88
@@ -237,5 +237,5 @@ func _promo() -> void:
 	# 9) タイトル
 	_mark("9)")
 	await _go("title")
-	await _wait(2.6)
+	await _wait(2.3)
 	get_tree().quit()
