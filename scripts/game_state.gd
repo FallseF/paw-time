@@ -287,19 +287,20 @@ func recorded_sleep() -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_base * 31 + day * 977
 	var s := today()
-	var bed := USUAL_DEFAULT + int(rng.randfn(0, 15))
+	# 見本の人（みか）は、ふだんは 23:30 ごろ寝る。夜のシフトの日は少し、深夜の日は大きくずれる
+	var bed := USUAL_DEFAULT + int(rng.randfn(0, 10))
 	if s.band == "夜":
-		bed += 45
+		bed += 25
 	elif s.band == "深夜":
-		bed += 150
-	if rng.randf() < 0.12:
-		bed += 100 # たまの夜ふかし
+		bed += 100
+	if rng.randf() < 0.08:
+		bed += 80 # たまの夜ふかし
 	bed = int(round(bed / 10.0) * 10)
-	var wake := 420 + int(rng.randfn(0, 20))
+	var wake := bed - 360 + 450 + int(rng.randfn(0, 15)) # だいたい 7.5 時間
 	if shift_for(day + 1).band == "朝":
-		wake = 390
+		wake = mini(wake, 400)
 	if s.role == "":
-		wake += 40
+		wake += 30
 	wake = int(round(wake / 10.0) * 10)
 	return {"bed": clampi(bed, 180, 540), "wake": clampi(wake, 300, 630)}
 
