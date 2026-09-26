@@ -94,7 +94,7 @@ func _ready() -> void:
 	t2.position = Vector2(0, 122)
 	t2.size = Vector2(360, 24)
 	add_child(t2)
-	var t3 := Kit.text("よく眠った朝は、玉がかえる。庭が育つ。", 13, Color(1, 1, 1, 0.7), false, HORIZONTAL_ALIGNMENT_CENTER)
+	var t3 := Kit.text("よく眠ると、庭が育つ", 13, Color(1, 1, 1, 0.7), false, HORIZONTAL_ALIGNMENT_CENTER)
 	t3.position = Vector2(0, 150)
 	t3.size = Vector2(360, 20)
 	add_child(t3)
@@ -110,9 +110,9 @@ func _ready() -> void:
 		var peek := _peek()
 		if peek != "":
 			v.add_child(Kit.text(peek, 12, Color(1, 1, 1, 0.75), false, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.button("はじめる：記録とつなぐ（見本）", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("data"), Color.WHITE, 46, 15))
-	v.add_child(Kit.button("はじめる：ゲームだけで遊ぶ", Color(1, 1, 1, 0.92), func(): _new("solo"), Color("4a3f52"), 42, 14))
-	var n := Kit.wrap(Kit.text("記録とつなぐと、シフトの日に仕事のポイと庭の飾りが届き、睡眠は記録から入ります。ゲームだけでも毎晩遊べます。", 11, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.button("はじめる（見本の記録つき）", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("data"), Color.WHITE, 46, 15))
+	v.add_child(Kit.button("記録なしで、はじめる", Color(1, 1, 1, 0.92), func(): _new("solo"), Color("4a3f52"), 42, 14))
+	var n := Kit.text("記録なしでも、毎晩あそべます", 12, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER)
 	v.add_child(n)
 
 

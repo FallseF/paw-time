@@ -76,7 +76,7 @@ func _ready() -> void:
 	_make_breath()
 	# 今夜の川の様子を、はじめに知らせる
 	var kind := GameState.night_kind()
-	if kind != "" and not extra:
+	if kind != "" and not extra and GameState.day >= 1:
 		var kt: Array = GameState.NIGHT_KIND_TEXT[kind]
 		await get_tree().create_timer(0.5).timeout
 		var pn := PanelContainer.new()
@@ -407,7 +407,7 @@ const ORB_TAG := {"register": "ピッと動いて、止まる", "dish": "ふわ�
 ## その色の玉にはじめて会ったときだけ、玉の上に性格をひとこと
 func _orb_tag(o: Orb3D) -> void:
 	var t: String = o.data.type
-	if not ORB_TAG.has(t) or GameState.tut.has("orb_" + t):
+	if not ORB_TAG.has(t) or GameState.tut.has("orb_" + t) or GameState.day < 1:
 		return
 	GameState.tut["orb_" + t] = true
 	tag_n += 1
@@ -498,17 +498,18 @@ func _build_ui() -> void:
 	bg.set_corner_radius_all(5)
 	dura_bar.add_theme_stylebox_override("background", bg)
 	ph.add_child(dura_bar)
-	var calm: String = ["水面ざわざわ", "水面ふつう", "水面しずか", "水面しずか"][GameState.tier()]
-	ph.add_child(_text(calm, 12, GameState.TIER_COLOR[GameState.tier()]))
+
 	pp.add_child(ph)
 	top.add_child(pp)
 
-	hint = _text("押して水へ → 縁が金色に光ったら、離す", 14, Color(1, 1, 1, 0.85))
-	var tip := _text("水の中でじっとしていると、ゆめの泡が浮いてくる", 12, Color("c9bdf5"))
+	hint = _text("押して、玉の下へ → 離す", 14, Color(1, 1, 1, 0.85))
+	var tip := _text("じっと待つと、ゆめの泡が浮かぶ", 12, Color("c9bdf5"))
 	tip.position = Vector2(0, 116)
 	tip.size = Vector2(360, 20)
 	add_child(tip)
-	var tips := ["水の中でじっとしていると、ゆめの泡が浮いてくる", "青い泡の玉はのんびり。紫のお盆の玉はまっすぐ逃げる", "茶色の箱の玉は重くて動かない。でも破れやすい", "黄色のレジの玉は、ピッと動いて止まる", "縁が金色のときに離すと、ぴったり"]
+	# はじめての夜は、下のヒントひとつだけ
+	tip.visible = GameState.day >= 1
+	var tips := ["じっと待つと、ゆめの泡が浮かぶ", "縁が金色で離すと、ぴったり"]
 	var tt := create_tween().set_loops()
 	for i in tips.size():
 		var txt: String = tips[(i + 1) % tips.size()]
@@ -684,7 +685,7 @@ func _gui_input(event: InputEvent) -> void:
 		poi.position = Vector3(g.x, -0.04, g.z)
 		_ripple(g)
 		_play("splash", randf_range(0.9, 1.1))
-		hint.text = "玉の下まで、そっと。縁が光ったら離す"
+		hint.text = "玉の下まで、そっと"
 	elif motion:
 		if pressed:
 			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
@@ -735,7 +736,7 @@ func _lift() -> void:
 		if durability <= 0:
 			_tear(null)
 			return
-		hint.text = "縁が光っているときに離すと、すくえる"
+		hint.text = "縁が光ったら、離す"
 		_refresh_ui()
 		busy = false
 		return
@@ -819,7 +820,7 @@ func _lift() -> void:
 	poi.position.y = 0.45
 	_refresh_ui()
 	busy = false
-	hint.text = "押して水へ → 縁が金色に光ったら、離す"
+	hint.text = "押して、玉の下へ → 離す"
 	if orbs.is_empty():
 		await get_tree().create_timer(0.6).timeout
 		_finish()
@@ -913,7 +914,7 @@ func _dream_bubble() -> void:
 	tw.tween_property(o, "scale", Vector3.ONE, 0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_ripple(o.position)
 	Kit.play(self, "dream", 1.2, -8)
-	hint.text = "ゆめの泡が浮いてきた。そのまま離す"
+	hint.text = "ゆめの泡だ。そのまま離す"
 	_refresh_ui()
 
 
@@ -936,7 +937,7 @@ func _process(delta: float) -> void:
 			m.emission_enabled = true
 			m.emission = Color("ffffff")
 			m.emission_energy_multiplier = 0.9
-			hint.text = "離せばすくえる。まんなかなら、ぴったり"
+			hint.text = "いま離せば、すくえる"
 			hint.add_theme_color_override("font_color", Color.WHITE)
 		else:
 			m.emission = rim_col

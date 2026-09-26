@@ -19,10 +19,28 @@ var show_parts := false
 var plan := "usual"
 var plan_btns := {}
 var go_btn: Button
+var plan_grid: GridContainer
+var plan_label: Label
+var more_btn: Button
+var preview_card: PanelContainer
+
+
+func _toggle_more() -> void:
+	Kit.play(self, "tap", 1.1)
+	var open := not plan_grid.visible
+	plan_grid.visible = open
+	timeline.visible = open
+	plan_label.visible = not open
+	preview_card.position.y = 350 if open else 160
+	more_btn.text = "とじる ▴" if open else "ほかの過ごし方 ▾"
+	more_btn.position.y = 500
 
 
 ## 決定ボタンの文言を、選んだ過ごし方に合わせる
 func _label_go() -> void:
+	if plan_label:
+		var names := {"record": "スマホの記録どおり", "early": "少し早めに寝る", "usual": "いつもの時刻に寝る", "extra": "もうひと回り、すくう", "market": "夜店をのぞく"}
+		plan_label.text = "今夜：%s" % names.get(plan, "")
 	if go_btn == null:
 		return
 	if plan == "extra" and GameState.night_plan != "extra":
@@ -43,8 +61,10 @@ const PLANS := [
 ## ひとりで遊ぶときは、夜の過ごし方を選ぶ（寝る時刻が決まる）
 func _build_plans() -> void:
 	var grid := GridContainer.new()
+	plan_grid = grid
+	grid.visible = false
 	grid.columns = 2
-	grid.position = Vector2(20, 106)
+	grid.position = Vector2(20, 150)
 	grid.size = Vector2(320, 0)
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
@@ -140,9 +160,9 @@ func _ready() -> void:
 	locked = false
 	var note_t := "いつもの時刻は %s ごろ" % GameState.clock(GameState.usual_bed())
 	if GameState.mode == "data":
-		note_t = "スマホの睡眠記録（見本）がとどいています"
+		note_t = "スマホの記録（見本）がとどいた"
 	if not GameState.tut.has("sleep"):
-		note_t = "いつもの時刻に 7〜9 時間眠ると、明日の庭が育つ"
+		note_t = "よく眠ると、明日の庭が育つ"
 	var note := Kit.text(note_t, 12, Color(1, 1, 1, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
 	note.position = Vector2(0, 86)
 	note.size = Vector2(360, 20)
@@ -157,16 +177,35 @@ func _ready() -> void:
 		wake = r.wake
 	_build_plans()
 
+	# いまの過ごし方（ひとつだけ見せる）と、「ほかの過ごし方」
+	plan_label = Kit.text("", 16, Color.WHITE, true, HORIZONTAL_ALIGNMENT_CENTER)
+	plan_label.position = Vector2(0, 116)
+	plan_label.size = Vector2(360, 26)
+	add_child(plan_label)
+	more_btn = Button.new()
+	more_btn.flat = true
+	more_btn.text = "ほかの過ごし方 ▾"
+	more_btn.add_theme_font_override("font", Kit.bold())
+	more_btn.add_theme_font_size_override("font_size", 13)
+	more_btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	more_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0.85))
+	more_btn.position = Vector2(110, 500)
+	more_btn.size = Vector2(140, 30)
+	more_btn.pressed.connect(_toggle_more)
+	add_child(more_btn)
+
 	timeline = Control.new()
-	timeline.position = Vector2(24, 250)
+	timeline.visible = false
+	timeline.position = Vector2(24, 294)
 	timeline.size = Vector2(312, 46)
 	timeline.draw.connect(_draw_timeline)
 	add_child(timeline)
 
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.09), 22, 0.0, Vector2(16, 12)))
-	card.position = Vector2(24, 306)
-	card.size = Vector2(312, 150)
+	card.position = Vector2(24, 160)
+	preview_card = card
+	card.size = Vector2(312, 0)
 	add_child(card)
 	preview = VBoxContainer.new()
 	preview.add_theme_constant_override("separation", 5)
@@ -272,13 +311,13 @@ func _set_time(b: int, w: int) -> void:
 	preview.add_child(head)
 	var after0 := clampf(GameState.rhythm + ns.score * GameState.RHYTHM_RATE, 0, 100)
 	var n0 := GameState.orbs.size()
-	var summary := "朝に玉 %d 個 ・ 庭のめぐみ +%d" % [n0, GameState.growth_gain(ns.score, h)] if n0 > 0 else "庭のめぐみ +%d" % GameState.growth_gain(ns.score, h)
+	var summary := ("朝に、玉が %d 個かえる" % n0) if n0 > 0 else "明日の庭が、すこし育つ"
 	preview.add_child(Kit.text(summary, 15, Color("c8f0c0"), true))
 	var diff := int(after0) - int(GameState.rhythm)
 	var t0 := 3 if after0 >= 75 else (2 if after0 >= 50 else (1 if after0 >= 25 else 0))
 	var rrow := HBoxContainer.new()
 	rrow.add_theme_constant_override("separation", 8)
-	rrow.add_child(Kit.text("リズム %s%d → %s" % ["+" if diff >= 0 else "", diff, GameState.TIER_NAME[t0]], 15, GameState.TIER_COLOR[t0], true))
+	rrow.add_child(Kit.text("リズム %s %s" % ["↑" if diff > 0 else ("↓" if diff < 0 else "→"), GameState.TIER_NAME[t0]], 15, GameState.TIER_COLOR[t0], true))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rrow.add_child(sp)
@@ -306,7 +345,7 @@ func _set_time(b: int, w: int) -> void:
 	preview.add_child(parts)
 	var t_after := t0
 	if ns.late:
-		preview.add_child(Kit.wrap(Kit.text("夜ふかし：夜のおばけが寄ってくる。でも庭はしおれる", 13, Color("ffc28a"))))
+		preview.add_child(Kit.text("夜ふかし：庭が少ししおれる", 13, Color("ffc28a")))
 	elif h >= 7.0 and t_after >= 2:
 		preview.add_child(Kit.text("今夜は夢を見そう", 13, Color("c9bdf5")))
 
