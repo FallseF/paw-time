@@ -68,10 +68,7 @@ func _ready() -> void:
 	var t2 := Kit.text("大ピーク防衛", 38, Color("ff6b5b"), true)
 	t2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t2)
-	var t3 := Kit.text("店の困りごとから、おばけで店を守る", 13, Kit.SUB)
-	t3.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(t3)
-	var tag := Kit.text("働いた日は、店で強くなる。\nよく寝た朝は、玉がかえる。", 13, Color("8b7bff"), true)
+	var tag := Kit.text("よく寝た朝は、玉がかえる。", 13, Color("8b7bff"), true)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tag)
 

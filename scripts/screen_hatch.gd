@@ -315,8 +315,7 @@ func _next() -> void:
 	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
 	var u: Dictionary = DefData.unit(h.id)
 	card_desc.text = sp.desc
-	if not u.is_empty():
-		card_desc.text += "\n戦いでは：" + (u.skill if u.has("skill") else "%s。%s" % [u.role, u.line])
+	card_sub.text = ("レア") if Rares.is_rare(h.id) else ("Lv%d・%s" % [h.level, GameState.ROLE_LABEL.get(sp.type, "")])
 	# 新しい仲間が編成に入っていなければ、ここで入れられる（いっぱいなら最後の一体と入れかえ）
 	if deck_btn:
 		deck_btn.queue_free()

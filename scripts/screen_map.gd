@@ -28,7 +28,8 @@ func _ready() -> void:
 	var cp := PanelContainer.new()
 	cp.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 18, 0.06))
 	cp.add_child(Kit.text("まかない %d" % GameState.coins, 13, Color("e8792f"), true))
-	head.add_child(cp)
+	if GameState.total_battles > 0:
+		head.add_child(cp)
 	var back := Kit.button("もどる", Color.WHITE, func(): main.go("room"), Kit.INK, 38, 14)
 	back.custom_minimum_size = Vector2(72, 38)
 	head.add_child(back)
@@ -276,8 +277,9 @@ func _open_sheet(si: int, st: int) -> void:
 	var tip := Kit.text(stage.tip, 13, Kit.SUB)
 	tip.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(tip)
-	var goal := Kit.text(("★ 達成ずみ：お店を無傷で守った" if GameState.is_perfect(si, st) else "★ お店を無傷で守ると、まかない +30%"), 12, Color("e8a317"), true)
-	v.add_child(goal)
+	if GameState.is_cleared(si, st):
+		var goal := Kit.text(("★ 無傷で守った" if GameState.is_perfect(si, st) else "★ 無傷で守ると +30%"), 12, Color("e8a317"), true)
+		v.add_child(goal)
 	# 出てくる困りごと
 	var er := HBoxContainer.new()
 	er.add_theme_constant_override("separation", 6)
@@ -316,16 +318,14 @@ func _open_sheet(si: int, st: int) -> void:
 		var bv := VBoxContainer.new()
 		bv.add_theme_constant_override("separation", 0)
 		bv.add_child(Kit.text("今日の応援", 12, Color("e8792f"), true))
-		for line in bst.lines:
+		for line in bst.lines.slice(0, 2):
 			var bl := Kit.text("・" + line, 12, Kit.INK)
 			bl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 			bl.custom_minimum_size = Vector2(270, 0)
 			bv.add_child(bl)
 		bp.add_child(bv)
 		v.add_child(bp)
-	else:
-		var nb := Kit.text("シフトの日や、よく寝た朝は、応援がつく", 11, Kit.SUB)
-		v.add_child(nb)
+
 	# 編成
 	var dr := HBoxContainer.new()
 	dr.add_theme_constant_override("separation", 4)
@@ -350,12 +350,14 @@ func _open_sheet(si: int, st: int) -> void:
 	var dp := PanelContainer.new()
 	dp.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 14, 0.0))
 	dp.add_child(dr)
-	v.add_child(dp)
+	if GameState.owned.size() > 2:
+		v.add_child(dp)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	var b1 := Kit.button("編成・強化", Color.WHITE, func(): main.go("crew"), Kit.INK)
-	b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(b1)
+	if GameState.owned.size() > 2:
+		var b1 := Kit.button("編成", Color.WHITE, func(): main.go("crew"), Kit.INK)
+		b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(b1)
 	var b2 := Kit.button("出撃！", Color("ff6b5b"), func():
 		GameState.pending_battle = {"shop": si, "stage": st}
 		main.go("defense"))

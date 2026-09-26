@@ -407,7 +407,7 @@ func _build_ui() -> void:
 	pp.add_child(ph)
 	top.add_child(pp)
 
-	hint = _text("押して水に入れる → 玉の下で離して、すくう", 14, Color(1, 1, 1, 0.85))
+	hint = _text("押して沈め、玉の下で離す", 14, Color(1, 1, 1, 0.85))
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
@@ -670,7 +670,7 @@ func _lift() -> void:
 	poi.position.y = 0.45
 	_refresh_ui()
 	busy = false
-	hint.text = "押して水に入れる → 玉の下で離して、すくう"
+	hint.text = "押して沈め、玉の下で離す"
 	if orbs.is_empty():
 		await get_tree().create_timer(0.6).timeout
 		_finish()

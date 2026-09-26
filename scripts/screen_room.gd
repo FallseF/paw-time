@@ -229,7 +229,7 @@ func _build_ui() -> void:
 	ff.flat = true
 	ff.add_theme_font_override("font", font_bold)
 	ff.add_theme_font_size_override("font_size", 11)
-	ff.add_theme_color_override("font_color", Color(0.3, 0.2, 0.3, 0.45))
+	ff.add_theme_color_override("font_color", Color(0.3, 0.2, 0.3, 0.25))
 	ff.position = Vector2(270, 330)
 	ff.size = Vector2(80, 24)
 	ff.pressed.connect(func():
@@ -278,71 +278,84 @@ func _dot(c: Color) -> Panel:
 
 
 func _render() -> void:
+	# 上の帯は「まかない」だけ（ポイは川べりで見る）
 	for c in poi_row.get_children():
 		c.queue_free()
 	poi_row.add_child(_text("まかない %d" % GameState.coins, 13, Color("e8792f"), font_black))
-	poi_row.add_child(_text("ポイ", 13, Color("8a7a88")))
-	var any := false
-	for id in GameState.NETS:
-		var n: int = GameState.nets[id]
-		if n <= 0:
-			continue
-		any = true
-		var t: String = GameState.NETS[id].type
-		poi_row.add_child(_dot(GameState.TYPE_COLOR.get(t, Color("ffd84d"))))
-		poi_row.add_child(_text("×%d" % n, 13))
-	if not any:
-		poi_row.add_child(_text("なし", 13, Color("8a7a88")))
 
 	for c in actions.get_children():
 		c.queue_free()
 	var s: Dictionary = GameState.today()
 	var nx := GameState.next_stage()
 	var nx_stage: Dictionary = DefData.stage(nx[0], nx[1])
+	var first_night: bool = GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles >= 2
+	# 1行の見出し＋1行の説明だけ
 	if GameState.total_battles == 0:
-		card_title.text = "店に、困りごとがやってくる"
-		card_body.text = "おばけのみんなで、カウンターを守ろう"
-	elif GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles <= 2:
-		card_title.text = "夜は、川べりで仲間をすくう"
-		card_body.text = "すくった光る玉は、寝て起きると、おばけになる。新しい仲間で次の店へ"
+		card_title.text = "店に、困りごとが来る"
+		card_body.text = "おばけのみんなで守ろう"
+	elif first_night:
+		card_title.text = "夜は、川べりへ"
+		card_body.text = "光る玉が、朝に仲間になる"
 	elif s.role != "" and not GameState.shift_done_today:
 		card_title.text = "今日のシフト"
-		card_body.text = "%s ・ %sの%s %d時間%s　天気：%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, "（はじめて）" if s.first else "", s.weather]
-	elif GameState.shift_done_today:
-		card_title.text = "今日の応援"
-		card_body.text = "\n".join(GameState.battle_boost(DefData.STORE_SHOP.get(GameState.boost.store, "")).lines)
+		card_body.text = "%s・%s" % [s.store, GameState.ROLE_LABEL[s.role]]
+	elif GameState.orbs.size() > 0:
+		card_title.text = "光る玉 %d 個" % GameState.orbs.size()
+		card_body.text = "寝て起きると、かえる"
 	else:
-		card_title.text = "今日は休み"
-		card_body.text = "よく寝た朝は、やる気のたまりが速い。ゆっくり守ろう"
-	if GameState.focus != "" and GameState.wins_today == 0 and GameState.total_battles > 0:
-		card_body.text += "\n今日の最初の勝ちで、%sに経験 +%d" % [GameState.info(GameState.focus).name, GameState.FOCUS_XP]
-	if GameState.weekday() == "金" and GameState.is_open(DefData.SHOPS.size() - 1, 0):
-		card_body.text += "\n金曜の夜：大ピークのまかない 1.5倍"
-	if GameState.orbs.size() > 0:
-		card_body.text += "\n光る玉 %d 個：寝て起きると、かえる" % GameState.orbs.size()
-	var ds := GameState.daily_stage()
-	if not ds.is_empty() and not GameState.daily_done and GameState.total_battles > 0:
-		card_body.text += "\n今日のお手伝い：%s を守ると +60" % DefData.stage(ds[0], ds[1]).name
-	if s.role != "" and not GameState.shift_done_today and GameState.total_battles > 0:
-		actions.add_child(_button("シフトの記録を受けとる", Color("ffb13d"), _do_shift))
-	var nb_ref := _button("夜の川べりへ", Color("5b6fc2"), func(): main.go("catch" if not GameState.scooped_tonight else "sleep"))
-	var go_b := _button("出撃：%s" % nx_stage.name, Color("ff6b5b"), func(): main.go("map"))
-	actions.add_child(go_b)
+		card_title.text = "つぎは %s" % nx_stage.name
+		card_body.text = DefData.shop(nx[0]).name
+	# 大きいボタンはひとつだけ。ほかは小さく
+	var night := func(): main.go("catch" if not GameState.scooped_tonight else "sleep")
+	var primary: Button
+	if first_night:
+		primary = _button("夜の川べりへ", Color("5b6fc2"), night)
+	else:
+		primary = _button("出撃", Color("ff6b5b"), func(): main.go("map"))
+	actions.add_child(primary)
+	if GameState.total_battles == 0 or first_night:
+		_pulse(primary)
 	if GameState.total_battles == 0:
-		_pulse(go_b)
-	elif GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles <= 2:
-		_pulse(nb_ref)
+		_fit_card.call_deferred()
+		return
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	var cb := _button("編成・強化", Color("8b7bff"), func(): main.go("crew"))
-	cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(cb)
-	var nb := nb_ref
-	nb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(nb)
-	if GameState.total_battles > 0:
-		actions.add_child(row)
+	row.add_theme_constant_override("separation", 6)
+	var small: Array = []
+	if s.role != "" and not GameState.shift_done_today:
+		small.append(["シフト記録", _do_shift])
+	if first_night:
+		small.append(["出撃", func(): main.go("map")])
+	else:
+		small.append(["夜の川べり", night])
+	if GameState.owned.size() > 2:
+		small.append(["編成", func(): main.go("crew")])
+	for it in small:
+		var b := _small(it[0], it[1])
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(b)
+	actions.add_child(row)
 	_fit_card.call_deferred()
+
+
+func _small(t: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.custom_minimum_size = Vector2(0, 38)
+	b.add_theme_font_override("font", font_bold)
+	b.add_theme_font_size_override("font_size", 13)
+	for k in ["normal", "hover", "pressed", "focus"]:
+		var st := _pill(Color("f3ece4") if k != "pressed" else Color("e6ddd2"), 19)
+		st.shadow_size = 0
+		if k == "focus":
+			st.bg_color = Color(0, 0, 0, 0)
+		b.add_theme_stylebox_override(k, st)
+	b.add_theme_color_override("font_color", Color("4a3f52"))
+	b.add_theme_color_override("font_hover_color", Color("4a3f52"))
+	b.pressed.connect(func():
+		Kit.sfx("c_tap")
+		Kit.pop(b))
+	b.pressed.connect(cb)
+	return b
 
 
 func _fit_card() -> void:
@@ -365,7 +378,7 @@ func _do_shift() -> void:
 	var got := GameState.finish_shift()
 	Kit.sfx("c_levelup")
 	card_title.text = "おつかれさま！"
-	card_body.text = "ポイ：" + "、".join(got) + "\n" + "\n".join(GameState.battle_boost(DefData.STORE_SHOP.get(GameState.boost.store, "")).lines)
+	card_body.text = "%sで応援がつく" % GameState.boost.get("store", "店")
 
 
 func _show_report() -> void:

@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("よく寝た朝は、おばけが育つ", 12, Color(1, 1, 1, 0.55))
+	var note := _text("", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 186)
 	note.size = Vector2(360, 20)
 	add_child(note)
@@ -138,19 +138,14 @@ func _set_hours(h: int) -> void:
 	big.text = "%d時間" % hours
 	for c in preview.get_children():
 		c.queue_free()
-	var regen := 1.0 if hours < 6 else (1.1 if hours < 7 else 1.25)
-	var n := GameState.orbs.size()
 	var lines := []
-	if n > 0:
-		lines.append("光る玉 %d 個が、朝にかえる" % n)
-	lines.append("おばけみんなが育つ（経験 +%d）" % (min(hours, GameState.SLEEP_CAP_H) * 6))
-	lines.append("明日のやる気のたまり ×%.2f" % regen)
+	lines.append("おばけが育つ（経験 +%d）" % (min(hours, GameState.SLEEP_CAP_H) * 6))
 	if hours >= 9:
-		lines.append("8時間より長く寝ても、育ち方は同じ")
+		lines.append("8時間より先は、同じ")
 	elif hours >= 7:
-		lines.append("よく眠ると、レアが生まれやすい")
+		lines.append("明日は、やる気がたまりやすい")
 	elif hours <= 5:
-		lines.append("夜ふかしすると、ヨミセが寄ってくる")
+		lines.append("夜ふかしの灯りに、何か来る")
 	for s in lines:
 		var l := _text("・" + s, 14, Color("e8e2ff"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT

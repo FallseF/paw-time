@@ -754,6 +754,7 @@ func _slot_button(i: int) -> Button:
 		b.add_theme_stylebox_override(k, s)
 	if not has:
 		b.disabled = true
+		b.modulate.a = 0.0 # 持っていない枠は見せない
 		var el := Kit.text("あき", 12, Color(0, 0, 0, 0.25))
 		el.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		el.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -823,7 +824,7 @@ func _refresh_ui() -> void:
 			cost.text = "やる気Lv%d必要" % _wallet_needed(s.cost)
 			cost.add_theme_font_size_override("font_size", 10)
 		elif s.left > 0:
-			cost.text = "%.0f秒" % ceil(s.left)
+			cost.text = str(s.cost) # 待ち時間は、上からの影で見せる
 		elif sim.energy < s.cost:
 			cost.text = "あと%d" % int(ceil(s.cost - sim.energy))
 		else:
@@ -1265,6 +1266,10 @@ func _process(delta: float) -> void:
 	_place_cam()
 	_refresh_ui()
 	_update_hint()
+	# はじめの2面は、チャイムとやる気Lvを出さない（あとで教える）
+	var early: bool = si == 0 and st == 0
+	wallet_btn.visible = not early
+	cannon_btn.modulate.a = 0.0 if early else cannon_btn.modulate.a
 	# チュートリアル：やる気Lv とチャイム
 	if not ended and sim.t > 10.0 and sim.can_wallet() and sim.wallet_lv == 1:
 		_show_hint("t_wallet", "やる気Lvを上げると、たまるのが速くなる", wallet_btn)

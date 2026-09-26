@@ -523,14 +523,14 @@ func sleep(hours: int, _trap := "") -> void:
 		net_strength = 1.25
 		regen_bonus = 1.25
 	morning_report = []
-	morning_report.append("%d時間ねた → 今日のやる気のたまり ×%.2f" % [hours, regen_bonus])
+	morning_report.append("%d時間ねた" % hours)
 	var ups: Array = []
 	for o in owned:
 		o.xp += h * 6
 		if _level_up(o):
 			ups.append("%s Lv%d" % [info(o.id).name, o.level])
 	if not ups.is_empty():
-		morning_report.append("寝ているあいだに育った：" + "、".join(ups))
+		morning_report.append("%d体が育った" % ups.size())
 	hatched = []
 	sleep_hist.append(hours)
 	var s: Dictionary = today()
