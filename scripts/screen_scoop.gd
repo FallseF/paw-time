@@ -25,6 +25,8 @@ var poi_type := ""
 var durability := 1.0
 var dura_by := {} # ポイの種類ごとの残り（切りかえても回復しない）
 var extra := false
+var perfect_streak := 0
+var rim_col := Color.WHITE
 var pressed := false
 var last_ground := Vector3.ZERO
 var busy := false
@@ -535,6 +537,7 @@ func _refresh_ui() -> void:
 	poi_btn.add_theme_color_override("font_hover_color", Color("1a1f3a"))
 	if poi_type != "":
 		poi_rim.material_override = Obake3D.toon(col, 0.4, 0.4)
+		rim_col = col
 	poi_film_mat.albedo_color = Color(1, 1, 1, 0.15 + 0.4 * durability)
 
 
@@ -621,8 +624,11 @@ func _gui_input(event: InputEvent) -> void:
 			last_ground = g
 			poi.position = Vector3(g.x, -0.04, g.z)
 			if durability <= 0:
-				_tear(null)
-				return
+				if not GameState.tut.has("scoop") and GameState.total_scooped == 0:
+					durability = 0.3
+				else:
+					_tear(null)
+					return
 			_refresh_ui()
 		else:
 			poi.position = Vector3(g.x, 0.45, g.z)
@@ -671,7 +677,15 @@ func _lift() -> void:
 	elif pt != "any":
 		match_mult = 0.85
 	var cost: float = target.data.weight * match_mult / GameState.poi_strength()
+	# 玉の真下で離すと「ぴったり」：破れにくく、3回続くとめぐみ
+	var perfect := best < POI_R * 0.4
+	if perfect:
+		cost *= 0.5
 	var will_hold := durability - cost > 0.0
+	# はじめての夜の最初の一玉は、かならずすくえる（やり方を覚えるため）
+	if not GameState.tut.has("scoop") and GameState.total_scooped == 0:
+		will_hold = true
+		cost = minf(cost, durability * 0.5)
 	target.caught = true
 	orbs.erase(target)
 	# スローモーションで持ち上げる
@@ -711,7 +725,18 @@ func _lift() -> void:
 	if GameState.NETS[poi_type].type == target.data.type:
 		GameState.goal("match")
 	caught_count += 1
-	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
+	if perfect:
+		perfect_streak += 1
+		var msg := "ぴったり！"
+		if perfect_streak >= 3:
+			msg = "ぴったり ×%d\nめぐみ +3" % perfect_streak
+			GameState.growth += 3
+			GameState._recalc_level()
+		_banner(msg if not target.data.rare else msg + "\nふしぎな光…", Color("ffe27a"))
+		_play("sparkle")
+	else:
+		perfect_streak = 0
+		_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
 	tw2.tween_property(cam, "transform", cam_base, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw2.tween_property(target, "position", cam.project_position(Vector2(120, 40), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -762,6 +787,23 @@ func _tear(target: Orb3D) -> void:
 
 func _process(delta: float) -> void:
 	ripple_t += delta
+	# ポイの下に玉があると、縁が光る（真ん中なら金色）
+	if pressed and poi_rim and poi_rim.material_override:
+		var near := 99.0
+		for o in orbs:
+			near = minf(near, Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length())
+		var m := poi_rim.material_override as StandardMaterial3D
+		if near < POI_R * 0.4:
+			m.emission_enabled = true
+			m.emission = Color("ffd23f")
+			m.emission_energy_multiplier = 2.2
+		elif near < POI_R:
+			m.emission_enabled = true
+			m.emission = Color("ffffff")
+			m.emission_energy_multiplier = 0.9
+		else:
+			m.emission = rim_col
+			m.emission_energy_multiplier = 0.4
 	water_mat.set_shader_parameter("ripple_t", ripple_t)
 	var ps: Array[Vector4] = []
 	var cs: Array[Vector4] = []
