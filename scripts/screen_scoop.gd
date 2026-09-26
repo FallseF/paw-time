@@ -68,7 +68,20 @@ func _ready() -> void:
 	if kind != "" and not extra:
 		var kt: Array = GameState.NIGHT_KIND_TEXT[kind]
 		await get_tree().create_timer(0.5).timeout
-		_banner("%s\n%s" % [kt[0], kt[1]], Color("e8ecff"))
+		var pn := PanelContainer.new()
+		pn.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.8), 20))
+		pn.position = Vector2(60, 190)
+		pn.size = Vector2(240, 0)
+		pn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(pn)
+		var vv := VBoxContainer.new()
+		pn.add_child(vv)
+		vv.add_child(_text(kt[0], 22, Color("fff2a8"), font_black))
+		vv.add_child(_text(kt[1], 14, Color("e8ecff")))
+		var tw := create_tween()
+		tw.tween_interval(2.4)
+		tw.tween_property(pn, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(pn.queue_free)
 
 
 # ---------- 世界 ----------
