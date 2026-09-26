@@ -149,7 +149,7 @@ func promo() -> void:
 	main.current._sleep()
 	await _wait(2.6)
 	var hatch = main.current
-	caption("よく寝た朝は、玉がよくかえる。", 90)
+	caption("よく寝た朝は、玉がよくかえる。", 130)
 	for i in 2:
 		if hatch.has_method("_next"):
 			hatch._next()
