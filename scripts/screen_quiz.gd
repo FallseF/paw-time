@@ -147,7 +147,7 @@ func _build_world() -> void:
 
 	orb = OrbModel.new().setup(ORB_COL, false, 0.34)
 	orb.position = Vector3(0, 1.2, 0)
-	orb.set_energy(0.8)
+	orb.set_energy(1.2)
 	world.add_child(orb)
 
 	burst = CPUParticles3D.new()
@@ -427,7 +427,7 @@ func _answer(choice: String, fast := false) -> void:
 	tw.tween_property(orb, "scale", Vector3.ONE * 0.72, 0.12)
 	await tw.finished
 	index += 1
-	orb.set_energy(0.8 + index * 0.12)
+	orb.set_energy(1.2 + index * 0.12)
 	_render_dots()
 	dots[index - 1].scale = Vector2.ONE * 1.8
 	var tw2 := create_tween().set_parallel()
@@ -448,7 +448,7 @@ func _back() -> void:
 		return
 	index -= 1
 	answers = answers.left(index)
-	orb.set_energy(0.8 + index * 0.12)
+	orb.set_energy(1.2 + index * 0.12)
 	_render_question()
 
 
