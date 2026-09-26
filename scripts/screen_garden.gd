@@ -828,7 +828,7 @@ func _show_card() -> void:
 			var left := 0
 			for id in GameState.nets:
 				left += GameState.nets[id]
-			card_box.add_child(Kit.wrap(Kit.text("川べりで、光る玉をすくって帰ろう。玉は、眠っている間にかえる（ポイ %d 本）" % left, 14, Color("6a5f70"))))
+			card_box.add_child(Kit.wrap(Kit.text("川べりで光る玉をすくおう。玉は朝にかえる（ポイ %d 本）" % left, 13, Color("6a5f70"))))
 			_deco_chips()
 			var b := Kit.button("夜の川べりで、おばけすくい", Color("5b6fc2"), func(): main.go("catch"))
 			card_box.add_child(b)
@@ -851,7 +851,7 @@ func _deco_chips() -> void:
 			owned_roles.append(r)
 	if owned_roles.is_empty():
 		return
-	card_box.add_child(Kit.text("今夜ともす飾り（その玉が出やすい）", 12, Color("8a7a88")))
+	card_box.add_child(Kit.text("今夜ともす飾り：その仕事の玉が出やすい", 11, Color("8a7a88")))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 6)
 	row.add_theme_constant_override("v_separation", 6)
@@ -862,9 +862,10 @@ func _deco_chips() -> void:
 		var b := Button.new()
 		b.text = GameState.DECOS[r].name
 		b.add_theme_font_override("font", Kit.bold())
-		b.add_theme_font_size_override("font_size", 12)
+		b.add_theme_font_size_override("font_size", 11)
+		b.text = GameState.DECOS[r].get("short", GameState.DECOS[r].name)
 		for k in ["normal", "hover", "pressed", "focus"]:
-			var st := Kit.pill(c if on else Color(1, 1, 1, 1), 14, 0.08, Vector2(10, 5))
+			var st := Kit.pill(c if on else Color(1, 1, 1, 1), 12, 0.06, Vector2(8, 3))
 			st.border_color = c
 			st.set_border_width_all(2)
 			b.add_theme_stylebox_override(k, st)

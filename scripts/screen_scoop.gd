@@ -88,8 +88,8 @@ func _build_world() -> void:
 	env.glow_enabled = true
 	env.glow_intensity = 1.2
 	env.glow_strength = 1.2
-	env.glow_bloom = 0.25
-	env.glow_hdr_threshold = 0.7
+	env.glow_bloom = 0.0
+	env.glow_hdr_threshold = 1.0
 	var we := WorldEnvironment.new()
 	we.environment = env
 	world.add_child(we)
@@ -417,8 +417,8 @@ func _build_ui() -> void:
 	add_child(hint)
 
 	poi_btn = Button.new()
-	poi_btn.position = Vector2(286, 520)
-	poi_btn.size = Vector2(60, 60)
+	poi_btn.position = Vector2(270, 516)
+	poi_btn.size = Vector2(76, 64)
 	poi_btn.add_theme_font_override("font", font_bold)
 	poi_btn.add_theme_font_size_override("font_size", 12)
 	poi_btn.pressed.connect(_cycle_poi)

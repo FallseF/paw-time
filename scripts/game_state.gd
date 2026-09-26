@@ -35,11 +35,11 @@ const WEEKDAYS := ["月", "火", "水", "木", "金", "土", "日"]
 
 ## 仕事ごとに庭へ届く飾り。はじめてその仕事をした日に届き、3回目で少し豪華になる。
 const DECOS := {
-	"register": {"name": "カフェのパラソル席", "desc": "レジの仕事から。おばけが紅茶を飲むふりをする"},
-	"hall": {"name": "赤ちょうちん", "desc": "ホールの仕事から。夜の庭がにぎやかになる"},
-	"dish": {"name": "泡のたらい", "desc": "皿洗いの仕事から。アワワが泳ぐ"},
-	"kitchen": {"name": "屋台のおでん鍋", "desc": "キッチンの仕事から。湯気がのぼる"},
-	"stock": {"name": "段ボールの秘密基地", "desc": "品出しの仕事から。ダンボが住みつく"},
+	"register": {"short": "パラソル", "name": "カフェのパラソル席", "desc": "レジの仕事から。おばけが紅茶を飲むふりをする"},
+	"hall": {"short": "ちょうちん", "name": "赤ちょうちん", "desc": "ホールの仕事から。夜の庭がにぎやかになる"},
+	"dish": {"short": "たらい", "name": "泡のたらい", "desc": "皿洗いの仕事から。アワワが泳ぐ"},
+	"kitchen": {"short": "おでん", "name": "屋台のおでん鍋", "desc": "キッチンの仕事から。湯気がのぼる"},
+	"stock": {"short": "秘密基地", "name": "段ボールの秘密基地", "desc": "品出しの仕事から。ダンボが住みつく"},
 }
 
 ## 庭の育ち。めぐみ（毎朝、リズムと睡眠で溜まる）がこの値をこえると、庭が一段育つ。
@@ -321,7 +321,7 @@ func finish_shift() -> Array:
 	for c in s.coworkers:
 		coworker_count[c] = coworker_count.get(c, 0) + 1
 	var net_id: String = ROLE_NET[s.role]
-	nets[net_id] += 2
+	nets[net_id] = mini(nets[net_id] + 2, 4) # 種類つきのポイは4本まで（ためこみすぎない）
 	got.append({"kind": "poi", "id": net_id, "n": 2, "text": "%s ×2" % NETS[net_id].name})
 	if s.first or first_role_today:
 		nets["kira"] += 1
