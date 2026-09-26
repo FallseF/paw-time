@@ -4,6 +4,7 @@ extends SceneTree
 ## godot --headless --path . -s tests/sim_week.gd
 func _initialize() -> void:
 	var gs = root.get_node_or_null("GameState")
+	gs.demo_mode = true # 本物のセーブに書かない
 	await process_frame
 	for pattern in [[7], [8, 7, 7, 6, 8, 9, 7], [5], [6, 5, 7, 4, 6, 5, 6]]:
 		gs.reset()
