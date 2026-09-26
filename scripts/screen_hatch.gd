@@ -31,7 +31,7 @@ var rare_tease := false
 func _update_header() -> void:
 	var n := orbs.size()
 	if index == 0:
-		header.text = "朝のお迎え：玉が %d こ%s" % [n, "　虹色がまじってる" if rare_tease else ""]
+		header.text = "朝のお迎え：玉 %dこ%s" % [n, "（虹色も！）" if rare_tease else ""]
 	else:
 		header.text = "朝のお迎え %d / %d" % [mini(index, n), n]
 
@@ -68,6 +68,23 @@ func _ready() -> void:
 	var rares := GameState.hatched.filter(func(h): return h.get("rare", false)).size()
 	rare_tease = rares > 0
 	_update_header()
+	# 睡眠のブーストを、朝いちばんに見せる
+	var sl: int = GameState.last_sleep
+	var msg := ""
+	if sl >= 7:
+		msg = "よく寝た朝：玉が★ひとつ育ってかえる"
+	elif sl <= 5:
+		msg = "寝不足の朝：玉の育ちはふつう"
+	if msg != "":
+		var pill := PanelContainer.new()
+		pill.add_theme_stylebox_override("panel", _pill(Color(0.16, 0.13, 0.22, 0.8) if sl >= 7 else Color(0.3, 0.2, 0.2, 0.7), 16))
+		var pl := _text(msg, 14, Color("ffe27a") if sl >= 7 else Color("ffc9b8"), font_black)
+		pl.autowrap_mode = TextServer.AUTOWRAP_OFF
+		pill.add_child(pl)
+		pill.position = Vector2(30, 74)
+		pill.size = Vector2(300, 0)
+		pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(pill)
 	next_btn.text = "玉をひらく"
 	if n_orbs >= 3:
 		skip_btn = Button.new()
@@ -414,7 +431,7 @@ func _stamp(t: String) -> void:
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.add_theme_color_override("font_outline_color", Color("fff6e8"))
 	l.add_theme_constant_override("outline_size", 10)
-	l.position = Vector2(0, 96)
+	l.position = Vector2(0, 124)
 	l.size = Vector2(360, 50)
 	l.pivot_offset = Vector2(180, 25)
 	l.rotation = -0.12
