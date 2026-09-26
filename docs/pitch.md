@@ -1,7 +1,9 @@
 # Paw Time ピッチ原稿（3分）
 
-審査員はリクルート。話すのは英語、日本語は意味の確認用。1分あたり約130語で、合計約390語。
-数字と固有名詞の出典は `apps/worker/README.md` の 9章。
+話すのは英語、日本語は意味の確認用。1分あたり約130語で、合計約390語。
+公開審査項目は「Potential Impact」「Creativity and Innovation」「Technical Architecture & Viability」。背景の出典・数値の対象・主張できる範囲は [ピッチ用の調査メモ](pitch-evidence.md) を参照。
+
+> 発表前の確認：現在のデモ用ゲーム処理は勤務時間に応じて網が増える。下記の「Working longer never earns more」は現行実装と一致しないため、報酬ルールまたは原稿を揃える。
 
 | 時間 | 場面 | 画面 |
 |---|---|---|
@@ -15,12 +17,12 @@
 
 ## 0:00–0:25 つかみ
 
-> Thirty-two million people in Japan have signed up for spot work.
-> But a job app only gets opened on the day you need a job.
-> The rest of the week, it's invisible.
-> **Paw Time is a job app people open every day — because it's a game.**
+> About six million people in Japan did short-term, one-off work in 2024, according to Recruit Works Institute.
+> But 44.6% of surveyed workers reported problems.
+> Finding a shift is only part of the experience.
+> **Paw Time connects work with what comes after it — including rest.**
 
-（日本で3200万人がスポットワークに登録している。でも求人アプリは、仕事が要る日にしか開かれない。Paw Time は、ゲームだから毎日開かれる求人アプリ。）
+（リクルートワークス研究所は、2024年に約605万人が短期・単発ワークを行ったと推計。就労実態調査では44.6%が困りごとを経験した。仕事を見つけた後の体験と休息までつなぐのがPaw Time。）
 
 ## 0:25–1:10 遊び（デモ）
 
