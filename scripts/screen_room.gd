@@ -240,8 +240,21 @@ func _box(size: Vector3, pos: Vector3, c: Color) -> void:
 
 
 func _process(delta: float) -> void:
+	# 重なりすぎないように、近いおばけどうしは少し離れる
+	for i in walkers.size():
+		for j in range(i + 1, walkers.size()):
+			var a: Obake3D = walkers[i].o
+			var b: Obake3D = walkers[j].o
+			var d := Vector3(a.position.x - b.position.x, 0, a.position.z - b.position.z)
+			var l := d.length()
+			if l < 0.7 and l > 0.001:
+				var push := d / l * (0.7 - l) * 1.5 * delta
+				a.position += push
+				b.position -= push
 	for w in walkers:
 		var ob: Obake3D = w.o
+		ob.position.x = clampf(ob.position.x, -2.2, 2.2)
+		ob.position.z = clampf(ob.position.z, -1.9, 1.0)
 		w.wait -= delta
 		if w.wait > 0:
 			continue
