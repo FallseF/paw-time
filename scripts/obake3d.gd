@@ -143,9 +143,12 @@ static func eye_mat(col: Color) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = EYE_SHADER
 	if col.get_luminance() > 0.5:
-		m.set_shader_parameter("iris_top", col)
-		m.set_shader_parameter("iris_bottom", col.lerp(Color("c9b6ff"), 0.35))
-		m.set_shader_parameter("glint", Color("fff6c8"))
+		# 明るい目（暗い体の子）：真っ白な丸だと目に見えないので、濃い紺の黒目を明るい輪で縁取り、
+		# キャッチライトが見えるようにする
+		m.set_shader_parameter("iris_top", Color("1b1530"))
+		m.set_shader_parameter("iris_bottom", Color("3d3468"))
+		m.set_shader_parameter("ring_color", col.lerp(Color("d9ccff"), 0.25))
+		m.set_shader_parameter("ring_width", 0.26)
 	else:
 		m.set_shader_parameter("iris_top", col.darkened(0.25))
 		m.set_shader_parameter("iris_bottom", col.lerp(Color("7a4f6e"), 0.55))
@@ -266,6 +269,8 @@ func face(center: Vector3, k := 1.0, eye_col := INK, sleepy := false) -> Node3D:
 	var f := Node3D.new()
 	f.position = center
 	f.scale = Vector3.ONE * k
+	# 暗い体の子（明るい目）は、口とひげも明るい線にして読めるようにする
+	var ink := INK if eye_col.get_luminance() <= 0.5 else Color("e6dcff")
 	for x in [-0.17, 0.17]:
 		if sleepy:
 			var half := Vector2(0.085, 0.05)
@@ -283,15 +288,15 @@ func face(center: Vector3, k := 1.0, eye_col := INK, sleepy := false) -> Node3D:
 		var nh := Vector2(0.034, 0.026)
 		f.add_child(_decal(Vector2(0, -0.035), nh, decal_mat(1, Color("ee8597"), nh, 0.0, Color("ffd9df"))))
 		var mh := Vector2(0.09, 0.045)
-		f.add_child(_decal(Vector2(0, -0.088), mh, decal_mat(2, INK, mh, 0.0125)))
+		f.add_child(_decal(Vector2(0, -0.088), mh, decal_mat(2, ink, mh, 0.0125)))
 		var wh := Vector2(0.1, 0.012)
-		var wm := decal_mat(4, Color(INK, 0.92), wh, 0.011)
+		var wm := decal_mat(4, Color(ink, 0.92), wh, 0.011)
 		for sx in [-1.0, 1.0]:
 			for j in 3:
 				f.add_child(_whisker(sx, j, wh, wm))
 	else:
 		var mh := Vector2(0.05, 0.03)
-		f.add_child(_decal(Vector2(0, -0.07), mh, decal_mat(3, INK, mh, 0.014)))
+		f.add_child(_decal(Vector2(0, -0.07), mh, decal_mat(3, ink, mh, 0.014)))
 	return f
 
 
