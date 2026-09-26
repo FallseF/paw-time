@@ -2239,6 +2239,10 @@ func start_auto(skill: float) -> void:
 	auto_skill = skill
 	tut_step = -1
 	tut_ring.visible = false
+	if tut_label:
+		tut_label.visible = false
+	if goal_pill:
+		goal_pill.visible = true
 	auto_cursor = Panel.new()
 	var rs := StyleBoxFlat.new()
 	rs.bg_color = Color(1, 1, 1, 0.25)

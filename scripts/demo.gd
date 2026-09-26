@@ -96,6 +96,15 @@ func _big_text(lines: Array, colors: Array, dim_alpha: float, y0: float) -> Cont
 	return c
 
 
+## OBAKE_SNAPDIR があれば、その場面を PNG に残す（窓ありで動かしたとき）
+func _snap(name: String) -> void:
+	var dir := OS.get_environment("OBAKE_SNAPDIR")
+	if dir == "" or DisplayServer.get_name() == "headless":
+		return
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [dir, name])
+
+
 func _wait(t: float) -> void:
 	await get_tree().create_timer(t, true, false, true).timeout
 
@@ -195,6 +204,8 @@ func autoplay(days: int) -> void:
 			await _wait(0.3)
 			if main.current.has_method("_close_report"):
 				main.current._close_report()
+			await _wait(0.6)
+			_snap("d%02d_a_room" % (d + 1))
 			if work and s.role != "":
 				main.current._do_shift()
 			await _wait(0.2)
@@ -216,6 +227,7 @@ func autoplay(days: int) -> void:
 		var h: int = pattern[d % pattern.size()]
 		if full_ui:
 			await _wait(0.8)
+			_snap("d%02d_b_result" % (d + 1))
 			await main.go("sleep")
 			main.current._set_hours(h)
 			main.current._sleep()
@@ -223,6 +235,7 @@ func autoplay(days: int) -> void:
 			if main.current_name == "hatch":
 				main.current._next()
 				await _wait(3.0)
+				_snap("d%02d_c_hatch" % (d + 1))
 				main.current._open_all()
 				await _wait(0.5)
 			await main.go("zukan")
