@@ -91,16 +91,18 @@ func _build_world() -> void:
 	var L: int = GameState.garden_seen_level
 	var t: int = GameState.tier()
 	# 地面：さびしい土 → 芝
-	var ground_c := Color("8a6a4e") if L < 1 else Color("6f9a5a").lerp(Color("7fb35f"), t / 3.0)
+	var ground_c := Color("8d7b68") if L < 1 else _grass_color()
 	_box(Vector3(16, 0.1, 16), Vector3(0, -0.05, 0), ground_c)
 	if L >= 1:
-		var rng := RandomNumberGenerator.new()
-		rng.seed = 5
-		for i in 70:
-			var p := Vector3(rng.randf_range(-3.6, 3.6), 0, rng.randf_range(-2.6, 2.8))
-			var g := _cone(0.05, rng.randf_range(0.12, 0.22), Color("5d8c4a").lerp(Color("88c070"), rng.randf()))
-			g.position = p + Vector3(0, 0.08, 0)
-			world.add_child(g)
+		_grass_tufts()
+	# 小石
+	var rr := RandomNumberGenerator.new()
+	rr.seed = 17
+	for i in 10:
+		var st := _ball(rr.randf_range(0.07, 0.14), Color("9a948c"))
+		st.scale = Vector3(1.3, 0.6, 1.0)
+		st.position = Vector3(rr.randf_range(-3.4, 3.4), 0.03, rr.randf_range(-2.2, 2.8))
+		world.add_child(st)
 	# 石の小道
 	for i in 6:
 		var st := _cyl(0.22, 0.04, Color("b8b0a4"))
@@ -179,6 +181,23 @@ func _build_world() -> void:
 		ob.position = Vector3(randf_range(-2.4, 2.4), 0, randf_range(-1.2, 1.8))
 		world.add_child(ob)
 		walkers.append({"o": ob, "id": o.id, "target": ob.position, "wait": randf_range(0.5, 3.0), "act": "", "emote": null})
+
+
+## 芝の色（リズムが低いと、少し枯れた色）
+func _grass_color() -> Color:
+	return Color("8a9a62").lerp(Color("6fa05a"), GameState.tier() / 3.0)
+
+
+func _grass_tufts() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	for i in 70:
+		var p := Vector3(rng.randf_range(-3.6, 3.6), 0, rng.randf_range(-2.6, 2.8))
+		var g := _cone(0.05, rng.randf_range(0.12, 0.22), Color("5d8c4a").lerp(Color("88c070"), rng.randf()))
+		g.position = p + Vector3(0, 0.08, 0)
+		world.add_child(g)
+		g.scale = Vector3.ONE * 0.01
+		create_tween().tween_property(g, "scale", Vector3.ONE, 0.5).set_delay(rng.randf() * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _mat(c: Color) -> StandardMaterial3D:
@@ -903,6 +922,7 @@ func _do_shift() -> void:
 		row.add_child(dot)
 		row.add_child(Kit.wrap(Kit.text(g.text, 14, Color("4a3f52"))))
 		card_box.add_child(row)
+		_card_fit()
 		Kit.play(self, "pop", 1.0 + randf() * 0.2)
 		_refresh_hud()
 		if g.kind == "deco":
@@ -959,10 +979,11 @@ func _reveal_deco(role: String) -> void:
 func _focus(at: Vector3, mode: int) -> void:
 	var to := cam_home
 	if mode == 1:
-		to.origin = at + Vector3(0, 3.0, 4.2)
+		to.origin = at + Vector3(0, 2.4, 4.4)
 		to = to.looking_at(at + Vector3(0, 0.4, 0), Vector3.UP)
-	var tw := create_tween()
+	var tw := create_tween().set_parallel()
 	tw.tween_property(cam, "transform", to, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(cam, "v_offset", -0.4 if mode == 1 else -1.6, 0.7)
 	await tw.finished
 
 
@@ -971,7 +992,7 @@ func _toast(title: String, body: String) -> void:
 		toast.queue_free()
 	toast = PanelContainer.new()
 	toast.add_theme_stylebox_override("panel", Kit.pill(Color(0.16, 0.13, 0.26, 0.9), 20, 0.2, Vector2(16, 10)))
-	toast.position = Vector2(30, 150)
+	toast.position = Vector2(30, 360)
 	toast.size = Vector2(300, 0)
 	add_child(toast)
 	var v := VBoxContainer.new()
@@ -993,13 +1014,11 @@ func _toast(title: String, body: String) -> void:
 # ---------- 朝 ----------
 
 func _show_morning() -> void:
-	busy = true
 	var ln: Dictionary = GameState.last_night
 	_clear_card()
 	card_box.add_child(Kit.text("ゆうべの眠り", 18, Color("2a2233"), true))
 	if ln.is_empty():
 		GameState.phase = "day"
-		busy = false
 		_show_card()
 		return
 	card_box.add_child(Kit.text("%s に寝て %s に起きた（%.1f時間）" % [GameState.clock(ln.bed), GameState.wake_clock(ln.wake), ln.hours], 14, Color("4a3f52")))
@@ -1034,7 +1053,6 @@ func _show_morning() -> void:
 	Kit.play(self, "chime", 0.9)
 	var tw := create_tween()
 	tw.tween_property(bar, "value", ln.rhythm / 100.0, 0.9).set_trans(Tween.TRANS_SINE)
-	busy = false
 
 
 func _after_morning() -> void:
@@ -1063,9 +1081,10 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	# 部品を作り直して、ぽんと出す
 	match level:
 		1:
-			var g := _box(Vector3(16, 0.1, 16), Vector3(0, -0.049, 0), Color("7fb35f"))
+			var g := _box(Vector3(16, 0.1, 16), Vector3(0, -0.049, 0), _grass_color())
 			g.scale = Vector3(0.01, 1, 0.01)
 			create_tween().tween_property(g, "scale", Vector3.ONE, 0.8).set_trans(Tween.TRANS_SINE)
+			_grass_tufts()
 		2, 4:
 			if items.has("flowerbed"):
 				items.flowerbed.queue_free()

@@ -215,9 +215,9 @@ func _process(delta: float) -> void:
 	if beat_t <= 0:
 		beat_t = 0.5
 	for s in sheep:
-		var o: Obake3D = s.o
-		if not is_instance_valid(o):
+		if not is_instance_valid(s.o):
 			continue
+		var o: Obake3D = s.o
 		var sp := SPEED * (0.6 if s.fake else 1.0)
 		s.x += sp * delta
 		o.position.x = s.x
@@ -236,7 +236,7 @@ func _process(delta: float) -> void:
 			combo = 0
 		if s.x > 3.6:
 			o.queue_free()
-	sheep = sheep.filter(func(s): return is_instance_valid(s.o))
+	sheep = sheep.filter(func(s): return is_instance_valid(s.o) and not s.o.is_queued_for_deletion())
 	if spawned >= TOTAL and sheep.is_empty():
 		_finish()
 

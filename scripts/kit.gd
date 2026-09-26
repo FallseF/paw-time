@@ -46,6 +46,7 @@ static func text(t: String, size: int, color := Color("2a2233"), heavy := false,
 
 static func wrap(l: Label) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return l
 
 
@@ -108,9 +109,9 @@ static func play(node: Node, name: String, pitch := 1.0, db := 0.0) -> void:
 	p.stream = _sfx[name]
 	p.pitch_scale = pitch
 	p.volume_db = db
-	node.get_tree().root.add_child(p)
-	p.play()
+	p.autoplay = true
 	p.finished.connect(p.queue_free)
+	node.get_tree().root.add_child.call_deferred(p)
 
 
 static func glow(c: Color, e: float) -> StandardMaterial3D:

@@ -5,7 +5,7 @@ extends Control
 var main
 
 const GROUPS := ["睡眠", "はじめて", "時間帯", "天気", "つながり", "リズム"]
-const NORMAL := ["receipt", "bubble", "tray", "pan", "box"]
+const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "nemuri", "lantern"]
 
 var font_bold: FontFile
 var font_black: FontFile
@@ -58,6 +58,11 @@ func _ready() -> void:
 
 	col.add_child(_section("ふつうのおばけ"))
 	col.add_child(_shelf())
+	var hint_n := _text("スヤリは羊かぞえの夢から、チョウチンは夜ふかしの夜に来る", 11, Color("9a8e98"))
+	hint_n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(hint_n)
+	col.add_child(_section("庭の育ち"))
+	col.add_child(_garden_list())
 	for g in GROUPS:
 		col.add_child(_section("レア ・ " + g))
 		var grid := GridContainer.new()
@@ -135,17 +140,16 @@ func _shelf() -> Control:
 	sun.light_energy = 0.6
 	w.add_child(sun)
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 0.8, 5.0)
 	cam.fov = 30
 	w.add_child(cam)
-	cam.look_at(Vector3(0, 0.45, 0))
+	cam.look_at_from_position(Vector3(0, 0.8, 5.0), Vector3(0, 0.45, 0))
 	for i in NORMAL.size():
 		var id: String = NORMAL[i]
-		var pos := Vector3((i - 2) * 1.05, 0, 0)
+		var pos := Vector3((i - 3) * 1.0, 0, 0)
 		if GameState.seen.has(id):
 			var o := Obake3D.new().setup(id)
 			o.position = pos
-			o.scale = Vector3.ONE * 0.8
+			o.scale = Vector3.ONE * 0.7
 			w.add_child(o)
 		else:
 			var q := MeshInstance3D.new()
@@ -164,12 +168,51 @@ func _shelf() -> Control:
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.add_theme_constant_override("separation", 0)
 	for id in NORMAL:
-		var l := _text(GameState.info(id).name if GameState.seen.has(id) else "？？？", 12, Color("6a5f70"))
+		var l := _text(GameState.info(id).name if GameState.seen.has(id) else "？？？", 10, Color("6a5f70"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.custom_minimum_size = Vector2(66, 18)
+		l.custom_minimum_size = Vector2(49, 18)
 		names.add_child(l)
 	v.add_child(names)
 	return v
+
+
+## 庭の段と、仕事の飾り
+func _garden_list() -> Control:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 12)
+	m.add_theme_constant_override("margin_right", 12)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color.WHITE, 16))
+	m.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 3)
+	p.add_child(v)
+	var L: int = GameState.garden_level
+	for i in GameState.GARDEN.size():
+		var st: Dictionary = GameState.GARDEN[i]
+		var done := i <= L
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		row.add_child(_text("●" if done else "○", 12, Color("7fbf6a") if done else Color("c9bfc6")))
+		var name_l := _text(st.name if done else ("？？？（めぐみ %d）" % st.need if i == L + 1 else "？？？"), 13, Color("2a2233") if done else Color("9a8e98"), font_black if done else null)
+		row.add_child(name_l)
+		v.add_child(row)
+	v.add_child(_text("めぐみ %d ・ 満月の夜 %d 回 ・ 夢見草 %d 輪" % [GameState.growth, GameState.moon_nights, GameState.dream_flowers], 12, Color("6a5f70")))
+	v.add_child(_text("仕事の飾り", 13, Color("8a7a88")))
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 4)
+	for r in ["register", "hall", "dish", "kitchen", "stock"]:
+		var lv: int = GameState.deco_level(r)
+		var chip := PanelContainer.new()
+		chip.add_theme_stylebox_override("panel", _pill(Color("f3ecff") if lv > 0 else Color("f1ebe4"), 12))
+		var t: String = GameState.DECOS[r].name if lv > 0 else "？？？（%s）" % GameState.ROLE_LABEL[r]
+		if lv == 2:
+			t += " ★"
+		chip.add_child(_text(t, 11, Color("4a3f52") if lv > 0 else Color("a89ea6")))
+		flow.add_child(chip)
+	v.add_child(flow)
+	return m
 
 
 func _card_texture(id: String) -> Texture2D:
