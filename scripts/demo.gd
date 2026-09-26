@@ -112,9 +112,15 @@ func _boss() -> void:
 	sim.ebase_hp = sim.ebase_max * 0.86
 	await get_tree().create_timer(0.8).timeout
 	sim.ebase_hp = sim.ebase_max * 0.84 # ここで大ピークが来る
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(1.6).timeout
+	# 見せ場のために、大ピークをチャイムの届くところまで進めておく
+	var bb := sim.find(sim.boss_uid)
+	if not bb.is_empty():
+		bb.x = maxf(bb.x, DefData.LANE - DefSim.CANNON_REACH + 1.5)
+	s.cam_x = DefData.LANE - DefSim.CANNON_REACH + 2.5
+	s.cam_hold = 6.0
 	# 大ピークが「！」でためた瞬間にチャイム
-	for k in 40:
+	for k in 30:
 		var b := sim.find(sim.boss_uid)
 		if not b.is_empty() and b.winding and b.x >= DefData.LANE - DefSim.CANNON_REACH:
 			break
