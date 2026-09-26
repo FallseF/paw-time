@@ -36,7 +36,11 @@ func _build_plans() -> void:
 	grid.add_theme_constant_override("v_separation", 8)
 	add_child(grid)
 	var locked_extra := GameState.night_plan == "extra"
-	for p in PLANS:
+	var list := PLANS.duplicate()
+	if GameState.mode == "data":
+		var r := GameState.recorded_sleep()
+		list[0] = ["record", "スマホの記録どおり", "%s に寝て %s に起きた" % [GameState.clock(r.bed), GameState.wake_clock(r.wake)]]
+	for p in list:
 		var b := Button.new()
 		b.custom_minimum_size = Vector2(156, 62)
 		b.text = "%s\n%s" % [p[1], p[2]]
@@ -74,7 +78,12 @@ func _style_plans() -> void:
 func _choose(id: String) -> void:
 	plan = id
 	_style_plans()
-	_set_time(GameState.plan_bed(id), wake)
+	if id == "record":
+		var r := GameState.recorded_sleep()
+		_set_time(r.bed, r.wake)
+	else:
+		wake = GameState.wake_for_tomorrow()
+		_set_time(GameState.plan_bed(id), wake)
 
 
 func _ready() -> void:
@@ -113,24 +122,23 @@ func _ready() -> void:
 	title.position = Vector2(0, 50)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	locked = GameState.mode == "data"
-	var note_t := "スマホの睡眠記録（見本）から入ります" if locked else "いつもの時刻は %s ごろ" % GameState.clock(GameState.usual_bed())
+	locked = false
+	var note_t := "いつもの時刻は %s ごろ" % GameState.clock(GameState.usual_bed())
+	if GameState.mode == "data":
+		note_t = "スマホの睡眠記録（見本）がとどいています"
 	var note := Kit.text(note_t, 12, Color(1, 1, 1, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
 	note.position = Vector2(0, 86)
 	note.size = Vector2(360, 20)
 	add_child(note)
 
-	if locked:
+	wake = GameState.wake_for_tomorrow()
+	plan = GameState.night_plan if GameState.night_plan != "" else ("record" if GameState.mode == "data" else "usual")
+	bed = GameState.plan_bed(plan)
+	if plan == "record":
 		var r := GameState.recorded_sleep()
 		bed = r.bed
 		wake = r.wake
-		bed_label = _row("寝た", 118, func(d): _set_time(bed + d * 30, wake))
-		wake_label = _row("起きた", 180, func(d): _set_time(bed, wake + d * 30))
-	else:
-		wake = GameState.wake_for_tomorrow()
-		plan = GameState.night_plan if GameState.night_plan != "" else "usual"
-		bed = GameState.plan_bed(plan)
-		_build_plans()
+	_build_plans()
 
 	timeline = Control.new()
 	timeline.position = Vector2(24, 250)

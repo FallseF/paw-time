@@ -261,7 +261,7 @@ func recorded_sleep() -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_base * 31 + day * 977
 	var s := today()
-	var bed := USUAL_DEFAULT + int(rng.randfn(0, 25))
+	var bed := USUAL_DEFAULT + int(rng.randfn(0, 15))
 	if s.band == "夜":
 		bed += 45
 	elif s.band == "深夜":
@@ -270,7 +270,7 @@ func recorded_sleep() -> Dictionary:
 		bed += 100 # たまの夜ふかし
 	bed = int(round(bed / 10.0) * 10)
 	var wake := 420 + int(rng.randfn(0, 20))
-	if s.band == "朝" or shift_for(day + 1).band == "朝":
+	if shift_for(day + 1).band == "朝":
 		wake = 390
 	if s.role == "":
 		wake += 40
