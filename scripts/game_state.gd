@@ -677,7 +677,8 @@ func title_index() -> int:
 
 
 func title_name() -> String:
-	return "すくい" + String(TITLES[title_index()].name)
+	var n: String = TITLES[title_index()].name
+	return n if n == "川の主" else "すくい" + n
 
 
 func next_title_text() -> String:
