@@ -1412,7 +1412,7 @@ func _update_poi(delta: float) -> void:
 		else:
 			gentle_time = 0.0
 		# 速く動かすほど、紙が弱る（そっと動かせば、ほとんど減らない）
-		var over := maxf(0.0, poi_speed - 0.6)
+		var over := maxf(0.0, poi_speed - 0.8)
 		var drain: float = (0.012 + minf(0.25 * over * over, 0.45)) * GameState.poi_gentle_mult() * mods.drain
 		if tut_step >= 0:
 			drain = 0.0 # はじめての1つめは、破れない
