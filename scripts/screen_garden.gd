@@ -210,6 +210,9 @@ func _build_world() -> void:
 	for o in GameState.owned.slice(-18):
 		var ob := Obake3D.make(o.id)
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
+		if Rares.is_rare(o.id):
+			# レアは少し大きい作りなので、庭では小さめに（横に広い子はさらに）
+			ob.scale = Vector3.ONE * (0.34 if o.id in ["hyakki", "wataridori", "shuumatsu"] else 0.42)
 		ob.position = _edge_point()
 		world.add_child(ob)
 		var w := {"o": ob, "id": o.id, "target": ob.position, "wait": randf_range(0.5, 3.0), "act": "", "emote": null}
@@ -427,20 +430,63 @@ func _build_dressing(L: int) -> void:
 	night_sky = Color("141a3a").lerp(Color("2a1f4f"), L / 10.0)
 
 
+## 庭の住人（トゥーンの 3D）：かかし・おじぞう・ねぶくろ。ふつうのおばけと同じ体と顔で組む
 func _paper(name: String, at: Vector3, h: float, parent: Node3D) -> void:
-	var path := "res://assets/gen/garden/%s.png" % name
-	if not ResourceLoader.exists(path):
-		return
-	var sp := Sprite3D.new()
-	sp.texture = load(path)
-	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sp.shaded = false
-	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	sp.pixel_size = h / float(sp.texture.get_height())
-	sp.offset = Vector2(0, sp.texture.get_height() * 0.5)
-	sp.position = at
-	parent.add_child(sp)
+	var o := Obake3D.new()
+	o.bob = false
+	o.position = at
+	parent.add_child(o)
+	match name:
+		"kakashi":
+			# 一本足のかかし：棒の上に白いおばけ、麦わら帽子、横木の腕
+			var pole := _cyl(0.035, 0.7, Color("8a5a3a"))
+			pole.position.y = 0.35
+			o.add_child(pole)
+			var arm := _box(Vector3(1.0, 0.06, 0.06), Vector3(0, 0.95, 0), Color("8a5a3a"), o)
+			arm.name = "arm"
+			var g := o.ghost(Color("f6f2ea"), 0.6)
+			g.position.y = 0.62
+			o.add_child(g)
+			var brim := _cyl(0.42, 0.04, Color("e8c45a"))
+			brim.position.y = 1.2
+			o.add_child(brim)
+			var crown := _cyl(0.2, 0.18, Color("e8c45a"), 0.16)
+			crown.position.y = 1.3
+			o.add_child(crown)
+		"jizo":
+			# 目を閉じて座る、灰色のおばけ。赤い前かけ
+			var g := o.ghost(Color("b8b4ad"), 0.55, 0.0, Obake3D.INK, true)
+			o.add_child(g)
+			var bib := _cyl(0.2, 0.05, Color("e8505b"), 0.3)
+			bib.position = Vector3(0, 0.22, 0.12)
+			bib.rotation.x = 0.35
+			o.add_child(bib)
+			var base := _cyl(0.36, 0.08, Color("8e96a8"))
+			base.position.y = 0.0
+			o.add_child(base)
+		"nebukuro":
+			# 寝袋にくるまって横になったおばけ（顔だけ出ている）
+			var bag := MeshInstance3D.new()
+			var cap := CapsuleMesh.new()
+			cap.radius = 0.22
+			cap.height = 1.0
+			bag.mesh = cap
+			bag.material_override = _mat(Color("2f3f8a"))
+			bag.rotation.z = PI / 2
+			bag.position = Vector3(0.15, 0.22, 0)
+			o.add_child(bag)
+			var head := MeshInstance3D.new()
+			head.mesh = _ball(0.2, Color.WHITE).mesh
+			head.material_override = _mat(Color("f6f2ea"))
+			head.position = Vector3(-0.38, 0.26, 0.02)
+			o.add_child(head)
+			var f := o.face(Vector3(-0.38, 0.26, 0.02), 0.4, Obake3D.INK, true)
+			f.rotation.y = -0.5
+			o.add_child(f)
+			var z := Kit.label3d("z", 34, Color("e8e2ff"))
+			z.position = Vector3(-0.3, 0.7, 0)
+			o.add_child(z)
+	o.scale = Vector3.ONE * (h / 1.3)
 
 
 const STAGE_SPOT := {1: Vector3(0.9, 0, 1.3), 2: Vector3(-2.1, 0, 0.6), 3: Vector3(2.4, 0, -1.2), 4: Vector3(-2.1, 0, 1.1), 5: Vector3(1.3, 0, 0.9), 6: Vector3(-0.9, 0, -1.4), 7: Vector3(-3.0, 0, -1.6), 8: Vector3(0, 0, 0.4), 9: Vector3(2.9, 0, 1.9), 10: Vector3(3.2, 0, -2.3)}

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bk84u78nk5lkn"
-path="res://.godot/imported/kakashi.png-ae18b05bce5e2e754317297480b85ae8.ctex"
+uid="uid://dtla51r0gs3wu"
+path="res://.godot/imported/okurimono.png-bde8b238bbeb2ad0e08d1a6de613d630.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gen/garden/kakashi.png"
-dest_files=["res://.godot/imported/kakashi.png-ae18b05bce5e2e754317297480b85ae8.ctex"]
+source_file="res://assets/gen/rares3d/okurimono.png"
+dest_files=["res://.godot/imported/okurimono.png-bde8b238bbeb2ad0e08d1a6de613d630.ctex"]
 
 [params]
 

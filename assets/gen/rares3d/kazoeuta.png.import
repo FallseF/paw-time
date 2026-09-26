@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b4urdjhkfub64"
-path="res://.godot/imported/jizo.png-438ae628c99328cf9099a2e555625ca4.ctex"
+uid="uid://de0qwauhun01h"
+path="res://.godot/imported/kazoeuta.png-ab1167287a3a82d80cc0dcb238a795dd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gen/garden/jizo.png"
-dest_files=["res://.godot/imported/jizo.png-438ae628c99328cf9099a2e555625ca4.ctex"]
+source_file="res://assets/gen/rares3d/kazoeuta.png"
+dest_files=["res://.godot/imported/kazoeuta.png-ab1167287a3a82d80cc0dcb238a795dd.ctex"]
 
 [params]
 

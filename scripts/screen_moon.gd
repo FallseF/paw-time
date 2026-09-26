@@ -266,7 +266,7 @@ func _finish() -> void:
 	await get_tree().create_timer(1.2).timeout
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.96, 0.95), 24, 0.25, Vector2(18, 14)))
-	p.position = Vector2(30, 440)
+	p.position = Vector2(30, 372)
 	p.size = Vector2(300, 0)
 	add_child(p)
 	var v := VBoxContainer.new()

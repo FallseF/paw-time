@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cws7dx2qmuwnn"
-path="res://.godot/imported/nebukuro.png-4019327ba9d765c3769702a0b416b2dd.ctex"
+uid="uid://dtubqjvpo01gg"
+path="res://.godot/imported/wataridori.png-202316e57082aacb7c4d4cf9493f20bf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gen/garden/nebukuro.png"
-dest_files=["res://.godot/imported/nebukuro.png-4019327ba9d765c3769702a0b416b2dd.ctex"]
+source_file="res://assets/gen/rares3d/wataridori.png"
+dest_files=["res://.godot/imported/wataridori.png-202316e57082aacb7c4d4cf9493f20bf.ctex"]
 
 [params]
 
