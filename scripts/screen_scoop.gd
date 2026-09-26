@@ -1257,6 +1257,11 @@ func _lift() -> void:
 	for o: Orb3D in list:
 		o.queue_free()
 	poi_target.y = 0.45
+	_play("pop", 1.3, -8)
+	var jar: Control = count_label.get_parent().get_parent()
+	jar.pivot_offset = jar.size / 2
+	jar.scale = Vector2(1.08, 1.08)
+	create_tween().tween_property(jar, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if last_gasp:
 		_float_text("ぎりぎりセーフ！でも紙が…", Vector2(180, 300), Color("ffd6a8"), 18)
 		await get_tree().create_timer(0.35).timeout

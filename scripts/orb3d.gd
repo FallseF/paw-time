@@ -78,6 +78,8 @@ func setup(d: Dictionary) -> Orb3D:
 	light.light_energy = 0.8
 	light.omni_range = 1.0
 	light.position = Vector3(0, 0.15, 0)
+	# 水面の映り込みはシェーダーが描くので、明かりは特別な玉だけ（Webで軽く）
+	light.visible = kind in ["rainbow", "gold"]
 	add_child(light)
 	scale = Vector3.ONE * KIND_SIZE.get(kind, 1.0)
 	_t = randf() * TAU
