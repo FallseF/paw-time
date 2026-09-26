@@ -26,6 +26,14 @@ var durability := 1.0
 var dura_by := {} # ポイの種類ごとの残り（切りかえても回復しない）
 var extra := false
 var perfect_streak := 0
+# 寝息のリズム：ポイを水に入れたまま、じっとしていると「ゆめの泡」が浮いてくる
+const STILL_NEED := 1.8
+var still_t := 0.0
+var still_prev := Vector3.ZERO
+var dream_left := 1
+var breath: MeshInstance3D
+var breath_mat: StandardMaterial3D
+var _bt := 0.0
 var rim_col := Color.WHITE
 var pressed := false
 var last_ground := Vector3.ZERO
@@ -63,6 +71,8 @@ func _ready() -> void:
 		_spawn_orb(d)
 	_pick_poi()
 	_refresh_ui()
+	dream_left = 1 + GameState.tier() / 2
+	_make_breath()
 	# 今夜の川の様子を、はじめに知らせる
 	var kind := GameState.night_kind()
 	if kind != "" and not extra:
@@ -469,6 +479,10 @@ func _build_ui() -> void:
 	top.add_child(pp)
 
 	hint = _text("押して水へ → 縁が金色に光ったら、離す", 14, Color(1, 1, 1, 0.85))
+	var tip := _text("水の中でじっとしていると、ゆめの泡が浮いてくる", 12, Color("c9bdf5"))
+	tip.position = Vector2(0, 116)
+	tip.size = Vector2(360, 20)
+	add_child(tip)
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
@@ -748,7 +762,10 @@ func _lift() -> void:
 	if GameState.NETS[poi_type].type == target.data.type:
 		GameState.goal("match")
 	caught_count += 1
-	if perfect:
+	if target.data.get("dream", false):
+		_banner("ゆめの泡を\nすくった", Color("d8ccff"))
+		_play("sparkle")
+	elif perfect:
 		perfect_streak += 1
 		var msg := "ぴったり！"
 		if perfect_streak >= 3:
@@ -809,8 +826,67 @@ func _tear(target: Orb3D) -> void:
 
 # ---------- 毎フレーム ----------
 
+## ポイのまわりの、ゆっくり息をする輪（じっとしているほど満ちる）
+func _make_breath() -> void:
+	breath = MeshInstance3D.new()
+	var t := TorusMesh.new()
+	t.inner_radius = POI_R + 0.05
+	t.outer_radius = POI_R + 0.09
+	breath.mesh = t
+	breath_mat = StandardMaterial3D.new()
+	breath_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	breath_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	breath_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	breath_mat.albedo_color = Color(0.79, 0.74, 0.96, 0.0)
+	breath.material_override = breath_mat
+	world.add_child(breath)
+
+
+func _update_breath(delta: float) -> void:
+	_bt += delta
+	if breath == null:
+		return
+	var moved := poi.position.distance_to(still_prev)
+	still_prev = poi.position
+	if pressed and not busy and dream_left > 0:
+		if moved < 0.004:
+			still_t += delta
+		else:
+			still_t = maxf(0.0, still_t - delta * 3.0)
+	else:
+		still_t = 0.0
+	var k := clampf(still_t / STILL_NEED, 0.0, 1.0)
+	# 4 秒でひと呼吸（吸って、吐いて）
+	var br := 0.5 + 0.5 * sin(_bt * TAU / 4.0)
+	breath.position = Vector3(poi.position.x, 0.02, poi.position.z)
+	breath.scale = Vector3.ONE * (1.0 + (1.0 - k) * 0.6 + br * 0.08)
+	breath_mat.albedo_color.a = k * 0.8
+	if k >= 1.0:
+		still_t = 0.0
+		_dream_bubble()
+
+
+func _dream_bubble() -> void:
+	dream_left -= 1
+	var o := Orb3D.new().setup({"type": "sleep", "rare": false, "weight": 0.18, "dream": true})
+	o.position = Vector3(poi.position.x + 0.03, -0.35, poi.position.z)
+	o.scale = Vector3.ONE * 0.2
+	world.add_child(o)
+	orbs.append(o)
+	total_tonight += 1
+	o.vel = Vector3.ZERO
+	var tw := create_tween().set_parallel()
+	tw.tween_property(o, "position:y", 0.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(o, "scale", Vector3.ONE, 0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_ripple(o.position)
+	Kit.play(self, "dream", 1.2, -8)
+	hint.text = "ゆめの泡が浮いてきた。そのまま離す"
+	_refresh_ui()
+
+
 func _process(delta: float) -> void:
 	ripple_t += delta
+	_update_breath(delta)
 	# ポイの下に玉があると、縁が光る（真ん中なら金色）
 	if pressed and poi_rim and poi_rim.material_override:
 		var near := 99.0
@@ -853,7 +929,7 @@ func _process(delta: float) -> void:
 			continue
 		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta
 		# 水中でポイが近くにあると、少し逃げる
-		if pressed:
+		if pressed and not o.data.get("dream", false):
 			var away: Vector3 = o.position - poi.position
 			away.y = 0
 			var d: float = away.length()
@@ -974,3 +1050,10 @@ func demo_real() -> void:
 	up.position = sp
 	_gui_input(up)
 	print("[demo_real] caught=", caught_count, " dura=", durability)
+
+
+## 確認用：水の中でじっと待つ
+func demo_still() -> void:
+	pressed = true
+	poi.position = Vector3(0.0, -0.04, 0.2)
+	still_prev = poi.position
