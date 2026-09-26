@@ -10,13 +10,13 @@ signal goal_completed(text: String, all_done: bool)
 const SAVE_PATH := "user://obake_b_save.json"
 
 const SPECIES := {
-	"receipt": {"name": "レシートン", "type": "register", "desc": "レジの音に寄ってくる。レシートの尻尾が長いほど長生き"},
-	"bubble": {"name": "アワワ", "type": "dish", "desc": "洗い場の泡から生まれる。割れても平気"},
-	"tray": {"name": "オボン", "type": "hall", "desc": "頭のお盆は絶対に落とさない"},
-	"pan": {"name": "ジュウ", "type": "kitchen", "desc": "油の跳ねる音が好き。少しあつい"},
-	"box": {"name": "ダンボ", "type": "stock", "desc": "箱から出たがらない。重いものが得意"},
-	"nemuri": {"name": "スヤリ", "type": "sleep", "desc": "夢の中の羊を数えていたら、ついてきた。だいたい寝ている"},
-	"lantern": {"name": "チョウチン", "type": "night", "desc": "夜ふかしの灯りに寄ってくる。明るいが、少し眠そう"},
+	"receipt": {"name": "レシートン", "type": "register", "desc": "レジの音に寄ってくる。尻尾のレシートは、捨てないでほしいらしい"},
+	"bubble": {"name": "アワワ", "type": "dish", "desc": "洗い場の泡から生まれる。割れても平気。割れても"},
+	"tray": {"name": "オボン", "type": "hall", "desc": "頭のお盆は絶対に落とさない。中身は気にしない"},
+	"pan": {"name": "ジュウ", "type": "kitchen", "desc": "油の跳ねる音が好き。さわると少しあつい。本人は言わない"},
+	"box": {"name": "ダンボ", "type": "stock", "desc": "住居です。資源ごみに出さないでください"},
+	"nemuri": {"name": "スヤリ", "type": "sleep", "desc": "夢の羊を数えていたら、ついてきた。起きているところを見た者はいない"},
+	"lantern": {"name": "チョウチン", "type": "night", "desc": "夜ふかしの灯りに寄ってくる。本人もかなり眠い"},
 }
 const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "nemuri", "lantern"]
 

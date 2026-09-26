@@ -23,6 +23,8 @@ var burst: CPUParticles3D
 var rays: MeshInstance3D
 var sfx := {}
 var busy := false
+var batch_from := 999
+var batch_obs: Array = []
 
 
 func _ready() -> void:
@@ -36,6 +38,11 @@ func _ready() -> void:
 		p.stream = load("res://assets/sfx/%s.wav" % n)
 		add_child(p)
 		sfx[n] = p
+	# 新顔とレアを先に、いつもの子はあとでまとめて
+	var featured: Array = GameState.hatched.filter(func(x): return x.is_new or x.get("rare", false))
+	var dupes: Array = GameState.hatched.filter(func(x): return not (x.is_new or x.get("rare", false)))
+	GameState.hatched = featured + dupes
+	batch_from = featured.size() if dupes.size() >= 2 else GameState.hatched.size()
 	var n_orbs: int = GameState.hatched.size()
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
@@ -272,6 +279,9 @@ func _next() -> void:
 		return
 	busy = true
 	next_btn.disabled = true
+	if index >= batch_from:
+		await _open_batch()
+		return
 	var tw0 := create_tween()
 	tw0.tween_property(card, "modulate:a", 0.0, 0.15)
 	if current_obake:
@@ -327,6 +337,65 @@ func _next() -> void:
 	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	index += 1
 	next_btn.text = "つぎの玉" if index < orbs.size() else "庭へ"
+	next_btn.disabled = false
+	busy = false
+
+
+## いつもの子たちの玉は、まとめて一度にひらく
+func _open_batch() -> void:
+	var tw0 := create_tween()
+	tw0.tween_property(card, "modulate:a", 0.0, 0.15)
+	if current_obake:
+		tw0.parallel().tween_property(current_obake, "position:x", -3.0, 0.3)
+	await tw0.finished
+	if current_obake:
+		current_obake.queue_free()
+		current_obake = null
+	var rest: Array = orbs.slice(index)
+	var tw := create_tween().set_parallel()
+	for i in rest.size():
+		tw.tween_property(rest[i], "position", Vector3((i - (rest.size() - 1) / 2.0) * 0.36, 0.6, 0.5), 0.4)
+	await tw.finished
+	for k in 2:
+		var tw2 := create_tween().set_parallel()
+		for o in rest:
+			tw2.tween_property(o, "scale", Vector3.ONE * (1.2 + k * 0.2), 0.12)
+		await tw2.finished
+		await get_tree().create_timer(0.15).timeout
+	_flash(0.8)
+	sfx["hatch"].play()
+	var counts := {}
+	var levels := {}
+	for i in rest.size():
+		var h: Dictionary = GameState.hatched[index + i]
+		counts[h.id] = counts.get(h.id, 0) + 1
+		levels[h.id] = h.level
+		var o: Orb3D = rest[i]
+		var ob := Obake3D.make(h.id)
+		ob.position = o.position + Vector3(0, -0.2, 0)
+		ob.scale = Vector3.ONE * 0.05
+		world.add_child(ob)
+		batch_obs.append(ob)
+		o.queue_free()
+		create_tween().tween_property(ob, "scale", Vector3.ONE * 0.3, 0.5).set_delay(i * 0.06).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	burst.position = Vector3(0, 0.6, 0.5)
+	burst.restart()
+	burst.emitting = true
+	await get_tree().create_timer(0.5).timeout
+	sfx["chime"].play()
+	var lines: Array = []
+	for id in counts:
+		lines.append("%s ×%d（Lv%d）" % [GameState.info(id).name, counts[id], levels[id]])
+	card_title.text = "いつもの子たち"
+	badge.get_parent().visible = false
+	card_sub.text = "なかまが増えて、少し育った"
+	card_desc.text = "\n".join(lines)
+	card.position.y = 430
+	var tw4 := create_tween().set_parallel()
+	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
+	tw4.tween_property(card, "position:y", 400.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	index = orbs.size()
+	next_btn.text = "庭へ"
 	next_btn.disabled = false
 	busy = false
 
