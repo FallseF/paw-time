@@ -57,6 +57,7 @@ func _ready() -> void:
 	scroll.add_child(col)
 
 	col.add_child(_records())
+	col.add_child(_medals())
 	for key in GameState.claimable():
 		col.add_child(_claim_row(key))
 	col.add_child(_next_milestone())
@@ -303,6 +304,39 @@ func _records() -> Control:
 	m.add_theme_constant_override("margin_right", 12)
 	m.add_child(outer)
 	return m
+
+
+## メダルの棚（グループをそろえると金色に）
+func _medals() -> Control:
+	var h := HBoxContainer.new()
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	h.add_theme_constant_override("separation", 6)
+	for g in ["ふつう"] + GROUPS:
+		var pr: Vector2i = GameState.group_progress(g)
+		var done := pr.x >= pr.y
+		var v := VBoxContainer.new()
+		v.add_theme_constant_override("separation", 1)
+		var m := Panel.new()
+		var ms := StyleBoxFlat.new()
+		ms.bg_color = Color("ffc93d") if done else Color(0, 0, 0, 0.07)
+		ms.border_color = Color("2a2233") if done else Color(0, 0, 0, 0.15)
+		ms.set_border_width_all(2)
+		ms.set_corner_radius_all(15)
+		m.add_theme_stylebox_override("panel", ms)
+		m.custom_minimum_size = Vector2(30, 30)
+		m.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		if done:
+			var star := _text("★", 15, Color("2a2233"), font_black)
+			star.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			star.set_anchors_preset(Control.PRESET_FULL_RECT)
+			m.add_child(star)
+		v.add_child(m)
+		var l := _text(g.left(3), 10, Color("2a2233") if done else Color("9a8e98"))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.custom_minimum_size = Vector2(42, 0)
+		v.add_child(l)
+		h.add_child(v)
+	return h
 
 
 func _claim_row(key: String) -> Control:
