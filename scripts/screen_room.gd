@@ -314,6 +314,9 @@ func _render() -> void:
 	else:
 		card_title.text = "今日は休み"
 		card_body.text = "よく寝た朝は、やる気のたまりが速い。ゆっくり守ろう"
+	var ds := GameState.daily_stage()
+	if not ds.is_empty() and not GameState.daily_done and GameState.total_battles > 0:
+		card_body.text += "\n今日のお手伝い：%s を守ると +60" % DefData.stage(ds[0], ds[1]).name
 	if s.role != "" and not GameState.shift_done_today and GameState.total_battles > 0:
 		actions.add_child(_button("シフトの記録を受けとる", Color("ffb13d"), _do_shift))
 	var nb_ref := _button("夜の川べりへ", Color("5b6fc2"), func(): main.go("catch" if not GameState.scooped_tonight else "sleep"))

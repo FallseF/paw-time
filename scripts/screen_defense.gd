@@ -56,6 +56,8 @@ var hint_label: Label
 var hint_target: Control
 var hint_key := ""
 var overlay: Control
+var boss_bar: PanelContainer
+var boss_hp: ProgressBar
 var speed_btn: Button
 var drag_from := -1.0
 var drag_cam := 0.0
@@ -161,7 +163,7 @@ func _build_world() -> void:
 		_box(Vector3(1.8, 0.1, 1.2), Vector3(-0.3, 2.3, 0), Color(shop.color).lightened(0.2), base_node)
 		_box(Vector3(0.08, 1.2, 0.08), Vector3(0.6, 1.7, 0.5), Color("7a5238"), base_node)
 
-	for kind in ["hit", "puff", "zap", "heal", "gold", "weak"]:
+	for kind in ["hit", "puff", "zap", "heal", "gold", "weak", "job"]:
 		fx_pools[kind] = []
 		fx_i[kind] = 0
 		for i in 6:
@@ -250,6 +252,13 @@ func _make_fx(kind: String) -> CPUParticles3D:
 			p.gravity = Vector3(0, -5, 0)
 			col = Color("ffd23f")
 			sz = 0.06
+		"job":
+			p.amount = 10
+			p.lifetime = 0.4
+			p.initial_velocity_min = 1.2
+			p.initial_velocity_max = 2.6
+			p.gravity = Vector3(0, -2, 0)
+			sz = 0.07
 		"weak":
 			p.amount = 14
 			p.lifetime = 0.45
@@ -274,10 +283,12 @@ func _make_fx(kind: String) -> CPUParticles3D:
 	return p
 
 
-func _fx(kind: String, pos: Vector3) -> void:
+func _fx(kind: String, pos: Vector3, col := Color(0, 0, 0, 0)) -> void:
 	var pool: Array = fx_pools[kind]
 	var p: CPUParticles3D = pool[fx_i[kind] % pool.size()]
 	fx_i[kind] += 1
+	if col.a > 0:
+		(p.material_override as StandardMaterial3D).albedo_color = col
 	p.position = pos
 	p.restart()
 	p.emitting = true
@@ -524,6 +535,22 @@ func _build_ui() -> void:
 	minimap.gui_input.connect(_on_minimap)
 	add_child(minimap)
 
+	boss_bar = PanelContainer.new()
+	boss_bar.add_theme_stylebox_override("panel", Kit.pill(Color(0.16, 0.13, 0.2, 0.85), 14, 0.0))
+	boss_bar.position = Vector2(60, 96)
+	boss_bar.size = Vector2(240, 0)
+	boss_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bbv := VBoxContainer.new()
+	bbv.add_theme_constant_override("separation", 2)
+	var bbl := Kit.text("金曜の大ピーク", 12, Color("ffb07a"), true)
+	bbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bbv.add_child(bbl)
+	boss_hp = Kit.bar(1.0, Color("ff8a3d"), Color(1, 1, 1, 0.15), 8)
+	bbv.add_child(boss_hp)
+	boss_bar.add_child(bbv)
+	boss_bar.visible = false
+	add_child(boss_bar)
+
 	# 下のパネル
 	var panel := Panel.new()
 	var ps := StyleBoxFlat.new()
@@ -722,6 +749,10 @@ func _refresh_ui() -> void:
 	else:
 		cannon_btn.scale = Vector2.ONE
 	minimap.queue_redraw()
+	var boss := sim.find(sim.boss_uid) if sim.boss_uid >= 0 else {}
+	boss_bar.visible = not boss.is_empty()
+	if not boss.is_empty():
+		boss_hp.value = boss.hp / boss.max_hp
 
 
 func _draw_minimap() -> void:
@@ -1028,6 +1059,9 @@ func _handle_events(evs: Array) -> void:
 	for ev in evs:
 		match ev.type:
 			"spawn":
+				var se := sim.find(ev.uid)
+				if not se.is_empty() and se.side == 1 and not demo:
+					GameState.enemies_seen[se.id] = true
 				if ev.get("boss", false):
 					_boss_arrives()
 			"attack":
@@ -1037,6 +1071,9 @@ func _handle_events(evs: Array) -> void:
 					_lunge(v, -1.0 if e.side == 0 else 1.0, 0.18 if e.side == 1 else 0.28)
 					if ev.bolt:
 						_bolt(ev.tx)
+					elif e.side == 0 and not e.tiny and e.job != "":
+						# 仕事ごとの色で、攻撃が当たった場所にしぶき（泡・油・レシート…）
+						_fx("job", Vector3(ev.tx + 0.2, 0.55, 0.45), JOB_COLOR.get(e.job, Color.WHITE).lightened(0.2))
 			"hit":
 				if views.has(ev.uid):
 					var v2: Dictionary = views[ev.uid]

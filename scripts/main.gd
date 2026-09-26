@@ -69,6 +69,8 @@ func _debug_setup() -> void:
 		for o in GameState.owned:
 			o.level = 6
 		GameState.coins = 3000
+		for id in ["iraira", "gyouretsu", "chuumon", "araimono", "denwa"]:
+			GameState.enemies_seen[id] = true
 		for si in 2:
 			for st in DefData.shop(si).stages.size():
 				GameState.cleared[DefData.stage_key(si, st)] = 1
@@ -113,6 +115,19 @@ func _maybe_autoshot() -> void:
 		elif step.begins_with("call:"):
 			current.call(step.substr(5))
 			await get_tree().create_timer(0.6).timeout
+		elif step.begins_with("click:"):
+			# click:x:y（360x640 の座標）で、指で押して離す
+			var xy := step.substr(6).split(":")
+			var pos := Vector2(float(xy[0]), float(xy[1]))
+			for pressed in [true, false]:
+				var ev := InputEventMouseButton.new()
+				ev.button_index = MOUSE_BUTTON_LEFT
+				ev.pressed = pressed
+				ev.position = pos * get_viewport().get_visible_rect().size / Vector2(360, 640)
+				ev.global_position = ev.position
+				Input.parse_input_event(ev)
+				await get_tree().create_timer(0.08).timeout
+			await get_tree().create_timer(0.5).timeout
 		elif step == "snap":
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(path.replace(".png", "_%d.png" % n))

@@ -10,6 +10,7 @@ const NORMAL := ["receipt", "bubble", "tray", "pan", "box"]
 var font_bold: FontFile
 var font_black: FontFile
 var detail: Control
+var scroll: ScrollContainer
 
 
 func _ready() -> void:
@@ -46,7 +47,7 @@ func _ready() -> void:
 	back.pressed.connect(func(): main.go("room"))
 	head.add_child(back)
 
-	var scroll := ScrollContainer.new()
+	scroll = ScrollContainer.new()
 	scroll.position = Vector2(0, 66)
 	scroll.size = Vector2(360, 574)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -72,6 +73,18 @@ func _ready() -> void:
 		for r in Rares.LIST:
 			if r.group == g:
 				grid.add_child(_card(r))
+	col.add_child(_section("困りごと（%d / %d）" % [GameState.enemies_seen.size(), DefData.ENEMIES.size()]))
+	var eg := GridContainer.new()
+	eg.columns = 3
+	eg.add_theme_constant_override("h_separation", 8)
+	eg.add_theme_constant_override("v_separation", 8)
+	var em := MarginContainer.new()
+	em.add_theme_constant_override("margin_left", 12)
+	em.add_theme_constant_override("margin_right", 12)
+	em.add_child(eg)
+	col.add_child(em)
+	for id in DefData.ENEMIES:
+		eg.add_child(_enemy_card(id))
 	var pad := Control.new()
 	pad.custom_minimum_size = Vector2(0, 30)
 	col.add_child(pad)
@@ -233,6 +246,42 @@ func _card(r: Dictionary) -> Control:
 	return p
 
 
+func _enemy_card(id: String) -> Control:
+	var d: Dictionary = DefData.ENEMIES[id]
+	var found: bool = GameState.enemies_seen.has(id)
+	var p := PanelContainer.new()
+	var st := _pill(Color.WHITE if found else Color("ece4da"), 14)
+	st.content_margin_left = 6
+	st.content_margin_right = 6
+	p.add_theme_stylebox_override("panel", st)
+	p.custom_minimum_size = Vector2(100, 150)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	p.add_child(v)
+	var tr := TextureRect.new()
+	tr.texture = Kit.enemy_tex(id)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.custom_minimum_size = Vector2(80, 70)
+	if not found:
+		tr.modulate = Color(0.15, 0.12, 0.2, 0.3)
+	v.add_child(tr)
+	var n := _text(d.name if found else "？？？", 12, Color("2a2233") if found else Color("9a8e98"), font_black)
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	n.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	v.add_child(n)
+	if found:
+		var w := _text(("弱点 " + GameState.ROLE_LABEL[d.weak]) if d.weak != "" else "弱点なし", 10, DefData.job_color(d.weak), font_black)
+		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(w)
+		var l := _text(d.line, 9, Color("7a6f7c"))
+		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.custom_minimum_size = Vector2(86, 0)
+		v.add_child(l)
+	return p
+
+
 func _show_detail(r: Dictionary) -> void:
 	if detail:
 		detail.queue_free()
@@ -280,3 +329,7 @@ func _show_detail(r: Dictionary) -> void:
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
+
+
+func demo_scroll_end() -> void:
+	scroll.scroll_vertical = 100000

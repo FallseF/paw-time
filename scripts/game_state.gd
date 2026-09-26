@@ -94,6 +94,7 @@ var consolation_done := false
 var total_battles := 0
 var last_result := {} # 直前の戦いの結果（結果画面が読む）
 var pending_battle := {} # これから戦うステージ {shop, stage}
+var enemies_seen := {} # 会った困りごと（図鑑）
 
 
 func _ready() -> void:
@@ -153,6 +154,7 @@ func reset() -> void:
 	total_battles = 0
 	last_result = {}
 	pending_battle = {}
+	enemies_seen = {}
 	changed.emit()
 
 
@@ -590,7 +592,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 const SAVE_KEYS := ["day", "phase", "nets", "net_strength", "last_sleep", "owned", "seen", "morning_report", "orbs", "hatched",
 	"scooped_tonight", "sleep_hist", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_days",
 	"first_role_today", "gifted", "received", "rare_pending", "coins", "deck", "cleared", "best_lap", "lap", "boost",
-	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done"]
+	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen"]
 
 
 func save_game() -> void:
