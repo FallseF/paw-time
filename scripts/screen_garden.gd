@@ -618,8 +618,20 @@ func _build_deco_body(role: String, lv: int) -> void:
 
 # ---------- 時間帯 ----------
 
+var crickets: AudioStreamPlayer
+
+
 func _apply_time(n: float) -> void:
 	night = n
+	if crickets == null:
+		crickets = AudioStreamPlayer.new()
+		var loop: AudioStreamWAV = load("res://assets/sfx/crickets.wav")
+		loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		loop.loop_end = loop.data.size() / 2
+		crickets.stream = loop
+		add_child(crickets)
+		crickets.play()
+	crickets.volume_db = lerpf(-60.0, -14.0, n)
 	var day_bg := Color("f3d9c4").lerp(Color("cfe3ef"), 0.3)
 	env.background_color = day_bg.lerp(Color("141a3a"), n)
 	env.ambient_light_color = Color("ffe9d6").lerp(Color("5a64a8"), n)

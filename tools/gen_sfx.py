@@ -212,6 +212,24 @@ write("tear", tear())
 write("hatch", hatch())
 write("sparkle", sparkle())
 write("river_loop", river_loop())
-for name, fn in [("tap", tap), ("pop", pop), ("grow", grow), ("bell", bell), ("night", night), ("dream", dream), ("lullaby", lullaby)]:
+def crickets():
+    n = int(SR * 8.0)
+    out = [0.0] * n
+    for k in range(26):
+        st = int(SR * random.uniform(0, 7.4))
+        f = random.uniform(4200, 5200)
+        dur = random.uniform(0.25, 0.6)
+        for j in range(int(SR * dur)):
+            if st + j < n:
+                am = 1.0 if (j // int(SR * 0.025)) % 2 == 0 else 0.0
+                out[st + j] += 0.12 * am * math.sin(2 * math.pi * f * j / SR) * math.sin(math.pi * j / (SR * dur))
+    fade = int(SR * 0.3)
+    for i in range(fade):
+        a = i / fade
+        out[i] = out[i] * a + out[n - fade + i] * (1 - a)
+    return out[: n - fade]
+
+
+for name, fn in [("crickets", crickets), ("tap", tap), ("pop", pop), ("grow", grow), ("bell", bell), ("night", night), ("dream", dream), ("lullaby", lullaby)]:
     write(name, fn())
 print("wrote sfx to", OUT)
