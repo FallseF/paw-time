@@ -491,7 +491,7 @@ func _open_all() -> void:
 		elif a.lv > 0:
 			tag = " Lv%d↑" % a.lv
 			lvups += 1
-		var l := _text("● %s%s%s" % [GameState.info(id).name, (" ×%d" % a.n) if a.n > 1 else "", tag], 14, Color("e85a4f") if a.new else Color("2a2233"))
+		var l := _text("● %s%s%s" % [GameState.info(id).name, ("×%d" % a.n) if a.n > 1 else "", tag], 13, Color("e85a4f") if a.new else Color("2a2233"))
 		l.autowrap_mode = TextServer.AUTOWRAP_OFF
 		l.custom_minimum_size = Vector2(138, 0)
 		l.clip_text = true
