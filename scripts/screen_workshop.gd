@@ -226,7 +226,7 @@ func _cost_row(cost: Dictionary) -> Control:
 		var have: int = GameState.shards.get(k, 0)
 		h.add_child(_gem(k, 11))
 		if have >= cost[k]:
-			h.add_child(_text("%s ✓" % GameState.SHARD_LABEL[k], 13, Color("5fa05a")))
+			h.add_child(_text("%s○" % GameState.SHARD_LABEL[k], 13, Color("5fa05a")))
 		else:
 			h.add_child(_text("%s%d" % [GameState.SHARD_LABEL[k], cost[k] - have], 13, Color("e85a4f")))
 	return h
