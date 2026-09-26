@@ -994,7 +994,8 @@ func _stage_tips() -> Array:
 	for id in ids:
 		var d: Dictionary = DefData.ENEMIES[id]
 		if d.weak != "":
-			out.append("・%s は %s に弱い" % [d.name, GameState.ROLE_LABEL[d.weak]])
+			var sp: String = GameState.info(GameState.species_for_type(d.weak)).name
+			out.append("・%s は %s（%s）に弱い" % [d.name, GameState.ROLE_LABEL[d.weak], sp])
 		else:
 			out.append("・%s に弱点はない" % d.name)
 	return out
@@ -1319,6 +1320,7 @@ func _result(r: Dictionary) -> void:
 	var coin_l := Kit.text("まかない +0", 22, Color("e8792f"), true)
 	coin_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(coin_l)
+	coin_l.visible = r.coins > 0
 	var target: int = r.coins
 	var tw := coin_l.create_tween()
 	tw.tween_method(func(x: float):
