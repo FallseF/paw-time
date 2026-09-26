@@ -1222,6 +1222,8 @@ func _handle_events(evs: Array) -> void:
 				_fx("puff", pos2)
 				if ev.side == 1:
 					Kit.sfx("c_coin", randf_range(0.95, 1.1), -6)
+				elif randf() < 0.5:
+					Kit.sfx("c_pop", 0.55, -10)
 				if ev.boss:
 					shake = 1.2
 					_flash(0.8)
@@ -1288,6 +1290,7 @@ func _handle_events(evs: Array) -> void:
 						tw.tween_property(sp, "modulate", Color.WHITE, 0.25)
 						tw.tween_property(sp, "modulate", Color(1, 0.45, 0.4), 0.25)
 						tw.tween_property(sp, "modulate", Color.WHITE, 0.25)
+						Kit.sfx("c_drum", 2.2, -10)
 						_popup("!", vw.root.position + Vector3(0, DefData.ENEMIES[ent.id].h + 0.2, 0.3), Color("ff6b5b"), 90)
 						if sim.can_cannon() and not GameState.tutorial.has("t_windup") and ent.x >= DefData.LANE - DefSim.CANNON_REACH:
 							_show_hint("t_windup", "「！」のあいだにチャイムを当てると、大技が止まる", cannon_btn)
