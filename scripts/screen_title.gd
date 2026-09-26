@@ -57,6 +57,7 @@ func _ready() -> void:
 	mute.pressed.connect(func():
 		AudioServer.set_bus_mute(0, not AudioServer.is_bus_mute(0))
 		GameState.tut["mute"] = AudioServer.is_bus_mute(0)
+		GameState.save_game()
 		mute.text = "音：%s" % ("OFF" if AudioServer.is_bus_mute(0) else "ON"))
 	add_child(mute)
 	var demo := _button("デモ：3週間すすめた状態で遊ぶ", Color(1, 1, 1, 0.14), _demo, Color(1, 1, 1, 0.8))
