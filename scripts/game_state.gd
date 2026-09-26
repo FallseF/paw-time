@@ -88,6 +88,9 @@ var boss_won_today := false
 var boss_wins := 0
 var tutorial := {} # 見せたチュートリアル
 var battles_today := 0
+var wins_today := 0
+var daily_done := false
+var consolation_done := false
 var total_battles := 0
 var last_result := {} # 直前の戦いの結果（結果画面が読む）
 var pending_battle := {} # これから戦うステージ {shop, stage}
@@ -142,6 +145,9 @@ func reset() -> void:
 	boss_wins = 0
 	tutorial = {}
 	battles_today = 0
+	wins_today = 0
+	daily_done = false
+	consolation_done = false
 	total_battles = 0
 	last_result = {}
 	pending_battle = {}
@@ -216,8 +222,9 @@ func finish_shift() -> Array:
 	for c in s.coworkers:
 		coworker_count[c] = coworker_count.get(c, 0) + 1
 	var net_id: String = ROLE_NET[s.role]
+	# 何時間働いても同じ（長く働くほど得、にしない）
 	var h: int = min(s.hours, SHIFT_CAP_H)
-	var n: int = clampi(h / 2, 1, 2)
+	var n := 2
 	nets[net_id] += n
 	got.append("%s ×%d" % [NETS[net_id].name, n])
 	if s.first:
@@ -239,7 +246,7 @@ func battle_boost(shop_id: String) -> Dictionary:
 	var here: bool = DefData.STORE_SHOP.get(boost.store, "") == shop_id or (shop_id == "peak")
 	b.job = boost.role
 	if here:
-		b.start_energy = 50.0 * boost.hours
+		b.start_energy = 200.0
 		b.job_mult = 1.3
 		b.lines.append("%sで働いた：はじめのやる気 +%d" % [boost.store, int(b.start_energy)])
 		b.lines.append("%sのおばけ ×1.3" % ROLE_LABEL[boost.role])
@@ -332,8 +339,24 @@ func deck_for_battle() -> Array:
 
 # ---------- ステージ ----------
 
-func is_cleared(si: int, st: int) -> bool:
-	return cleared.get(DefData.stage_key(si, st), 0) > 0
+func is_cleared(si: int, st: int, l := -1) -> bool:
+	return cleared.get(DefData.stage_key(si, st, lap if l < 0 else l), 0) > 0
+
+
+func clear_count(si: int, st: int) -> int:
+	return int(cleared.get(DefData.stage_key(si, st, lap), 0))
+
+
+## 今日のお手伝い：ひらいているステージから日替わりで1つ。その日の最初の勝ちに +60
+func daily_stage() -> Array:
+	var open: Array = []
+	for si in DefData.SHOPS.size():
+		for st in DefData.shop(si).stages.size():
+			if is_open(si, st) and is_cleared(si, st):
+				open.append([si, st])
+	if open.is_empty():
+		return []
+	return open[(day * 7 + 3) % open.size()]
 
 
 ## そのステージに挑めるか（前のステージを越えたら開く）
@@ -358,29 +381,42 @@ func next_stage() -> Array:
 func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary:
 	battles_today += 1
 	total_battles += 1
-	var key := DefData.stage_key(si, st)
+	var key := DefData.stage_key(si, st, lap)
 	var stg: Dictionary = DefData.stage(si, st)
-	var r := {"won": won, "shop": si, "stage": st, "coins": 0, "first": false, "orb": false, "lap_up": false, "stats": stats}
+	var r := {"won": won, "shop": si, "stage": st, "coins": 0, "first": false, "orb": false, "lap_up": false, "stats": stats, "daily": false, "join": ""}
 	if won:
 		var first: bool = cleared.get(key, 0) == 0
 		var base: int = int(stg.reward * DefData.lap_mult(lap))
-		# 1日の最初の勝ちは多め（毎日ひらく理由。何度でも遊べるが、稼ぎは逓減）
-		var mult := 1.0 if first else (0.5 if battles_today <= 3 else 0.25)
+		# くり返しは半分、その日4勝目からは4分の1（何度でも遊べるが、稼ぎは逓減）
+		var mult := 1.0 if first else (0.5 if wins_today < 3 else 0.25)
 		r.coins = int(base * mult)
+		var ds := daily_stage()
+		if not first and not daily_done and not ds.is_empty() and ds[0] == si and ds[1] == st:
+			daily_done = true
+			r.coins += 60
+			r.daily = true
 		r.first = first
+		wins_today += 1
 		cleared[key] = cleared.get(key, 0) + 1
 		if first and st == DefData.shop(si).stages.size() - 1:
 			orbs.append({"type": "rare", "rare": true})
 			r.orb = true
+		# 最初の2面で、戦い方を教える仲間が加わる
+		if first and lap == 1 and si == 0 and st <= 1:
+			var jid := "tray" if st == 0 else "bubble"
+			if not seen.has(jid):
+				add_obake(jid)
+				r.join = jid
 		if stg.get("boss_stage", false):
 			boss_won_today = true
 			boss_wins += 1
 			if lap == best_lap:
 				best_lap += 1
 				r.lap_up = true
-	else:
-		# 負けても少しもらえる（詰まないように）
-		r.coins = int(stg.reward * 0.15)
+	elif stats.get("time", 0.0) >= 30.0 and stats.get("kills", 0) >= 3 and not consolation_done:
+		# ちゃんと戦って負けたら、1日1回だけ少しもらえる（詰まないように。すぐ帰るのは0）
+		consolation_done = true
+		r.coins = int(stg.reward * 0.2)
 	coins += r.coins
 	last_result = r
 	changed.emit()
@@ -428,7 +464,7 @@ func sleep(hours: int, _trap := "") -> void:
 	last_sleep = hours
 	var h: int = min(hours, SLEEP_CAP_H)
 	if hours < 6:
-		net_strength = 0.7
+		net_strength = 1.0
 		regen_bonus = 1.0
 	elif hours < 7:
 		net_strength = 1.0
@@ -488,6 +524,9 @@ func sleep(hours: int, _trap := "") -> void:
 	shift_done_today = false
 	boss_won_today = false
 	battles_today = 0
+	wins_today = 0
+	daily_done = false
+	consolation_done = false
 	nets["plain"] = max(nets["plain"], 2) # 毎日、まかないポイが2本まで戻る
 	changed.emit()
 	save_game()
@@ -544,7 +583,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 const SAVE_KEYS := ["day", "phase", "nets", "net_strength", "last_sleep", "owned", "seen", "morning_report", "orbs", "hatched",
 	"scooped_tonight", "sleep_hist", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_days",
 	"first_role_today", "gifted", "received", "rare_pending", "coins", "deck", "cleared", "best_lap", "lap", "boost",
-	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles"]
+	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done"]
 
 
 func save_game() -> void:

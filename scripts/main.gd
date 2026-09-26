@@ -60,6 +60,7 @@ func _debug_setup() -> void:
 	var s := OS.get_environment("OBAKE_SETUP")
 	if s == "":
 		return
+	GameState.total_battles = 1
 	for id in ["tray", "bubble", "pan"]:
 		GameState.add_obake(id)
 	if s == "rich":

@@ -288,6 +288,9 @@ func _render() -> void:
 	if GameState.total_battles == 0:
 		card_title.text = "店に、困りごとがやってくる"
 		card_body.text = "おばけのみんなで、カウンターを守ろう"
+	elif GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles <= 2:
+		card_title.text = "夜は、川べりで仲間をすくう"
+		card_body.text = "すくった光る玉は、寝て起きると、おばけになる。新しい仲間で次の店へ"
 	elif s.role != "" and not GameState.shift_done_today:
 		card_title.text = "今日のシフト"
 		card_body.text = "%s ・ %sの%s %d時間%s　天気：%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, "（はじめて）" if s.first else "", s.weather]
@@ -299,16 +302,19 @@ func _render() -> void:
 		card_body.text = "よく寝た朝は、やる気のたまりが速い。ゆっくり守ろう"
 	if s.role != "" and not GameState.shift_done_today and GameState.total_battles > 0:
 		actions.add_child(_button("シフトの記録を受けとる", Color("ffb13d"), _do_shift))
+	var nb_ref := _button("夜の川べりへ", Color("5b6fc2"), func(): main.go("catch" if not GameState.scooped_tonight else "sleep"))
 	var go_b := _button("出撃：%s" % nx_stage.name, Color("ff6b5b"), func(): main.go("map"))
 	actions.add_child(go_b)
 	if GameState.total_battles == 0:
 		_pulse(go_b)
+	elif GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles <= 2:
+		_pulse(nb_ref)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	var cb := _button("編成・強化", Color("8b7bff"), func(): main.go("crew"))
 	cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(cb)
-	var nb := _button("夜の川べりへ", Color("5b6fc2"), func(): main.go("catch" if not GameState.scooped_tonight else "sleep"))
+	var nb := nb_ref
 	nb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(nb)
 	if GameState.total_battles > 0:

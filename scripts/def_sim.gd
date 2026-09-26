@@ -9,6 +9,7 @@ const KB_DIST := 1.4
 const CANNON_TIME := 22.0
 const CANNON_REACH := 11.0
 const MAX_ENEMIES := 40
+const WARN_TIME := 3.0 # 増援の予告
 const WALLET_MAX_LV := 8
 
 var L: float = DefData.LANE
@@ -111,8 +112,16 @@ func can_cannon() -> bool:
 	return cannon >= 1.0 and result == ""
 
 
+func cannon_targets() -> int:
+	var n := 0
+	for e in entities:
+		if e.side == 1 and e.x >= L - CANNON_REACH:
+			n += 1
+	return n
+
+
 func fire_cannon() -> bool:
-	if not can_cannon():
+	if not can_cannon() or cannon_targets() == 0:
 		return false
 	cannon = 0.0
 	var hit := 0
@@ -251,9 +260,9 @@ func _run_spawners() -> void:
 		if not s.on:
 			if pct <= s.trigger:
 				s.on = true
-				s.next = t + (s.start if s.trigger >= 100.0 else 0.0)
+				s.next = t + (s.start if s.trigger >= 100.0 else WARN_TIME)
 				if s.trigger < 100.0:
-					events.append({"type": "surge"})
+					events.append({"type": "surge_warn", "id": s.id, "boss": DefData.ENEMIES[s.id].get("boss", false)})
 			else:
 				continue
 		if s.count > 0 and s.done >= s.count:
@@ -380,8 +389,12 @@ func _attack(e: Dictionary, targets: Array, base_hit: bool) -> void:
 			if base_hit:
 				_hit_base(e, a)
 	if e.side == 1 and e.drain > 0 and not hits.is_empty():
-		energy = maxf(0.0, energy - e.drain)
-		events.append({"type": "drain", "uid": e.uid})
+		# 品出しのおばけが受けとめると、棚が埋まって、やる気は減らない
+		if hits[0].job == "stock":
+			events.append({"type": "refill", "uid": hits[0].uid})
+		else:
+			energy = maxf(0.0, energy - e.drain)
+			events.append({"type": "drain", "uid": e.uid})
 
 
 func _hit_base(e: Dictionary, a: float) -> void:
@@ -493,7 +506,7 @@ func ai_step(dt: float, skill := 1.0) -> void:
 			threat += 1
 			if e.boss:
 				boss_near = true
-	if can_cannon() and (threat >= 4 or boss_near):
+	if can_cannon() and cannon_targets() > 0 and (threat >= 4 or boss_near):
 		fire_cannon()
 		return
 	# 最初はやる気Lvを上げる（うまい人ほど早く）

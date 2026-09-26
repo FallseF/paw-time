@@ -74,6 +74,9 @@ func _ready() -> void:
 	if nx[0] > 0:
 		var card: Control = list.get_child(nx[0])
 		scroll.scroll_vertical = int(card.position.y) - 8
+	if GameState.get_meta("open_next", false) or GameState.total_battles == 0:
+		GameState.set_meta("open_next", false)
+		_open_sheet(nx[0], nx[1])
 
 
 func _shop_card(si: int, boost_shop: String) -> Control:
@@ -161,7 +164,10 @@ func _stage_row(si: int, st: int) -> Control:
 	nv.add_child(Kit.text(stage.name if open else "？？？", 15, Kit.INK if open else Kit.SUB, true))
 	var sub := "まかない %d" % int(stage.reward * DefData.lap_mult(GameState.lap))
 	if done:
-		sub = "クリア ×%d ・ " % GameState.cleared.get(DefData.stage_key(si, st), 0) + sub
+		sub = "クリア ×%d ・ " % GameState.clear_count(si, st) + sub
+	var ds := GameState.daily_stage()
+	if done and not GameState.daily_done and not ds.is_empty() and ds[0] == si and ds[1] == st:
+		sub = "今日のお手伝い +60 ・ " + sub
 	nv.add_child(Kit.text(sub, 11, Kit.SUB))
 	row.add_child(nv)
 	if open:

@@ -158,8 +158,9 @@ static func stage(si: int, st: int) -> Dictionary:
 	return SHOPS[si].stages[st]
 
 
-static func stage_key(si: int, st: int) -> String:
-	return "%d-%d" % [si, st]
+## 周回ごとに記録を分ける（1周目は "店-面"、2周目からは "L2:店-面"）
+static func stage_key(si: int, st: int, lap := 1) -> String:
+	return ("%d-%d" % [si, st]) if lap <= 1 else ("L%d:%d-%d" % [lap, si, st])
 
 
 ## Lv の倍率（体力と攻撃）

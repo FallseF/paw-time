@@ -491,6 +491,18 @@ func _build_ui() -> void:
 	lp.add_child(e_lbl)
 	e_hp = Kit.bar(1.0, Color("ff6b5b"), Color(0, 0, 0, 0.3), 8)
 	lp.add_child(e_hp)
+	# 増援が来る目盛り
+	var ticks := {}
+	for sp_ in stage.spawn:
+		if sp_[4] < 100:
+			ticks[sp_[4]] = true
+	for tk in ticks:
+		var m := ColorRect.new()
+		m.color = Color.WHITE
+		m.size = Vector2(2, 8)
+		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		e_hp.add_child(m)
+		e_hp.resized.connect(func(): m.position = Vector2(e_hp.size.x * tk / 100.0 - 1, 0))
 	hp_row.add_child(lp)
 	var rp := VBoxContainer.new()
 	rp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -717,6 +729,9 @@ func _draw_minimap() -> void:
 	var half := 3.3
 	var r := Rect2(Vector2((cam_x - half) / L * w, 0), Vector2(half * 2 / L * w, 12))
 	minimap.draw_rect(r, Color(1, 1, 1, 0.25))
+	if sim.can_cannon():
+		var cr := Rect2(Vector2((L - DefSim.CANNON_REACH) / L * w, 0), Vector2(DefSim.CANNON_REACH / L * w, 12))
+		minimap.draw_rect(cr, Color(0.55, 0.6, 1.0, 0.35 + 0.15 * sin(_t * 6.0)))
 	for e in sim.entities:
 		var x: float = clampf(e.x / L, 0, 1) * w
 		var c := Color("ffffff") if e.side == 0 else Color("ff6b5b")
@@ -824,6 +839,9 @@ func _cannon() -> void:
 		return
 	if sim.fire_cannon():
 		_hide_hint("t_cannon")
+	elif sim.can_cannon():
+		Kit.sfx("c_deny")
+		_popup_ui("届くところに困りごとがいない", cannon_btn)
 	else:
 		Kit.sfx("c_deny")
 		_shake_ui(cannon_btn)
@@ -1022,6 +1040,10 @@ func _handle_events(evs: Array) -> void:
 				_flash(0.12, Color("ff6b5b"))
 			"cannon":
 				_cannon_fx()
+				if ev.hit >= 3:
+					_banner("%d体、押し返した！" % ev.hit, Color("fff6e0"))
+				else:
+					_popup_ui("%d体 押し返した" % ev.hit, cannon_btn)
 			"hop":
 				if views.has(ev.uid):
 					var v4: Dictionary = views[ev.uid]
@@ -1039,9 +1061,15 @@ func _handle_events(evs: Array) -> void:
 				pass
 			"drain":
 				_popup_ui("やる気 -%d" % 20, energy_bar)
-			"surge":
-				_banner("混んできた！", Color("ff8a5b"))
+			"surge_warn":
+				if ev.boss:
+					_banner("大ピークまで\nあと3秒", Color("ff8a3d"))
+				else:
+					_banner("%s、\nあと3秒で押し寄せる" % DefData.ENEMIES[ev.id].name, Color("ff8a5b"))
 				Kit.sfx("c_drum", 1.3, -4)
+			"refill":
+				if views.has(ev.uid):
+					_popup("補充！", views[ev.uid].root.position + Vector3(0, 1.1, 0.3), Color("e8b878"), 40)
 			"wallet":
 				pass
 			"win":
@@ -1219,6 +1247,11 @@ func _result(r: Dictionary) -> void:
 	if won:
 		if r.first:
 			notes.append(["はじめてクリア！", Color("ff6b5b")])
+		if r.get("join", "") != "":
+			var ju: Dictionary = DefData.unit(r.join)
+			notes.append(["%sが仲間になった（%s：%s）" % [GameState.info(r.join).name, ju.role, ju.line], Color("8b7bff")])
+		if r.get("daily", false):
+			notes.append(["今日のお手伝い +60", Color("e8792f")])
 		if r.orb:
 			notes.append(["虹色の玉をもらった（明日の朝かえる）", Color("8b7bff")])
 		if r.lap_up:
@@ -1246,7 +1279,9 @@ func _result(r: Dictionary) -> void:
 	row.add_theme_constant_override("separation", 8)
 	v.add_child(row)
 	if won:
-		var b1 := Kit.button("地図へ", Kit.ACCENT, func(): main.go("map"))
+		var b1 := Kit.button("つぎへ" if r.first else "地図へ", Kit.ACCENT, func():
+			GameState.set_meta("open_next", r.first)
+			main.go("map"))
 		b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(b1)
 		var b2 := Kit.button("もう一回", Color("b0a4b8"), func(): main.go("defense"))

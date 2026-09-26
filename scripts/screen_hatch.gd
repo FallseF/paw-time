@@ -311,7 +311,10 @@ func _next() -> void:
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
 	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
+	var u: Dictionary = DefData.unit(h.id)
 	card_desc.text = sp.desc
+	if not u.is_empty():
+		card_desc.text += "\n戦いでは：" + (u.skill if u.has("skill") else "%s。%s" % [u.role, u.line])
 	card.position.y = 430
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
