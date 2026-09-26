@@ -990,7 +990,7 @@ func _process(delta: float) -> void:
 		o.vel = (o.vel + steer).limit_length(cap)
 		o.position += o.vel * delta
 		if t == "kitchen":
-			o.core.position.y = 0.06 + absf(sin(_bt * 7.0 + o.position.x * 5.0)) * 0.07
+			o.hop = absf(sin(_bt * 7.0 + o.position.x * 5.0)) * 0.07
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
 		if e.length() > 0.8:
 			o.vel -= Vector3(e.x, 0, e.y).normalized() * 0.6 * delta * 10.0

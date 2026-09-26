@@ -113,3 +113,9 @@ godot --headless --path . -s tests/sim_b.gd
 - 庭ではレアを小さめに（0.42、横に広いヒャッキ・ワタリドリ・シュウマツは 0.34）
 - 満月の結果カードが下にはみ出していたのを上へ
 - 宣伝動画（promo/promo.mp4）は撮り直していないので、古い平たいレアの絵が映っている
+
+## 14. Paw Time・ねこおばけ・新しい玉（feature/paw-cat を取り込み）
+- タイトルは「Paw Time」（タイトル画面・project.godot・README）。副題「ねこおばけと、夜の庭」
+- scripts/obake3d.gd と assets/gen/rares3d を paw-cat 版に（耳・しっぽ・鼻・ω口・ひげ）。庭の 3D 住人（かかし・おじぞう・ねぶくろ）も ghost()/face() 経由なので自動でねこに
+- 玉：scripts/orb_model.gd と shaders/orb_*.gdshader を取り込み、scripts/orb3d.gd は paw-cat 版（中身は OrbModel）。こちらの動き（玉の性格・ゆめの泡・虹）はそのまま。キッチンの玉の「はねる」は orb3d.gd の hop で
+- 宣伝動画は撮り直していない（古い玉とタイトルのまま）
