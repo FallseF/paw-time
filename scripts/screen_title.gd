@@ -107,6 +107,9 @@ func _ready() -> void:
 	if GameState.has_save():
 		var b := Kit.button("つづきから", Color("ff8a5b"), _continue)
 		v.add_child(b)
+		var peek := _peek()
+		if peek != "":
+			v.add_child(Kit.text(peek, 12, Color(1, 1, 1, 0.75), false, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.button("はじめる：記録とつなぐ（見本）", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("data"), Color.WHITE, 46, 15))
 	v.add_child(Kit.button("はじめる：ゲームだけで遊ぶ", Color(1, 1, 1, 0.92), func(): _new("solo"), Color("4a3f52"), 42, 14))
 	var n := Kit.wrap(Kit.text("記録とつなぐと、シフトの日に仕事のポイと庭の飾りが届き、睡眠は記録から入ります。ゲームだけでも毎晩遊べます。", 11, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER))
@@ -156,3 +159,17 @@ func _confirm(mode: String) -> void:
 	v.add_child(Kit.button("やめる", Color(1, 1, 1, 0.9), func():
 		confirm.queue_free()
 		confirm = null, Color("4a3f52"), 40, 14))
+
+
+## セーブの中身をのぞいて、どこまで進んだかを一行で
+func _peek() -> String:
+	var f := FileAccess.open(GameState.SAVE_PATH, FileAccess.READ)
+	if f == null:
+		return ""
+	var d = JSON.parse_string(f.get_as_text())
+	if typeof(d) != TYPE_DICTIONARY:
+		return ""
+	var dd := int(d.get("day", 0))
+	var lv := int(d.get("garden_level", 0))
+	var seen: Dictionary = d.get("seen", {})
+	return "%d週目 %s曜日 ・ 庭 Lv%d ・ 図鑑 %d" % [dd / 7 + 1, GameState.WEEKDAYS[dd % 7], lv + 1, seen.size()]

@@ -1157,6 +1157,9 @@ func _show_morning() -> void:
 	r.add_child(Kit.text("%s%d" % ["+" if diff >= 0 else "", int(diff)], 15, Color("3f7d4f") if diff >= 0 else Color("c0473b"), true))
 	card_box.add_child(r)
 	card_box.add_child(Kit.text("庭のめぐみ +%d%s" % [ln.growth_gain, ("（夢で +%d）" % ln.dream) if ln.has("dream") else ""], 14, Color("3f7d4f"), true))
+	var om := GameState.omen()
+	if om != "":
+		card_box.add_child(Kit.wrap(Kit.text("きざし：" + om, 12, Color("8a5bd6"))))
 	if GameState.last_goals > 0:
 		card_box.add_child(Kit.text("きのうのめあて %d/3 達成" % GameState.last_goals, 13, Color("b07a1a"), true))
 	if ln.get("visitor", "") != "":

@@ -506,6 +506,26 @@ func tonight_orbs() -> Array:
 	return out
 
 
+## 眠りのレアの「きざし」。あと少しで会えそうなものを一行で
+func omen() -> String:
+	if not seen.has("asayake"):
+		var n := 0
+		for i in range(sleep_hist.size() - 1, -1, -1):
+			if sleep_hist[i] < 7.0:
+				break
+			n += 1
+		if n >= 1 and n < 3:
+			return "よく眠る夜が %d つ続いている。朝焼けの色が近い" % n
+	if not seen.has("totonou") and bed_hist.size() >= 2:
+		if absi(bed_hist[-1] - bed_hist[-2]) <= 20:
+			return "同じ時刻に眠る夜が続いている。鈴の音がする"
+	if not seen.has("hirunen") and shift_for(day).role == "":
+		return "今日は休み。たっぷり眠ると、日だまりの匂いがするかも"
+	if not seen.has("mangetsu") and sleep_hist.size() >= 7:
+		return "ひと月の眠り：%d / 28 夜" % sleep_hist.size()
+	return ""
+
+
 # ---------- 今日のめあて ----------
 
 const GOAL_TEXT := {
