@@ -103,6 +103,9 @@ static func skin(color: Color, emission := 0.0, tex: Texture2D = null, rim := 0.
 		var o := ShaderMaterial.new()
 		o.shader = OUTLINE_SHADER
 		o.set_shader_parameter("color", line_color(color))
+		# 持ち物（肌らしさなし）は輪郭を細くして、部品ごとの縁取りを目立たせない
+		if sss <= 0.0:
+			o.set_shader_parameter("width", 0.0045)
 		m.next_pass = o
 	_shared[key] = m
 	return m

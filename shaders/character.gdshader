@@ -15,7 +15,7 @@ uniform vec4 sss_color : source_color = vec4(1.0, 0.42, 0.32, 1.0);
 uniform float sss_strength : hint_range(0.0, 1.0) = 0.1;
 uniform float wrap : hint_range(0.0, 1.0) = 0.35;
 uniform float ramp_center : hint_range(0.0, 1.0) = 0.42;
-uniform float ramp_soft : hint_range(0.01, 1.0) = 0.45;
+uniform float ramp_soft : hint_range(0.01, 1.0) = 0.6;
 uniform float shadow_level : hint_range(0.0, 1.0) = 0.42;
 uniform float shadow_sat : hint_range(0.0, 1.5) = 0.22;
 uniform float ao_strength : hint_range(0.0, 1.0) = 0.6;
@@ -75,7 +75,7 @@ void light() {
 	vec3 sat = max(mix(vec3(l), ALBEDO, 1.0 + shadow_sat), vec3(0.0));
 	vec3 sat_ratio = clamp(sat / max(ALBEDO, vec3(0.001)), vec3(0.0), vec3(2.0));
 	vec3 shade_dark = shadow_tint.rgb * shadow_level * sat_ratio * clamp(w * 1.4, 0.35, 1.0);
-	vec3 shade_lit = light_tint.rgb * (0.86 + 0.14 * w);
+	vec3 shade_lit = light_tint.rgb * (0.66 + 0.34 * clamp(w, 0.0, 1.0));
 	vec3 shade = mix(shade_dark, shade_lit, lit);
 	// 明暗の境目の赤み（光が中を透けてくる感じ）
 	float term = exp(-pow((w - ramp_center) / (ramp_soft * 0.9), 2.0));

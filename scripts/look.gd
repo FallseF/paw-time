@@ -5,7 +5,7 @@ extends RefCounted
 ##   var rig := Look.apply(world, "room", Color("241c2b"))
 ## 返り値は {"env": Environment, "key": DirectionalLight3D, "fill": ..., "rim": ...}。
 ## 画面側で明るさを変えたいときは、返ったライトを直接いじる。
-## フィル・リム・キャラ用の足し光は CHAR_LAYER（おばけだけが乗る層）にしか当てないので、
+## フィル・リムは CHAR_LAYER（おばけだけが乗る層）にしか当てないので、
 ## 床や壁の明るさは今までどおりキーと環境光だけで決まる。
 
 const CHAR_LAYER := 2
@@ -17,14 +17,12 @@ const PRESETS := {
 		"key": [Vector3(-38, 32, 0), Color("fff0dc"), 1.05],
 		"fill": [Vector3(-12, -140, 0), Color("b9c8ff"), 0.28],
 		"rim": [Vector3(-25, 165, 0), Color("fff4e6"), 0.75],
-		"char": 0.0,
 		"exposure": 1.0, "contrast": 1.04, "saturation": 1.06,
 	},
 	# 休憩室：夕方の室内。暖かいキーと、窓からの青いフィル
 	"room": {
 		"ambient": Color("ffe9d6"), "ambient_energy": 0.35,
 		"key": [Vector3(-40, 35, 0), Color("ffe0bf"), 0.6],
-		"char": 0.35,
 		"fill": [Vector3(-15, -135, 0), Color("a9bcff"), 0.25],
 		"rim": [Vector3(-20, 170, 0), Color("ffe6c8"), 0.6],
 		"exposure": 1.0, "contrast": 1.05, "saturation": 1.05,
@@ -33,7 +31,6 @@ const PRESETS := {
 	"hatch": {
 		"ambient": Color("c9a8b8"), "ambient_energy": 0.25,
 		"key": [Vector3(-30, 40, 0), Color("ffc98f"), 0.6],
-		"char": 0.12,
 		"fill": [Vector3(-10, -140, 0), Color("9fb0ff"), 0.22],
 		"rim": [Vector3(-18, 172, 0), Color("ffd9b0"), 0.8],
 		"exposure": 1.0, "contrast": 1.06, "saturation": 1.05,
@@ -65,11 +62,8 @@ static func apply(world: Node, preset := "studio", bg := Color(0, 0, 0, 0), tran
 	world.add_child(we)
 	var rig := {"env": env}
 	var char_bits := 1 << (CHAR_LAYER - 1)
-	var lights := ["key", "fill", "rim"]
-	if p.char > 0.0:
-		lights.append("char")
-	for k in lights:
-		var d: Array = p[k] if k != "char" else [p.key[0], p.key[1], p.char]
+	for k in ["key", "fill", "rim"]:
+		var d: Array = p[k]
 		var l := DirectionalLight3D.new()
 		l.name = "Look" + k.capitalize()
 		l.rotation_degrees = d[0]
