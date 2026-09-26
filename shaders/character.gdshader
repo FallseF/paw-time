@@ -30,13 +30,43 @@ uniform float shadow_keep : hint_range(0.0, 1.0) = 0.6;
 uniform float top_light : hint_range(0.0, 0.5) = 0.07;
 
 varying float v_ao;
-varying float v_ear;
+varying float v_ear_region;
+varying vec3 v_obj;
 varying float v_up;
 
 void vertex() {
 	v_ao = COLOR.r;
-	v_ear = 1.0 - COLOR.g;
+	v_ear_region = 1.0 - COLOR.b;
+	v_obj = VERTEX;
 	v_up = (MODEL_NORMAL_MATRIX * NORMAL).y;
+}
+
+// 耳の内側（くぼみ）の距離場。tools/blender/build_cat_obake.py の Shape.ear_sdf と同じ形。
+// 頂点色に焼くと三角形の粗さでギザつくので、画素ごとに計算する。
+float round_cone(vec3 p, float r1, float r2, float h) {
+	vec2 q = vec2(length(p.xz), p.y);
+	float b = (r1 - r2) / h;
+	float a = sqrt(1.0 - b * b);
+	float k = dot(q, vec2(-b, a));
+	if (k < 0.0) return length(q) - r1;
+	if (k > a * h) return length(q - vec2(0.0, h)) - r2;
+	return dot(q, vec2(a, b)) - r1;
+}
+
+float inner_ear(vec3 p, float sx) {
+	vec3 v = p - vec3(sx * 0.265, 0.9, -0.03);
+	// 耳の傾き（Rx(-0.12)・Rz(-sx*0.36)）を戻す
+	float ax = 0.12;
+	v = vec3(v.x, cos(ax) * v.y - sin(ax) * v.z, sin(ax) * v.y + cos(ax) * v.z);
+	float az = sx * 0.36;
+	v = vec3(cos(az) * v.x - sin(az) * v.y, sin(az) * v.x + cos(az) * v.y, v.z);
+	vec3 l2 = v * vec3(1.0, 1.0, 1.45);
+	vec3 ip = l2 - vec3(0.0, -0.03, 0.16);
+	ip.z += (l2.y + 0.03) * 0.42;
+	float inner = round_cone(ip, 0.088, 0.016, 0.2) / 1.45;
+	float d = 0.012 - inner;
+	float w = fwidth(d) + 0.003;
+	return smoothstep(-w, w, d) * smoothstep(-0.005, 0.02, v.z);
 }
 
 float luma(vec3 c) {
@@ -45,7 +75,10 @@ float luma(vec3 c) {
 
 void fragment() {
 	vec3 alb = base_color.rgb * texture(albedo_tex, UV).rgb;
-	alb = mix(alb, inner_color.rgb, clamp(v_ear * 1.6, 0.0, 1.0));
+	if (v_ear_region > 0.01) {
+		float ear = max(inner_ear(v_obj, -1.0), inner_ear(v_obj, 1.0)) * clamp(v_ear_region * 2.0, 0.0, 1.0);
+		alb = mix(alb, inner_color.rgb, ear);
+	}
 	// 上を向いた面ほどわずかに明るく（空からの光）
 	alb *= 1.0 + top_light * v_up;
 	// AO は暗くするだけでなく、影の色へ寄せる

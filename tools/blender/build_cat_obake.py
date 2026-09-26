@@ -10,7 +10,9 @@ Blender 5.2 で、画面なしで動かす:
   3. サブディビジョンサーフェスを 1 段かけて確定し、もう一度光線で表面に戻す。法線は距離場の勾配から付ける。
   4. 尻尾は曲線に沿った管で、別のメッシュ（Tail）にする。
   5. Cycles で AO（耳の付け根・尻尾の付け根・裾のすき間）を頂点色に焼く。床は置かない。
-     頂点色: R = AO（1 で明るい）、G = 1 - 耳の内側の印、B = 1。色を持たない部品は白 = AO なし・耳なしになる。
+     頂点色: R = AO（1 で明るい）、G = 1 - 耳の内側の印（粗い目安）、B = 1 - 耳のまわりの印。
+     耳の内側のピンクの境目は、シェーダーが同じ距離場を画素ごとに計算してなめらかに描く（B の範囲だけ）。
+     色を持たない部品は白 = AO なし・耳なしになる。
   6. UV は SphereMesh と同じ向き（u は正面 +Z から +X へ回る、v は上 0・下 1）。
 
 座標は Godot の向きで組む（y が上、正面が +Z、足元が y=0、頭は中心 y=0.5・半径 0.5）。
@@ -109,7 +111,7 @@ class Shape:
         l2 = loc * np.array([1.0, 1.0, flat])
         outer = round_cone(l2 - np.array([0.0, -0.08, 0.0]), 0.155, 0.038, 0.27) / flat
         # 前側を浅くくぼませる（耳の内側）
-        inner_p = l2 - np.array([0.0, -0.03, 0.14])
+        inner_p = l2 - np.array([0.0, -0.03, 0.16])
         inner_p[:, 2] += (l2[:, 1] + 0.03) * 0.42  # 先へ行くほど表に寄せる（耳の面に沿わせる）
         inner = round_cone(inner_p, 0.088, 0.016, 0.2) / flat
         return smax(outer, -inner, 0.025), inner, loc
@@ -172,6 +174,14 @@ class Shape:
             w = a * np.exp(-((D - de) ** 2).sum(1) / sig**2)
             out = out + w[:, None] * (de - D)
         return out / np.linalg.norm(out, axis=1, keepdims=True)
+
+    def ear_region(self, pts):
+        """耳のまわり 0..1（シェーダーが耳の内側を計算する範囲の印。頭のほかの所で誤って色が付かないように）"""
+        m = np.zeros(len(pts))
+        for R, c in self.ears:
+            e, _, _ = self.ear_sdf(pts, R, c)
+            m = np.maximum(m, np.clip((0.09 - e) / 0.04, 0.0, 1.0))
+        return m
 
     def ear_mask(self, pts):
         """耳の内側（くぼみ）の印 0..1"""
@@ -419,8 +429,10 @@ def finalize_colors(ob, shape=None):
     ao = buf.reshape(-1, 4)[:, 0]
     # 暗すぎる所をやわらげる（すき間の黒つぶれを防ぐ）
     ao = np.clip(ao, 0.0, 1.0) ** 0.8
-    ear = shape.ear_mask(read_verts(ob)) if shape is not None else np.zeros(n)
-    col = np.stack([ao, 1.0 - ear, np.ones(n), np.ones(n)], axis=1)
+    P = read_verts(ob)
+    ear = shape.ear_mask(P) if shape is not None else np.zeros(n)
+    region = shape.ear_region(P) if shape is not None else np.zeros(n)
+    col = np.stack([ao, 1.0 - ear, 1.0 - region, np.ones(n)], axis=1)
     me.color_attributes.remove(ao_attr)
     c = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
     c.data.foreach_set("color", col.ravel())
