@@ -51,6 +51,7 @@ func _ready() -> void:
 		return
 	# 仕事さがし・はじめての流れ（島の説明／見つけた仕事の知らせ／毎日の求人と評価）の重ね画面。入口はこの1行だけ
 	add_child(JobDesk.new())
+	add_child(ChatHub.new()) # チャット（相棒をタップ →「話す」）。入口はこの1行だけ
 	night = 1.0 if GameState.phase == "evening" else 0.0
 	if OS.get_environment("OBAKE_NIGHT") != "":
 		night = float(OS.get_environment("OBAKE_NIGHT")) # 確認用：0 昼 / 0.5 夕方 / 1 夜

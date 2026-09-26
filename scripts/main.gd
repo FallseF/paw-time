@@ -26,6 +26,7 @@ const SCREENS := {
 	# おさらい（練習）とスキルの記録（feature/skills）
 	"practice": preload("res://scripts/screen_practice.gd"),
 	"skills": preload("res://scripts/screen_skills.gd"),
+	"chat": preload("res://scripts/screen_chat.gd"), # チャット（feature/cat-chat）。OBAKE_CHAT=me|list|shop:<id>
 }
 
 var root: Control

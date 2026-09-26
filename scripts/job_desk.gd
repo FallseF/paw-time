@@ -417,7 +417,7 @@ func open_work_menu() -> void:
 	var pet := SpecialObake.pet_name()
 	var body := tr("WORK_MENU_BODY") % Shifts.upcoming().size()
 	_sheet(pet, tr("WORK_MENU_TITLE"), body, tr("SHIFT_FORM_OPEN"), open_shift_form, -1, 0,
-		[[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("WORK_MENU_CLOSE"), _close_sheet]])
+		[[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("CHAT_MENU_SHOPS"), func(): ChatHub.open(self, "list")], [tr("WORK_MENU_CLOSE"), _close_sheet]])
 
 
 ## 働いたお店の一覧（お店の島へ）。まだ無ければ、見本のお店
@@ -651,6 +651,7 @@ func _accept() -> void:
 	var status := I18n.wrap(_text("", 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
 	card_box.add_child(_link(tr("CAL_ICS"), func(): status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
 	card_box.add_child(status)
+	card_box.add_child(_link(tr("CHAT_ASK_SHOP"), func(): ChatHub.open(self, ChatShops.thread_id_for(s)), Color("6a5bd6"))) # お店の猫に聞く（feature/cat-chat）
 	index += 1
 	card_box.add_child(Kit.button(tr("JOB_NEXT") if index < jobs.size() else tr("JOB_DONE"), ORANGE, _next))
 	_pop_card()
