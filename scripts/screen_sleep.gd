@@ -138,16 +138,19 @@ func _set_hours(h: int) -> void:
 	big.text = "%d時間" % hours
 	for c in preview.get_children():
 		c.queue_free()
-	var strength := 0.7 if hours < 6 else (1.0 if hours < 7 else 1.25)
+	var regen := 1.0 if hours < 6 else (1.1 if hours < 7 else 1.25)
 	var n := GameState.orbs.size()
 	var lines := []
 	if n > 0:
-		lines.append("光る玉 %d 個が、寝ている間に育つ" % n)
-	if hours >= 7:
-		lines.append("よく眠ると、レアなおばけが生まれやすい")
+		lines.append("光る玉 %d 個が、朝にかえる" % n)
+	lines.append("おばけみんなが育つ（経験 +%d）" % (min(hours, GameState.SLEEP_CAP_H) * 8))
+	lines.append("明日のやる気のたまり ×%.2f" % regen)
+	if hours >= 9:
+		lines.append("8時間より長く寝ても、育ち方は同じ")
+	elif hours >= 7:
+		lines.append("よく眠ると、ネムリンたちが生まれやすい")
 	elif hours <= 5:
 		lines.append("夜ふかしすると、ヨミセが寄ってくる")
-	lines.append("明日のポイの強さ ×%.2f" % strength)
 	for s in lines:
 		var l := _text("・" + s, 15, Color("e8e2ff"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -170,5 +173,6 @@ func _sleep() -> void:
 	tw.parallel().tween_property(zz, "modulate:a", 1.0, 0.6)
 	tw.tween_interval(0.9)
 	await tw.finished
+	Kit.music("")
 	GameState.sleep(hours, "")
 	main.go("hatch" if GameState.hatched.size() > 0 else "morning")
