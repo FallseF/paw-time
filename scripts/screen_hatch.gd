@@ -369,6 +369,8 @@ func _next() -> void:
 		extra = "Lv%d → Lv%d に育った！見た目も変わる" % [h.before, h.level]
 	elif h.get("shard", "") != "":
 		extra = "%sのかけら +1（工房で使える）" % GameState.SHARD_LABEL[h.shard]
+	if h.get("gold_shard", "") != "":
+		extra += ("\n" if extra != "" else "") + "金の玉：%sのかけら +2" % GameState.SHARD_LABEL[h.gold_shard]
 	if h.get("kind", "") == "rainbow" and not rare:
 		extra += ("\n" if extra != "" else "") + "虹の玉：大きく育ち、虹のかけら +1"
 	card_desc.text = sp.desc + ("\n" + extra if extra != "" else "")

@@ -766,10 +766,11 @@ func sleep(hours: int) -> void:
 		var xp: int = 4 + q * 4
 		var before := level_of(sid)
 		var r := add_obake(sid, xp, q)
+		var gold_t := ""
 		if orb.kind == "gold":
-			var t: String = NORMAL_IDS.pick_random()
-			shards[SPECIES[t].type] += 2
-		hatched.append({"id": sid, "is_new": r.is_new, "level": r.level, "before": before, "leveled": r.leveled, "rare": false, "quality": q, "kind": orb.kind, "shard": r.shard})
+			gold_t = SPECIES[NORMAL_IDS.pick_random()].type
+			shards[gold_t] += 2
+		hatched.append({"id": sid, "is_new": r.is_new, "level": r.level, "before": before, "leveled": r.leveled, "rare": false, "quality": q, "kind": orb.kind, "shard": r.shard, "gold_shard": gold_t})
 	# 2) その日の記録から、条件を満たしたレア（1晩2体まで）
 	var have := seen.duplicate()
 	for rid in rare_pending:
