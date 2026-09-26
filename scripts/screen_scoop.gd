@@ -1105,6 +1105,10 @@ func _lift() -> void:
 
 	var cost := _cost_of(list)
 	var will_hold := durability - cost > 0.0
+	# ぎりぎり：まだ元気なポイで1つだけなら、すくえるが、そのあと紙が破れる
+	var last_gasp := not will_hold and list.size() == 1 and durability >= dura_max * 0.5
+	if last_gasp:
+		will_hold = true
 	var gentle := gentle_time >= 0.2
 	var centered_ids := {}
 	for o: Orb3D in list:
@@ -1139,7 +1143,7 @@ func _lift() -> void:
 			orbs.append(o)
 		_tear(list)
 		return
-	durability -= cost
+	durability = 0.0 if last_gasp else durability - cost
 	# 決まった瞬間
 	var n := list.size()
 	combo += n
@@ -1202,9 +1206,31 @@ func _lift() -> void:
 	for o: Orb3D in list:
 		o.queue_free()
 	poi_target.y = 0.45
+	if last_gasp:
+		_float_text("ぎりぎりセーフ！でも紙が…", Vector2(180, 300), Color("ffd6a8"), 18)
+		await get_tree().create_timer(0.35).timeout
+		_tear_after_catch()
+		return
 	_refresh_ui()
 	busy = false
 	_after_catch()
+
+
+## ぎりぎりすくえたあとで、ポイだけが破れる（コンボは続く）
+func _tear_after_catch() -> void:
+	_play("tear")
+	in_hand = false
+	used = false
+	var tw := create_tween()
+	tw.tween_property(poi_film_mat, "albedo_color:a", 0.0, 0.2)
+	await tw.finished
+	_pick_default_poi()
+	_refresh_ui()
+	busy = false
+	if selected == "":
+		_end_night("ポイを使い切った")
+	else:
+		_after_catch()
 
 
 func _after_catch() -> void:
