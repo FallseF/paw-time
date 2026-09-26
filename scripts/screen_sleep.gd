@@ -140,6 +140,8 @@ func _ready() -> void:
 	var note_t := "いつもの時刻は %s ごろ" % GameState.clock(GameState.usual_bed())
 	if GameState.mode == "data":
 		note_t = "スマホの睡眠記録（見本）がとどいています"
+	if not GameState.tut.has("sleep"):
+		note_t = "いつもの時刻に 7〜9 時間眠ると、明日の庭が育つ"
 	var note := Kit.text(note_t, 12, Color(1, 1, 1, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
 	note.position = Vector2(0, 86)
 	note.size = Vector2(360, 20)
