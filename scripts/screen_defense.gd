@@ -85,6 +85,8 @@ func _ready() -> void:
 	_build_ui()
 	Kit.music("c_battle_loop")
 	speed = int(GameState.get_meta("speed", 1)) if not demo else 1
+	if OS.get_environment("OBAKE_SPEED") != "":
+		speed = int(OS.get_environment("OBAKE_SPEED"))
 	speed_btn.text = "×%d" % speed
 	Kit.make_portraits(GameState.deck.duplicate())
 	_intro()
@@ -1154,7 +1156,7 @@ func _process(delta: float) -> void:
 		acc += delta * speed
 		var dt := 1.0 / 30.0
 		var steps := 0
-		while acc >= dt and steps < 8:
+		while acc >= dt and steps < 8 * speed:
 			sim.tick(dt)
 			acc -= dt
 			steps += 1
@@ -1272,6 +1274,8 @@ func _handle_events(evs: Array) -> void:
 					_popup("補充！", views[ev.uid].root.position + Vector3(0, 1.1, 0.3), Color("e8b878"), 40)
 			"wallet":
 				pass
+			"closing":
+				_banner("閉店時間が近い。\n渦が弱ってきた", Color("b9c4ff"))
 			"win":
 				_end(true)
 			"lose":
@@ -1453,10 +1457,10 @@ func _result(r: Dictionary) -> void:
 		if r.lap_up:
 			notes.append(["%d周目がひらいた：もっと混む" % GameState.best_lap, Color("8b7bff")])
 		var nx := GameState.next_stage()
-		if r.first and not (nx[0] == si and nx[1] == st):
+		if r.first and not r.lap_up and not (nx[0] == si and nx[1] == st):
 			notes.append(["つぎ：%s" % DefData.stage(nx[0], nx[1]).name, Kit.INK])
 		if not r.first:
-			notes.append(["くり返しのまかないは少なめ（1日の最初の3回は半分）", Kit.SUB])
+			notes.append(["くり返しのまかないは半分（その日4勝目からは4分の1）", Kit.SUB])
 	else:
 		notes.append(["困りごとには、効く仕事がある", Kit.INK])
 		for line in _stage_tips():

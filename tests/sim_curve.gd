@@ -12,6 +12,7 @@ func _initialize() -> void:
 			elif si == 0 and st == 1:
 				ids = ["receipt", "box", "tray"]
 			var need := -1
+			var tsum := 0.0
 			for lv in range(1, 21):
 				var w := 0
 				for r in 3:
@@ -26,11 +27,12 @@ func _initialize() -> void:
 						sim.pop_events()
 					if sim.result == "win":
 						w += 1
+						tsum = sim.t
 					if w >= 2 or (r - w) >= 2:
 						break
 				if w >= 2:
 					need = lv
 					break
-			line.append("%d-%d:Lv%d" % [si + 1, st + 1, need])
+			line.append("%d-%d:Lv%d(%ds)" % [si + 1, st + 1, need, int(tsum)])
 			print(line[-1])
 	quit()

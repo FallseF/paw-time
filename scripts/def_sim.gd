@@ -10,6 +10,7 @@ const CANNON_TIME := 22.0
 const CANNON_REACH := 11.0
 const MAX_ENEMIES := 40
 const WARN_TIME := 3.0 # 増援の予告
+const CLOSING_TIME := 200.0
 const WALLET_MAX_LV := 8
 
 var L: float = DefData.LANE
@@ -37,6 +38,7 @@ var kills := 0
 var deployed := 0
 var boss_uid := -1
 var weekly := {} # 今週のお題
+var closing := false
 var swarm_queue: Array = [] # [出る時刻, lv]
 
 
@@ -245,6 +247,12 @@ func tick(dt: float) -> void:
 	while not swarm_queue.is_empty() and swarm_queue[0][0] <= t:
 		_spawn_tiny(swarm_queue.pop_front()[1])
 	_run_spawners()
+	# 長引いたら閉店時間：渦がじわじわ弱る（どちらも進めない膠着を終わらせる）
+	if t > CLOSING_TIME:
+		if not closing:
+			closing = true
+			events.append({"type": "closing"})
+		ebase_hp -= ebase_max * 0.006 * dt
 	for e in entities.duplicate():
 		if e.hp <= 0:
 			continue
