@@ -17,7 +17,6 @@ var c2: Color
 ## 揺らす部品（名前 → ノード）と、その元の位置・向き
 var _p := {}
 var _base := {}
-var _mats := {}
 
 
 ## 図鑑カードの絵。3D で撮った絵を優先し、無ければ古い平たい絵を返す。
@@ -49,17 +48,15 @@ func setup(id: String) -> Obake3D:
 
 # ---------------------------------------------------------------- 部品
 
-## 輪郭つきのトゥーン材質（色ごとに使い回す）。s は置く先の縮尺（輪郭の太さ補正）。
-func _mat(c: Color, rim := 0.25, em := 0.0, s := 1.0) -> StandardMaterial3D:
-	var key := "%s/%s/%s/%s" % [c.to_html(), rim, em, s]
-	if not _mats.has(key):
-		_mats[key] = toon(c, rim, em, 0.025 / s)
-	return _mats[key]
+## 持ち物の材質（肌と同じ塗り・輪郭つき、色ごとに使い回す）。
+## s は昔の輪郭の太さ補正の名残。いまの輪郭は縮尺に左右されないので使わない。
+func _mat(c: Color, rim := 0.25, em := 0.0, _s := 1.0) -> ShaderMaterial:
+	return prop(c, rim, em)
 
 
 ## おばけの肌（ふつうのおばけと同じ塗り）
-func _skin(c: Color, s := 1.0, em := 0.0) -> StandardMaterial3D:
-	return _mat(c, 0.12, em, s)
+func _skin(c: Color, _s := 1.0, em := 0.0) -> ShaderMaterial:
+	return skin(c, em)
 
 
 func _add(m: Mesh, mat: Material, pos: Vector3, parent: Node3D = null, rot := Vector3.ZERO, scl := Vector3.ONE) -> MeshInstance3D:
@@ -165,7 +162,7 @@ func _flake(r: float, c: Color, pos: Vector3) -> Node3D:
 
 ## 光る粒（ほたる・火花）
 func _glow(r: float, c: Color, pos: Vector3, parent: Node3D = null) -> MeshInstance3D:
-	var m := toon(c, 0.3, 0.7, 0.008)
+	var m := skin(c, 0.7, null, 0.3, 0.0, false)
 	return _add(_sphere(r), m, pos, parent)
 
 
@@ -179,7 +176,7 @@ func _puff(r: float, c: Color, pos: Vector3, parent: Node3D = null) -> Node3D:
 
 
 ## 縦じまの塗り（傘・左右の塗り分け）。u は正面 +Z から回る向き。
-func _stripes(cols: Array, rim := 0.2) -> StandardMaterial3D:
+func _stripes(cols: Array, rim := 0.2) -> ShaderMaterial:
 	var g := Gradient.new()
 	g.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 	var offs := PackedFloat32Array()
@@ -192,10 +189,7 @@ func _stripes(cols: Array, rim := 0.2) -> StandardMaterial3D:
 	var tex := GradientTexture1D.new()
 	tex.gradient = g
 	tex.width = 256
-	var m := toon(Color.WHITE, rim)
-	m.albedo_texture = tex
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	return m
+	return skin(Color.WHITE, 0.0, tex, 0.18 + rim * 0.6)
 
 
 # ---------------------------------------------------------------- 睡眠
@@ -453,7 +447,7 @@ func _b_tasogare() -> void:
 	# 夜の側の目を白く
 	for e in eyes:
 		if e.position.x < 0:
-			e.material_override = flat(Color.WHITE)
+			e.material_override = eye_mat(Color.WHITE)
 	var orbit := _node(Vector3(0, 0.55, 0))
 	_p.orbit = orbit
 	var sun := _node(Vector3(0.72, 0.3, 0), orbit)

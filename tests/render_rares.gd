@@ -55,20 +55,7 @@ func _make_stage() -> void:
 	root.add_child(vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_CLEAR_COLOR
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("e6d6e0")
-	env.ambient_light_energy = 0.45
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	var we := WorldEnvironment.new()
-	we.environment = env
-	world.add_child(we)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-35, 35, 0)
-	sun.light_color = Color("fff1e0")
-	sun.light_energy = 0.85
-	world.add_child(sun)
+	Look.apply(world, "studio", Color(0, 0, 0, 0), true)
 	cam = Camera3D.new()
 	cam.fov = 26
 	world.add_child(cam)
@@ -105,6 +92,8 @@ func _frame(ob: Node3D) -> void:
 	var first := true
 	for m in ob.find_children("*", "MeshInstance3D", true, false):
 		var mi := m as MeshInstance3D
+		if mi.has_meta("no_frame"):
+			continue
 		var b := mi.global_transform * mi.get_aabb()
 		box = b if first else box.merge(b)
 		first = false
