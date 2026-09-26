@@ -467,6 +467,11 @@ func _render() -> void:
 	var nu := GameState.next_unlock_text()
 	if nu != "" and GameState.records.nights > 0:
 		card_body.text += "\n" + nu
+	var normals: int = GameState.NORMAL_IDS.filter(func(i): return GameState.owned.has(i)).size()
+	if normals >= 2 and not GameState.tut.has("partner"):
+		card_body.text += "\n工房で「相棒」を選べるようになった"
+	if GameState.claimable().size() > 0:
+		card_body.text += "\n図鑑に受け取れるごほうびがある"
 	_fit_card()
 
 

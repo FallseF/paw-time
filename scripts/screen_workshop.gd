@@ -53,6 +53,7 @@ func _ready() -> void:
 	tp.modulate.a = 0.0
 	tp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(tp)
+	GameState.tut["partner"] = true
 	_build()
 
 
