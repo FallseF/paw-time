@@ -27,6 +27,8 @@ func _ready() -> void:
 	GameState.changed.connect(_render)
 	if GameState.phase == "morning" and GameState.morning_report.size() > 0:
 		_show_report()
+	else:
+		_partner_says()
 	if GameState.phase == "morning":
 		GameState.phase = "room"
 		GameState.save_game() # 朝を見終えたことを残す（開き直しても朝をくり返さない）
@@ -555,6 +557,39 @@ func _show_report() -> void:
 	tw.tween_callback(_close_report)
 
 
+## 相棒が真顔でひとこと
+func _partner_says() -> void:
+	var w: Dictionary = {}
+	for x in walkers:
+		if x.o.species == GameState.partner:
+			w = x
+	if w.is_empty():
+		return
+	var line := GameState.partner_line()
+	var bubble := PanelContainer.new()
+	bubble.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.95), 16))
+	var l := _text(line, 13, Color("2a2233"))
+	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	l.custom_minimum_size = Vector2(200, 0)
+	bubble.add_child(l)
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bubble.modulate.a = 0.0
+	add_child(bubble)
+	await get_tree().create_timer(0.8).timeout
+	if not is_instance_valid(bubble):
+		return
+	w.wait = 4.5
+	var ob: Obake3D = w.o
+	var p := cam.unproject_position(ob.global_position + Vector3(0, 1.0, 0))
+	bubble.reset_size()
+	bubble.position = Vector2(clampf(p.x - bubble.size.x / 2, 8, 352 - bubble.size.x), clampf(p.y - bubble.size.y - 6, 116, 330))
+	var tw := create_tween()
+	tw.tween_property(bubble, "modulate:a", 1.0, 0.25)
+	tw.tween_interval(3.8)
+	tw.tween_property(bubble, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(bubble.queue_free)
+
+
 func _close_report() -> void:
 	if report == null or not is_instance_valid(report):
 		return
@@ -563,6 +598,7 @@ func _close_report() -> void:
 	var tw := create_tween()
 	tw.tween_property(r, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(r.queue_free)
+	_partner_says()
 
 
 func demo_tap() -> void:

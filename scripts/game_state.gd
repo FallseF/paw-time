@@ -864,6 +864,30 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 	}
 
 
+# ---------- 相棒のひとこと（真顔で） ----------
+
+func partner_line() -> String:
+	var s := today()
+	var lines: Array = []
+	if phase == "scooped":
+		lines = ["今夜はもう寝よう。玉は逃げない", "すくった玉、あったかい", "明日の朝が、ちょっとたのしみ"]
+	elif is_festival():
+		lines = ["今夜は祭り。はっぴを探している", "金の玉は、すこし重い", "太鼓の音で、泡が出た"]
+	elif last_sleep <= 5:
+		lines = ["ねむそうだね。ぼくもだけど", "今日のポイは、すこし弱い。そっとね", "寝不足は、紙にでる"]
+	elif s.weather == "雨":
+		lines = ["雨の夜は、玉がふえる。ぬれるけど", "かさ、ないの"]
+	elif s.weather == "雪":
+		lines = ["雪の日の玉は、ゆっくりだよ", "しっぽが冷たい"]
+	elif s.moon == "満月":
+		lines = ["今夜は満月。虹が出る気がする", "月がまるい。ぼくもまるい"]
+	elif s.role != "" and not worked_today:
+		lines = ["今日は%sのシフトだって" % ROLE_LABEL[s.role], "働くと、色のポイがもらえる。2本まで"]
+	else:
+		lines = ["ここは休憩室。休むところ", "きのうのコンボ、見てた", "今日も、そっといこう", "玉は、真ん中ですくうといい", "新しい子が、隅でじっとしている"]
+	return info(partner).name + "「" + String(lines[day % lines.size()]) + "」"
+
+
 # ---------- 図鑑のごほうび ----------
 
 func group_progress(g: String) -> Vector2i:
