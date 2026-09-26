@@ -419,7 +419,8 @@ func _open_all() -> void:
 		return
 	busy = true
 	next_btn.visible = false
-	skip_btn.visible = false
+	if skip_btn:
+		skip_btn.visible = false
 	card.modulate.a = 0.0
 	if current_obake:
 		current_obake.queue_free()
