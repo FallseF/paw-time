@@ -192,14 +192,14 @@ func _stage_row(si: int, st: int) -> Control:
 	nv.add_theme_constant_override("separation", 0)
 	nv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	nv.add_child(Kit.text(stage.name if open else "？？？", 15, Kit.INK if open else Kit.SUB, true))
-	var sub := ("まかない %d" % GameState.expected_reward(si, st)) + ("（くり返し）" if done else "")
+	var sub := "まかない%d" % GameState.expected_reward(si, st)
 	if done:
-		sub = "クリア ×%d ・ " % GameState.clear_count(si, st) + sub
+		sub = "クリア×%d・" % GameState.clear_count(si, st) + sub
 	if stage.get("boss_stage", false) and GameState.weekday() == "金":
-		sub = "金曜なのでまかない1.5倍 ・ " + sub
+		sub = "金曜は1.5倍・" + sub
 	var ds := GameState.daily_stage()
 	if done and not GameState.daily_done and not ds.is_empty() and ds[0] == si and ds[1] == st:
-		sub = "今日のお手伝い +60 ・ " + sub
+		sub = "お手伝い+60・" + sub
 	nv.add_child(Kit.text(sub, 11, Kit.SUB))
 	row.add_child(nv)
 	if open:
