@@ -14,7 +14,7 @@ var world: Node3D
 var cam: Camera3D
 var sheep: Array = [] # {o, x, counted, fake, done}
 var spawned := 0
-var spawn_t := 1.6
+var spawn_t := 0.4
 var count := 0
 var combo := 0
 var running := false
@@ -25,6 +25,7 @@ var pop: Label
 var burst: CPUParticles3D
 var beat_t := 0.0
 var fence: Node3D
+var marker: Label3D
 
 
 func _ready() -> void:
@@ -32,7 +33,7 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	Kit.play(self, "dream", 1.0, -6)
-	await get_tree().create_timer(1.4).timeout
+	await get_tree().create_timer(0.8).timeout
 	running = true
 	var tw := create_tween()
 	tw.tween_property(hint, "modulate:a", 0.55, 0.6)
@@ -69,8 +70,8 @@ func _build_world() -> void:
 	world.add_child(sun)
 	cam = Camera3D.new()
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
-	cam.position = Vector3(0, 1.3, 5.6)
-	cam.fov = 60
+	cam.position = Vector3(0, 1.2, 4.2)
+	cam.fov = 62
 	world.add_child(cam)
 	cam.look_at(Vector3(0, 0.6, 0))
 
@@ -140,6 +141,32 @@ func _build_world() -> void:
 		r.material_override = Obake3D.toon(Color("c99468"), 0.1)
 		fence.add_child(r)
 
+	# 手前で眠っている、うちのおばけたち（この夢を見ている）
+	var ids: Array = []
+	for o in GameState.owned:
+		if not Rares.is_rare(o.id):
+			ids.append(o.id)
+	ids.shuffle()
+	for i in min(3, ids.size()):
+		var sl := Obake3D.new().setup(ids[i])
+		sl.bob = false
+		sl.scale = Vector3.ONE * 0.32
+		sl.position = Vector3(-0.8 + i * 0.8, 0.05, 1.5)
+		sl.rotation = Vector3(0, 0.3 - i * 0.3, 1.25 if i % 2 == 0 else -1.25)
+		world.add_child(sl)
+		var z := Kit.label3d("Zz", 36, Color("e8e2ff"))
+		z.position = sl.position + Vector3(0.2, 0.55, 0)
+		world.add_child(z)
+		var tw := z.create_tween().set_loops()
+		tw.tween_property(z, "position:y", z.position.y + 0.15, 1.2).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(z, "position:y", z.position.y, 1.2).set_trans(Tween.TRANS_SINE)
+
+	# ここでタップ、の目印（柵の上の星）
+	marker = Kit.label3d("☆", 64, Color("fff2a8"))
+	marker.position = Vector3(0, 1.75, 0)
+	marker.modulate.a = 0.35
+	world.add_child(marker)
+
 	burst = CPUParticles3D.new()
 	burst.emitting = false
 	burst.one_shot = true
@@ -195,7 +222,7 @@ func _spawn() -> void:
 	var fake := spawned == 4 or spawned == 8
 	var id: String = "nemuri" if not fake else ["box", "lantern"][spawned % 2]
 	var o := Obake3D.new().setup(id)
-	o.scale = Vector3.ONE * 0.45
+	o.scale = Vector3.ONE * 0.55
 	o.position = Vector3(-3.4, 0, 0.3)
 	o.rotation.y = PI / 2
 	world.add_child(o)
@@ -225,7 +252,7 @@ func _process(delta: float) -> void:
 			var ax: float = absf(s.x)
 			if ax < ARC:
 				var k: float = 1.0 - (ax / ARC) * (ax / ARC)
-				o.position.y = k * 1.05
+				o.position.y = k * 1.15
 			else:
 				o.position.y = 0.0
 		elif s.fake:
@@ -236,6 +263,13 @@ func _process(delta: float) -> void:
 			combo = 0
 		if s.x > 3.6:
 			o.queue_free()
+	# 目印は、羊が柵の上に近いほど明るくなる
+	var near := 9.0
+	for s2 in sheep:
+		if not s2.fake and not s2.counted and not s2.missed and is_instance_valid(s2.o):
+			near = minf(near, absf(s2.x))
+	marker.modulate.a = lerpf(1.0, 0.3, clampf(near / 0.6, 0, 1))
+	marker.scale = Vector3.ONE * lerpf(1.3, 1.0, clampf(near / 0.6, 0, 1))
 	sheep = sheep.filter(func(s): return is_instance_valid(s.o) and not s.o.is_queued_for_deletion())
 	if spawned >= TOTAL and sheep.is_empty():
 		_finish()

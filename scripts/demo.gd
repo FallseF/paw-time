@@ -120,34 +120,43 @@ func _wait(t: float) -> void:
 	await get_tree().create_timer(t, true, false, true).timeout
 
 
+func _go(screen: String, instant := false) -> void:
+	while main.busy:
+		await get_tree().process_frame
+	await main.go(screen, instant)
+
+
 func _promo() -> void:
 	await get_tree().process_frame
 	# 1) すくい（スロー）
 	GameState.reset("data")
 	GameState.nets["plain"] = 3
-	await main.go("catch", true)
+	await _go("catch", true)
 	await _wait(0.9)
 	main.current.call("demo_hold")
 	await _wait(0.5)
 	main.current.call("demo_lift")
-	await _wait(3.2)
-	# 2) おやすみ
-	await main.go("sleep")
-	await _wait(1.8)
-	main.current.call("_sleep")
+	await _wait(3.0)
+	# 2) おやすみ → 夢へ（リズムが整っている夜）
+	GameState.rhythm = 88
+	GameState.bed_hist = [330, 330, 330]
+	GameState.scooped_tonight = true
+	await _go("sleep")
 	await _wait(1.6)
+	main.current.call("_sleep")
+	await _wait(2.4)
 	# 3) 羊かぞえの夢
-	GameState.rhythm = 80
-	await main.go("dream", true)
-	main.current.call("demo_auto")
-	await _wait(7.5)
+	if main.current.has_method("demo_auto"):
+		main.current.call("demo_auto")
+	await _wait(7.0)
+	if main.current.has_method("_finish"):
+		main.current.call("_finish")
+	await _wait(1.8)
 	# 4) 朝の孵化（レア）
-	GameState.orbs = [{"type": "sleep", "rare": false}]
-	GameState.sleep(330, 420)
 	GameState.add_obake("yumemi")
 	GameState.hatched.push_front({"id": "yumemi", "is_new": true, "level": 1, "rare": true})
-	await main.go("hatch")
-	await _wait(0.5)
+	await _go("hatch")
+	await _wait(0.4)
 	main.current.call("_next")
 	await _wait(3.6)
 	# 5) 庭が育つ
@@ -155,28 +164,29 @@ func _promo() -> void:
 	GameState.garden_seen_level = GameState.garden_level - 1
 	GameState.phase = "morning"
 	GameState.last_night = {"bed": 330, "wake": 420, "hours": 7.5, "score": 26, "parts": [["たっぷり眠る", 12], ["いつもの時刻", 10], ["休みの日の休息", 4]], "rhythm_before": 70, "rhythm": 86, "growth_gain": 18, "level_before": 0, "late": false, "visitor": ""}
-	await main.go("garden")
-	await _wait(1.8)
+	await _go("garden")
+	await _wait(1.6)
 	main.current.call("_after_morning")
-	await _wait(4.2)
+	await _wait(4.0)
 	# 6) 満月の夜
-	await main.go("moon")
+	await _go("moon")
 	await _wait(0.6)
 	main.current.call("demo_light_all")
 	await _wait(5.5)
 	# 7) 育った夜の庭
 	main.fast_forward(24)
 	GameState.phase = "evening"
-	await main.go("garden")
+	await _go("garden")
 	await _wait(3.5)
 	# 8) 図鑑
-	await main.go("zukan")
+	await _go("zukan")
 	await _wait(1.0)
-	var sc: ScrollContainer = main.current.get_child(2)
-	var tw := create_tween()
-	tw.tween_property(sc, "scroll_vertical", 900, 2.5).set_trans(Tween.TRANS_SINE)
+	for c in main.current.get_children():
+		if c is ScrollContainer:
+			var tw := create_tween()
+			tw.tween_property(c, "scroll_vertical", 1100, 2.6).set_trans(Tween.TRANS_SINE)
 	await _wait(3.0)
 	# 9) タイトル
-	await main.go("title")
+	await _go("title")
 	await _wait(3.0)
 	get_tree().quit()
