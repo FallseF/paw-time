@@ -49,8 +49,8 @@ func _ready() -> void:
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
-	header.text = "朝だ。光る玉が %d 個" % n_orbs
-	next_btn.text = "玉をひらく"
+	header.text = tr("朝だ。光る玉が %d 個") % n_orbs
+	next_btn.text = tr("玉をひらく")
 
 
 func _build_world() -> void:
@@ -310,24 +310,24 @@ func _next() -> void:
 	await tw3.finished
 	sfx["chime"].play()
 	var sp: Dictionary = GameState.info(h.id)
-	card_title.text = sp.name
+	card_title.text = tr(sp.name)
 	badge.get_parent().visible = h.is_new
-	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
+	card_sub.text = (tr("レア ・ %s") % tr(sp.group)) if Rares.is_rare(h.id) else (tr("Lv%d ・ %s") % [h.level, _type_label(sp.type)])
 	var u: Dictionary = DefData.unit(h.id)
-	card_desc.text = sp.desc
-	card_sub.text = ("レア") if Rares.is_rare(h.id) else ("Lv%d・%s" % [h.level, GameState.ROLE_LABEL.get(sp.type, "")])
+	card_desc.text = tr(sp.desc)
+	card_sub.text = (tr("レア")) if Rares.is_rare(h.id) else (tr("Lv%d・%s") % [h.level, tr(GameState.ROLE_LABEL.get(sp.type, ""))])
 	# 新しい仲間が編成に入っていなければ、ここで入れられる（いっぱいなら最後の一体と入れかえ）
 	if deck_btn:
 		deck_btn.queue_free()
 		deck_btn = null
 	if not u.is_empty() and not h.id in GameState.deck:
 		var last: String = GameState.deck[GameState.deck.size() - 1] if GameState.deck.size() >= GameState.DECK_MAX else ""
-		deck_btn = Kit.button(("%sと入れかえて編成する" % GameState.info(last).name) if last != "" else "編成に入れる", Color("8b7bff"), func():
+		deck_btn = Kit.button(("%sと入れかえて編成する" % tr(GameState.info(last).name)) if last != "" else "編成に入れる", Color("8b7bff"), func():
 			if last != "":
 				GameState.toggle_deck(last)
 			GameState.toggle_deck(h.id)
 			deck_btn.disabled = true
-			deck_btn.text = "編成に入れた", Color.WHITE, 36, 13)
+			deck_btn.text = tr("編成に入れた"), Color.WHITE, 36, 13)
 		card.get_child(0).add_child(deck_btn)
 	card.size = Vector2(312, 0)
 	await get_tree().process_frame
@@ -337,13 +337,13 @@ func _next() -> void:
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
 	tw4.tween_property(card, "position:y", final_y, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	index += 1
-	next_btn.text = "つぎの玉" if index < orbs.size() else "今日をはじめる"
+	next_btn.text = tr("つぎの玉") if index < orbs.size() else tr("今日をはじめる")
 	next_btn.disabled = false
 	busy = false
 
 
 func _type_label(t: String) -> String:
-	return {"register": "レジの経験", "dish": "皿洗いの経験", "hall": "ホールの経験", "kitchen": "キッチンの経験", "stock": "品出しの経験", "night": "夜ふかし", "rare": "はじめての経験", "sleep": "よく眠った朝"}.get(t, "")
+	return {"register": tr("レジの経験"), "dish": tr("皿洗いの経験"), "hall": tr("ホールの経験"), "kitchen": tr("キッチンの経験"), "stock": tr("品出しの経験"), "night": tr("夜ふかし"), "rare": tr("はじめての経験"), "sleep": tr("よく眠った朝")}.get(t, "")
 
 
 func _flash(a: float) -> void:

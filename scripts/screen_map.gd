@@ -21,16 +21,16 @@ func _ready() -> void:
 	head.size = Vector2(332, 44)
 	head.add_theme_constant_override("separation", 8)
 	add_child(head)
-	head.add_child(Kit.text("お店", 26, Kit.INK, true))
+	head.add_child(Kit.text(tr("お店"), 26, Kit.INK, true))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
 	var cp := PanelContainer.new()
 	cp.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 18, 0.06))
-	cp.add_child(Kit.text("まかない %d" % GameState.coins, 13, Color("e8792f"), true))
+	cp.add_child(Kit.text(tr("まかない %d") % GameState.coins, 13, Color("e8792f"), true))
 	if GameState.total_battles > 0:
 		head.add_child(cp)
-	var back := Kit.button("もどる", Color.WHITE, func(): main.go("room"), Kit.INK, 38, 14)
+	var back := Kit.button(tr("もどる"), Color.WHITE, func(): main.go("room"), Kit.INK, 38, 14)
 	back.custom_minimum_size = Vector2(72, 38)
 	head.add_child(back)
 
@@ -40,10 +40,10 @@ func _ready() -> void:
 		lr.size = Vector2(332, 32)
 		lr.add_theme_constant_override("separation", 6)
 		add_child(lr)
-		lr.add_child(Kit.text("混み具合", 13, Kit.SUB, true))
+		lr.add_child(Kit.text(tr("混み具合"), 13, Kit.SUB, true))
 		for l in range(maxi(1, GameState.best_lap - 3), GameState.best_lap + 1):
 			var on: bool = l == GameState.lap
-			var b := Kit.button("%d周目" % l, Kit.ACCENT if on else Color.WHITE, func():
+			var b := Kit.button(tr("%d周目") % l, Kit.ACCENT if on else Color.WHITE, func():
 				GameState.lap = l
 				GameState.save_game()
 				main.go("map", true), Color.WHITE if on else Kit.INK, 30, 12)
@@ -59,8 +59,8 @@ func _ready() -> void:
 		wp.size = Vector2(336, 0)
 		var wv := VBoxContainer.new()
 		wv.add_theme_constant_override("separation", 0)
-		wv.add_child(Kit.text("%d週目のお題「%s」" % [GameState.week_no(), wk.name], 13, Color("ffd23f"), true))
-		wv.add_child(Kit.text(wk.desc, 11, Color.WHITE))
+		wv.add_child(Kit.text(tr("%d週目のお題「%s」") % [GameState.week_no(), tr(wk.name)], 13, Color("ffd23f"), true))
+		wv.add_child(Kit.text(tr(wk.desc), 11, Color.WHITE))
 		wp.add_child(wv)
 		add_child(wp)
 		top += 60.0
@@ -75,7 +75,7 @@ func _ready() -> void:
 	scroll.add_child(list)
 	var boost_shop := ""
 	if not GameState.boost.is_empty():
-		boost_shop = DefData.STORE_SHOP.get(GameState.boost.store, "")
+		boost_shop = DefData.STORE_SHOP.get(tr(GameState.boost.store), "")
 	for si in DefData.SHOPS.size():
 		list.add_child(_shop_card(si, boost_shop))
 	var pad := Control.new()
@@ -135,7 +135,7 @@ func _shop_card(si: int, boost_shop: String) -> Control:
 		st.modulate_color = Color(0.85, 0.85, 0.85)
 		hb.add_theme_stylebox_override("panel", st)
 	var hr := HBoxContainer.new()
-	var nm := Kit.text(shop.name, 18, Color.WHITE, true)
+	var nm := Kit.text(tr(shop.name), 18, Color.WHITE, true)
 	nm.add_theme_color_override("font_outline_color", Kit.INK)
 	nm.add_theme_constant_override("outline_size", 7)
 	hr.add_child(nm)
@@ -145,7 +145,7 @@ func _shop_card(si: int, boost_shop: String) -> Control:
 	if shop.id == boost_shop:
 		var bp := PanelContainer.new()
 		bp.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 12, 0.0))
-		bp.add_child(Kit.text("今日の応援あり", 11, Color(shop.color).darkened(0.3), true))
+		bp.add_child(Kit.text(tr("今日の応援あり"), 11, Color(shop.color).darkened(0.3), true))
 		hr.add_child(bp)
 	hb.add_child(hr)
 	v.add_child(hb)
@@ -191,15 +191,15 @@ func _stage_row(si: int, st: int) -> Control:
 	nv.alignment = BoxContainer.ALIGNMENT_CENTER
 	nv.add_theme_constant_override("separation", 0)
 	nv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	nv.add_child(Kit.text(stage.name if open else "？？？", 15, Kit.INK if open else Kit.SUB, true))
-	var sub := "まかない%d" % GameState.expected_reward(si, st)
+	nv.add_child(Kit.text(tr(stage.name) if open else tr("？？？"), 15, Kit.INK if open else Kit.SUB, true))
+	var sub := tr("まかない%d") % GameState.expected_reward(si, st)
 	if done:
-		sub = "クリア×%d・" % GameState.clear_count(si, st) + sub
+		sub = tr("クリア×%d・") % GameState.clear_count(si, st) + sub
 	if stage.get("boss_stage", false) and GameState.weekday() == "金":
-		sub = "金曜は1.5倍・" + sub
+		sub = tr("金曜は1.5倍・") + sub
 	var ds := GameState.daily_stage()
 	if done and not GameState.daily_done and not ds.is_empty() and ds[0] == si and ds[1] == st:
-		sub = "お手伝い+60・" + sub
+		sub = tr("お手伝い+60・") + sub
 	nv.add_child(Kit.text(sub, 11, Kit.SUB))
 	row.add_child(nv)
 	if open:
@@ -213,7 +213,7 @@ func _stage_row(si: int, st: int) -> Control:
 			n += 1
 	if done:
 		var star := Kit.text("★" if GameState.is_perfect(si, st) else "☆", 18, Color("e8a317") if GameState.is_perfect(si, st) else Color("d8cfc6"), true)
-		star.tooltip_text = "★3つ：店の余裕を7割のこす"
+		star.tooltip_text = tr("★3つ：店の余裕を7割のこす")
 		row.add_child(star)
 	if open and not done:
 		var np := PanelContainer.new()
@@ -263,13 +263,13 @@ func _open_sheet(si: int, st: int) -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
-	v.add_child(Kit.text("%s" % shop.name, 12, Color(shop.color).darkened(0.2), true))
-	v.add_child(Kit.text(stage.name, 22, Kit.INK, true))
-	var tip := Kit.text(ShopData.stage(si, st).tip, 13, Kit.SUB)
+	v.add_child(Kit.text("%s" % tr(shop.name), 12, Color(shop.color).darkened(0.2), true))
+	v.add_child(Kit.text(tr(stage.name), 22, Kit.INK, true))
+	var tip := Kit.text(tr(ShopData.stage(si, st).tip), 13, Kit.SUB)
 	tip.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(tip)
 	if GameState.is_cleared(si, st):
-		var goal := Kit.text(("★3つ とった" if GameState.is_perfect(si, st) else "★3つで、まかない +30%"), 12, Color("e8a317"), true)
+		var goal := Kit.text((tr("★3つ とった") if GameState.is_perfect(si, st) else tr("★3つで、まかない +30%")), 12, Color("e8a317"), true)
 		v.add_child(goal)
 	# 出てくる困りごとと、片づく持ち場
 	var er := HBoxContainer.new()
@@ -283,12 +283,12 @@ func _open_sheet(si: int, st: int) -> void:
 		var cc := CenterContainer.new()
 		cc.add_child(Kit.trouble_chip(kind, 38))
 		c.add_child(cc)
-		var nl := Kit.text(d.name, 9, Kit.INK, true)
+		var nl := Kit.text(tr(d.name), 9, Kit.INK, true)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		nl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		c.add_child(nl)
 		var sj: String = ShopData.STATIONS[d.station].job
-		var wk := Kit.text(ShopData.STATIONS[d.station].name, 9, DefData.job_color(sj), true)
+		var wk := Kit.text(tr(ShopData.STATIONS[d.station].name), 9, DefData.job_color(sj), true)
 		wk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		c.add_child(wk)
 		er.add_child(c)
@@ -304,9 +304,9 @@ func _open_sheet(si: int, st: int) -> void:
 		bp.add_theme_stylebox_override("panel", Kit.pill(Color("fff1dc"), 14, 0.0))
 		var bv := VBoxContainer.new()
 		bv.add_theme_constant_override("separation", 0)
-		bv.add_child(Kit.text("今日の応援", 12, Color("e8792f"), true))
+		bv.add_child(Kit.text(tr("今日の応援"), 12, Color("e8792f"), true))
 		for line in bst.lines.slice(0, 2):
-			var bl := Kit.text("・" + line, 12, Kit.INK)
+			var bl := Kit.text(tr("・") + line, 12, Kit.INK)
 			bl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 			bl.custom_minimum_size = Vector2(270, 0)
 			bv.add_child(bl)
@@ -330,7 +330,7 @@ func _open_sheet(si: int, st: int) -> void:
 		cell.add_child(pic)
 		# この夜の困りごとに効く仕事なら「効く」
 		var job: String = DefData.unit(id).get("job", "")
-		var tag := Kit.text("出番" if job != "" and weak_jobs.has(job) else " ", 9, Color("e8792f"), true)
+		var tag := Kit.text(tr("出番") if job != "" and weak_jobs.has(job) else " ", 9, Color("e8792f"), true)
 		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cell.add_child(tag)
 		dr.add_child(cell)
@@ -342,10 +342,10 @@ func _open_sheet(si: int, st: int) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	if GameState.owned.size() > 2:
-		var b1 := Kit.button("編成", Color.WHITE, func(): main.go("crew"), Kit.INK)
+		var b1 := Kit.button(tr("編成"), Color.WHITE, func(): main.go("crew"), Kit.INK)
 		b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(b1)
-	var b2 := Kit.button("開店！", Color("ff6b5b"), func():
+	var b2 := Kit.button(tr("開店！"), Color("ff6b5b"), func():
 		GameState.pending_battle = {"shop": si, "stage": st}
 		main.go("defense"))
 	b2.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -212,20 +212,20 @@ func _build_ui() -> void:
 	dp.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.92), 22))
 	var dv := VBoxContainer.new()
 	dv.add_theme_constant_override("separation", -2)
-	dv.add_child(_text("%d週目" % GameState.week_no(), 11, Color("8a7a88")))
-	dv.add_child(_text("%s曜日の休憩室" % GameState.weekday(), 16, Color("2a2233"), font_black))
+	dv.add_child(_text(tr("%d週目") % GameState.week_no(), 11, Color("8a7a88")))
+	dv.add_child(_text(tr("%s曜日の休憩室") % GameState.weekday(), 16, Color("2a2233"), font_black))
 	dp.add_child(dv)
 	top.add_child(dp)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
-	var zk := _button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
+	var zk := _button(tr("図鑑"), Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
 	zk.custom_minimum_size = Vector2(64, 40)
 	top.add_child(zk)
 
 	# 確認用の早送り（1日すすめる：7時間ねたことにする）
 	var ff := Button.new()
-	ff.text = "早送り >>"
+	ff.text = tr("早送り >>")
 	ff.flat = true
 	ff.add_theme_font_override("font", font_bold)
 	ff.add_theme_font_size_override("font_size", 11)
@@ -281,7 +281,7 @@ func _render() -> void:
 	# 上の帯は「まかない」だけ（ポイは川べりで見る）
 	for c in poi_row.get_children():
 		c.queue_free()
-	poi_row.add_child(_text("まかない %d" % GameState.coins, 13, Color("e8792f"), font_black))
+	poi_row.add_child(_text(tr("まかない %d") % GameState.coins, 13, Color("e8792f"), font_black))
 
 	for c in actions.get_children():
 		c.queue_free()
@@ -291,27 +291,27 @@ func _render() -> void:
 	var first_night: bool = GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles >= 2
 	# 1行の見出し＋1行の説明だけ
 	if GameState.total_battles == 0:
-		card_title.text = "店に、困りごとが来る"
-		card_body.text = "おばけを置いて、回そう"
+		card_title.text = tr("店に、困りごとが来る")
+		card_body.text = tr("おばけを置いて、回そう")
 	elif first_night:
-		card_title.text = "夜は、川べりへ"
-		card_body.text = "光る玉が、朝に仲間になる"
+		card_title.text = tr("夜は、川べりへ")
+		card_body.text = tr("光る玉が、朝に仲間になる")
 	elif s.role != "" and not GameState.shift_done_today:
-		card_title.text = "今日のシフト"
-		card_body.text = "%s・%s" % [s.store, GameState.ROLE_LABEL[s.role]]
+		card_title.text = tr("今日のシフト")
+		card_body.text = tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])]
 	elif GameState.orbs.size() > 0:
-		card_title.text = "光る玉 %d 個" % GameState.orbs.size()
-		card_body.text = "寝て起きると、かえる"
+		card_title.text = tr("光る玉 %d 個") % GameState.orbs.size()
+		card_body.text = tr("寝て起きると、かえる")
 	else:
-		card_title.text = "つぎは %s" % nx_stage.name
-		card_body.text = DefData.shop(nx[0]).name
+		card_title.text = tr("つぎは %s") % tr(nx_stage.name)
+		card_body.text = tr(DefData.shop(nx[0]).name)
 	# 大きいボタンはひとつだけ。ほかは小さく
 	var night := func(): main.go("catch" if not GameState.scooped_tonight else "sleep")
 	var primary: Button
 	if first_night:
-		primary = _button("夜の川べりへ", Color("5b6fc2"), night)
+		primary = _button(tr("夜の川べりへ"), Color("5b6fc2"), night)
 	else:
-		primary = _button("お店へ", Color("ff6b5b"), func(): main.go("map"))
+		primary = _button(tr("お店へ"), Color("ff6b5b"), func(): main.go("map"))
 	actions.add_child(primary)
 	if GameState.total_battles == 0 or first_night:
 		_pulse(primary)
@@ -322,13 +322,13 @@ func _render() -> void:
 	row.add_theme_constant_override("separation", 6)
 	var small: Array = []
 	if s.role != "" and not GameState.shift_done_today:
-		small.append(["シフト記録", _do_shift])
+		small.append([tr("シフト記録"), _do_shift])
 	if first_night:
-		small.append(["お店へ", func(): main.go("map")])
+		small.append([tr("お店へ"), func(): main.go("map")])
 	else:
-		small.append(["夜の川べり", night])
+		small.append([tr("夜の川べり"), night])
 	if GameState.owned.size() > 2:
-		small.append(["編成", func(): main.go("crew")])
+		small.append([tr("編成"), func(): main.go("crew")])
 	for it in small:
 		var b := _small(it[0], it[1])
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -377,8 +377,8 @@ func _pulse(c: Control) -> void:
 func _do_shift() -> void:
 	var got := GameState.finish_shift()
 	Kit.sfx("c_levelup")
-	card_title.text = "おつかれさま！"
-	card_body.text = "%sで応援がつく" % GameState.boost.get("store", "店")
+	card_title.text = tr("おつかれさま！")
+	card_body.text = tr("%sで応援がつく") % GameState.boost.get("store", tr("店"))
 
 
 func _show_report() -> void:
@@ -390,9 +390,9 @@ func _show_report() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
 	report.add_child(v)
-	v.add_child(_text("けさのこと", 14, Color("ffe27a"), font_black))
+	v.add_child(_text(tr("けさのこと"), 14, Color("ffe27a"), font_black))
 	for line in GameState.morning_report:
-		var l := _text("・" + line, 13, Color("f3eeff"))
+		var l := _text(tr("・") + line, 13, Color("f3eeff"))
 		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		l.custom_minimum_size = Vector2(296, 0)
 		v.add_child(l)

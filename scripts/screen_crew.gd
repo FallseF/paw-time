@@ -20,7 +20,7 @@ func _ready() -> void:
 	head.size = Vector2(332, 44)
 	head.add_theme_constant_override("separation", 8)
 	add_child(head)
-	head.add_child(Kit.text("編成・強化", 24, Kit.INK, true))
+	head.add_child(Kit.text(tr("編成・強化"), 24, Kit.INK, true))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
@@ -29,7 +29,7 @@ func _ready() -> void:
 	coin_l = Kit.text("", 13, Color("e8792f"), true)
 	cp.add_child(coin_l)
 	head.add_child(cp)
-	var back := Kit.button("もどる", Color.WHITE, func(): main.go("map"), Kit.INK, 38, 14)
+	var back := Kit.button(tr("もどる"), Color.WHITE, func(): main.go("map"), Kit.INK, 38, 14)
 	back.custom_minimum_size = Vector2(72, 38)
 	head.add_child(back)
 
@@ -41,7 +41,7 @@ func _ready() -> void:
 	var dv := VBoxContainer.new()
 	dv.add_theme_constant_override("separation", 2)
 	dp.add_child(dv)
-	dv.add_child(Kit.text("店に出るおばけ（%d体まで）" % GameState.DECK_MAX, 11, Kit.SUB, true))
+	dv.add_child(Kit.text(tr("店に出るおばけ（%d体まで）") % GameState.DECK_MAX, 11, Kit.SUB, true))
 	deck_row = HBoxContainer.new()
 	deck_row.add_theme_constant_override("separation", 2)
 	dv.add_child(deck_row)
@@ -64,7 +64,7 @@ func _ready() -> void:
 
 
 func _render() -> void:
-	coin_l.text = "まかない %d" % GameState.coins
+	coin_l.text = tr("まかない %d") % GameState.coins
 	for c in deck_row.get_children():
 		c.queue_free()
 	for i in GameState.DECK_MAX:
@@ -130,7 +130,7 @@ func _card(o: Dictionary) -> Control:
 	row.add_child(v)
 	var nr := HBoxContainer.new()
 	nr.add_theme_constant_override("separation", 6)
-	nr.add_child(Kit.text(GameState.info(id).name, 16, Kit.INK, true))
+	nr.add_child(Kit.text(tr(GameState.info(id).name), 16, Kit.INK, true))
 	var tag := PanelContainer.new()
 	var ts := Kit.pill(DefData.job_color(job) if not rare else Color("ff8fb1"), 8, 0.0)
 	ts.content_margin_left = 6
@@ -139,14 +139,14 @@ func _card(o: Dictionary) -> Control:
 	ts.content_margin_bottom = 1
 	tag.add_theme_stylebox_override("panel", ts)
 	tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var tag_text: String = ("レア" if rare else GameState.ROLE_LABEL[job])
+	var tag_text: String = (tr("レア") if rare else tr(GameState.ROLE_LABEL[job]))
 	tag.add_child(Kit.text(tag_text, 10, Color.WHITE, true))
 	nr.add_child(tag)
 	var is_focus: bool = GameState.focus == id
 	var fb := Button.new()
-	fb.text = "★育てる" if is_focus else "☆"
+	fb.text = tr("★育てる") if is_focus else "☆"
 	fb.flat = true
-	fb.tooltip_text = "育てたい一体：その日の最初の勝ちで経験 +%d" % GameState.FOCUS_XP
+	fb.tooltip_text = tr("育てたい一体：その日の最初の勝ちで経験 +%d") % GameState.FOCUS_XP
 	fb.add_theme_font_override("font", Kit.font_black)
 	fb.add_theme_font_size_override("font_size", 12)
 	fb.add_theme_color_override("font_color", Color("e8792f") if is_focus else Color("c9bcc8"))
@@ -159,10 +159,10 @@ func _card(o: Dictionary) -> Control:
 	v.add_child(nr)
 	var mult := DefData.unit_mult(o.level) * (0.8 if rare else 1.0)
 	if o.level >= DefData.VETERAN_LV:
-		nr.add_child(Kit.text("ベテラン", 11, Color("e8792f"), true))
+		nr.add_child(Kit.text(tr("ベテラン"), 11, Color("e8792f"), true))
 	var wk: Dictionary = ShopData.worker(id)
-	v.add_child(Kit.text("Lv%d　速さ %.1f　スタミナ %d秒" % [o.level, wk.rate * DefData.unit_mult(o.level), int(wk.stamina * (1.0 + 0.08 * (o.level - 1)))], 11, Kit.SUB))
-	var line := Kit.text(ShopData.HELP_TEXT.get(ShopData.help_of(id), "") if rare else ShopData.worker(id).line, 11, Kit.INK)
+	v.add_child(Kit.text(tr("Lv%d　速さ %.1f　スタミナ %d秒") % [o.level, wk.rate * DefData.unit_mult(o.level), int(wk.stamina * (1.0 + 0.08 * (o.level - 1)))], 11, Kit.SUB))
+	var line := Kit.text(ShopData.HELP_TEXT.get(ShopData.help_of(id), "") if rare else tr(ShopData.worker(id).line), 11, Kit.INK)
 	line.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(line)
 	var xr := HBoxContainer.new()
@@ -172,16 +172,16 @@ func _card(o: Dictionary) -> Control:
 	xb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	xb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	xr.add_child(xb)
-	var xt := "寝て育った %d/%d" % [o.xp, need]
+	var xt := tr("寝て育った %d/%d") % [o.xp, need]
 	if o.level < DefData.VETERAN_LV:
-		xt += "　Lv%dでベテラン" % DefData.VETERAN_LV
+		xt += tr("　Lv%dでベテラン") % DefData.VETERAN_LV
 	xr.add_child(Kit.text(xt, 9, Color("8b7bff")))
 	v.add_child(xr)
 	var br := HBoxContainer.new()
 	br.add_theme_constant_override("separation", 6)
 	var full: bool = not in_deck and GameState.deck.size() >= GameState.DECK_MAX
 	var last: String = GameState.deck[GameState.deck.size() - 1] if not GameState.deck.is_empty() else ""
-	var label := "外す" if in_deck else ("%sと入れかえ" % GameState.info(last).name if full else "編成に入れる")
+	var label := tr("外す") if in_deck else (tr("%sと入れかえ") % tr(GameState.info(last).name) if full else tr("編成に入れる"))
 	var tb := Kit.button(label, Color("efe6f5") if in_deck else Color("ff8a5b"), func():
 		if full:
 			GameState.toggle_deck(last)
@@ -192,7 +192,7 @@ func _card(o: Dictionary) -> Control:
 	tb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	br.add_child(tb)
 	var cost := GameState.upgrade_cost(id)
-	var ub := Kit.button(("強化 %d" % cost) if cost >= 0 else "Lv MAX", Color("8b7bff"), func():
+	var ub := Kit.button((tr("強化 %d") % cost) if cost >= 0 else "Lv MAX", Color("8b7bff"), func():
 		if GameState.upgrade(id):
 			Kit.sfx("c_levelup")
 			_render()

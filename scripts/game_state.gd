@@ -92,7 +92,7 @@ var wins_today := 0
 var daily_done := false
 var consolation_done := false
 var daily_pick: Array = [] # [日, 店, 面]
-var settings := {"music": true}
+var settings := {"music": true, "lang": "en"}
 var perfect := {}
 var stage_stars := {} # 面ごとの いちばんよい★ # お店を無傷で守った面（周回つきのキー）
 var focus := "" # 育てたい一体。その日の最初の勝ちで経験値 +FOCUS_XP
@@ -123,7 +123,8 @@ func _ready() -> void:
 func info(id: String) -> Dictionary:
 	if id == "my":
 		var t: Dictionary = QuizData.TYPES.get(my_obake.get("type_id", ""), {})
-		return {"name": t.get("name", "あいぼう"), "type": t.get("job", "hall"), "desc": t.get("line", "")}
+		var en := TranslationServer.get_locale().begins_with("en")
+		return {"name": t.get("en_name" if en else "name", "Buddy" if en else "あいぼう"), "type": t.get("job", "hall"), "desc": t.get("en_line" if en else "line", "")}
 	return ALL.get(id, {"name": id, "type": "", "desc": ""})
 
 
@@ -278,7 +279,7 @@ func finish_shift() -> Array:
 	got.append("%s ×%d" % [NETS[net_id].name, n])
 	if s.first:
 		nets["kira"] += 1
-		got.append("きらきらポイ ×1（はじめての経験）")
+		got.append(tr("きらきらポイ ×1（はじめての経験）"))
 	boost = {"store": s.store, "role": s.role, "hours": h}
 	changed.emit()
 	save_game()
@@ -289,9 +290,9 @@ func finish_shift() -> Array:
 func battle_boost(shop_id: String) -> Dictionary:
 	var b := {"regen": regen_bonus, "start_bonus": 0.0, "job": "", "job_mult": 1.0, "lines": [], "weekly": DefData.weekly(week_no())}
 	if not b.weekly.is_empty():
-		b.lines.append("今週のお題「%s」：%s" % [b.weekly.name, b.weekly.desc])
+		b.lines.append(tr("今週のお題「%s」：%s") % [tr(b.weekly.name), tr(b.weekly.desc)])
 	if regen_bonus > 1.0:
-		b.lines.append("よく寝た：スタミナ ×%.2f" % regen_bonus)
+		b.lines.append(tr("よく寝た：スタミナ ×%.2f") % regen_bonus)
 	if boost.is_empty():
 		return b
 	var here: bool = DefData.STORE_SHOP.get(boost.store, "") == shop_id or (shop_id == "peak")
@@ -299,11 +300,11 @@ func battle_boost(shop_id: String) -> Dictionary:
 	if here:
 		b.start_bonus = 15.0
 		b.job_mult = 1.3
-		b.lines.append("%sで働いた：余裕 +15" % boost.store)
-		b.lines.append("%sのおばけ ×1.3" % ROLE_LABEL[boost.role])
+		b.lines.append(tr("%sで働いた：余裕 +15") % tr(boost.store))
+		b.lines.append(tr("%sのおばけ ×1.3") % tr(ROLE_LABEL[boost.role]))
 	else:
 		b.job_mult = 1.1
-		b.lines.append("%sのおばけ ×1.1" % ROLE_LABEL[boost.role])
+		b.lines.append(tr("%sのおばけ ×1.1") % tr(ROLE_LABEL[boost.role]))
 	return b
 
 
@@ -462,17 +463,17 @@ func lock_reason(si: int) -> String:
 		return ""
 	var prev: Dictionary = DefData.shop(si - 1)
 	if not is_cleared(si - 1, prev.stages.size() - 1):
-		return "%s を越えるとひらく" % prev.stages[prev.stages.size() - 1].name
+		return tr("%s を越えるとひらく") % tr(prev.stages[prev.stages.size() - 1].name)
 	if stars_in_shop(si - 1) < STARS_TO_OPEN:
-		return "%sで★をあと%d" % [prev.name, STARS_TO_OPEN - stars_in_shop(si - 1)]
+		return tr("%sで★をあと%d") % [tr(prev.name), STARS_TO_OPEN - stars_in_shop(si - 1)]
 	if lap == 1 and day < SHOP_OPEN_DAY[si]:
-		return "%d日目からひらく" % (SHOP_OPEN_DAY[si] + 1)
+		return tr("%d日目からひらく") % (SHOP_OPEN_DAY[si] + 1)
 	if si == DefData.SHOPS.size() - 1:
 		var wd := weekday()
 		if boss_wins == 0 and wd != "金":
-			return "金曜の夜にひらく"
+			return tr("金曜の夜にひらく")
 		if boss_wins > 0 and not wd in ["金", "土", "日"]:
-			return "金・土・日の夜にひらく"
+			return tr("金・土・日の夜にひらく")
 	return ""
 
 
@@ -591,14 +592,14 @@ func sleep(hours: int, _trap := "") -> void:
 		net_strength = 1.25
 		regen_bonus = 1.25
 	morning_report = []
-	morning_report.append("%d時間ねた" % hours)
+	morning_report.append(tr("%d時間ねた") % hours)
 	var ups: Array = []
 	for o in owned:
 		o.xp += h * 6
 		if _level_up(o):
 			ups.append("%s Lv%d" % [info(o.id).name, o.level])
 	if not ups.is_empty():
-		morning_report.append("%d体が育った" % ups.size())
+		morning_report.append(tr("%d体が育った") % ups.size())
 	hatched = []
 	sleep_hist.append(hours)
 	var s: Dictionary = today()
@@ -633,7 +634,7 @@ func sleep(hours: int, _trap := "") -> void:
 		_level_up(o)
 		hatched.append({"id": sid, "is_new": is_new, "level": o.level, "rare": Rares.is_rare(sid)})
 	if orbs.size() > 0:
-		morning_report.append("光る玉が %d 個、朝日で割れた" % orbs.size())
+		morning_report.append(tr("光る玉が %d 個、朝日で割れた") % orbs.size())
 	orbs = []
 	scooped_tonight = false
 	# 次の日へ
@@ -641,7 +642,7 @@ func sleep(hours: int, _trap := "") -> void:
 	if day % 7 == 0:
 		var wk := DefData.weekly(week_no())
 		if not wk.is_empty():
-			morning_report.append("%d週目のお題「%s」：%s" % [week_no(), wk.name, wk.desc])
+			morning_report.append(tr("%d週目のお題「%s」：%s") % [week_no(), tr(wk.name), tr(wk.desc)])
 		stores_week = {}
 		bands_week = {}
 		weekend_days = {}

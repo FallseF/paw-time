@@ -60,3 +60,10 @@ godot --headless --path . --export-release "Web" build/web/index.html
 - 新規：scripts/shop_data.gd（持ち場・困りごと・働き方・レアのお手伝い・ステージ）、shop_sim.gd（計算と自動操作）、screen_shift.gd（店の画面）、tests/sim_shift.gd、tools/ui_flow.sh、ui_review/
 - 取りこみ（feature/paw-cat）：scripts/obake3d.gd、rare_obake3d.gd、orb3d.gd、orb_model.gd、shaders/orb_*.gdshader、assets/gen/rares3d/、tests/render_rares.gd
 - 削除：screen_defense.gd、def_sim.gd、tests/sim_defense・sim_curve・sim_boss、assets/gen/rares・enemies・style2・cards、カウンター等の平たい絵
+
+## 作業途中で止めた（11:45、オーナーの方針変更：B案の島づくり＋キセカエに一本化）
+- 済み：マイおばけ猫の診断の組みこみ（タイトル→診断→休憩室、相棒は編成の先頭）、シェアカードの軸は実際の割合、1周目は日にち・★・金曜で進む、困りごとの3D小物
+- 英語化は途中（WIP）：画面の文字は tr() と i18n/strings.csv（keys,en,ja）、既定は英語、タイトルに EN/日本語の切りかえ。ui_review/en に全画面を撮った
+  - 残り：英語で「はみ出し」が出ている所（店のおばけカードの名前が長い、困りごと札の英語が小さい、休憩室の見出し、診断画面は quiz_data の英語を使っていない）、ダブルに訳された「Calm / Calm」、図鑑のレアの説明の英語が未確認
+- AAA-look の取りこみは未着手
+- Web は 10:24 の書き出しが最新（英語化の前）

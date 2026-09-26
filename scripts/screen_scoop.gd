@@ -370,14 +370,14 @@ func _build_ui() -> void:
 	jp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var jv := HBoxContainer.new()
 	jv.add_theme_constant_override("separation", 6)
-	jv.add_child(_text("今夜のすくい", 14, Color("e8ecff")))
+	jv.add_child(_text(tr("今夜のすくい"), 14, Color("e8ecff")))
 	jar_row = HBoxContainer.new()
 	jar_row.add_theme_constant_override("separation", 4)
 	jv.add_child(jar_row)
 	jp.add_child(jv)
 	row.add_child(jp)
 	var home := Button.new()
-	home.text = "帰る"
+	home.text = tr("帰る")
 	home.add_theme_font_override("font", font_bold)
 	home.add_theme_font_size_override("font_size", 14)
 	for k in ["normal", "hover", "pressed"]:
@@ -407,7 +407,7 @@ func _build_ui() -> void:
 	pp.add_child(ph)
 	top.add_child(pp)
 
-	hint = _text("押して沈め、玉の下で離す", 14, Color(1, 1, 1, 0.85))
+	hint = _text(tr("押して沈め、玉の下で離す"), 14, Color(1, 1, 1, 0.85))
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
@@ -478,14 +478,14 @@ func _refresh_ui() -> void:
 	var left := 0
 	for id in GameState.nets:
 		left += GameState.nets[id]
-	poi_label.text = "ポイ ×%d" % left
+	poi_label.text = tr("ポイ ×%d") % left
 	dura_bar.value = durability if poi_type != "" else 0.0
 	var fill := StyleBoxFlat.new()
 	fill.set_corner_radius_all(5)
 	fill.bg_color = Color("7bdc6b") if durability > 0.5 else (Color("ffd23f") if durability > 0.25 else Color("ff6b5b"))
 	dura_bar.add_theme_stylebox_override("fill", fill)
 	var col := Color("dddddd")
-	var name := "なし"
+	var name := tr("なし")
 	if poi_type != "":
 		col = GameState.TYPE_COLOR.get(GameState.NETS[poi_type].type, Color("ffd84d"))
 		name = GameState.NETS[poi_type].name.replace("のポイ", "").replace("ポイ", "")
@@ -565,14 +565,14 @@ func _gui_input(event: InputEvent) -> void:
 	var g := _ground(pos)
 	if down:
 		if poi_type == "":
-			_banner("ポイがない。今夜はおしまい", Color("ffb3a8"))
+			_banner(tr("ポイがない。今夜はおしまい"), Color("ffb3a8"))
 			return
 		pressed = true
 		last_ground = g
 		poi.position = Vector3(g.x, -0.04, g.z)
 		_ripple(g)
 		_play("splash", randf_range(0.9, 1.1))
-		hint.text = "玉の下まで、そっと動かす"
+		hint.text = tr("玉の下まで、そっと動かす")
 	elif motion:
 		if pressed:
 			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
@@ -618,7 +618,7 @@ func _lift() -> void:
 		if durability <= 0:
 			_tear(null)
 			return
-		hint.text = "玉の真下で離すと、すくえる"
+		hint.text = tr("玉の真下で離すと、すくえる")
 		_refresh_ui()
 		busy = false
 		return
@@ -660,7 +660,7 @@ func _lift() -> void:
 	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
 	GameState.save_game()
 	caught_count += 1
-	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
+	_banner(tr("すくった！") if not target.data.rare else tr("すくった！\nふしぎな光…"), Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
 	tw2.tween_property(cam, "transform", cam_base, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw2.tween_property(target, "position", cam.project_position(Vector2(120, 40), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -670,7 +670,7 @@ func _lift() -> void:
 	poi.position.y = 0.45
 	_refresh_ui()
 	busy = false
-	hint.text = "押して沈め、玉の下で離す"
+	hint.text = tr("押して沈め、玉の下で離す")
 	if orbs.is_empty():
 		await get_tree().create_timer(0.6).timeout
 		_finish()
@@ -680,7 +680,7 @@ func _tear(target: Orb3D) -> void:
 	busy = true
 	_play("tear")
 	Input.vibrate_handheld(80)
-	_banner("やぶれた…", Color("ffb3a8"))
+	_banner(tr("やぶれた…"), Color("ffb3a8"))
 	GameState.nets[poi_type] -= 1
 	GameState.save_game()
 	var tw := create_tween().set_parallel()
@@ -699,11 +699,11 @@ func _tear(target: Orb3D) -> void:
 	_refresh_ui()
 	busy = false
 	if poi_type == "":
-		hint.text = "ポイを使い切った"
+		hint.text = tr("ポイを使い切った")
 		await get_tree().create_timer(0.8).timeout
 		_finish()
 	else:
-		hint.text = "新しいポイ。こんどはそっと"
+		hint.text = tr("新しいポイ。こんどはそっと")
 
 
 # ---------- 毎フレーム ----------

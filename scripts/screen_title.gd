@@ -63,13 +63,13 @@ func _ready() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
 	card.add_child(v)
-	var t1 := Kit.text("猫おばけの店番", 16, Kit.SUB, true)
+	var t1 := Kit.text(tr("猫おばけの店番"), 16, Kit.SUB, true)
 	t1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t1)
 	var t2 := Kit.text("Paw Time", 44, Color("ff6b5b"), true)
 	t2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t2)
-	var tag := Kit.text("よく寝た朝は、玉がかえる。", 13, Color("8b7bff"), true)
+	var tag := Kit.text(tr("よく寝た朝は、玉がかえる。"), 13, Color("8b7bff"), true)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tag)
 
@@ -79,21 +79,30 @@ func _ready() -> void:
 	bv.add_theme_constant_override("separation", 10)
 	add_child(bv)
 	if GameState.has_save():
-		bv.add_child(Kit.button("つづきから（%d週目 %s曜）" % [GameState.week_no(), GameState.weekday()], Color("ff6b5b"), func(): main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
-		bv.add_child(Kit.button("はじめから", Color(1, 1, 1, 0.92), _confirm_new, Kit.INK, 44, 15))
+		bv.add_child(Kit.button(tr("つづきから（%d週目 %s曜）") % [GameState.week_no(), GameState.weekday()], Color("ff6b5b"), func(): main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
+		bv.add_child(Kit.button(tr("はじめから"), Color(1, 1, 1, 0.92), _confirm_new, Kit.INK, 44, 15))
 	else:
-		bv.add_child(Kit.button("はじめる", Color("ff6b5b"), func():
+		bv.add_child(Kit.button(tr("はじめる"), Color("ff6b5b"), func():
 			GameState.reset()
 			main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
-	var mb := Kit.button("音楽：%s" % ("ON" if Kit.music_on else "OFF"), Color(1, 1, 1, 0.8), func(): pass, Kit.INK, 34, 12)
+	var mb := Kit.button(tr("音楽：%s") % ("ON" if Kit.music_on else "OFF"), Color(1, 1, 1, 0.8), func(): pass, Kit.INK, 34, 12)
 	mb.custom_minimum_size = Vector2(90, 34)
 	mb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	mb.pressed.connect(func():
 		Kit.set_music_on(not Kit.music_on)
 		GameState.settings["music"] = Kit.music_on
 		GameState.save_game()
-		mb.text = "音楽：%s" % ("ON" if Kit.music_on else "OFF"))
+		mb.text = tr("音楽：%s") % ("ON" if Kit.music_on else "OFF"))
 	bv.add_child(mb)
+	# 言語の切りかえ（EN / 日本語）
+	var en := TranslationServer.get_locale().begins_with("en")
+	var lb := Kit.button("日本語" if en else "English", Color(1, 1, 1, 0.8), func():
+		Kit.set_lang("ja" if TranslationServer.get_locale().begins_with("en") else "en")
+		GameState.save_game()
+		main.go("title", true), Kit.INK, 34, 12)
+	lb.custom_minimum_size = Vector2(90, 34)
+	lb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	bv.add_child(lb)
 
 
 func _process(delta: float) -> void:
@@ -122,10 +131,10 @@ func _confirm_new() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
 	p.add_child(v)
-	var t := Kit.text("はじめから遊ぶ？\nいまの記録は消える", 17, Kit.INK, true)
+	var t := Kit.text(tr("はじめから遊ぶ？\nいまの記録は消える"), 17, Kit.INK, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	v.add_child(Kit.button("はじめから", Color("ff6b5b"), func():
+	v.add_child(Kit.button(tr("はじめから"), Color("ff6b5b"), func():
 		GameState.wipe_save()
 		main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
-	v.add_child(Kit.button("やめる", Color("b0a4b8"), func(): confirm.queue_free()))
+	v.add_child(Kit.button(tr("やめる"), Color("b0a4b8"), func(): confirm.queue_free()))

@@ -16,7 +16,7 @@ const ORDER := ["register", "tables", "kitchen", "sink", "shelf"]
 const TROUBLES := {
 	"gyouretsu": {"name": "行列", "station": "register", "work": 9.0, "patience": 14.0, "icon": "行列"},
 	"kakekomi": {"name": "駆け込み", "station": "register", "work": 4.0, "patience": 7.0, "icon": "駆込"},
-	"mizu": {"name": "こぼれた水", "station": "tables", "work": 5.0, "patience": 13.0, "icon": "水"},
+	"mizu": {"name": "こぼれた水", "station": "tables", "work": 5.0, "patience": 13.0, "icon": "こぼれ"},
 	"iraira": {"name": "イライラ", "station": "tables", "work": 6.0, "patience": 9.0, "icon": "イラ"},
 	"denwa": {"name": "クレームの電話", "station": "tables", "work": 8.0, "patience": 11.0, "icon": "電話"},
 	"chuumon": {"name": "注文ラッシュ", "station": "kitchen", "work": 9.0, "patience": 12.0, "icon": "注文"},

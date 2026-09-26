@@ -263,13 +263,13 @@ func _build_ui() -> void:
 	var pause := Kit.button("||", Color(1, 1, 1, 0.92), _pause, Kit.INK, 40, 15)
 	pause.custom_minimum_size = Vector2(44, 40)
 	top.add_child(pause)
-	top.add_child(_meter("閉店まで", Color("8b7bff")))
-	top.add_child(_meter("店の余裕", Color("7bdc6b")))
+	top.add_child(_meter(tr("閉店まで"), Color("8b7bff")))
+	top.add_child(_meter(tr("店の余裕"), Color("7bdc6b")))
 
 	# 持ち場の名札（押しても置ける）
 	for sid in sim.stations:
 		var b := Button.new()
-		b.text = ShopData.STATIONS[sid].name
+		b.text = tr(ShopData.STATIONS[sid].name)
 		b.add_theme_font_override("font", Kit.font_black)
 		b.add_theme_font_size_override("font_size", 12)
 		for k in ["normal", "hover", "pressed", "focus"]:
@@ -347,12 +347,12 @@ func _meter(title: String, col: Color) -> Control:
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
-	var l := Kit.text(title, 11, Kit.SUB, true)
+	var l := Kit.text(tr("閉店まで") if title == "time" else tr("店の余裕"), 11, Kit.SUB, true)
 	v.add_child(l)
 	var b := Kit.bar(1.0, col, Color(0, 0, 0, 0.08), 8)
 	v.add_child(b)
 	p.add_child(v)
-	if title == "閉店まで":
+	if title == "time":
 		time_bar = b
 		time_lbl = l
 	else:
@@ -385,7 +385,7 @@ func _card(i: int, w: float) -> Button:
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pic.texture = Kit.portrait(c.id)
 	b.add_child(pic)
-	var name_l := Kit.text("あいぼう" if c.id == "my" else GameState.info(c.id).name, 10 if w < 70 else 11, Kit.INK, true)
+	var name_l := Kit.text(tr("あいぼう") if c.id == "my" else tr(GameState.info(c.id).name), 10 if w < 70 else 11, Kit.INK, true)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.position = Vector2(0, 64)
 	name_l.size = Vector2(w, 16)
@@ -423,7 +423,7 @@ func _select(i: int) -> void:
 			for sid in sim.stations:
 				if ShopData.STATIONS[sid].job == c.job:
 					own = sid
-			_show_hint("t_place", "%sをタップ" % ShopData.STATIONS[own if own != "" else sim.stations[0]].name, chips[own if own != "" else sim.stations[0]])
+			_show_hint("t_place", tr("%sをタップ") % tr(ShopData.STATIONS[own if own != "" else sim.stations[0]].name), chips[own if own != "" else sim.stations[0]])
 
 
 func _to_station(sid: String) -> void:
@@ -431,7 +431,7 @@ func _to_station(sid: String) -> void:
 		return
 	if selected < 0:
 		Kit.sfx("c_deny")
-		_show_hint("t_pick_again", "先に、下のおばけを選ぶ", cards[0], false)
+		_show_hint("t_pick_again", tr("先に、下のおばけを選ぶ"), cards[0], false)
 		return
 	var c: Dictionary = sim.crew[selected]
 	if sim.assign(selected, sid):
@@ -496,7 +496,7 @@ func _process(delta: float) -> void:
 
 func _refresh() -> void:
 	time_bar.value = 1.0 - sim.progress()
-	time_lbl.text = "閉店まで %d秒" % int(ceil(sim.duration - sim.t))
+	time_lbl.text = tr("閉店まで %d秒") % int(ceil(sim.duration - sim.t))
 	yoyu_bar.value = sim.yoyu / sim.yoyu_max
 	var low := sim.yoyu / sim.yoyu_max < 0.35
 	yoyu_lbl.add_theme_color_override("font_color", Color("e85a4f") if low else Kit.SUB)
@@ -506,7 +506,7 @@ func _refresh() -> void:
 		var bar: ProgressBar = b.get_node("stamina")
 		bar.value = c.stamina / c.stamina_max
 		var sl: Label = b.get_node("state")
-		sl.text = {"rest": "休けい中", "walk_break": "休けいへ", "idle": ""}.get(c.state, ShopData.STATIONS[c.station].name if c.station != "" else "")
+		sl.text = {"rest": tr("休けい中"), "walk_break": tr("休けいへ"), "idle": ""}.get(c.state, tr(ShopData.STATIONS[c.station].name) if c.station != "" else "")
 		b.modulate = Color(0.85, 0.85, 0.9) if c.state in ["rest", "walk_break"] else Color.WHITE
 		b.position.y = -8.0 if i == selected else 0.0
 		var pic: TextureRect = b.get_node("pic")
@@ -628,7 +628,7 @@ func _handle(evs: Array) -> void:
 					tw.tween_property(b, "scale", Vector2(1.4, 1.4), 0.12)
 					tw.parallel().tween_property(b, "modulate:a", 0.0, 0.2)
 					tw.tween_callback(b.queue_free)
-					_popup("片づいた", b.position + Vector2(10, -6), Color("7bdc6b"))
+					_popup(tr("片づいた"), b.position + Vector2(10, -6), Color("7bdc6b"))
 				var d: Dictionary = ShopData.STATIONS[ev.station]
 				burst.position = Vector3(d.pos.x, 0.8, d.pos.y)
 				burst.restart()
@@ -639,17 +639,17 @@ func _handle(evs: Array) -> void:
 				if not GameState.tutorial.has("t_late"):
 					var tr := _trouble(ev.uid)
 					if not tr.is_empty():
-						_show_hint("t_late", "赤いのは、余裕を減らす", chips[tr.station])
+						_show_hint("t_late", tr("赤いのは、余裕を減らす"), chips[tr.station])
 			"overflow":
 				shake = 0.6
 				_flash(0.15, Color("ff6b5b"))
 				Kit.sfx("c_crash", 1.0, -6)
 				var d3: Dictionary = ShopData.STATIONS[ev.station]
-				_popup("あふれた！", cam.unproject_position(Vector3(d3.pos.x, 1.4, d3.pos.y)), Color("ff6b5b"))
+				_popup(tr("あふれた！"), cam.unproject_position(Vector3(d3.pos.x, 1.4, d3.pos.y)), Color("ff6b5b"))
 			"tired":
 				Kit.sfx("c_whoosh", 0.7, -6)
 				if not GameState.tutorial.has("t_tired"):
-					_show_hint("t_tired", "つかれたら、休んで戻る", cards[_crew_index(ev.uid)])
+					_show_hint("t_tired", tr("つかれたら、休んで戻る"), cards[_crew_index(ev.uid)])
 			"rested":
 				pass
 			"sweep":
@@ -657,7 +657,7 @@ func _handle(evs: Array) -> void:
 				Kit.sfx("c_zap", 1.2, -4)
 				shake = 0.3
 			"surge_warn":
-				_banner("どっと来る！", Color("ff8a5b"))
+				_banner(tr("どっと来る！"), Color("ff8a5b"))
 				Kit.sfx("c_drum", 1.3, -4)
 			"win":
 				_end(true)
@@ -808,8 +808,8 @@ func _draw_bubble(b: Control) -> void:
 	var w: float = b.get_meta("work")
 	if w < 0.999:
 		b.draw_arc(c, 11, PI / 2 - PI * (1.0 - w), PI / 2 + PI * (1.0 - w), 24, Color(0.48, 0.86, 0.42, 0.35), 5.0)
-	var icon: String = b.get_meta("icon")
-	var fs := 13 if icon.length() <= 1 else 11
+	var icon: String = tr(b.get_meta("icon"))
+	var fs := 13 if icon.length() <= 1 else (11 if icon.length() <= 3 else 9)
 	var tw := Kit.font_black.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	b.draw_string(Kit.font_black, Vector2(c.x - tw / 2, c.y + fs * 0.38), icon, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Kit.INK)
 
@@ -851,9 +851,9 @@ func _callout(id: String) -> void:
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", -2)
-	v.add_child(Kit.text(GameState.info(id).name, 15, Kit.INK, true))
+	v.add_child(Kit.text(tr(GameState.info(id).name), 15, Kit.INK, true))
 	var help: String = ShopData.help_of(id)
-	var l := Kit.text(ShopData.HELP_TEXT.get(help, ""), 11, Kit.SUB)
+	var l := Kit.text(tr(ShopData.HELP_TEXT.get(help, "")), 11, Kit.SUB)
 	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	l.custom_minimum_size = Vector2(260, 0)
 	v.add_child(l)
@@ -910,11 +910,11 @@ func _update_hint() -> void:
 
 func _intro() -> void:
 	var num := ("%d-%d " % [si + 1, st + 1]) if not stage.get("rush", false) else ""
-	_banner(num + DefData.stage(si, st).name, Color("ffd23f"))
+	_banner(num + tr(DefData.stage(si, st).name), Color("ffd23f"))
 	Kit.sfx("c_bell", 1.2, -6)
 	await get_tree().create_timer(1.4).timeout
 	if cards.size() > 0 and not ended:
-		_show_hint("t_pick", "おばけを選んで", cards[0])
+		_show_hint("t_pick", tr("おばけを選んで"), cards[0])
 
 
 func _pause() -> void:
@@ -936,22 +936,22 @@ func _pause() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
 	p.add_child(v)
-	var t := Kit.text("ひと休み", 22, Kit.INK, true)
+	var t := Kit.text(tr("ひと休み"), 22, Kit.INK, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	var tip := Kit.text(stage.tip, 13, Kit.SUB)
+	var tip := Kit.text(tr(stage.tip), 13, Kit.SUB)
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(tip)
-	v.add_child(Kit.button("つづける", Kit.ACCENT, func():
+	v.add_child(Kit.button(tr("つづける"), Kit.ACCENT, func():
 		paused = false
 		overlay.queue_free()
 		overlay = null))
-	var sb := Kit.button("はやさ ×%d" % speed, Color.WHITE, func(): pass, Kit.INK, 40, 14)
+	var sb := Kit.button(tr("はやさ ×%d") % speed, Color.WHITE, func(): pass, Kit.INK, 40, 14)
 	sb.pressed.connect(func():
 		speed = 2 if speed == 1 else 1
-		sb.text = "はやさ ×%d" % speed)
+		sb.text = tr("はやさ ×%d") % speed)
 	v.add_child(sb)
-	v.add_child(Kit.button("あきらめて帰る", Color("b0a4b8"), func():
+	v.add_child(Kit.button(tr("あきらめて帰る"), Color("b0a4b8"), func():
 		overlay.queue_free()
 		overlay = null
 		paused = false
@@ -977,11 +977,11 @@ func _end(won: bool) -> void:
 	if won:
 		Kit.sfx("c_fanfare")
 		_flash(0.6)
-		_banner("閉店！", Color("ffd23f"))
+		_banner(tr("閉店！"), Color("ffd23f"))
 	else:
 		Kit.sfx("c_lose")
 		shake = 1.0
-		_banner("店が\nパンクした…", Color("b9c4ff"))
+		_banner(tr("店が\nパンクした…"), Color("b9c4ff"))
 	await get_tree().create_timer(1.6).timeout
 	if demo:
 		return
@@ -1010,7 +1010,7 @@ func _result(r: Dictionary, stars: int) -> void:
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
 	var won: bool = r.won
-	var t := Kit.text("おつかれさま！" if won else "店がパンクした…", 24, Kit.INK, true)
+	var t := Kit.text(tr("おつかれさま！") if won else tr("店がパンクした…"), 24, Kit.INK, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	if won:
@@ -1018,28 +1018,28 @@ func _result(r: Dictionary, stars: int) -> void:
 		sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(sl)
 	if r.coins > 0:
-		var cl := Kit.text("まかない +%d" % r.coins, 20, Color("e8792f"), true)
+		var cl := Kit.text(tr("まかない +%d") % r.coins, 20, Color("e8792f"), true)
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(cl)
 		Kit.sfx("c_coin", 1.1)
 	# ひと言だけ（いちばん大事なもの）
 	var note := ""
 	if won and r.get("join", "") != "":
-		note = "%sが仲間になった" % GameState.info(r.join).name
+		note = tr("%sが仲間になった") % tr(GameState.info(r.join).name)
 	elif won and r.orb:
-		note = "虹色の玉をもらった"
+		note = tr("虹色の玉をもらった")
 	elif won and r.lap_up:
-		note = "%d周目がひらいた" % GameState.best_lap
+		note = tr("%d周目がひらいた") % GameState.best_lap
 	elif not won:
-		note = stage.tip
+		note = tr(stage.tip)
 	if note != "":
 		var nl := Kit.text(note, 14, Color("8b7bff"), true)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nl)
 	var to_room: bool = won and GameState.day == 0 and not GameState.scooped_tonight and GameState.total_battles >= 2
-	var primary := "休憩室へ" if to_room else ("つぎへ" if won else "もう一回")
+	var primary := tr("休憩室へ") if to_room else (tr("つぎへ") if won else tr("もう一回"))
 	if won and r.lap_up:
-		primary = "%d周目へ" % GameState.best_lap
+		primary = tr("%d周目へ") % GameState.best_lap
 	v.add_child(Kit.button(primary, Kit.ACCENT, func():
 		if won and r.lap_up:
 			GameState.lap = GameState.best_lap
@@ -1049,7 +1049,7 @@ func _result(r: Dictionary, stars: int) -> void:
 			return
 		GameState.set_meta("open_next", r.first)
 		main.go("room" if to_room else "map")))
-	var second := "地図へ" if not won else "もう一回"
+	var second := tr("地図へ") if not won else tr("もう一回")
 	v.add_child(Kit.button(second, Color("b0a4b8"), func(): main.go("map" if not won else "defense"), Color.WHITE, 40, 14))
 	p.scale = Vector2(0.85, 0.85)
 	p.pivot_offset = Vector2(150, 120)

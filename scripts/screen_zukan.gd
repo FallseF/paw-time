@@ -31,13 +31,13 @@ func _ready() -> void:
 	for r in Rares.LIST:
 		if GameState.seen.has(r.id):
 			rare_have += 1
-	head.add_child(_text("図鑑", 26, Color("2a2233"), font_black))
+	head.add_child(_text(tr("図鑑"), 26, Color("2a2233"), font_black))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
-	head.add_child(_text("レア %d / %d" % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
+	head.add_child(_text(tr("レア %d / %d") % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
 	var back := Button.new()
-	back.text = "もどる"
+	back.text = tr("もどる")
 	back.add_theme_font_override("font", font_bold)
 	back.add_theme_font_size_override("font_size", 14)
 	for k in ["normal", "hover", "pressed"]:
@@ -57,10 +57,10 @@ func _ready() -> void:
 	col.add_theme_constant_override("separation", 12)
 	scroll.add_child(col)
 
-	col.add_child(_section("ふつうのおばけ"))
+	col.add_child(_section(tr("ふつうのおばけ")))
 	col.add_child(_shelf())
 	for g in GROUPS:
-		col.add_child(_section("レア ・ " + g))
+		col.add_child(_section(tr("レア ・ ") + tr(g)))
 		var grid := GridContainer.new()
 		grid.columns = 3
 		grid.add_theme_constant_override("h_separation", 8)
@@ -71,13 +71,13 @@ func _ready() -> void:
 		m.add_child(grid)
 		col.add_child(m)
 		for r in Rares.LIST:
-			if r.group == g:
+			if tr(r.group) == g:
 				grid.add_child(_card(r))
 	var seen_n := 0
 	for kind in ShopData.TROUBLES:
 		if GameState.enemies_seen.has(kind):
 			seen_n += 1
-	col.add_child(_section("困りごと（%d / %d）" % [seen_n, ShopData.TROUBLES.size()]))
+	col.add_child(_section(tr("困りごと（%d / %d）") % [seen_n, ShopData.TROUBLES.size()]))
 	var eg := GridContainer.new()
 	eg.columns = 3
 	eg.add_theme_constant_override("h_separation", 8)
@@ -181,7 +181,7 @@ func _shelf() -> Control:
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.add_theme_constant_override("separation", 0)
 	for id in NORMAL:
-		var l := _text(GameState.info(id).name if GameState.seen.has(id) else "？？？", 12, Color("6a5f70"))
+		var l := _text(tr(GameState.info(id).name) if GameState.seen.has(id) else tr("？？？"), 12, Color("6a5f70"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.custom_minimum_size = Vector2(66, 18)
 		names.add_child(l)
@@ -236,10 +236,10 @@ func _card(r: Dictionary) -> Control:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(art)
 	v.add_child(center)
-	var name_l := _text(r.name if found else "？？？", 13, Color("2a2233") if found else Color("9a8e98"), font_black)
+	var name_l := _text(tr(r.name) if found else tr("？？？"), 13, Color("2a2233") if found else Color("9a8e98"), font_black)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(name_l)
-	var hint := _text(r.desc if found else r.hint, 10, Color("7a6f7c"))
+	var hint := _text(tr(r.desc) if found else tr(r.hint), 10, Color("7a6f7c"))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	hint.custom_minimum_size = Vector2(84, 0)
@@ -265,12 +265,12 @@ func _enemy_card(kind: String) -> Control:
 	var cc := CenterContainer.new()
 	cc.add_child(Kit.trouble_chip(kind, 48, found))
 	v.add_child(cc)
-	var n := _text(d.name if found else "？？？", 12, Color("2a2233") if found else Color("9a8e98"), font_black)
+	var n := _text(tr(d.name) if found else tr("？？？"), 12, Color("2a2233") if found else Color("9a8e98"), font_black)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(n)
 	if found:
 		var sj: String = ShopData.STATIONS[d.station].job
-		var w := _text(ShopData.STATIONS[d.station].name + "で片づく", 10, DefData.job_color(sj), font_black)
+		var w := _text(tr(ShopData.STATIONS[d.station].name) + tr("で片づく"), 10, DefData.job_color(sj), font_black)
 		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(w)
 	return p
@@ -313,15 +313,15 @@ func _show_detail(r: Dictionary) -> void:
 		if not found:
 			tr.modulate = Color(0.15, 0.12, 0.2, 0.35)
 		v.add_child(tr)
-	var n := _text(r.name if found else "？？？", 26, Color("2a2233"), font_black)
+	var n := _text(tr(r.name) if found else tr("？？？"), 26, Color("2a2233"), font_black)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(n)
-	var g := _text("レア ・ " + r.group, 13, Color(r.look.c2).darkened(0.2))
+	var g := _text(tr("レア ・ ") + tr(r.group), 13, Color(r.look.c2).darkened(0.2))
 	g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(g)
-	var dtext: String = r.desc if found else "ヒント：" + r.hint
+	var dtext: String = tr(r.desc) if found else tr("ヒント：") + tr(r.hint)
 	if found and DefData.RARE_UNITS.has(r.id):
-		dtext += "\n\n店では：" + ShopData.HELP_TEXT.get(ShopData.help_of(r.id), "")
+		dtext += tr("\n\n店では：") + ShopData.HELP_TEXT.get(ShopData.help_of(r.id), "")
 	var d := _text(dtext, 15, Color("4a3f52"))
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY

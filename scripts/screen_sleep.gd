@@ -45,7 +45,7 @@ func _ready() -> void:
 	moon.size = Vector2(80, 80)
 	add_child(moon)
 
-	var title := _text("おやすみの前に", 24, Color("f3eeff"), font_black)
+	var title := _text(tr("おやすみの前に"), 24, Color("f3eeff"), font_black)
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
@@ -64,7 +64,7 @@ func _ready() -> void:
 	big = _text("", 64, Color.WHITE, font_black)
 	big.custom_minimum_size = Vector2(150, 100)
 	row.add_child(big)
-	row.add_child(_round("＋", func(): _set_hours(hours + 1)))
+	row.add_child(_round(tr("＋"), func(): _set_hours(hours + 1)))
 
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.1), 22))
@@ -76,7 +76,7 @@ func _ready() -> void:
 	card.add_child(preview)
 
 	var go := Button.new()
-	go.text = "おやすみ"
+	go.text = tr("おやすみ")
 	go.position = Vector2(70, 540)
 	go.size = Vector2(220, 54)
 	go.add_theme_font_override("font", font_black)
@@ -135,19 +135,19 @@ func _round(t: String, cb: Callable) -> Button:
 
 func _set_hours(h: int) -> void:
 	hours = clampi(h, 4, 9)
-	big.text = "%d時間" % hours
+	big.text = tr("%d時間") % hours
 	for c in preview.get_children():
 		c.queue_free()
 	var lines := []
-	lines.append("おばけが育つ（経験 +%d）" % (min(hours, GameState.SLEEP_CAP_H) * 6))
+	lines.append(tr("おばけが育つ（経験 +%d）") % (min(hours, GameState.SLEEP_CAP_H) * 6))
 	if hours >= 9:
-		lines.append("8時間より先は、同じ")
+		lines.append(tr("8時間より先は、同じ"))
 	elif hours >= 7:
-		lines.append("明日は、つかれにくい")
+		lines.append(tr("明日は、つかれにくい"))
 	elif hours <= 5:
-		lines.append("夜ふかしの灯りに、何か来る")
+		lines.append(tr("夜ふかしの灯りに、何か来る"))
 	for s in lines:
-		var l := _text("・" + s, 14, Color("e8e2ff"))
+		var l := _text(tr("・") + s, 14, Color("e8e2ff"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		l.custom_minimum_size = Vector2(270, 0)

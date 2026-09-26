@@ -28,6 +28,7 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_players.append(p)
+	set_lang(GameState.settings.get("lang", "en"))
 	_music = AudioStreamPlayer.new()
 	_music.volume_db = -12
 	add_child(_music)
@@ -52,6 +53,12 @@ func sfx(n: String, pitch := 1.0, vol := 0.0) -> void:
 
 
 var music_on := true
+
+
+## 言語（はじめは英語。タイトルで切りかえて、セーブに残す）
+func set_lang(code: String) -> void:
+	TranslationServer.set_locale(code)
+	GameState.settings["lang"] = code
 
 
 func set_music_on(on: bool) -> void:
@@ -247,13 +254,13 @@ func trouble_chip(kind: String, px := 36, found := true) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(px, px)
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon: String = ShopData.TROUBLES[kind].icon if found else "？"
+	var icon: String = ShopData.TROUBLES[kind].icon if found else tr("？")
 	c.draw.connect(func():
 		var r := px / 2.0
 		c.draw_circle(Vector2(r, r + 2), r - 1, Color(0, 0, 0, 0.12))
 		c.draw_circle(Vector2(r, r), r - 1, Color.WHITE if found else Color("e6ddd2"))
 		c.draw_arc(Vector2(r, r), r - 3, 0, TAU, 32, Color("ff8a5b") if found else Color("cfc4b8"), 2.5, true)
-		var fs := int(px * (0.38 if icon.length() <= 1 else 0.3))
+		var fs := int(px * (0.38 if icon.length() <= 1 else (0.3 if icon.length() <= 3 else 0.22)))
 		var tw := font_black.get_string_size(icon, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		c.draw_string(font_black, Vector2(r - tw / 2, r + fs * 0.38), icon, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK))
 	return c
