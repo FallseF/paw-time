@@ -23,12 +23,13 @@ import numpy as np
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT_DIR = os.path.join(ROOT, "assets", "models", "island")
 
-GRASS = (0.54, 0.78, 0.36)
-GRASS2 = (0.42, 0.68, 0.30)
+GRASS = (0.58, 0.80, 0.45)
+GRASS2 = (0.47, 0.72, 0.40)
 SAND = (0.93, 0.84, 0.64)
 WET = (0.78, 0.68, 0.52)
 ROCK = (0.62, 0.58, 0.56)
 ROCK_DARK = (0.46, 0.42, 0.44)
+SEABED = (0x1F / 255, 0x6F / 255, 0x8A / 255)
 
 
 def srgb_to_lin(c):
@@ -143,7 +144,7 @@ def island_dist(x, z, st):
     # うしろの丘（休憩室が建つ）：z < -2.4 の横長の台
     qx = np.abs(x) - 6.6
     qz = np.abs(z + 5.2) - 2.8
-    hill = np.hypot(np.maximum(qx, 0), np.maximum(qz, 0)) + np.minimum(np.maximum(qx, qz), 0) - 0.3
+    hill = np.hypot(np.maximum(qx + 1.0, 0), np.maximum(qz + 1.0, 0)) + np.minimum(np.maximum(qx, qz), 0) - 1.3
     d = smin(d, hill, 0.8)
     if st["islet"]:
         ix, iz, ir = ISLET
@@ -196,7 +197,7 @@ def build_terrain(si):
     for j in range(nz - 1):
         for i in range(nx - 1):
             a = j * nx + i
-            faces.append([a, a + 1, a + nx + 1, a + nx])
+            faces.append([a, a + nx, a + nx + 1, a + 1])  # 上から見て表になる向き（z を反転して渡すので逆回り）
     ob = make_object("Terrain", V, faces)
     # 使わない海の底（深いところ）の面を減らす：全頂点が -0.6 の面を消す
     import bmesh
@@ -229,6 +230,9 @@ def build_terrain(si):
     ao = bake_ao([ob], 0.6)[0]
     ao = np.clip(ao, 0, 1) ** 0.7
     lin = srgb_to_lin(col) * (0.45 + 0.55 * ao)[:, None]
+    # 深いところは、海の底の色（screen_garden.gd の深い海の底と同じ）へなじませる
+    deep = smoothstep(-0.3, -0.58, h)[:, None]
+    lin = lin + (srgb_to_lin(np.array(SEABED))[None, :] - lin) * deep
     set_colors(ob, lin)
     export([ob], "terrain_s%d" % si)
 

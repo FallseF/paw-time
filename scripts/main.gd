@@ -127,6 +127,14 @@ func _seed_for(start: String) -> void:
 	var ff := int(OS.get_environment("OBAKE_FF")) if OS.get_environment("OBAKE_FF") != "" else 0
 	if ff > 0:
 		fast_forward(ff)
+	# 島の段を決めて撮る（OBAKE_LEVEL=0..10）と、置き物キットの見本の飾りつけ（OBAKE_KIT_DEMO=1）
+	if OS.get_environment("OBAKE_LEVEL") != "":
+		GameState.garden_level = int(OS.get_environment("OBAKE_LEVEL"))
+		GameState.garden_seen_level = GameState.garden_level
+	if OS.get_environment("OBAKE_COINS") != "":
+		Wallet.reset(int(OS.get_environment("OBAKE_COINS")))
+	if OS.get_environment("OBAKE_KIT_DEMO") != "":
+		IslandKit.demo_layout(IslandKit.stage_for(GameState.garden_level))
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		GameState.sleep(330, 420)

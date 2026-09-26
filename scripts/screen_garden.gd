@@ -50,6 +50,8 @@ func _ready() -> void:
 		_start_visit()
 		return
 	night = 1.0 if GameState.phase == "evening" else 0.0
+	if OS.get_environment("OBAKE_NIGHT") != "":
+		night = float(OS.get_environment("OBAKE_NIGHT")) # 確認用：0 昼 / 0.5 夕方 / 1 夜
 	_apply_time(night)
 	if night > 0.5:
 		_light_deco()
@@ -98,7 +100,10 @@ func _build_world() -> void:
 	cam.fov = 52
 	cam.v_offset = -1.6
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.0, -0.4))
+	# 小島ができたら、少し右へ寄せて引き、ふたつの島を入れる
+	var shift := Vector3(1.5, 0, 0) if IslandKit.stage_for(_L()) >= 2 and ResourceLoader.exists(IslandProps.GLB % "terrain_s2") else Vector3.ZERO
+	cam.position = cam.position * (1.12 if shift != Vector3.ZERO else 1.0) + shift
+	cam.look_at(Vector3(0, 0.0, -0.4) + shift)
 	cam_home = cam.transform
 
 	var L: int = _L()
@@ -472,15 +477,30 @@ var sea_mat: StandardMaterial3D
 func _build_land(L: int, ground_c: Color) -> void:
 	var sea := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
-	pm.size = Vector2(40, 40)
+	pm.size = Vector2(90, 90)
 	sea.mesh = pm
 	sea_mat = StandardMaterial3D.new()
 	sea_mat.albedo_color = Color("4fa8bd")
 	sea_mat.roughness = 0.4
+	if ResourceLoader.exists(IslandProps.GLB % "terrain_s0"):
+		# 地形があるときは、浅瀬の砂が透けて見える海にする
+		sea_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		sea_mat.albedo_color = Color(0.2, 0.62, 0.74, 0.72)
+		sea_mat.metallic_specular = 0.6
+		sea_mat.roughness = 0.25
 	sea.material_override = sea_mat
 	sea.position.y = -0.14
 	world.add_child(sea)
 	sea_mesh = sea
+	if sea_mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+		# 透ける海の下の、深い海の底
+		var bed := MeshInstance3D.new()
+		var bp := PlaneMesh.new()
+		bp.size = Vector2(80, 80)
+		bed.mesh = bp
+		bed.material_override = Obake3D.flat(Color("1f6f8a"))
+		bed.position.y = -0.63
+		world.add_child(bed)
 	land_sand = _cyl(1.0, 0.12, Color("e8d3a8"))
 	land_sand.position.y = -0.1
 	world.add_child(land_sand)
@@ -1130,7 +1150,9 @@ func _apply_time(n: float) -> void:
 	var day_bg := Color("f3d9c4").lerp(Color("cfe3ef"), 0.3)
 	env.background_color = day_bg.lerp(night_sky, n)
 	if sea_mat:
-		sea_mat.albedo_color = Color("4fa8bd").lerp(Color("1a2a52"), n)
+		var a := sea_mat.albedo_color.a
+		sea_mat.albedo_color = (Color(0.2, 0.62, 0.74) if a < 1.0 else Color("4fa8bd")).lerp(Color("1a2a52"), n)
+		sea_mat.albedo_color.a = a
 	# 昼 → 夕方 → 夜 の光（Look の island_day / island_evening / island_night を混ぜる）
 	if island_rig.is_empty():
 		island_rig = Look.island_rig(world)
@@ -2122,8 +2144,9 @@ func _enter_edit() -> void:
 	goals_btn.visible = false
 	meters.visible = false
 	var to := cam_home
-	to.origin = Vector3(0, 10.5, 5.2)
-	to = to.looking_at(Vector3(0, 0, 0.1), Vector3.UP)
+	var sh := Vector3(1.6, 0, 0) if terrain and IslandKit.stage_for(_L()) >= 2 else Vector3.ZERO
+	to.origin = Vector3(0, 10.5, 5.2) * (1.15 if sh != Vector3.ZERO else 1.0) + sh
+	to = to.looking_at(Vector3(0, 0, 0.1) + sh, Vector3.UP)
 	var tw := create_tween().set_parallel()
 	tw.tween_property(cam, "transform", to, 0.6).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(cam, "v_offset", -0.6, 0.6)
@@ -2690,3 +2713,17 @@ func demo_name_share() -> void:
 
 func demo_leave() -> void:
 	_leave(GameState.owned[0].id)
+
+
+## 確認用：画面の UI を隠して島だけを撮る
+func demo_hide_ui() -> void:
+	for c in get_children():
+		if c is Control and not c is SubViewportContainer:
+			c.visible = false
+
+
+## 確認用：島をつくる → カタログを開く
+func demo_catalog() -> void:
+	_enter_edit()
+	await get_tree().create_timer(0.7).timeout
+	_open_catalog()

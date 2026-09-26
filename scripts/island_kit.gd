@@ -321,6 +321,33 @@ static func load_all() -> void:
 	_ensure()
 
 
+## 確認・宣伝用：段ごとの見本の飾りつけ（OBAKE_KIT_DEMO=1 で使う。保存はしない）
+const DEMO := [
+	[["hut", -2.55, -1.2, 0], ["tree_round", -2.7, 1.75, 0], ["tree_pine", 2.95, -0.3, 0], ["bench", 1.55, 2.3, 0],
+	["flower_pot", 0.95, 2.45, 0], ["flower_pot", 2.2, 2.4, 0], ["cafe_stand", 2.35, 0.95, 7], ["stepping_stones", 0.2, 3.05, 2],
+	["fence_wood", -1.2, 2.95, 0], ["paper_lantern", 0.95, -1.15, 0], ["bush", -3.1, -0.2, 0], ["cushion", -1.9, -0.55, 0], ["yarn_ball", -1.5, -0.2, 0]],
+	[["cottage", -2.7, -1.15, 1], ["tree_sakura", -3.4, 1.0, 0], ["hammock", 3.3, -0.35, 6], ["market_fruit", 2.8, 1.75, 7],
+	["torii_gate", 0.2, 3.55, 0], ["pier", -1.9, 4.55, 0], ["tulip_patch", 0.95, 2.6, 0], ["street_lamp", 1.75, 3.0, 0],
+	["parasol_table", -1.3, 2.35, 0], ["fence_hedge", -2.4, 3.05, 7], ["stone_lantern", -0.6, 3.5, 0], ["tree_pine", 3.7, 0.9, 0], ["swing", 3.0, -1.35, 7], ["signpost", 0.75, 1.9, 1]],
+	[["windmill", -3.9, 0.9, 0], ["hot_spring", -2.5, 2.4, 0], ["bridge_islet", 5.25, 1.35, 0], ["lighthouse", 7.25, 0.95, 0],
+	["tree_palm", 6.45, 2.1, 0], ["tree_palm", 7.6, 2.0, 0], ["shell_pile", 6.9, 2.45, 0], ["fountain", 1.0, 2.45, 0],
+	["string_lights", 2.6, 2.9, 7], ["ramen_cart", 3.4, 1.4, 7], ["tree_sakura", -4.1, -0.9, 0], ["koinobori", 3.9, -0.9, 0],
+	["mailbox", -1.2, -1.2, 0], ["tanabata_bamboo", -0.5, 3.6, 0], ["bulletin_board", 1.9, -1.35, 0], ["picnic_mat", 2.1, 3.9, 0]],
+]
+
+
+static func demo_layout(stage: int) -> void:
+	_loaded = true
+	placed = []
+	stock = {}
+	var u := 1
+	for s in mini(stage, DEMO.size() - 1) + 1:
+		for d in DEMO[s]:
+			placed.append({"u": u, "id": d[0], "x": d[1], "z": d[2], "r": d[3]})
+			u += 1
+	_next_uid = u
+
+
 ## テストや「はじめから」用
 static func reset() -> void:
 	_loaded = true
