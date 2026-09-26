@@ -639,6 +639,7 @@ const GOAL_TEXT := {
 	"match": "仕事のポイで、同じ色の玉をすくう",
 	"zukan": "図鑑でヒントを見る",
 	"early_ok": "0時までに寝る",
+	"moon4": "満月の夜に、灯りを4つともす",
 }
 
 
@@ -648,7 +649,7 @@ func make_goals() -> void:
 	var sleep_goal: String = ["usual", "hours7", "early_ok"][rng.randi() % 3]
 	if bed_hist.is_empty():
 		sleep_goal = "hours7"
-	var pool := ["scoop3", "talk", "zukan"]
+	var pool := ["scoop3", "talk", "zukan"] if weekday() != 6 else ["talk", "zukan", "moon4"]
 	var role_decos := decos.keys().filter(func(k): return ROLE_NET.has(k))
 	if not role_decos.is_empty() and weekday() != 6:
 		pool.append("light")
@@ -656,7 +657,7 @@ func make_goals() -> void:
 	for k in ["receipt", "bubble", "tray", "pan", "box"]:
 		if nets.get(k, 0) > 0:
 			typed = true
-	if typed or today().role != "":
+	if (typed or today().role != "") and weekday() != 6:
 		pool.append("match")
 	var picks: Array = []
 	while picks.size() < 2:
