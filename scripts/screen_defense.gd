@@ -317,6 +317,23 @@ func _make_view(e: Dictionary) -> void:
 			v.spr = sp
 		else:
 			var tex := Kit.rare_tex(e.id) if Rares.is_rare(e.id) else null
+			var aura := {"lantern": [3.0, Color(1.0, 0.75, 0.3, 0.22)], "shield": [2.5, Color(0.6, 0.8, 1.0, 0.22)], "dream": [3.0, Color(0.6, 1.0, 0.75, 0.2)], "sunrise": [1.6, Color(1.0, 0.55, 0.45, 0.22)]}
+			if aura.has(e.ability):
+				# 能力の届く範囲を、足元の光の輪で見せる
+				var disc := MeshInstance3D.new()
+				var cm := CylinderMesh.new()
+				cm.top_radius = aura[e.ability][0]
+				cm.bottom_radius = aura[e.ability][0]
+				cm.height = 0.01
+				disc.mesh = cm
+				var dm := StandardMaterial3D.new()
+				dm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				dm.albedo_color = aura[e.ability][1]
+				disc.material_override = dm
+				disc.scale = Vector3(1, 1, 0.35)
+				disc.position = Vector3(0, 0.02, 0.2)
+				root.add_child(disc)
 			if tex:
 				var sp2 := _sprite(tex, 1.35)
 				inner.add_child(sp2)
