@@ -500,20 +500,34 @@ func ai_step(dt: float, skill := 1.0) -> void:
 	if wallet_lv < 3 + int(skill * 2) and can_wallet() and (energy >= energy_max() * 0.8 or t < 6.0):
 		wallet_up()
 		return
-	# 前に困りごとがいるなら壁、そうでなければ高いものから
-	var order: Array = []
-	for i in slots.size():
-		order.append(i)
-	order.sort_custom(func(a, b): return slots[a].cost > slots[b].cost)
-	var ally_front := 0
+	# 壁が前に足りなければ安いものを。そうでなければ、いちばん高いものを狙って貯める
+	var walls := 0
 	for e in entities:
-		if e.side == 0 and not e.tiny:
-			ally_front += 1
-	if threat > 0 and ally_front < 3:
-		order.reverse()
-	for i in order:
-		if can_deploy(i):
-			deploy(i)
+		if e.side == 0 and not e.tiny and e.max_hp >= 300 * 1.0 and e.x < L - 1.5:
+			walls += 1
+	var cheapest := -1
+	var priciest := -1
+	for i in slots.size():
+		if slots[i].left > 0:
+			continue
+		if cheapest < 0 or slots[i].cost < slots[cheapest].cost:
+			cheapest = i
+		if slots[i].cost <= energy_max() and (priciest < 0 or slots[i].cost > slots[priciest].cost):
+			priciest = i
+	if threat > 0 and walls < 2 and cheapest >= 0 and can_deploy(cheapest):
+		deploy(cheapest)
+		return
+	if priciest >= 0 and can_deploy(priciest):
+		deploy(priciest)
+		return
+	# 高いものが遠いときは、手ごろなものを混ぜる
+	if priciest >= 0 and energy < slots[priciest].cost * 0.5:
+		var cands: Array = []
+		for i in slots.size():
+			if can_deploy(i):
+				cands.append(i)
+		if not cands.is_empty() and randf() < 0.5:
+			deploy(cands.pick_random())
 			return
 	if can_wallet() and energy >= energy_max() * 0.95:
 		wallet_up()

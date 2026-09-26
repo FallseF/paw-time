@@ -112,7 +112,7 @@ func button(t: String, bg: Color, cb: Callable, fg := Color.WHITE, h := 50, size
 	b.add_theme_color_override("font_color", fg)
 	b.add_theme_color_override("font_hover_color", fg)
 	b.add_theme_color_override("font_pressed_color", fg)
-	b.add_theme_color_override("font_disabled_color", fg.lerp(Color("a89ea8"), 0.6))
+	b.add_theme_color_override("font_disabled_color", Color("8a8090"))
 	b.pressed.connect(func():
 		sfx("c_tap")
 		pop(b))

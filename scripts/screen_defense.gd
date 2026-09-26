@@ -117,24 +117,30 @@ func _build_world() -> void:
 	world.add_child(cam)
 	_place_cam()
 
-	# 背景の絵（なければ空の色だけ）
+	# 背景の絵（なければ空の色だけ）。空と床の色は絵からとって、つなぎ目を消す
+	var floor_col := Color(shop.floor)
 	var bg_path := "res://assets/gen/c/bg_%s.png" % shop.id
 	if ResourceLoader.exists(bg_path):
 		var bg := Sprite3D.new()
 		bg.texture = load(bg_path)
 		bg.shaded = false
-		bg.pixel_size = 30.0 / bg.texture.get_width()
-		bg.position = Vector3(DefData.LANE * 0.5, 4.2, -7.0)
-		bg.modulate = Color(1, 1, 1) if si < 3 else Color(0.95, 0.9, 0.95)
+		bg.pixel_size = 40.0 / bg.texture.get_width()
+		bg.position = Vector3(DefData.LANE * 0.5, 7.2, -22.0)
 		world.add_child(bg)
+		var img := bg.texture.get_image()
+		if img:
+			if img.is_compressed():
+				img.decompress()
+			env.background_color = img.get_pixel(4, 4)
+			floor_col = img.get_pixel(4, img.get_height() - 6)
 	else:
 		for i in 14:
 			var h := randf_range(2.0, 5.0)
 			_box(Vector3(randf_range(1.6, 2.6), h, 1.0), Vector3(-2.0 + i * 1.9, h * 0.5, -5.0), Color(shop.sky).darkened(0.15 + randf() * 0.1))
 	# 床
-	_box(Vector3(34, 0.3, 4.4), Vector3(DefData.LANE * 0.5, -0.15, 0.3), Color(shop.floor))
-	_box(Vector3(34, 0.04, 0.08), Vector3(DefData.LANE * 0.5, 0.005, 1.45), Color(shop.floor).darkened(0.25))
-	_box(Vector3(34, 0.04, 0.08), Vector3(DefData.LANE * 0.5, 0.005, -0.85), Color(shop.floor).lightened(0.12))
+	_box(Vector3(40, 0.3, 12.0), Vector3(DefData.LANE * 0.5, -0.15, 1.6), floor_col)
+	_box(Vector3(40, 0.04, 0.08), Vector3(DefData.LANE * 0.5, 0.005, 1.45), floor_col.darkened(0.2))
+	_box(Vector3(40, 0.04, 0.08), Vector3(DefData.LANE * 0.5, 0.005, -0.85), floor_col.lightened(0.1))
 
 	# 困りごとの渦（左）と、店のカウンター（右）
 	ebase_node = _sprite_node(Kit.enemy_tex("uzu"), 3.4)
@@ -304,7 +310,7 @@ func _make_view(e: Dictionary) -> void:
 				v.spr = sp2
 			else:
 				var ob := Obake3D.make(e.id)
-				ob.scale = Vector3.ONE * 0.62
+				ob.scale = Vector3.ONE * 0.7
 				ob.rotation.y = -1.0
 				inner.add_child(ob)
 				v.ob = ob
