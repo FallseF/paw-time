@@ -1286,6 +1286,8 @@ func _process(delta: float) -> void:
 func _update_poi(delta: float) -> void:
 	if busy:
 		return
+	# 水に入れていない間は、ポイは見せない（押したところに現れる）
+	poi.visible = pressed or auto
 	var target := poi_target
 	if pressed:
 		if submerge > 0.0:
@@ -1564,11 +1566,15 @@ func _tut_show() -> void:
 
 
 func _tut_follow() -> void:
+	# 池のまんなかに近い玉をねらう（手前すぎると説明の文字と重なる）
 	var target: Orb3D = null
+	var best := 1e9
 	for o: Orb3D in orbs:
 		if o.catchable():
-			target = o
-			break
+			var d := Vector2(o.position.x, o.position.z + 0.6).length()
+			if d < best:
+				best = d
+				target = o
 	if target == null:
 		return
 	var p := cam.unproject_position(target.position + Vector3(0, 0, 0.5 if tut_step == 0 else 0.0))
