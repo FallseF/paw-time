@@ -164,7 +164,7 @@ func _promo() -> void:
 	GameState.phase = "evening"
 	await _go("garden", true)
 	main.current.call("_toggle_card")
-	await _wait(2.4)
+	await _wait(2.0)
 	# 1) すくい（スロー）
 	_mark("1)")
 	GameState.reset("data")
@@ -191,7 +191,7 @@ func _promo() -> void:
 	_mark("3)")
 	if main.current.has_method("demo_auto"):
 		main.current.call("demo_auto")
-	await _wait(4.2)
+	await _wait(5.4)
 	if main.current.has_method("_finish"):
 		main.current.call("_finish")
 	await _wait(1.3)
