@@ -507,10 +507,28 @@ func _show_job() -> void:
 	voice.add_theme_stylebox_override("panel", Kit.pill(Color("f1f7f1"), 12, 0.0, Vector2(10, 5)))
 	voice.add_child(I18n.wrap(_text(Reviews.summary_text(j.listing), 12, GREEN, true)))
 	card_box.add_child(voice)
+	_skill_row(j)
 	var acc := Kit.button(tr("JOB_ACCEPT"), ORANGE, _accept)
 	card_box.add_child(acc)
 	card_box.add_child(_link(tr("JOB_PASS"), _pass))
 	_pop_card()
+
+
+## スキルの記録（feature/skills）：その仕事の自分のバッジ（例: Register ★2 · 3 shifts）。
+## その仕事がはじめてなら「2 分のおさらい、する？」（任意。受けるかどうかとは関係ない）
+func _skill_row(j: Dictionary) -> void:
+	var role := String(j.role)
+	var txt := Skills.badge_text(role)
+	if txt != "":
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.add_child(SkillBadge.make(role, Skills.stars(role), 24))
+		row.add_child(_text(tr("SK_CARD_YOURS") % txt, 12, Color("3b5ba5"), true))
+		card_box.add_child(row)
+	if Skills.suggest_practice(role):
+		card_box.add_child(_link(tr("SK_CARD_SUGGEST"), func():
+			Skills.practice_role = role
+			_go("practice"), Color("3b5ba5")))
 
 
 func _accept() -> void:

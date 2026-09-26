@@ -1365,3 +1365,193 @@ KIT_UI_MOCK,Mock store — no real payment,見本のストア（本当の支払�
 COIN_N,%d coins,%d コイン
 COIN_HAVE_NEED,Coins %d/%d,コイン %d/%d
 朝だ。光る玉が 1 個,Morning. 1 glowing orb.,朝だ。光る玉が 1 個
+SKILL_SHIFTS_1,1 shift,シフト1回
+SKILL_SHIFTS_N,%d shifts,シフト%d回
+SK_PILL,My skills,マイスキル
+SK_TITLE,My skills,マイスキル
+SK_SAY,%s: This record is yours. It comes with you to every shop.,%s「この記録は、あなたのもの。どのお店にも持っていけるよ」
+SK_NO_BADGE,No badge yet,バッジはまだ
+SK_NO_SHIFTS,no shifts yet,シフトはまだ
+SK_PRACTICE,Practice,おさらい
+SK_AGAIN,Again,もう一度
+SK_NOTE,Practice is optional and just for you. Shops can't require it: training a shop requires is paid work time.,おさらいは任意で、自分のためのもの。お店が求めることはできません（お店が命じる研修は労働時間で、賃金が出ます）
+SK_CARD_YOURS,Your skill: %s,あなたのスキル：%s
+SK_CARD_SUGGEST,New role? Want a 2-minute practice? (optional),はじめての仕事？ 2分のおさらい、する？（任意）
+PR_LEAVE,Leave,やめる
+PR_HEAD,Practice · %s %s,おさらい・%s %s
+PR_NO_TIMER,Optional · no timer,任意・時間制限なし
+PR_INTRO_SAY,%s: Let's practice together. Mistakes are fine!,%s「いっしょに練習しよ。まちがえても大丈夫！」
+PR_TITLE_REGISTER,Register practice,レジのおさらい
+PR_TITLE_DISH,Dishwashing practice,皿洗いのおさらい
+PR_TITLE_HALL,Hall practice,ホールのおさらい
+PR_TITLE_KITCHEN,Kitchen practice,キッチンのおさらい
+PR_TITLE_STOCK,Stocking practice,品出しのおさらい
+PR_ABOUT_REGISTER,"Take the order, pick the items, give the right change, and send them off with a smile.",注文を聞いて、品をそろえて、おつりを正しく渡して、笑顔で見送る。
+PR_ABOUT_DISH,"Wash the lightest mess first, scrub, and put each piece where it won't break.",汚れの軽い物から洗って、こすって、割れない場所に置く。
+PR_ABOUT_HALL,"Seat each group at the best table, then carry dishes to the right table number.",お客さんをちょうどいい席へ案内して、伝票の番号の席へ料理を運ぶ。
+PR_ABOUT_KITCHEN,"Hands first, then follow the ticket step by step.",まず手洗い。それから伝票どおりに、ひとつずつ。
+PR_ABOUT_STOCK,"Older dates in front, newer at the back. Then face the labels forward.",日付の古い物を前に、新しい物を奥に。最後にラベルを正面へ。
+PR_LV_GOT,got it,取った
+PR_LV_OPEN,try,挑戦
+PR_LV_LOCKED,later,あとで
+PR_LV_LOCKED_SAY,Try %s first. No rush!,まず %s から。あわてなくていいよ
+PR_START,Start (about 2 min),はじめる（2分くらい）
+PR_GENERAL_NOTE,General skills that work at any shop. Each shop will show you its own way.,どのお店でも通じる基本だけ。お店ごとのやり方は、そのお店が教えてくれます。
+PR_GO_SAY,Here we go!,よーし、いこう！
+PR_GOOD_1,Nice!,いいね！
+PR_GOOD_2,That's it!,そうそう！
+PR_GOOD_3,Great job!,じょうず！
+PR_DONE_NEW,%s %s badge!,%s %s のバッジ！
+PR_DONE_AGAIN,Practice complete!,おさらい完了！
+PR_DONE_BODY,Saved to your skill record. It stays with you at every shop.,スキルの記録に残したよ。どのお店に移っても消えない。
+PR_REWARD_CLOTH,New uniform: %s,新しい制服：%s
+PR_REWARD_POI,%s ×%d,%s ×%d
+PR_REWARD_POI_FULL,Your scoops are already full,ポイはもういっぱい
+PR_SEE_UNIFORM,Try it on,着てみる
+PR_NEXT_LEVEL,Next: %s,次は %s
+PR_AGAIN,Practice again,もう一度
+PR_MY_SKILLS,My skills,マイスキル
+PR_ITEM_COFFEE,Coffee,コーヒー
+PR_ITEM_TEA,Tea,紅茶
+PR_ITEM_JUICE,Juice,ジュース
+PR_ITEM_COOKIE,Cookie,クッキー
+PR_ITEM_SANDWICH,Sandwich,サンド
+PR_ITEM_ONIGIRI,Rice ball,おにぎり
+PR_REG_WAIT,A customer is coming…,お客さんが来るよ…
+PR_REG_ORDER,"%s, please!",%s、ください！
+PR_REG_SAY_ORDER,Welcome! Let's get their order.,いらっしゃいませ！ 注文をそろえよう
+PR_REG_TASK_ITEMS,Pick the items they asked for,言われた品をそろえよう
+PR_REG_HINT_ITEMS,Check the yellow bubble for what they want.,黄色の吹き出しを見てね
+PR_REG_OOPS_ITEM,"Hmm, they didn't ask for that one. Check the order again.",それは頼まれてないかも。もう一度注文を見てみよう
+PR_REG_OOPS_ENOUGH,We already have enough of that one.,それはもう足りてるよ
+PR_REG_GOOD_ITEMS,All there! Now the money.,そろった！ 次はお会計
+PR_REG_PAID,Here's ¥%s.,%s円で
+PR_REG_SAY_CHANGE,Count the change onto the tray.,おつりを皿にのせよう
+PR_REG_TASK_CHANGE,Give the right change,おつりを正しく渡そう
+PR_REG_HINT_CHANGE_1,Change: ¥%s,おつり：%s円
+PR_REG_HINT_CHANGE,Paid ¥%s − total ¥%s = change. Count up from the total.,あずかり %s円 − 合計 %s円 = おつり。合計から数え上げるとかんたん
+PR_REG_GIVING,On the tray: ¥%s,皿の上：%s円
+PR_REG_UNDO,Start over,やり直す
+PR_REG_HAND,Hand over,渡す
+PR_REG_OOPS_MORE,Almost! ¥%s more.,あと少し！ あと%s円
+PR_REG_OOPS_LESS,That's ¥%s too much. Let's count again.,%s円多いよ。もう一度数えよう
+PR_REG_GOOD_CHANGE,Right change!,おつりぴったり！
+PR_REG_TASK_PHRASE,Send them off with the right words,ひとことで見送ろう
+PR_REG_HINT_PHRASE,A warm goodbye makes people want to come back.,あたたかい見送りは、また来たくなる
+PR_REG_PHRASE_OK,"Thank you, come again!",ありがとうございました、またどうぞ！
+PR_REG_PHRASE_NEXT,Next!,次の方！
+PR_REG_PHRASE_HURRY,Please hurry up.,早くしてください
+PR_REG_OOPS_PHRASE,"Hmm, a bit cold. Try a warmer goodbye.",ちょっと冷たいかも。あたたかいひとことにしよう
+PR_REG_THANKS,Thanks!,ありがとう！
+PR_DISH_GLASS,Glasses,グラス
+PR_DISH_PLATE,Plates,お皿
+PR_DISH_PAN,Pans,フライパン
+PR_DISH_TASK_PICK,What should we wash next?,次はどれを洗う？
+PR_DISH_HINT_ORDER,"Lightest mess first: glasses, then plates, then greasy pans.",汚れの軽い物から：グラス → お皿 → 油のフライパン
+PR_DISH_OOPS_ORDER_GLASS,Glasses first! Greasy water makes them cloudy.,グラスが先！ 油の水だとくもっちゃう
+PR_DISH_OOPS_ORDER_PLATE,Plates before pans. Save the greasy ones for last.,フライパンより先にお皿。油汚れは最後に
+PR_DISH_SCRUB,Scrub,こする
+PR_DISH_TASK_SCRUB,Scrub the %s,%sをこすろう
+PR_DISH_HINT_SCRUB,Tap to scrub until it's clean.,きれいになるまでタップ
+PR_DISH_GOOD_CLEAN,Squeaky clean!,ピカピカ！
+PR_DISH_TASK_RACK,Where does it go so it won't break?,割れないのは、どこに置く？
+PR_DISH_HINT_RACK,"Glasses upside down, plates standing, pans on the hook.",グラスは逆さ、お皿は立てて、フライパンはフック
+PR_DISH_RACK_CUPS,Cup rack,グラス置き
+PR_DISH_RACK_PLATES,Plate rack,お皿立て
+PR_DISH_RACK_HOOKS,Pan hook,フック
+PR_DISH_RACK_SUB_CUPS,upside down,逆さに
+PR_DISH_RACK_SUB_PLATES,standing up,立てて
+PR_DISH_RACK_SUB_HOOKS,hang it,つるす
+PR_DISH_OOPS_RACK_GLASS,"Careful, it could tip and break there. Glasses go upside down in the cup rack.",そこだと倒れて割れそう。グラスはグラス置きに逆さに
+PR_DISH_OOPS_RACK_PLATE,"Careful, it could slide and break. Plates stand in the plate rack.",そこだと滑って割れそう。お皿はお皿立てに
+PR_DISH_OOPS_RACK_PAN,Too heavy for there. Hang the pan on the hook.,そこには重すぎるかも。フライパンはフックに
+PR_DISH_GOOD_ALL,"All clean, nothing broken!",全部きれい、割れ物なし！
+PR_HALL_PASS,Pass,受け渡し口
+PR_HALL_TABLE,Table %d,%d番
+PR_HALL_SEATS,%d seats,%d席
+PR_HALL_TAKEN,taken,使用中
+PR_HALL_GROUP_1,"Table for one, please.",1人です
+PR_HALL_GROUP_N,"Table for %d, please.",%d人です
+PR_HALL_SAY_WELCOME,Welcome! Which table fits best?,いらっしゃいませ！ どの席がいいかな
+PR_HALL_TASK_SEAT,Seat the group,お客さんを席へ案内しよう
+PR_HALL_HINT_SEAT,Pick the smallest free table that fits. Keep big tables for big groups.,座れる中で、いちばん小さい席。大きい席は大人数のために
+PR_HALL_OOPS_TAKEN,Someone is already sitting there.,そこは、もう座っているよ
+PR_HALL_OOPS_SMALL,Only %d seats there. Not enough room.,そこは%d席。座りきれないよ
+PR_HALL_OOPS_BIG,"That fits, but a smaller table is free. Keep the big one for a bigger group.",座れるけど、小さい席もあいてるよ。大きい席は大人数に
+PR_HALL_SAY_THIS_WAY,"This way, please!",こちらへどうぞ！
+PR_HALL_TICKET,Table %d: %s,%d番：%s
+PR_HALL_SAY_UP,Order up! Check the table number.,料理ができた！ 番号を見よう
+PR_HALL_TASK_CARRY,Carry it to the right table,正しい席へ運ぼう
+PR_HALL_HINT_CARRY,The ticket number tells you where it goes.,伝票の番号が運ぶ席
+PR_HALL_OOPS_TABLE,The ticket says table %d. Let's check again.,伝票は%d番だよ。もう一度見てみよう
+PR_HALL_SAY_SERVE,Here you go. Enjoy!,お待たせしました、どうぞ！
+PR_HALL_GOOD_ALL,Everyone is seated and served!,みんな座って、料理も届いた！
+PR_HALL_DISH_PASTA,Pasta,パスタ
+PR_HALL_DISH_CURRY,Curry,カレー
+PR_HALL_DISH_SALAD,Salad,サラダ
+PR_HALL_DISH_SOUP,Soup,スープ
+PR_KIT_SINK,Hand sink,手洗い
+PR_KIT_TICKET_BACK,Ticket,伝票
+PR_KIT_STEP_WASH,Wash hands,手を洗う
+PR_KIT_STEP_CAP,Put on a cap,帽子をかぶる
+PR_KIT_STEP_READ,Read the ticket,伝票を読む
+PR_KIT_STEP_COOK,Cook,作る
+PR_KIT_STEP_PLATE,Plate it,盛りつける
+PR_KIT_STEP_WIPE,Wipe the counter,台をふく
+PR_KIT_TASK_FIRST,What comes first?,最初にすることは？
+PR_KIT_TASK_STEP,What's next?,次は？
+PR_KIT_HINT_STEP,"Clean hands, clean food. Then follow the ticket.",きれいな手で、きれいな料理。それから伝票どおり
+PR_KIT_OOPS_WASH_FIRST,Hands first! Always wash before touching food.,まず手洗い！ 食べ物にさわる前に必ず
+PR_KIT_OOPS_ORDER,Not yet. What comes before that?,まだ早いかも。その前にすることは？
+PR_KIT_OOPS_DONE,We already did that one.,それはもうやったよ
+PR_KIT_OOPS_NOT_TODAY,"Good idea, but this kitchen doesn't need it today.",いい考え。でも今日はいらないよ
+PR_KIT_TASK_WASH,Wash your hands,手を洗おう
+PR_KIT_HINT_WASH,"Soap every part: palms, backs, fingers, thumbs. Then rinse.",手のひら・手の甲・指の間・親指まで、石けんで。最後に流す
+PR_KIT_SAY_WASH,Scrub scrub!,ごしごし！
+PR_KIT_WASH_PALMS,Palms,手のひら
+PR_KIT_WASH_BACKS,Backs of hands,手の甲
+PR_KIT_WASH_FINGERS,Between fingers,指の間
+PR_KIT_WASH_THUMBS,Thumbs & nails,親指とつめ
+PR_KIT_WASH_RINSE,Rinse,流す
+PR_KIT_GOOD_WASH,Clean hands!,手がきれい！
+PR_KIT_GOOD_CAP,Hair tucked away!,髪をまとめた！
+PR_KIT_GOOD_READ,Got the ticket.,伝票を読んだ
+PR_KIT_NO,No %s (allergy),%s抜き（アレルギー）
+PR_KIT_TASK_COOK,Add what the ticket says,伝票の材料を入れよう
+PR_KIT_HINT_COOK,Only what's on the ticket.,伝票にある物だけ
+PR_KIT_OOPS_AVOID,The ticket says no %s. Allergy notes really matter.,伝票に「%s抜き」。アレルギーのメモは大事
+PR_KIT_OOPS_NOT_ON_TICKET,That's not on the ticket.,それは伝票にないよ
+PR_KIT_OOPS_ALREADY,Already in the pan.,もう入ってるよ
+PR_KIT_GOOD_COOK,Smells good!,いいにおい！
+PR_KIT_GOOD_PLATE,Looks tasty!,おいしそう！
+PR_KIT_TASK_WIPE,Wipe the counter clean,台をふこう
+PR_KIT_WIPE,Wipe,ふく
+PR_KIT_GOOD_ALL,"Order ready, kitchen clean!",料理できた、台もきれい！
+PR_DISH_NAME_OMELET,Omelet,オムレツ
+PR_DISH_NAME_FRIED_RICE,Fried rice,チャーハン
+PR_DISH_NAME_SALAD,Salad,サラダ
+PR_DISH_NAME_SOUP,Soup,スープ
+PR_ING_EGG,Egg,たまご
+PR_ING_CHEESE,Cheese,チーズ
+PR_ING_RICE,Rice,ごはん
+PR_ING_ONION,Onion,玉ねぎ
+PR_ING_LETTUCE,Lettuce,レタス
+PR_ING_TOMATO,Tomato,トマト
+PR_STOCK_DATES,"On shelf: %s
+New box: %s","たなの品：%s
+届いた箱：%s"
+PR_STOCK_SAY_BOX,A new box! Check the dates.,新しい箱！ 日付を見よう
+PR_STOCK_TASK_BOX,Where does the new one go?,新しいのは、どこに置く？
+PR_STOCK_HINT_FIFO,"First in, first out: older dates in front, newer at the back.",先入れ先出し：古い日付を前、新しい日付を奥
+PR_STOCK_FRONT,In front,前へ
+PR_STOCK_FRONT_SUB,sells first,先に売れる
+PR_STOCK_BACK,At the back,奥へ
+PR_STOCK_BACK_SUB,sells later,あとで売れる
+PR_STOCK_OOPS_BACK,This one is newer. Put it behind so the older one sells first.,こっちが新しい。古い物が先に売れるよう、奥へ
+PR_STOCK_OOPS_FRONT,Look closely: this one is older! It goes in front.,よく見て：こっちのほうが古い！ 前へ
+PR_STOCK_GOOD_BOX,Nice rotation!,きれいに入れ替えた！
+PR_STOCK_SAY_FACE,Some labels are turned away.,ラベルがそっぽを向いてる
+PR_STOCK_TASK_FACE,Face the items,前出ししよう
+PR_STOCK_HINT_FACE,Pull them to the front and turn the labels forward.,手前に出して、ラベルを正面に
+PR_STOCK_FACE,Face it,正面に
+PR_STOCK_GOOD_ALL,Shelf looks great!,たながきれい！

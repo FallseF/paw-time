@@ -276,6 +276,8 @@ static func stop(t := -1.0) -> Dictionary:
 	_ended.append(summary)
 	_session = {}
 	_save()
+	# スキルの記録：シフト 1 回＝経験 1（何時間でも同じ）
+	Skills.record_shift(String(summary.role), String(summary.shift_id) if String(summary.shift_id) != "" else "wt:%d" % int(summary.start))
 	_notify(summary)
 	return summary
 

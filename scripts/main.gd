@@ -21,6 +21,9 @@ const SCREENS := {
 	"work": preload("res://scripts/screen_work.gd"),
 	"wardrobe": preload("res://scripts/screen_wardrobe.gd"),
 	"travel": preload("res://scripts/screen_travel.gd"),
+	# おさらい（練習）とスキルの記録（feature/skills）
+	"practice": preload("res://scripts/screen_practice.gd"),
+	"skills": preload("res://scripts/screen_skills.gd"),
 }
 
 var root: Control
@@ -166,6 +169,15 @@ func _seed_for(start: String) -> void:
 	if OS.get_environment("OBAKE_EXPAND") != "":
 		IslandKit.load_all()
 		IslandKit.expanded = Array(OS.get_environment("OBAKE_EXPAND").split(","))
+	# 確認用：スキルの記録（OBAKE_SKILLS=register:2:3,dish:1:0 … 仕事:星:シフト回数）と、おさらいの仕事（OBAKE_PRACTICE=dish）
+	if OS.get_environment("OBAKE_SKILLS") != "":
+		var roles := {}
+		for e in OS.get_environment("OBAKE_SKILLS").split(","):
+			var p := e.split(":")
+			roles[p[0]] = {"stars": int(p[1]) if p.size() > 1 else 0, "clears": 0, "shifts": int(p[2]) if p.size() > 2 else 0}
+		Skills.from_dict({"roles": roles})
+	if OS.get_environment("OBAKE_PRACTICE") != "":
+		Skills.practice_role = OS.get_environment("OBAKE_PRACTICE")
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		if OS.get_environment("OBAKE_ITEMS") != "":
