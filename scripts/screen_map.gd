@@ -49,8 +49,21 @@ func _ready() -> void:
 			b.custom_minimum_size = Vector2(64, 30)
 			lr.add_child(b)
 
-	scroll = ScrollContainer.new()
+	var wk := DefData.weekly(GameState.week_no())
 	var top := 96.0 if GameState.best_lap > 1 else 62.0
+	if not wk.is_empty():
+		var wp := PanelContainer.new()
+		wp.add_theme_stylebox_override("panel", Kit.pill(Color("2a2233"), 16, 0.1))
+		wp.position = Vector2(12, top)
+		wp.size = Vector2(336, 0)
+		var wv := VBoxContainer.new()
+		wv.add_theme_constant_override("separation", 0)
+		wv.add_child(Kit.text("%d週目のお題「%s」" % [GameState.week_no(), wk.name], 13, Color("ffd23f"), true))
+		wv.add_child(Kit.text(wk.desc, 11, Color.WHITE))
+		wp.add_child(wv)
+		add_child(wp)
+		top += 60.0
+	scroll = ScrollContainer.new()
 	scroll.position = Vector2(0, top)
 	scroll.size = Vector2(360, 640 - top)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -220,6 +233,7 @@ func _stage_row(si: int, st: int) -> Control:
 
 
 func _open_sheet(si: int, st: int) -> void:
+	await Kit.make_portraits(GameState.deck.duplicate())
 	if sheet:
 		sheet.queue_free()
 	var shop: Dictionary = DefData.shop(si)
@@ -247,6 +261,8 @@ func _open_sheet(si: int, st: int) -> void:
 	p.add_theme_stylebox_override("panel", ps)
 	p.position = Vector2(0, 640)
 	p.size = Vector2(360, 0)
+	p.custom_minimum_size = Vector2(360, 0)
+	p.clip_contents = true
 	sheet.add_child(p)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
@@ -295,7 +311,10 @@ func _open_sheet(si: int, st: int) -> void:
 		bv.add_theme_constant_override("separation", 0)
 		bv.add_child(Kit.text("今日の応援", 12, Color("e8792f"), true))
 		for line in bst.lines:
-			bv.add_child(Kit.text("・" + line, 12, Kit.INK))
+			var bl := Kit.text("・" + line, 12, Kit.INK)
+			bl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+			bl.custom_minimum_size = Vector2(270, 0)
+			bv.add_child(bl)
 		bp.add_child(bv)
 		v.add_child(bp)
 	else:

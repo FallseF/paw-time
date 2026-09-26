@@ -1009,7 +1009,10 @@ func _intro() -> void:
 		v.add_theme_constant_override("separation", 0)
 		v.add_child(Kit.text("今日の応援", 12, Color("e8792f"), true))
 		for line in boost.lines:
-			v.add_child(Kit.text(line, 12, Kit.INK))
+			var bl := Kit.text(line, 12, Kit.INK)
+			bl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+			bl.custom_minimum_size = Vector2(290, 0)
+			v.add_child(bl)
 		p.add_child(v)
 		add_child(p)
 		p.modulate.a = 0.0

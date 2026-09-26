@@ -36,6 +36,7 @@ var lap_mult := 1.0
 var kills := 0
 var deployed := 0
 var boss_uid := -1
+var weekly := {} # 今週のお題
 var swarm_queue: Array = [] # [出る時刻, lv]
 
 
@@ -49,6 +50,9 @@ func setup(shop_i: int, stage_i: int, deck: Array, boost: Dictionary, lap := 1) 
 	regen_mult = boost.get("regen", 1.0)
 	if boost.get("job", "") != "":
 		job_buff[boost.job] = boost.get("job_mult", 1.0)
+	weekly = boost.get("weekly", {})
+	if not weekly.is_empty():
+		job_buff[weekly.job] = job_buff.get(weekly.job, 1.0) * weekly.job_mult
 	for d in deck:
 		var u: Dictionary = DefData.unit(d.id)
 		if u.is_empty():
@@ -191,6 +195,8 @@ func _spawn_enemy(id: String, mult: float) -> Dictionary:
 	var d: Dictionary = DefData.ENEMIES[id]
 	var e := _new_entity(1, id)
 	var m := mult * lap_mult
+	if not weekly.is_empty() and weekly.enemy == id:
+		m *= weekly.enemy_mult
 	e.x = BASE_E_X + randf() * 0.3
 	e.z = randf_range(0.0, 0.5)
 	e.max_hp = d.hp * m

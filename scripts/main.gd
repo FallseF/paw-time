@@ -61,6 +61,8 @@ func _debug_setup() -> void:
 	if s == "":
 		return
 	GameState.total_battles = 1
+	if OS.get_environment("OBAKE_DAY") != "":
+		GameState.day = int(OS.get_environment("OBAKE_DAY"))
 	for id in ["tray", "bubble", "pan"]:
 		GameState.add_obake(id)
 	if s == "rich":

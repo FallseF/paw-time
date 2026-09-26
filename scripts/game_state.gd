@@ -242,7 +242,9 @@ func finish_shift() -> Array:
 
 ## 戦いのブースト。shop_id の店で働いた日なら、開始やる気とその仕事のおばけが強くなる。
 func battle_boost(shop_id: String) -> Dictionary:
-	var b := {"regen": regen_bonus, "start_energy": 0.0, "job": "", "job_mult": 1.0, "lines": []}
+	var b := {"regen": regen_bonus, "start_energy": 0.0, "job": "", "job_mult": 1.0, "lines": [], "weekly": DefData.weekly(week_no())}
+	if not b.weekly.is_empty():
+		b.lines.append("今週のお題「%s」：%s" % [b.weekly.name, b.weekly.desc])
 	if regen_bonus > 1.0:
 		b.lines.append("よく寝た：やる気のたまり ×%.2f" % regen_bonus)
 	if boost.is_empty():
@@ -525,6 +527,9 @@ func sleep(hours: int, _trap := "") -> void:
 	# 次の日へ
 	day += 1
 	if day % 7 == 0:
+		var wk := DefData.weekly(week_no())
+		if not wk.is_empty():
+			morning_report.append("%d週目のお題「%s」：%s" % [week_no(), wk.name, wk.desc])
 		stores_week = {}
 		bands_week = {}
 		weekend_days = {}

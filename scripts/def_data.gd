@@ -144,6 +144,22 @@ const SHOPS := [
 ## 目安：1章=1〜2日目、2章=Lv4前後（4〜6日目）、3章=Lv6前後（1週半）、大ピーク=Lv8前後（2週目の終わり）
 const HARD := [[1.0, 1.2, 1.8, 2.5], [1.75, 1.95, 3.2, 2.15], [3.6, 3.9, 1.7, 2.25], [2.6]]
 
+## 今週のお題（2週目から、週ごとに入れ替わる）。困りごとがひとつ強くなり、ひとつの仕事のおばけが張りきる
+const WEEKLY := [
+	{"name": "給料日の週", "desc": "行列がのびる。レジのおばけが張りきる", "enemy": "gyouretsu", "enemy_mult": 1.5, "job": "register", "job_mult": 1.25},
+	{"name": "新メニューの週", "desc": "注文ラッシュが増す。キッチンのおばけが張りきる", "enemy": "chuumon", "enemy_mult": 1.5, "job": "kitchen", "job_mult": 1.25},
+	{"name": "雨つづきの週", "desc": "クレームの電話が鳴りやまない。ホールのおばけが張りきる", "enemy": "denwa", "enemy_mult": 1.5, "job": "hall", "job_mult": 1.25},
+	{"name": "宴会シーズン", "desc": "洗い物の塔が高くなる。皿洗いのおばけが張りきる", "enemy": "araimono", "enemy_mult": 1.5, "job": "dish", "job_mult": 1.25},
+	{"name": "棚卸しの週", "desc": "品切れが続く。品出しのおばけが張りきる", "enemy": "shinagire", "enemy_mult": 1.5, "job": "stock", "job_mult": 1.25},
+]
+
+
+static func weekly(week: int) -> Dictionary:
+	if week <= 1:
+		return {}
+	return WEEKLY[(week - 2) % WEEKLY.size()]
+
+
 ## 店の名前（シフトの記録）→ 章の id
 const STORE_SHOP := {"カフェ こもれび": "cafe", "居酒屋 とりまる": "izakaya", "北倉庫": "souko"}
 
