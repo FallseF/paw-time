@@ -105,6 +105,7 @@ var flash: ColorRect
 var cond_pill: PanelContainer
 var tut_ring: Panel
 var drops: CPUParticles3D
+var scraps: CPUParticles3D
 var stars: CPUParticles3D
 var sfx := {}
 var ambience: AudioStreamPlayer
@@ -336,6 +337,12 @@ func _build_world() -> void:
 		world.add_child(fall)
 
 	drops = _burst(Color("cfe8ff"), 24, 0.7, Vector3(0, -6, 0), 1.2, 2.4)
+	scraps = _burst(Color("fff6e8"), 14, 0.9, Vector3(0, -3, 0), 0.4, 1.2)
+	var scrap_mesh := BoxMesh.new()
+	scrap_mesh.size = Vector3(0.05, 0.004, 0.035)
+	scraps.mesh = scrap_mesh
+	scraps.angular_velocity_min = -360
+	scraps.angular_velocity_max = 360
 	stars = _burst(Color("fff2a8"), 40, 1.1, Vector3(0, -1.5, 0), 1.0, 2.2)
 	telegraph = CPUParticles3D.new()
 	telegraph.emitting = false
@@ -1219,6 +1226,7 @@ func _lift() -> void:
 ## ぎりぎりすくえたあとで、ポイだけが破れる（コンボは続く）
 func _tear_after_catch() -> void:
 	_play("tear")
+	_emit_scraps()
 	in_hand = false
 	used = false
 	var tw := create_tween()
@@ -1270,9 +1278,16 @@ func _partner_react(happy: bool) -> void:
 		tw.tween_property(partner_node, "rotation:z", 0.0, 0.3)
 
 
+func _emit_scraps() -> void:
+	scraps.position = poi.position + Vector3(0, 0.05, 0)
+	scraps.restart()
+	scraps.emitting = true
+
+
 func _tear(list: Array) -> void:
 	busy = true
 	_partner_react(false)
+	_emit_scraps()
 	pressed = false
 	_play("tear")
 	Input.vibrate_handheld(80)
