@@ -329,13 +329,24 @@ func _open_sheet(si: int, st: int) -> void:
 	# 編成
 	var dr := HBoxContainer.new()
 	dr.add_theme_constant_override("separation", 4)
+	var weak_jobs := {}
+	for id2 in ids:
+		weak_jobs[DefData.ENEMIES[id2].weak] = true
 	for id in GameState.deck:
+		var cell := VBoxContainer.new()
+		cell.add_theme_constant_override("separation", -4)
 		var pic := TextureRect.new()
 		pic.texture = Kit.portrait(id)
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		pic.custom_minimum_size = Vector2(36, 36)
-		dr.add_child(pic)
+		cell.add_child(pic)
+		# この夜の困りごとに効く仕事なら「効く」
+		var job: String = DefData.unit(id).get("job", "")
+		var tag := Kit.text("効く" if job != "" and weak_jobs.has(job) else " ", 9, Color("e8792f"), true)
+		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cell.add_child(tag)
+		dr.add_child(cell)
 	var dp := PanelContainer.new()
 	dp.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 14, 0.0))
 	dp.add_child(dr)
