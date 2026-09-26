@@ -34,6 +34,17 @@ func _run(plan: Array) -> String:
 			var st: int = nx[1]
 			if gs.is_cleared(si, st):
 				break
+			if not gs.is_open(si, st):
+				# ★が足りなければ、前の店のいちばん★の少ない面をやり直す。日にちや曜日なら今日はおしまい
+				if si > 0 and st == 0 and gs.stars_in_shop(si - 1) < gs.STARS_TO_OPEN and gs.is_cleared(si - 1, DefData.shop(si - 1).stages.size() - 1):
+					var worst := 0
+					for k in DefData.shop(si - 1).stages.size():
+						if int(gs.stage_stars.get(DefData.stage_key(si - 1, k, gs.lap), 0)) < int(gs.stage_stars.get(DefData.stage_key(si - 1, worst, gs.lap), 0)):
+							worst = k
+					si -= 1
+					st = worst
+				else:
+					break
 			var sim := ShopSim.new()
 			sim.setup(si, st, gs.deck_for_battle(), gs.battle_boost(DefData.shop(si).id), gs.lap)
 			while sim.result == "":

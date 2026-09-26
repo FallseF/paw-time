@@ -93,7 +93,8 @@ var daily_done := false
 var consolation_done := false
 var daily_pick: Array = [] # [日, 店, 面]
 var settings := {"music": true}
-var perfect := {} # お店を無傷で守った面（周回つきのキー）
+var perfect := {}
+var stage_stars := {} # 面ごとの いちばんよい★ # お店を無傷で守った面（周回つきのキー）
 var focus := "" # 育てたい一体。その日の最初の勝ちで経験値 +FOCUS_XP
 const FOCUS_XP := 40
 var total_battles := 0
@@ -441,8 +442,38 @@ func is_open(si: int, st: int) -> bool:
 		return true
 	if st > 0:
 		return is_cleared(si, st - 1)
+	return lock_reason(si) == ""
+
+
+## 店（章）がひらく条件。遊んだ回数ではなく、日にちと★でゆっくり進む
+const SHOP_OPEN_DAY := [0, 1, 2, 4] # この日（0=1週目の月曜）から。大ピークは金曜
+const STARS_TO_OPEN := 6 # 前の店で★をこれだけ
+
+
+func stars_in_shop(si: int) -> int:
+	var n := 0
+	for st in DefData.shop(si).stages.size():
+		n += int(stage_stars.get(DefData.stage_key(si, st, lap), 0))
+	return n
+
+
+func lock_reason(si: int) -> String:
+	if si == 0:
+		return ""
 	var prev: Dictionary = DefData.shop(si - 1)
-	return is_cleared(si - 1, prev.stages.size() - 1)
+	if not is_cleared(si - 1, prev.stages.size() - 1):
+		return "%s を越えるとひらく" % prev.stages[prev.stages.size() - 1].name
+	if stars_in_shop(si - 1) < STARS_TO_OPEN:
+		return "%sで★をあと%d" % [prev.name, STARS_TO_OPEN - stars_in_shop(si - 1)]
+	if lap == 1 and day < SHOP_OPEN_DAY[si]:
+		return "%d日目からひらく" % (SHOP_OPEN_DAY[si] + 1)
+	if si == DefData.SHOPS.size() - 1:
+		var wd := weekday()
+		if boss_wins == 0 and wd != "金":
+			return "金曜の夜にひらく"
+		if boss_wins > 0 and not wd in ["金", "土", "日"]:
+			return "金・土・日の夜にひらく"
+	return ""
 
 
 func next_stage() -> Array:
@@ -472,6 +503,7 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 			r.coins += 60
 			r.daily = true
 		r.first = first
+		stage_stars[key] = maxi(int(stage_stars.get(key, 0)), int(stats.get("stars", 0)))
 		# お店が無傷なら★（はじめての★で +30%）
 		if stats.get("stars", 0) >= 3 and not perfect.has(key):
 			perfect[key] = true
@@ -677,7 +709,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 const SAVE_KEYS := ["day", "phase", "nets", "net_strength", "last_sleep", "owned", "seen", "morning_report", "orbs", "hatched",
 	"scooped_tonight", "sleep_hist", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_days",
 	"first_role_today", "gifted", "received", "rare_pending", "coins", "deck", "cleared", "best_lap", "lap", "boost",
-	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick", "focus", "perfect", "settings"]
+	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick", "focus", "perfect", "settings", "stage_stars"]
 
 
 func save_game() -> void:

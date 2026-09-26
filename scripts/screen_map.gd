@@ -151,8 +151,7 @@ func _shop_card(si: int, boost_shop: String) -> Control:
 	v.add_child(hb)
 	var open_any := GameState.is_open(si, 0)
 	if not open_any:
-		var prev: Dictionary = DefData.shop(si - 1)
-		var l := Kit.text("  %s を越えるとひらく" % prev.stages[prev.stages.size() - 1].name, 13, Kit.SUB)
+		var l := Kit.text("  " + GameState.lock_reason(si), 13, Kit.SUB)
 		v.add_child(l)
 		return m
 	for st in shop.stages.size():
