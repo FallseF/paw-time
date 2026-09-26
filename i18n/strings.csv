@@ -1242,3 +1242,126 @@ Body,Body,体
 Hand,Hand,手
 Dishwashing,Dishwashing,皿洗い
 Hall,Hall,ホール
+KIT_hut,Beach Hut,浜の小屋
+KIT_cottage,Cozy Cottage,ちいさな家
+KIT_cafe_stand,Café Stand,カフェの屋台
+KIT_market_fruit,Fruit Stall,くだもの屋
+KIT_market_fish,Fish Stall,さかな屋
+KIT_ramen_cart,Ramen Cart,ラーメンの屋台
+KIT_bench,Bench,ベンチ
+KIT_log_seat,Log Seat,丸太のいす
+KIT_cushion,Cushion,ざぶとん
+KIT_picnic_mat,Picnic Mat,ピクニックシート
+KIT_parasol_table,Parasol Table,パラソルのテーブル
+KIT_hammock,Hammock,ハンモック
+KIT_stone_lantern,Stone Lantern,石灯籠
+KIT_paper_lantern,Paper Lantern,ちょうちん
+KIT_street_lamp,Street Lamp,街灯
+KIT_string_lights,String Lights,ひもの灯り
+KIT_fence_wood,Wooden Fence,木の柵
+KIT_fence_hedge,Hedge,生け垣
+KIT_stepping_stones,Stepping Stones,飛び石
+KIT_path_brick,Brick Path,れんがの道
+KIT_bridge_arch,Arch Bridge,そり橋
+KIT_bridge_islet,Islet Bridge,小島への橋
+KIT_tree_round,Round Tree,まるい木
+KIT_tree_sakura,Cherry Tree,桜の木
+KIT_tree_pine,Pine,松
+KIT_tree_palm,Palm Tree,ヤシの木
+KIT_bush,Bush,しげみ
+KIT_flower_pot,Flower Pot,植木鉢
+KIT_flower_bed,Flower Bed,花壇
+KIT_tulip_patch,Tulips,チューリップ
+KIT_sunflowers,Sunflowers,ひまわり
+KIT_pond,Pond,池
+KIT_pier,Pier,桟橋
+KIT_hot_spring,Hot Spring,温泉
+KIT_fountain,Fountain,噴水
+KIT_lighthouse,Lighthouse,灯台
+KIT_torii_gate,Shrine Gate,鳥居
+KIT_windmill,Windmill,風車
+KIT_swing,Swing,ブランコ
+KIT_slide,Slide,すべり台
+KIT_sandbox,Sandbox,砂場
+KIT_yarn_ball,Yarn Ball,毛糸玉
+KIT_mailbox,Mailbox,郵便受け
+KIT_bulletin_board,Bulletin Board,掲示板
+KIT_signpost,Signpost,道しるべ
+KIT_shell_pile,Shell Pile,貝がら
+KIT_snowman,Snowman,雪だるま
+KIT_pumpkin_patch,Pumpkin Patch,かぼちゃ畑
+KIT_tanabata_bamboo,Tanabata Bamboo,七夕の笹
+KIT_koinobori,Carp Streamers,こいのぼり
+KIT_CAT_home,Homes,家
+KIT_CAT_shop,Shops,お店
+KIT_CAT_seat,Seats,座る
+KIT_CAT_light,Lights,灯り
+KIT_CAT_fence,Fences,柵
+KIT_CAT_path,Paths & Bridges,道・橋
+KIT_CAT_tree,Trees,木
+KIT_CAT_flower,Flowers,花
+KIT_CAT_water,Water,水
+KIT_CAT_landmark,Landmarks,しるし
+KIT_CAT_play,Play,あそぶ
+KIT_CAT_sign,Little Things,小物
+KIT_CAT_season,Seasonal,季節
+KIT_CAT_premium,Special (sample store),とくべつ（見本のストア）
+KIT_lighthouse_starlight,Starlight Lighthouse,星あかりの灯台
+KIT_festival_yagura,Festival Tower,お祭りのやぐら
+KIT_lantern_arch,Lantern Arch,ちょうちんのアーチ
+MAT_wood,Wood,木材
+MAT_stone,Stone,石
+MAT_seed,Seeds,花の種
+MAT_paper,Lantern Paper,ちょうちん紙
+MAT_shell,Shells,貝がら
+MAT_cloth,Cloth,布
+KIT_UI_SHOP,Catalog,カタログ
+KIT_UI_BUY,Buy,買う
+KIT_UI_PLACE,Place,置く
+KIT_UI_STORE,Store,しまう
+KIT_UI_ROTATE,Rotate,回す
+KIT_UI_DONE,Done,できた
+KIT_UI_CLOSE,Close,とじる
+KIT_UI_HAVE,You have,持っている
+KIT_UI_MISSING,Need,足りない
+KIT_UI_LOCKED,Unlocks when the island grows,島が広がると買える
+KIT_UI_COINS,Paw Coins,肉球コイン
+KIT_UI_STOCK,In storage,しまってある物
+KIT_UI_BOUGHT,Bought! Drag to place it.,買った！ドラッグで置いてね
+KIT_UI_TAP,Tap an item to move it,物をタップして、動かす
+KIT_UI_MATS,Materials,材料
+KIT_UI_DROP,Found %s ×%d,%s を %d こ見つけた
+KIT_STAGE_0,Little Island,ちいさな島
+KIT_STAGE_1,Beaches & Cliffs,砂浜と崖
+KIT_STAGE_2,Twin Islands,ふたつの島
+KIT_UI_SOON,Coming soon — sample store,準備中です（見本のストア）
+KIT_UI_COSMETIC,Looks only. Gameplay stays free.,見た目だけ。遊びの進み方は変わりません
+VEH_raft,Raft,いかだ
+VEH_rowboat,Rowboat,ボート
+VEH_ferry,Ferry,フェリー
+VEH_seaplane,Seaplane,水上飛行機
+VEH_helicopter,Helicopter,ヘリコプター
+VEH_paper_boat,Paper Boat,紙の舟
+VEH_giant_koi,Giant Koi,大きな鯉
+KIT_UI_EXPAND,Expand the island,島を広げる
+KIT_UI_EXPAND_PLOT,New land rises from the sea here.,ここに、海から陸がせり上がる
+KIT_UI_EXPAND_ISLET,"A small islet, linked by a bridge.",橋でつながる、小さな島
+KIT_UI_EXPAND_GO,Raise the land,陸をあげる
+KIT_UI_EXPAND_DONE,The island grew!,島が広がった！
+KIT_UI_MAXED,The island is as big as it gets.,これ以上は広げられない
+KIT_UI_EXPANSIONS,Expansions %d/%d,広げた場所 %d/%d
+KIT_UI_GARAGE,Dock,船着き場
+KIT_UI_RIDE,Ride,これに乗る
+KIT_UI_RIDING,Riding,乗っている
+KIT_UI_MAKE,Build,作る
+KIT_UI_VEH_NOTE,Looks only. Every vehicle travels the same and gives the same rewards.,見た目だけ。どの乗り物でも、着く速さやもらえる物は同じ
+KIT_UI_TRAVEL,Heading to %s's island,%sの島へ
+KIT_UI_SKIP,Skip,とばす
+KIT_UI_ARRIVE,Arrived!,到着！
+KIT_UI_MOCK,Mock store — no real payment,見本のストア（本当の支払いはありません）
+中に、乗り物,A ride inside,中に、乗り物
+乗り物,Ride,乗り物
+おでかけのときに乗れる（見た目だけ）,Ride it when you visit (looks only),おでかけのときに乗れる（見た目だけ）
+COIN_N,%d coins,%d コイン
+COIN_HAVE_NEED,Coins %d/%d,コイン %d/%d
+朝だ。光る玉が 1 個,Morning. 1 glowing orb.,朝だ。光る玉が 1 個

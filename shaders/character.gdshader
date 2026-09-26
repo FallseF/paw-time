@@ -26,17 +26,25 @@ uniform float back_rim : hint_range(0.0, 4.0) = 0.5;
 uniform float sheen : hint_range(0.0, 1.0) = 0.05;
 uniform float sheen_gloss = 18.0;
 uniform float emission_energy = 0.0;
+// 1 なら頂点色をそのまま色に使う（地形：芝・砂・岩と AO を Blender で焼いてある）
+uniform float vertex_albedo : hint_range(0.0, 1.0) = 0.0;
+// 地形の芝に、世界座標のまだらを少し足す（近くで見ても単色に見えないように）
+uniform float ground_mottle : hint_range(0.0, 0.3) = 0.0;
 uniform float shadow_keep : hint_range(0.0, 1.0) = 0.6;
 uniform float top_light : hint_range(0.0, 0.5) = 0.07;
 
 varying float v_ao;
 varying float v_ear_region;
+varying vec3 v_col;
+varying vec3 v_world;
 varying vec3 v_obj;
 varying float v_up;
 
 void vertex() {
 	v_ao = COLOR.r;
 	v_ear_region = 1.0 - COLOR.b;
+	v_col = COLOR.rgb;
+	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	v_obj = VERTEX;
 	v_up = (MODEL_NORMAL_MATRIX * NORMAL).y;
 }
@@ -75,14 +83,23 @@ float luma(vec3 c) {
 
 void fragment() {
 	vec3 alb = base_color.rgb * texture(albedo_tex, UV).rgb;
-	if (v_ear_region > 0.01) {
+	if (vertex_albedo > 0.5) {
+		alb = base_color.rgb * v_col;
+		if (ground_mottle > 0.0) {
+			vec2 q = v_world.xz;
+			float n = sin(q.x * 2.3 + sin(q.y * 1.7)) * sin(q.y * 2.9 + sin(q.x * 1.3));
+			n += 0.5 * sin(q.x * 7.1 + q.y * 5.3) * sin(q.y * 6.7 - q.x * 3.1);
+			alb *= 1.0 + ground_mottle * n;
+		}
+	}
+	if (v_ear_region > 0.01 && vertex_albedo < 0.5) {
 		float ear = max(inner_ear(v_obj, -1.0), inner_ear(v_obj, 1.0)) * clamp(v_ear_region * 2.0, 0.0, 1.0);
 		alb = mix(alb, inner_color.rgb, ear);
 	}
 	// 上を向いた面ほどわずかに明るく（空からの光）
 	alb *= 1.0 + top_light * v_up;
 	// AO は暗くするだけでなく、影の色へ寄せる
-	float ao = mix(1.0, v_ao, ao_strength);
+	float ao = mix(1.0, v_ao, ao_strength * (1.0 - vertex_albedo));
 	vec3 ao_col = mix(shadow_tint.rgb * 0.75, vec3(1.0), ao);
 	ALBEDO = alb * ao_col;
 	float ndv = clamp(dot(NORMAL, VIEW), 0.0, 1.0);

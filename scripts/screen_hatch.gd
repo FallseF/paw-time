@@ -59,7 +59,7 @@ func _ready() -> void:
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
-	header.text = tr("朝だ。光る玉が %d 個") % n_orbs
+	header.text = tr("朝だ。光る玉が 1 個") if n_orbs == 1 else tr("朝だ。光る玉が %d 個") % n_orbs
 	next_btn.text = "玉をひらく"
 	# 最初の玉は、待たずにひらく
 	await get_tree().create_timer(0.7).timeout
@@ -376,7 +376,7 @@ func _open_batch() -> void:
 	var n_items := 0
 	for i in rest.size():
 		var h: Dictionary = GameState.hatched[index + i]
-		counts[h.id] = counts.get(h.id, 0) + 1
+		counts[h.id] = counts.get(h.id, 0) + (int(h.content.get("n", 1)) if h.has("kind") else 1) # 材料は 1 玉で何こか
 		levels[h.id] = h.level
 		if h.has("kind"):
 			n_items += 1
@@ -472,8 +472,8 @@ func _reveal_item(h: Dictionary) -> void:
 	sfx["chime"].play()
 	card_title.text = tr(Drops.info(c).get("name", ""))
 	badge.get_parent().visible = h.is_new
-	card_sub.text = tr("島の材料") if c.kind == "material" else tr("服")
-	card_desc.text = tr("島をつくるときに使える") if c.kind == "material" else tr("おばけに着せられる")
+	card_sub.text = tr({"material": "島の材料", "cloth": "服", "vehicle": "乗り物"}.get(c.kind, "島の材料"))
+	card_desc.text = tr({"material": "島をつくるときに使える", "cloth": "おばけに着せられる", "vehicle": "おでかけのときに乗れる（見た目だけ）"}.get(c.kind, ""))
 	card.position.y = 400
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)

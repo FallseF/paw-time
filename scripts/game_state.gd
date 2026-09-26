@@ -1074,10 +1074,10 @@ func host() -> String:
 	return owned[0].id if not owned.is_empty() else "receipt"
 
 
-## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）
+## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）・置き物キット（版3）・広げた場所と乗り物（版4）
 func island_code(items_present: Array) -> String:
 	var b := PackedByteArray()
-	b.append(3)
+	b.append(5) # 版5：服（キセカエ）＋置き物キット＋広げた場所＋乗り物。版1〜4も読める
 	b.append(garden_level)
 	b.append(tier())
 	var nm := (nickname if nickname != "" else "ななし").to_utf8_buffer()
@@ -1115,7 +1115,7 @@ func island_code(items_present: Array) -> String:
 		b.append(clampi(int(round((float(l.get("x", 99.0)) + 6.0) * 20.0)), 0, 255) if l.has("x") else 255)
 		b.append(clampi(int(round((float(l.get("z", 0.0)) + 6.0) * 20.0)), 0, 255) if l.has("x") else 255)
 		b.append(int(l.get("r", 0)) & 7)
-	# 版3：服。あるじ（255）と住人の番号ごとに、6 か所＋色の 7 バイト。着ている子だけ、最大 6 体
+	# 服（版5。キセカエの版3と同じ形）。あるじ（255）と住人の番号ごとに、6 か所＋色の 7 バイト。着ている子だけ、最大 6 体
 	var dressed: Array = []
 	if not Wardrobe.outfit_of(host()).is_empty():
 		dressed.append([255, host()])
@@ -1127,6 +1127,11 @@ func island_code(items_present: Array) -> String:
 	for dd in dressed:
 		b.append(dd[0])
 		b.append_array(Wardrobe.pack(dd[1]))
+	# 置き物キット（買って置いた物）を後ろに足す
+	b.append_array(IslandKit.encode(IslandKit.placed))
+	# プレイヤーが広げた場所と、桟橋にとめてある乗り物
+	b.append_array(IslandKit.encode_expansions(IslandKit.expansions()))
+	b.append(Vehicles.index_of(Vehicles.current()))
 	return Marshalls.raw_to_base64(b).replace("+", "-").replace("/", "_").replace("=", "")
 
 
@@ -1139,7 +1144,7 @@ func decode_island(code: String) -> Dictionary:
 	while code.length() % 4 != 0:
 		code += "="
 	var b := Marshalls.base64_to_raw(code)
-	if b.size() < 6 or not b[0] in [1, 2, 3]:
+	if b.size() < 6 or b[0] < 1 or b[0] > 5:
 		return {}
 	var i := 1
 	var d := {"level": b[1], "tier": clampi(b[2], 0, 3)}
@@ -1191,9 +1196,16 @@ func decode_island(code: String) -> Dictionary:
 			d.layout[key] = {"x": x / 20.0 - 6.0, "z": z / 20.0 - 6.0, "r": r}
 		if key.begins_with("deco_"):
 			d.decos[key.substr(5)] = maxi(1, lv)
-	# 版3：服（なければ空）。あるじの服は "my"／あるじの id で引けるようにする
+	# 版3 は 2 種類ある（キセカエの版3＝服、島キットの版3＝置き物）。長さがぴったり合うほうで読む
 	d.outfits = {}
-	if b[0] >= 3 and i < b.size():
+	d.kit = []
+	d.expansions = []
+	d.vehicle = "raft"
+	var ver: int = b[0]
+	var has_outfits: bool = ver >= 5 or (ver == 3 and _is_outfit_block(b, i))
+	var has_kit: bool = ver >= 4 or (ver == 3 and not has_outfits)
+	# 服：あるじ（255）と住人の番号ごとに 7 バイト。あるじの服は "my"／あるじの id で引けるようにする
+	if has_outfits and i < b.size():
 		var dn: int = b[i]
 		i += 1
 		for k in dn:
@@ -1206,4 +1218,23 @@ func decode_island(code: String) -> Dictionary:
 				d.outfits[d.host] = o
 			elif who < d.residents.size():
 				d.outfits[d.residents[who]] = o
+	if has_kit:
+		var kd := IslandKit.decode(b, i)
+		d.kit = kd.list
+		i = kd.next
+	# 広げた場所と乗り物（版4から）
+	if ver >= 4:
+		var ed := IslandKit.decode_expansions(b, i)
+		d.expansions = ed.list
+		i = ed.next
+		if i < b.size() and b[i] < Vehicles.LIST.size():
+			d.vehicle = Vehicles.LIST[b[i]].id
 	return d
+
+
+## キセカエの版3（服の並び）として長さがぴったり合うか（島キットの版3と見分ける）
+static func _is_outfit_block(b: PackedByteArray, i: int) -> bool:
+	if i >= b.size():
+		return false
+	var n: int = b[i]
+	return n <= 6 and i + 1 + 8 * n == b.size()

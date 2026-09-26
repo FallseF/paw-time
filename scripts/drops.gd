@@ -2,7 +2,8 @@ class_name Drops
 ## すくった玉の中身：おばけ／島の材料／服。玉の中にヒント（小さな影）を見せ、朝の孵化で明かす。
 ## 割合は下の W_MATERIAL / W_CLOTH / W_CAT。玉の中身を決めるのはここだけ（Wardrobe などは別に引かない）。
 ##   服   → Wardrobe.random_drop("common"|"rare") で選び、Wardrobe.grant で持ち物に（新しい服は朝の庭で OutfitReveal）
-##   材料 → いまは仮（MATERIALS）。island-kit を取り込んだら IslandKit.random_drop() / grant_material() に
+##   材料 → IslandKit.roll_material() で選び、朝に IslandKit.grant_material(id, n)
+##   乗り物 → 虹の玉の材料のうち VEHICLE_FROM_RARE の割合で、まだ持っていない乗り物（見た目だけ。速さもごほうびも同じ）
 
 ## 玉の中身の割合（持ち主の決定：玉はほぼ材料、おばネコはレア）。合計は何でもよい（比で引く）
 const W_MATERIAL := 70
@@ -10,7 +11,10 @@ const W_CLOTH := 20
 const W_CAT := 10
 ## この夜数のあいだ新しいおばネコがかえらなければ、次の夜のいちばんいい玉をおばネコにする（画面には出さない）
 const CAT_PITY_NIGHTS := 7
+## 虹の玉から材料が出るとき、代わりに乗り物になる割合（持っていない乗り物があるときだけ）
+const VEHICLE_FROM_RARE := 0.25
 
+## 昔の仮の材料（古いセーブの玉の中身を読むためだけに残す）
 const MATERIALS := {
 	"driftwood": {"name": "流木", "color": Color("b07a4a")},
 	"pebble": {"name": "まるい小石", "color": Color("a8a39a")},
@@ -36,7 +40,9 @@ static func roll(orb_type: String, rare: bool) -> Dictionary:
 	var r := randi() % (W_MATERIAL + W_CLOTH + W_CAT)
 	var c: Dictionary
 	if r < W_MATERIAL:
-		c = _roll_material()
+		c = _roll_vehicle() if rare and randf() < VEHICLE_FROM_RARE else {}
+		if c.is_empty():
+			c = _roll_material()
 	elif r < W_MATERIAL + W_CLOTH:
 		c = _roll_cloth("rare" if rare else "common")
 	else:
@@ -50,8 +56,17 @@ static func is_cat(c: Dictionary) -> bool:
 
 
 static func _roll_material() -> Dictionary:
-	var id: String = MATERIALS.keys().pick_random()
-	return {"kind": "material", "id": id}
+	var m := IslandKit.roll_material()
+	return {"kind": "material", "id": m.kind, "n": m.n}
+
+
+## まだ持っていない乗り物（いかだと見本の有料は除く）。無ければ {}
+static func _roll_vehicle() -> Dictionary:
+	var pool: Array = []
+	for v in Vehicles.LIST:
+		if v.id != "raft" and not v.get("premium", false) and not Vehicles.owned().has(v.id):
+			pool.append(v.id)
+	return {"kind": "vehicle", "id": pool.pick_random()} if not pool.is_empty() else {}
 
 
 ## 服はキセカエの「玉から」の服（持っていない物）。全部そろっていたら材料にする
@@ -64,7 +79,11 @@ static func _roll_cloth(rarity := "common") -> Dictionary:
 
 static func info(c: Dictionary) -> Dictionary:
 	if c.get("kind", "") == "material":
+		if IslandKit.MATERIALS.has(c.id):
+			return {"name": "MAT_" + c.id, "color": Color(IslandKit.MATERIALS[c.id].color)}
 		return MATERIALS.get(c.id, {"name": c.id, "color": Color.WHITE})
+	if c.get("kind", "") == "vehicle":
+		return {"name": "VEH_" + c.id, "color": Color("fff2a8")}
 	if c.get("kind", "") == "cloth":
 		var it := WardrobeData.item(c.id)
 		if not it.is_empty():
@@ -82,6 +101,12 @@ static func grant(c: Dictionary) -> bool:
 		if got and gs:
 			gs.new_outfits.append(c.id)
 		return got
+	if c.kind == "material" and IslandKit.MATERIALS.has(c.id):
+		var first := IslandKit.count(c.id) == 0
+		IslandKit.grant_material(c.id, int(c.get("n", 1)))
+		return first
+	if c.kind == "vehicle":
+		return Vehicles.grant(c.id)
 	if gs == null:
 		return false
 	var key: String = "%s:%s" % [c.kind, c.id]
@@ -97,14 +122,14 @@ static func make_icon(c: Dictionary, glow := false) -> Node3D:
 	var m := MeshInstance3D.new()
 	if c.kind == "material":
 		match c.id:
-			"driftwood":
+			"driftwood", "wood":
 				var cy := CylinderMesh.new()
 				cy.top_radius = 0.18
 				cy.bottom_radius = 0.22
 				cy.height = 1.0
 				m.mesh = cy
 				m.rotation = Vector3(0.2, 0.5, 1.3)
-			"pebble", "moss":
+			"pebble", "moss", "stone", "seed":
 				var sp := SphereMesh.new()
 				sp.radius = 0.45
 				sp.height = 0.6
@@ -121,6 +146,10 @@ static func make_icon(c: Dictionary, glow := false) -> Node3D:
 				b.size = Vector3(0.6, 0.35, 0.45)
 				m.mesh = b
 				m.rotation = Vector3(0.3, 0.6, 0.2)
+	elif c.kind == "vehicle":
+		var v := VehicleProps.build_vehicle(c.id)
+		v.scale = Vector3.ONE * 0.45
+		n.add_child(v)
 	else:
 		var t := TorusMesh.new()
 		t.inner_radius = 0.28
@@ -134,8 +163,9 @@ static func make_icon(c: Dictionary, glow := false) -> Node3D:
 		k.mesh = s
 		k.material_override = Obake3D.toon(col.darkened(0.15), 0.2)
 		n.add_child(k)
-	m.material_override = Obake3D.toon(col, 0.25)
-	n.add_child(m)
+	if c.kind != "vehicle":
+		m.material_override = Obake3D.toon(col, 0.25)
+		n.add_child(m)
 	if glow:
 		# 玉の中では、光る影にして、ガラス越しに形が読めるように
 		for mi in n.find_children("*", "MeshInstance3D", true, false):

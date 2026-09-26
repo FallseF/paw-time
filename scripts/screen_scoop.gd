@@ -413,7 +413,7 @@ func _orb_tag(o: Orb3D) -> void:
 	if ck != "obake" and not GameState.tut.has("hint_" + ck):
 		GameState.tut["hint_" + ck] = true
 		tag_n += 1
-		var hl := Kit.label3d(tr("中に、島の材料") if ck == "material" else tr("中に、服"), 30, Color("fff2a8"))
+		var hl := Kit.label3d(tr({"material": "中に、島の材料", "cloth": "中に、服", "vehicle": "中に、乗り物"}.get(ck, "中に、島の材料")), 30, Color("fff2a8"))
 		hl.pixel_size = 0.0035
 		hl.position = Vector3(0, 0.5, 0)
 		hl.visible = false

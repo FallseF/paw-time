@@ -15,9 +15,12 @@ func _initialize() -> void:
 	for strat in ["solo_steady", "solo_chaos", "solo_owl", "data_record", "data_steady"]:
 		seed(7)
 		gs.reset("data" if strat.begins_with("data") else "solo")
+		Wardrobe.reset() # 服・材料・乗り物の持ち物も、戦略ごとにまっさらから
+		IslandKit.reset()
+		Vehicles.reset()
 		var line := []
 		var levels := {}
-		var tally := {"cat_orb": 0, "cat_life_rare": 0, "cat_dream": 0, "material": 0, "cloth": 0, "scooped_obake": 0, "scooped_material": 0, "scooped_cloth": 0}
+		var tally := {"cat_orb": 0, "cat_life_rare": 0, "cat_dream": 0, "material": 0, "cloth": 0, "vehicle": 0, "scooped_obake": 0, "scooped_material": 0, "scooped_cloth": 0, "scooped_vehicle": 0}
 		var gap := 0
 		var max_gap := 0
 		for d in 42:
@@ -88,10 +91,10 @@ func _initialize() -> void:
 			if Rares.is_rare(id):
 				rares += 1
 		print("%-12s %s | レア%d 通常%d | 段到達日 %s" % [strat, "  ".join(line), rares, gs.seen.size() - rares, levels])
-		var scooped: int = tally.scooped_obake + tally.scooped_material + tally.scooped_cloth
-		print("   30日ですくった玉 %d 個（中身 おばネコ %d・材料 %d・服 %d）→ かえった：おばネコ %d（玉とそのほか）・暮らしのレア %d・夢のスヤリ %d | 島の材料 %d・服 %d | 新しい子が来ない夜の最長 %d" % [scooped, tally.scooped_obake, tally.scooped_material, tally.scooped_cloth, tally.cat_orb, tally.cat_life_rare, tally.cat_dream, tally.material, tally.cloth, max_gap])
+		var scooped: int = tally.scooped_obake + tally.scooped_material + tally.scooped_cloth + tally.scooped_vehicle
+		print("   30日ですくった玉 %d 個（中身 おばネコ %d・材料 %d・服 %d）→ かえった：おばネコ %d（玉とそのほか）・暮らしのレア %d・夢のスヤリ %d | 島の材料 %d・服 %d・乗り物 %d | 新しい子が来ない夜の最長 %d" % [scooped, tally.scooped_obake, tally.scooped_material, tally.scooped_cloth, tally.cat_orb, tally.cat_life_rare, tally.cat_dream, tally.material, tally.cloth, tally.vehicle, max_gap])
 		if scooped >= 40:
-			var mat_share := float(tally.scooped_material) / scooped
+			var mat_share := float(tally.scooped_material + tally.scooped_vehicle) / scooped
 			var cat_share := float(tally.scooped_obake) / scooped
 			if mat_share < 0.55 or cat_share > 0.25:
 				fails += 1

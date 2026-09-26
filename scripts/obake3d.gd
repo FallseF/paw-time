@@ -219,7 +219,9 @@ func _add_contact_shadow() -> void:
 		return
 	var box := AABB()
 	var first := true
-	for m in body.find_children("*", "MeshInstance3D", true, false):
+	# setup() を通さず ghost() だけで組んだ子（庭の住人など）は body が無いので、自分の下から探す
+	var src: Node = body if body else self
+	for m in src.find_children("*", "MeshInstance3D", true, false):
 		var mi := m as MeshInstance3D
 		if mi.material_override and mi.material_override is ShaderMaterial and (mi.material_override as ShaderMaterial).shader == DECAL_SHADER:
 			continue
@@ -666,7 +668,7 @@ func _add_prop(id: String) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	if bob:
+	if bob and body:
 		body.position.y = sin(_t * 2.0) * 0.06
 		body.rotation.y = sin(_t * 0.7) * 0.25
 		body.scale = Vector3(1.0 + sin(_t * 4.0) * 0.015, 1.0 - sin(_t * 4.0) * 0.015, 1.0)
@@ -682,6 +684,6 @@ func _process(delta: float) -> void:
 	for e in eyes:
 		e.scale.y = lerpf(EYE_SCALE.y, 0.1, k)
 	var sh := get_node_or_null("ContactShadow") as Node3D
-	if sh:
+	if sh and body:
 		var lift := clampf(body.position.y, 0.0, 0.3)
 		sh.scale = Vector3.ONE * (1.0 - lift * 1.2)

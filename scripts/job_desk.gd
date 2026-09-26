@@ -26,7 +26,7 @@ var jobs: Array = []
 var index := 0
 var accepted := 0
 var busy := false
-var note_top := 62 # 知らせのカードの一段目（毎日は「しごと」の小さなボタンの下から）
+var note_top := 108 # 知らせのカードの一段目（上の段の札・キセカエ・しごとの下から）
 var work_btn: Button
 
 

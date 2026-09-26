@@ -64,8 +64,9 @@ func hold_still() -> void:
 
 # ---------------------------------------------------------------- 部品
 
-func _m(c: Color, rim := 0.3, grow := 0.016) -> StandardMaterial3D:
-	return toon(c, rim, 0.0, grow)
+## 持ち物の材質（Obake3D.prop と同じ塗り・細い輪郭）。grow は昔の輪郭の太さの名残で使わない。
+func _m(c: Color, rim := 0.3, _grow := 0.016) -> ShaderMaterial:
+	return prop(c, rim)
 
 
 func _put(m: Mesh, c: Color, pos: Vector3, rot := Vector3.ZERO, scl := Vector3.ONE, grow := 0.016) -> MeshInstance3D:
