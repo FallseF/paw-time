@@ -282,6 +282,38 @@ func _build_world() -> void:
 	sky_stars.mesh = stm
 	sky_stars.material_override = _glow_mat(Color("dfe6ff"), 2.0)
 	world.add_child(sky_stars)
+	# 空のグラデーション
+	var sky := MeshInstance3D.new()
+	var sq := QuadMesh.new()
+	sq.size = Vector2(60, 22)
+	sky.mesh = sq
+	sky.position = Vector3(0, 7, -20)
+	var skym := ShaderMaterial.new()
+	skym.shader = load("res://shaders/sky.gdshader")
+	if mods.snow:
+		skym.set_shader_parameter("top_col", Color("1a2238"))
+		skym.set_shader_parameter("mid_col", Color("3a4466"))
+		skym.set_shader_parameter("low_col", Color("7a7f9a"))
+	elif mods.dark:
+		skym.set_shader_parameter("top_col", Color("020308"))
+		skym.set_shader_parameter("mid_col", Color("0a0c1c"))
+		skym.set_shader_parameter("low_col", Color("1c1830"))
+	elif mods.festival:
+		skym.set_shader_parameter("low_col", Color("6a3040"))
+	sky.material_override = skym
+	world.add_child(sky)
+	# 遠くの山なみ
+	for i in 7:
+		var mt := MeshInstance3D.new()
+		var cm2 := CylinderMesh.new()
+		cm2.top_radius = 0.0
+		cm2.bottom_radius = rng.randf_range(3.0, 5.0)
+		cm2.height = rng.randf_range(2.5, 4.0)
+		cm2.radial_segments = 5
+		mt.mesh = cm2
+		mt.position = Vector3(-14 + i * 4.6 + rng.randf_range(-1, 1), cm2.height * 0.5 - 0.3, -15)
+		mt.material_override = Obake3D.flat(Color("141a33") if not mods.snow else Color("5a6386"))
+		world.add_child(mt)
 	for i in 16:
 		var tx := -10.0 + i * 1.35 + rng.randf_range(-0.3, 0.3)
 		var tz := rng.randf_range(-9, -6)
