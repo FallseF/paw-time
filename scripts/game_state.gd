@@ -375,8 +375,8 @@ func clear_count(si: int, st: int) -> int:
 ## 今日のお手伝い：ひらいているステージから日替わりで1つ。その日の最初の勝ちに +60
 func daily_stage() -> Array:
 	# その日の最初に決めたら、1日変えない
-	if daily_pick.size() == 3 and int(daily_pick[0]) == day:
-		return [int(daily_pick[1]), int(daily_pick[2])]
+	if daily_pick.size() == 4 and int(daily_pick[0]) == day and int(daily_pick[1]) == lap:
+		return [int(daily_pick[2]), int(daily_pick[3])]
 	var open: Array = []
 	for si in DefData.SHOPS.size():
 		for st in DefData.shop(si).stages.size():
@@ -385,7 +385,7 @@ func daily_stage() -> Array:
 	if open.is_empty():
 		return []
 	var pick: Array = open[(day * 7 + 3) % open.size()]
-	daily_pick = [day, pick[0], pick[1]]
+	daily_pick = [day, lap, pick[0], pick[1]]
 	return pick
 
 
@@ -430,7 +430,7 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 		if stats.get("base", 0.0) >= 0.999 and not perfect.has(key):
 			perfect[key] = true
 			r["perfect"] = true
-			r.coins += int(base * 0.3)
+			r.coins += int(r.coins * 0.3)
 		if wins_today == 0 and focus != "" and not owned_of(focus).is_empty():
 			var fo := owned_of(focus)
 			fo.xp += FOCUS_XP

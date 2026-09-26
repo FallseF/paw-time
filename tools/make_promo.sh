@@ -17,7 +17,7 @@ rec() { # 場面 秒
 
 if [ "$1" != "--no-rec" ]; then
 rec rush 7
-rec boss 11
+rec boss 14
 rec room 4
 rec scoop 6
 rec hatch 6
@@ -35,7 +35,7 @@ cap() {
 }
 
 cap rush 0.5 6
-cap boss 0.4 9.5
+cap boss 0.4 12.5
 cap room 0.3 3.5
 cap scoop 0.3 5.5
 cap hatch 0.3 5.5

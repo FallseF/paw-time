@@ -80,7 +80,7 @@ func _ready() -> void:
 	bv.size = Vector2(260, 0)
 	bv.add_theme_constant_override("separation", 10)
 	add_child(bv)
-	if GameState.has_save() and (GameState.total_battles > 0 or GameState.day > 0):
+	if GameState.has_save():
 		bv.add_child(Kit.button("つづきから（%d週目 %s曜）" % [GameState.week_no(), GameState.weekday()], Color("ff6b5b"), func(): main.go("morning")))
 		bv.add_child(Kit.button("はじめから", Color(1, 1, 1, 0.92), _confirm_new, Kit.INK, 44, 15))
 	else:

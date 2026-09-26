@@ -121,7 +121,7 @@ func _boss() -> void:
 		await get_tree().create_timer(0.1).timeout
 	sim.cannon = 1.0
 	s._cannon()
-	await get_tree().create_timer(1.5).timeout
+	await get_tree().create_timer(1.2).timeout
 	# 大ピークを弱らせて、見せ場を早める
 	for e in sim.entities:
 		if e.boss:
@@ -130,11 +130,15 @@ func _boss() -> void:
 	var kz := _slot(sim, "kaminari")
 	sim.slots[kz].left = 0
 	s._deploy(kz)
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(1.8).timeout
+	for sp in sim.spawners:
+		if not sp.on:
+			sp.on = true
+			sp.next = 9999.0
 	sim.ebase_hp = minf(sim.ebase_hp, 300)
 	while sim.result == "":
-		await get_tree().create_timer(0.2).timeout
-		sim.ebase_hp -= 60
+		await get_tree().create_timer(0.15).timeout
+		sim.ebase_hp -= 150
 
 
 func _slot(sim: DefSim, id: String) -> int:

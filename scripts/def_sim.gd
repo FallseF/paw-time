@@ -352,6 +352,7 @@ func _step(e: Dictionary, dt: float) -> void:
 		return
 	if targets.is_empty() and not base_hit:
 		e.attacking = false
+		e.winding = false
 		_walk(e, dt)
 		return
 	e.attacking = true
@@ -365,8 +366,9 @@ func _step(e: Dictionary, dt: float) -> void:
 		events.append({"type": "hop", "uid": e.uid})
 		return
 	# 大きな困りごとは、攻撃の前に1秒ためる（ここでチャイムを当てると止まる）
-	if e.big and not e.winding and e.cd <= WINDUP and e.cd > 0:
+	if e.big and not e.winding and e.cd <= WINDUP:
 		e.winding = true
+		e.cd = WINDUP
 		events.append({"type": "windup", "uid": e.uid})
 	if e.cd > 0:
 		return

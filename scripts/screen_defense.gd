@@ -902,6 +902,8 @@ func _show_hint(key: String, text: String, target: Control, once := true) -> voi
 		return
 	if demo:
 		return
+	if hint.visible and hint_key != key:
+		return # ほかの案内を出している間は、あとで出す
 	GameState.tutorial[key] = true
 	hint_key = key
 	hint_label.text = text
