@@ -43,7 +43,7 @@ func _ready() -> void:
 	dp.add_child(dv)
 	dv.add_child(Kit.text("出撃するおばけ（%d体まで）" % GameState.DECK_MAX, 11, Kit.SUB, true))
 	deck_row = HBoxContainer.new()
-	deck_row.add_theme_constant_override("separation", 3)
+	deck_row.add_theme_constant_override("separation", 2)
 	dv.add_child(deck_row)
 
 	scroll = ScrollContainer.new()
@@ -75,13 +75,13 @@ func _render() -> void:
 		s.content_margin_top = 2
 		s.content_margin_bottom = 2
 		slot.add_theme_stylebox_override("panel", s)
-		slot.custom_minimum_size = Vector2(44, 44)
+		slot.custom_minimum_size = Vector2(40, 40)
 		if i < GameState.deck.size():
 			var pic := TextureRect.new()
 			pic.texture = Kit.portrait(GameState.deck[i])
 			pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			pic.custom_minimum_size = Vector2(40, 40)
+			pic.custom_minimum_size = Vector2(36, 36)
 			slot.add_child(pic)
 		deck_row.add_child(slot)
 	var y := scroll.scroll_vertical
@@ -164,7 +164,12 @@ func _card(o: Dictionary) -> Control:
 	v.add_child(xr)
 	var br := HBoxContainer.new()
 	br.add_theme_constant_override("separation", 6)
-	var tb := Kit.button("外す" if in_deck else "編成に入れる", Color("efe6f5") if in_deck else Color("ff8a5b"), func():
+	var full: bool = not in_deck and GameState.deck.size() >= GameState.DECK_MAX
+	var last: String = GameState.deck[GameState.deck.size() - 1] if not GameState.deck.is_empty() else ""
+	var label := "外す" if in_deck else ("%sと入れかえ" % GameState.info(last).name if full else "編成に入れる")
+	var tb := Kit.button(label, Color("efe6f5") if in_deck else Color("ff8a5b"), func():
+		if full:
+			GameState.toggle_deck(last)
 		if GameState.toggle_deck(id):
 			_render()
 		else:
