@@ -6,6 +6,7 @@ const SCREENS := {
 	"room": preload("res://scripts/screen_room.gd"),
 	"catch": preload("res://scripts/screen_scoop.gd"),
 	"catch3d": preload("res://scripts/screen_catch3d.gd"),
+	"hatch": preload("res://scripts/screen_hatch.gd"),
 	"catch2d": preload("res://scripts/screen_catch.gd"),
 	"sleep": preload("res://scripts/screen_sleep.gd"),
 	"battle": preload("res://scripts/screen_battle.gd"),
@@ -30,6 +31,9 @@ func _ready() -> void:
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade.modulate.a = 0.0
 	var start := OS.get_environment("OBAKE_START")
+	if start == "hatch":
+		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
+		GameState.sleep(7, "")
 	go(start if SCREENS.has(start) else "morning", true)
 	root.add_child(fade)
 	_maybe_autoshot()

@@ -94,4 +94,4 @@ func _sleep() -> void:
 	tw.tween_interval(0.8)
 	await tw.finished
 	GameState.sleep(hours, trap)
-	main.go("morning")
+	main.go("hatch" if GameState.hatched.size() > 0 else "morning")

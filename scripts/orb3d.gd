@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 		core_mat.emission = c
 		halo_mat.albedo_color = Color(c.r, c.g, c.b, 0.3)
 		light.light_color = c
-	core_mat.emission_energy_multiplier = 2.4 + pulse * 1.6
+	core_mat.emission_energy_multiplier = (1.4 + pulse * 1.0) if caught else (2.4 + pulse * 1.6)
 	halo.scale = Vector3.ONE * (0.9 + pulse * 0.25)
 	if caught:
 		return
