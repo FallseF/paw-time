@@ -111,6 +111,7 @@ var tonight := {} # 今夜のすくいの結果 {count, best_combo, clean}
 var records := {"best_combo": 0, "total": 0, "nights": 0, "rainbow": 0, "festival_best": 0, "clean": 0}
 var claimed := {} # 図鑑のごほうび（グループ・節目）
 var tut := {} # はじめての説明を見たか
+var week_snap := {"total": 0, "seen": 1}
 var ALL := {}
 
 # レアの判定用の記録
@@ -181,6 +182,7 @@ func reset() -> void:
 	records = {"best_combo": 0, "total": 0, "nights": 0, "rainbow": 0, "festival_best": 0, "clean": 0}
 	claimed = {}
 	tut = {}
+	week_snap = {"total": 0, "seen": 1}
 	sleep_hist = []
 	roles_seen = {}
 	stores_seen = {}
@@ -698,6 +700,9 @@ func sleep(hours: int) -> void:
 		morning_report.append("紙のポイは %d 本でいっぱい（使わないと増えない）" % FREE_POI_CAP)
 	if rare_pending.size() > 0:
 		morning_report.append("まだかえっていないレアの気配が %d つ…" % rare_pending.size())
+	if day % 7 == 0:
+		morning_report.push_front("第%d週のまとめ：すくった玉 %d・新しい出会い %d" % [week_no() - 1, records.total - int(week_snap.total), seen.size() - int(week_snap.seen)])
+		week_snap = {"total": records.total, "seen": seen.size()}
 	changed.emit()
 	save_game()
 
@@ -813,7 +818,7 @@ func reward_text(rw: Dictionary) -> String:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day"]
+const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "seen", "shards", "upgrades", "partner", "orbs", "hatched", "morning_report", "worked_today", "scooped_tonight", "tonight", "records", "claimed", "tut", "sleep_hist", "roles_seen", "stores_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_work", "first_role_today", "first_store_today", "gifted", "received", "festival_cleared", "rare_pending", "festival_gift_day", "week_snap"]
 
 
 func save_game() -> void:

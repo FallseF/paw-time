@@ -84,12 +84,44 @@ func _build_world() -> void:
 	cam.look_at(Vector3(0, 0.3, 0))
 	var water := MeshInstance3D.new()
 	var wp := PlaneMesh.new()
-	wp.size = Vector2(12, 12)
+	wp.size = Vector2(40, 40)
 	water.mesh = wp
 	var wm := ShaderMaterial.new()
 	wm.shader = load("res://shaders/water.gdshader")
 	water.material_override = wm
 	world.add_child(water)
+	var moon := MeshInstance3D.new()
+	var mm := SphereMesh.new()
+	mm.radius = 1.4
+	mm.height = 2.8
+	moon.mesh = mm
+	var mmat := StandardMaterial3D.new()
+	mmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mmat.albedo_color = Color("fff1c8")
+	mmat.emission_enabled = true
+	mmat.emission = Color("fff1c8")
+	mmat.emission_energy_multiplier = 1.6
+	moon.material_override = mmat
+	moon.position = Vector3(3.2, 6.5, -14)
+	world.add_child(moon)
+	var stars := CPUParticles3D.new()
+	stars.amount = 160
+	stars.lifetime = 100.0
+	stars.preprocess = 100.0
+	stars.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	stars.emission_box_extents = Vector3(18, 6, 1)
+	stars.position = Vector3(0, 6, -16)
+	stars.gravity = Vector3.ZERO
+	stars.initial_velocity_max = 0.0
+	var sm := SphereMesh.new()
+	sm.radius = 0.035
+	sm.height = 0.07
+	stars.mesh = sm
+	var smat := StandardMaterial3D.new()
+	smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smat.albedo_color = Color("dfe6ff")
+	stars.material_override = smat
+	world.add_child(stars)
 	var ids := ["receipt", "bubble", "tray"]
 	for i in 3:
 		var o := Obake3D.make(ids[i])
