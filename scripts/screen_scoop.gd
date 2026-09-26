@@ -2093,6 +2093,8 @@ func _show_result(reason: String, was_best: bool) -> void:
 			lines.append("祭り %d / 12（12こで景品、20こで特賞）" % count)
 	elif goal_done:
 		lines.append("おだい達成：%s" % GameState.reward_text(goal.reward))
+	elif not goal.is_empty():
+		lines.append("おだい「%s」あと%d（明日はべつのおだい）" % [goal.text, goal.n - mini(_goal_progress(), goal.n)])
 	if pond_cleared:
 		lines.append("池をすくいきった：虹のかけら×1")
 	for line in lines:
