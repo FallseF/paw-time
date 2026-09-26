@@ -17,7 +17,6 @@ var c2: Color
 ## 揺らす部品（名前 → ノード）と、その元の位置・向き
 var _p := {}
 var _base := {}
-var _mats := {}
 
 
 ## 図鑑カードの絵。3D で撮った絵を優先し、無ければ古い平たい絵を返す。
@@ -49,17 +48,15 @@ func setup(id: String) -> Obake3D:
 
 # ---------------------------------------------------------------- 部品
 
-## 輪郭つきのトゥーン材質（色ごとに使い回す）。s は置く先の縮尺（輪郭の太さ補正）。
-func _mat(c: Color, rim := 0.25, em := 0.0, s := 1.0) -> StandardMaterial3D:
-	var key := "%s/%s/%s/%s" % [c.to_html(), rim, em, s]
-	if not _mats.has(key):
-		_mats[key] = toon(c, rim, em, 0.025 / s)
-	return _mats[key]
+## 持ち物の材質（肌と同じ塗り・輪郭つき、色ごとに使い回す）。
+## s は昔の輪郭の太さ補正の名残。いまの輪郭は縮尺に左右されないので使わない。
+func _mat(c: Color, rim := 0.25, em := 0.0, _s := 1.0) -> ShaderMaterial:
+	return prop(c, rim, em)
 
 
 ## おばけの肌（ふつうのおばけと同じ塗り）
-func _skin(c: Color, s := 1.0, em := 0.0) -> StandardMaterial3D:
-	return _mat(c, 0.12, em, s)
+func _skin(c: Color, _s := 1.0, em := 0.0) -> ShaderMaterial:
+	return skin(c, em)
 
 
 func _add(m: Mesh, mat: Material, pos: Vector3, parent: Node3D = null, rot := Vector3.ZERO, scl := Vector3.ONE) -> MeshInstance3D:
@@ -76,40 +73,6 @@ func _node(pos: Vector3, parent: Node3D = null, rot := Vector3.ZERO) -> Node3D:
 	n.rotation = rot
 	(parent if parent else body).add_child(n)
 	return n
-
-
-func _cyl(top: float, bottom: float, h: float, seg := 20) -> CylinderMesh:
-	var c := CylinderMesh.new()
-	c.top_radius = top
-	c.bottom_radius = bottom
-	c.height = h
-	c.radial_segments = seg
-	c.rings = 1
-	return c
-
-
-func _box(size: Vector3) -> BoxMesh:
-	var b := BoxMesh.new()
-	b.size = size
-	return b
-
-
-func _torus(inner: float, outer: float) -> TorusMesh:
-	var t := TorusMesh.new()
-	t.inner_radius = inner
-	t.outer_radius = outer
-	t.rings = 24
-	t.ring_segments = 10
-	return t
-
-
-func _cap(r: float, h: float) -> CapsuleMesh:
-	var c := CapsuleMesh.new()
-	c.radius = r
-	c.height = h
-	c.radial_segments = 16
-	c.rings = 6
-	return c
 
 
 func _hemi(r: float) -> SphereMesh:
@@ -165,7 +128,7 @@ func _flake(r: float, c: Color, pos: Vector3) -> Node3D:
 
 ## 光る粒（ほたる・火花）
 func _glow(r: float, c: Color, pos: Vector3, parent: Node3D = null) -> MeshInstance3D:
-	var m := toon(c, 0.3, 0.7, 0.008)
+	var m := skin(c, 0.7, null, 0.3, 0.0, false)
 	return _add(_sphere(r), m, pos, parent)
 
 
@@ -179,7 +142,7 @@ func _puff(r: float, c: Color, pos: Vector3, parent: Node3D = null) -> Node3D:
 
 
 ## 縦じまの塗り（傘・左右の塗り分け）。u は正面 +Z から回る向き。
-func _stripes(cols: Array, rim := 0.2) -> StandardMaterial3D:
+func _stripes(cols: Array, rim := 0.2) -> ShaderMaterial:
 	var g := Gradient.new()
 	g.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 	var offs := PackedFloat32Array()
@@ -192,10 +155,7 @@ func _stripes(cols: Array, rim := 0.2) -> StandardMaterial3D:
 	var tex := GradientTexture1D.new()
 	tex.gradient = g
 	tex.width = 256
-	var m := toon(Color.WHITE, rim)
-	m.albedo_texture = tex
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	return m
+	return skin(Color.WHITE, 0.0, tex, 0.18 + rim * 0.6)
 
 
 # ---------------------------------------------------------------- 睡眠
@@ -306,7 +266,7 @@ func _b_kirari() -> void:
 	_mini(c2, 0.8, Vector3(0, 0, 0))
 	var crown := _node(Vector3(0.02, 0.74, 0), null, Vector3(0, 0, 0.16))
 	_p.crown = crown
-	var gold := _mat(c1, 0.35, 0.2)
+	var gold := metal(c1)
 	_add(_cyl(0.48, 0.44, 0.28, 24), gold, Vector3.ZERO, crown)
 	var gems := [Color("ff6f91"), Color("5fc4f0"), Color("7fd18a"), Color("ff6f91"), Color("b98cff")]
 	for i in 5:
@@ -453,7 +413,7 @@ func _b_tasogare() -> void:
 	# 夜の側の目を白く
 	for e in eyes:
 		if e.position.x < 0:
-			e.material_override = flat(Color.WHITE)
+			e.material_override = eye_mat(Color.WHITE)
 	var orbit := _node(Vector3(0, 0.55, 0))
 	_p.orbit = orbit
 	var sun := _node(Vector3(0.72, 0.3, 0), orbit)
@@ -547,12 +507,19 @@ func _b_kaminari() -> void:
 		_add(_cyl(0.0, 0.06, 0.13, 8), dark, Vector3(-0.08 - i * 0.14, 0.66 - i * 0.05, -0.2 - i * 0.07), null, Vector3(0, 0, 0.4))
 	var tail := _node(Vector3(-0.55, 0.26, -0.36))
 	_p.tail = tail
+	# 竜の尻尾：胴から先へ細くなる一本の管
+	var pts := PackedVector3Array()
+	var rad := PackedFloat32Array()
 	var r := 0.16
 	var p2 := Vector3.ZERO
+	pts.append(Vector3(0.22, -0.06, 0.12))
+	rad.append(0.2)
 	for i in 4:
-		_add(_sphere(r), skin, p2, tail)
+		pts.append(p2)
+		rad.append(r)
 		p2 += Vector3(-0.14, 0.08 + i * 0.03, -0.02)
 		r *= 0.8
+	_add(tube("kaminari_tail", pts, rad, 24), skin, Vector3.ZERO, tail)
 	_add(_cyl(0.0, 0.07, 0.16, 8), dark, p2 + Vector3(0.02, 0.04, 0), tail, Vector3(0, 0, 0.3))
 	var bolt := _node(Vector3(-0.3, 1.0, 0.0), null, Vector3(0, 0, -0.2))
 	bolt.scale = Vector3.ONE * 1.6
@@ -616,10 +583,8 @@ func _b_okurimono() -> void:
 	var box := _node(Vector3.ZERO)
 	_p.box = box
 	var skin := _skin(c1)
-	_add(_cyl(0.38, 0.4, 0.2, 20), skin, Vector3(0, 0.12, 0), box)
-	for i in 8:
-		var a := TAU * i / 8.0
-		_add(_sphere(0.13), skin, Vector3(cos(a) * 0.33, 0.04, sin(a) * 0.33), box)
+	# 箱の下からのぞく、波打つ裾（ふつうのおばけの体を縮めて箱の中に入れる）
+	_add(body_meshes("plain").body, skin, Vector3.ZERO, box, Vector3.ZERO, Vector3(0.8, 0.8, 0.8))
 	_add(_box(Vector3(0.9, 0.62, 0.8)), skin, Vector3(0, 0.46, 0), box)
 	box.add_child(face(Vector3(0, 0.38, -0.03), 0.9))
 	var red := _mat(c2, 0.3)
