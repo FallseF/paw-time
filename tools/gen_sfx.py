@@ -250,6 +250,32 @@ def festival_loop():
     return out
 
 
+def room_loop():
+    # 休憩室のオルゴール：ゆっくりしたペンタトニックの分散和音 8 小節
+    bpm = 84
+    beat = 60.0 / bpm
+    n = int(SR * beat * 32)
+    out = [0.0] * n
+    chords = [[523, 659, 784], [440, 523, 659], [392, 494, 587], [440, 523, 659]]
+    rnd = random.Random(21)
+    for bar in range(8):
+        ch = chords[bar % 4]
+        for k in range(4):
+            fr = ch[k % 3] * (2 if k == 3 else 1)
+            s = int(SR * (bar * 4 + k) * beat)
+            for j in range(int(SR * 1.6)):
+                if s + j < n:
+                    e = math.exp(-j / (SR * 0.5))
+                    out[s + j] += 0.3 * e * (math.sin(2 * math.pi * fr * j / SR) + 0.2 * math.sin(2 * math.pi * fr * 2.76 * j / SR))
+        # 低い音
+        s = int(SR * bar * 4 * beat)
+        for j in range(int(SR * beat * 4)):
+            if s + j < n:
+                out[s + j] += 0.18 * math.exp(-j / (SR * 1.2)) * math.sin(2 * math.pi * ch[0] / 2 * j / SR)
+    return out
+
+
+write("room_loop", room_loop())
 write("bubble", bubble())
 write("pop", pop())
 write("thunder", thunder())

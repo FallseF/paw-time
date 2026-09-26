@@ -17,6 +17,8 @@ var current: Control
 var current_name := ""
 var fade: ColorRect
 var busy := false
+var music: AudioStreamPlayer
+const MUSIC_SCREENS := ["title", "room", "morning", "zukan", "workshop", "hatch"]
 
 
 func _ready() -> void:
@@ -24,6 +26,13 @@ func _ready() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.theme = UI.make_theme()
 	add_child(root)
+	music = AudioStreamPlayer.new()
+	var loop: AudioStreamWAV = load("res://assets/sfx/room_loop.wav")
+	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	loop.loop_end = loop.data.size() / 2
+	music.stream = loop
+	music.volume_db = -14
+	add_child(music)
 	fade = ColorRect.new()
 	fade.color = Color("140f1c")
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -61,6 +70,7 @@ func go(screen_name: String, instant := false) -> void:
 		tw.tween_property(fade, "modulate:a", 1.0, 0.18)
 		await tw.finished
 	Engine.time_scale = 1.0
+	_music_for(screen_name)
 	if current:
 		current.queue_free()
 	current = SCREENS[screen_name].new()
@@ -75,6 +85,16 @@ func go(screen_name: String, instant := false) -> void:
 		await tw2.finished
 		fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	busy = false
+
+
+func _music_for(screen_name: String) -> void:
+	var want := screen_name in MUSIC_SCREENS
+	if want and not music.playing:
+		music.volume_db = -30
+		music.play()
+		create_tween().tween_property(music, "volume_db", -14.0, 0.8)
+	elif not want and music.playing:
+		music.stop()
 
 
 ## 確認用：OBAKE_SHOT="画面名,wait1,call:メソッド" で起動すると、最後に撮って終わる
