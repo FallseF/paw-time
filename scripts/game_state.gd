@@ -442,7 +442,7 @@ func set_partner(id: String) -> void:
 # ---------- おばけ ----------
 
 func xp_to_next(level: int) -> int:
-	return 30 + level * 50
+	return 30 + level * 70
 
 
 ## おばけを1体ふやす。かぶったら経験値とかけら。{is_new, level, leveled, shard}
@@ -454,7 +454,7 @@ func add_obake(id: String, xp := 0, quality := 3) -> Dictionary:
 		owned[id] = {"level": 1, "xp": 0, "count": 1}
 	else:
 		owned[id].count += 1
-		xp += 6
+		xp += 4
 	var o: Dictionary = owned[id]
 	if SPECIES.has(id):
 		var t: String = SPECIES[id].type
