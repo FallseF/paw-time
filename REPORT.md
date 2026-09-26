@@ -32,7 +32,7 @@ godot --headless --path . -s tests/test_tutorial.gd      # はじめての夜の
 godot --headless --path . -s tests/test_double_sleep.gd  # 「眠って朝へ」二度押しで2日進まない
 godot --headless --path . --fixed-fps 60 -s tests/test_practice.gd   # 練習ではポイも玉も記録も変わらない
 godot --headless --path . -s tests/test_week_rollover.gd # 週が変わっても、できていたおねがいのごほうびが消えない
-godot --headless --path . -s tests/sim_week.gd           # 4週間の簡易比較
+godot --headless --path . -s tests/sim_week.gd           # 4週間の早送りが最後まで回るか（すくいは乱数の簡易モデル。バランスは OBAKE_AUTOPLAY で見る）
 
 ./tools/make_promo.sh    # 広告動画を録り直す（Movie Maker → ffmpeg）
 ```
