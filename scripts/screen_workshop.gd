@@ -81,7 +81,7 @@ func _build() -> void:
 		col.add_child(_margin(_upgrade_card(key)))
 	# 特別なポイ
 	col.add_child(_section("特別なポイ（1本ずつ使い切り）"))
-	var ckeys := ["lure", "double", "akari"]
+	var ckeys := ["lure", "double", "akari", "paper"]
 	ckeys.sort_custom(func(a, b): return GameState.can_pay(GameState.CRAFTS[a]) and not GameState.can_pay(GameState.CRAFTS[b]))
 	for pid in ckeys:
 		col.add_child(_margin(_craft_card(pid)))
@@ -282,8 +282,9 @@ func _craft_card(pid: String) -> Control:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.add_theme_constant_override("separation", 2)
 	h.add_child(v)
-	v.add_child(_text("%s ×%d" % [info.name, GameState.pois.get(pid, 0)], 15, Color("2a2233"), font_black))
-	var d := _text(info.desc.replace("工房製。", ""), 12, Color("6a5f70"))
+	var title: String = ("紙のポイの束（3本）" if pid == "paper" else info.name)
+	v.add_child(_text("%s ×%d" % [title, GameState.pois.get(pid, 0)], 15, Color("2a2233"), font_black))
+	var d := _text("余ったかけらで、今夜すくう数をふやす" if pid == "paper" else info.desc.replace("工房製。", ""), 12, Color("6a5f70"))
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
 	v.add_child(_cost_row(GameState.CRAFTS[pid]))

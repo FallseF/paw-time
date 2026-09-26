@@ -55,6 +55,8 @@ const CRAFTS := {
 	"lure": {"register": 2, "dish": 2},
 	"double": {"stock": 2, "hall": 1},
 	"akari": {"kitchen": 2, "rainbow": 1},
+	# 紙のポイの束（余ったかけらを、今夜すくう数に）
+	"paper": {"register": 2, "dish": 2, "stock": 2},
 	# 色のポイ（働かない日でも、かけらから作れる）
 	"receipt": {"register": 3},
 	"bubble": {"dish": 3},
@@ -411,10 +413,13 @@ func buy_decor(key: String) -> bool:
 	return true
 
 
+const CRAFT_YIELD := {"paper": 3}
+
+
 func craft(pid: String) -> bool:
 	if not pay(CRAFTS[pid]):
 		return false
-	pois[pid] += 1
+	pois[pid] += CRAFT_YIELD.get(pid, 1)
 	changed.emit()
 	save_game()
 	return true
