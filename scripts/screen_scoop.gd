@@ -996,7 +996,7 @@ func _chip(pid: String, n: int, sel: bool) -> Control:
 	b.add_theme_color_override("font_hover_color", fg)
 	b.add_theme_color_override("font_pressed_color", fg)
 	var hand := "\n手に" if (in_hand and pid == selected) else ("\n使いかけ" if parked.has(pid) else "")
-	b.text = "%s\n×%d%s" % [GameState.POI[pid].short, n, hand]
+	b.text = "%s\n×%d%s" % [GameState.POI[pid].short, n, hand] if not practice else "紙\n練習"
 	b.pressed.connect(_select_poi.bind(pid))
 	return b
 
