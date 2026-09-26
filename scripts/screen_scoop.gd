@@ -447,7 +447,7 @@ func _build_ui() -> void:
 	pp.add_child(ph)
 	top.add_child(pp)
 
-	hint = _text("押して水に入れる → 玉の下で離して、すくう", 14, Color(1, 1, 1, 0.85))
+	hint = _text("押して水へ → 縁が金色に光ったら、離す", 14, Color(1, 1, 1, 0.85))
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
@@ -616,7 +616,7 @@ func _gui_input(event: InputEvent) -> void:
 		poi.position = Vector3(g.x, -0.04, g.z)
 		_ripple(g)
 		_play("splash", randf_range(0.9, 1.1))
-		hint.text = "玉の下まで、そっと動かす"
+		hint.text = "玉の下まで、そっと。縁が光ったら離す"
 	elif motion:
 		if pressed:
 			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
@@ -665,7 +665,7 @@ func _lift() -> void:
 		if durability <= 0:
 			_tear(null)
 			return
-		hint.text = "玉の真下で離すと、すくえる"
+		hint.text = "縁が光っているときに離すと、すくえる"
 		_refresh_ui()
 		busy = false
 		return
@@ -746,7 +746,7 @@ func _lift() -> void:
 	poi.position.y = 0.45
 	_refresh_ui()
 	busy = false
-	hint.text = "押して水に入れる → 玉の下で離して、すくう"
+	hint.text = "押して水へ → 縁が金色に光ったら、離す"
 	if orbs.is_empty():
 		await get_tree().create_timer(0.6).timeout
 		_finish()
