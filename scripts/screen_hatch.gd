@@ -24,6 +24,7 @@ var rays: MeshInstance3D
 var sfx := {}
 var busy := false
 var skip_btn: Button
+var buddy: Obake3D
 var btn_row: HBoxContainer
 var rare_tease := false
 
@@ -232,6 +233,15 @@ func _build_world() -> void:
 	burst.material_override = gm
 	world.add_child(burst)
 
+	# 相棒が、すみで見守る
+	if GameState.owned.has(GameState.partner):
+		buddy = Obake3D.make(GameState.partner)
+		buddy.set_level(GameState.level_of(GameState.partner))
+		buddy.scale = Vector3.ONE * 0.28
+		buddy.position = Vector3(0.66, 0.18, -0.5)
+		buddy.rotation.y = -0.6
+		world.add_child(buddy)
+
 
 func _pill(bg: Color, radius := 20) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
@@ -373,6 +383,10 @@ func _next() -> void:
 	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	await tw3.finished
 	var rare: bool = h.get("rare", false)
+	if buddy:
+		var bt := create_tween()
+		bt.tween_property(buddy, "position:y", 0.38, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		bt.tween_property(buddy, "position:y", 0.18, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	sfx["fanfare" if rare or h.is_new else "chime"].play()
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
