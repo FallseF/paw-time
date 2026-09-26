@@ -14,6 +14,10 @@ const SCREENS := {
 	"moon": preload("res://scripts/screen_moon.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"quiz": preload("res://scripts/screen_quiz.gd"),
+	# はじめての流れと仕事さがし（feature/onboarding-jobs）。流れの順番は scripts/onboarding.gd
+	"onboard": preload("res://scripts/screen_onboard.gd"),
+	"onboard_night": preload("res://scripts/screen_onboard.gd"),
+	"prefs": preload("res://scripts/screen_job_prefs.gd"),
 }
 
 var root: Control
@@ -43,6 +47,11 @@ func _ready() -> void:
 	if start != "" and start != "title":
 		GameState.reset(OS.get_environment("OBAKE_MODE") if OS.get_environment("OBAKE_MODE") != "" else "data")
 		_seed_for(start)
+	# はじめて起動した人は、タイトルを飛ばしてマイおばけ猫の診断から（scripts/onboarding.gd の順番）
+	if start == "" and not GameState.has_save() and Onboarding.at("quiz"):
+		GameState.reset("solo") # 見本の記録ではなく、自分で受けた仕事（Shifts）で遊ぶ
+		GameState.save()
+		start = "quiz"
 	# 島のコード（Web は URL の #island=、手元では OBAKE_VISIT）で起動したら、その島へおでかけ
 	var code := OS.get_environment("OBAKE_VISIT")
 	if OS.has_feature("web"):
@@ -187,6 +196,7 @@ func go(screen_name: String, instant := false) -> void:
 		current.set("next_screen", "garden")
 	current.set_anchors_preset(Control.PRESET_FULL_RECT)
 	current.set("main", self)
+	current.set("screen_name", screen_name) # 1つの画面スクリプトで2場面を持つとき用（screen_onboard.gd）
 	root.add_child(current)
 	root.move_child(current, 0)
 	if not instant:
@@ -214,12 +224,22 @@ func _maybe_autoshot() -> void:
 	if target == "":
 		return
 	var path := OS.get_environment("OBAKE_SHOT_PATH")
+	# 途中の画面から撮るとき（OBAKE_START なし）は、保存を読んでから（はじめての流れを段ごとに撮るため）
+	if OS.get_environment("OBAKE_START") == "" and GameState.has_save():
+		GameState.load_game()
 	var n := 0
 	for step in target.split(","):
 		if step.begins_with("wait"):
 			await get_tree().create_timer(float(step.substr(4)), true, false, true).timeout
 		elif step.begins_with("call:"):
-			current.call(step.substr(5))
+			# 画面そのものに無ければ、重ね画面（JobDesk など）の子から探す
+			var m := step.substr(5)
+			var who: Node = current
+			if not current.has_method(m):
+				for c in current.get_children():
+					if c.has_method(m):
+						who = c
+			who.call(m)
 			await get_tree().create_timer(0.6, true, false, true).timeout
 		elif step == "shot":
 			await RenderingServer.frame_post_draw

@@ -134,7 +134,7 @@ func _continue() -> void:
 		elif not GameState.hatched.is_empty():
 			main.go("hatch")
 		else:
-			main.go("garden")
+			main.go(Onboarding.resume_screen()) # はじめての流れの途中なら、その続きから
 
 
 func _new(mode: String) -> void:
@@ -148,7 +148,7 @@ func _new(mode: String) -> void:
 
 ## はじめての人は、まずマイおばけ猫の診断から（終わると島へ）
 func _begin() -> void:
-	main.go("quiz" if GameState.my_obake.is_empty() else "garden")
+	main.go("quiz" if GameState.my_obake.is_empty() else Onboarding.resume_screen())
 
 
 func _confirm(mode: String) -> void:

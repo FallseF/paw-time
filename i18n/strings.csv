@@ -706,3 +706,387 @@ A curious glow...","すくった！
 エプロン,Apron,エプロン
 中に、島の材料,Island material inside,中に、島の材料
 中に、服,Clothing inside,中に、服
+DAY_LABEL,Week %d · %s,%d週目 %s曜日
+WEEKDAY_0,Mon,月
+JOB_WD_0,Mon,月
+WEEKDAY_1,Tue,火
+JOB_WD_1,Tue,火
+WEEKDAY_2,Wed,水
+JOB_WD_2,Wed,水
+WEEKDAY_3,Thu,木
+JOB_WD_3,Thu,木
+WEEKDAY_4,Fri,金
+JOB_WD_4,Fri,金
+WEEKDAY_5,Sat,土
+JOB_WD_5,Sat,土
+WEEKDAY_6,Sun,日
+JOB_WD_6,Sun,日
+ONB_PARTNER,Your partner,あいぼう
+SPECIAL_MOON_NAME,Moon Halo,月の輪
+SPECIAL_MOON_PET,Luna,ルナ
+SPECIAL_SUN_NAME,Sun Crown,太陽の冠
+SPECIAL_SUN_PET,Sunny,サニー
+SPECIAL_STAR_NAME,Star Orbit,星めぐり
+SPECIAL_STAR_PET,Stella,ステラ
+SPECIAL_BLOSSOM_NAME,Blossom Crown,花の冠
+SPECIAL_BLOSSOM_PET,Sakura,さくら
+ONB_SPECIAL_KICKER,A SPECIAL obake cat appeared!,とくべつなおばけ猫が あらわれた！
+ONB_SPECIAL_RIBBON,★ SPECIAL · %s ★,★ とくべつ・%s ★
+ONB_SPECIAL_PET,"Say hi to %s, your partner!",あいぼうの %s だよ！
+ONB_SHIFT_PLACE,Practice shift · Café Komorebi,体験バイト・カフェ こもれび
+ONB_SHIFT_MOCK,Just pretend! 4 hours in 30 seconds,練習だよ！ 4時間を30秒で
+ONB_SHIFT_HELLO,I'm %s! Let's try a shift together!,%s だよ！ いっしょに働いてみよう！
+ONB_SHIFT_HINT_START,Tap to open the café,押して、お店をあけよう
+ONB_SHIFT_START,Open the café,お店をあける
+ONB_SHIFT_GO,Here they come!,お客さんが来るよ！
+ONB_SHIFT_HINT_WAIT,Wait for a customer…,お客さんを待とう…
+ONB_SHIFT_HINT_SERVE,A customer! Tap Serve,お客さんだ！ 「出す」を押そう
+ONB_SHIFT_SERVE,Serve,出す
+ONB_SHIFT_NOT_YET,Wait for a customer first!,まずはお客さんを待とう！
+ONB_SHIFT_SERVED,Served: %d,出した数：%d
+ONB_ORDER_1,"Latte, please!",ラテください！
+ONB_ORDER_2,One melon soda!,メロンソーダひとつ！
+ONB_ORDER_3,"Pancakes, please!",パンケーキください！
+ONB_ORDER_4,Hot cocoa!,ココアください！
+ONB_CHEER_1,Nice one!,いいね！
+ONB_CHEER_2,You're a natural!,じょうず！
+ONB_CHEER_3,They loved it!,よろこんでたよ！
+ONB_SHIFT_DONE_SAY,We did it! Great shift!,おつかれさま！ いいシフトだった！
+ONB_SHIFT_DONE,Shift done!,シフトおわり！
+ONB_SHIFT_RESULT,Customers served: %d,お客さん %d 人に出したよ
+ONB_SHIFT_EARNED,+2 poi,ポイ +2
+ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
+ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
+ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Hold on the water, slide under the orb, and let go.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 水を押したまま玉の下へ、そして離す。
+ONB_NIGHT_TITLE,Good night,おやすみ
+ONB_NIGHT_BODY,Orbs hatch while you sleep. %s will keep watch.,玉は、眠っている間にかえる。%s が見てるね。
+ONB_NIGHT_SLEEP,Sleep until morning,朝まで眠る
+TOUR_1_TITLE,This is your island!,ここが、きみの島！
+TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。
+TOUR_2_TITLE,Rest grows the island,休むと、島が育つ
+TOUR_2_BODY,"Sleep at a steady time and the shore grows — flowers, a pond, a pier, even a lighthouse.",いつも同じころに眠ると、岸がひろがる。花・池・桟橋、灯台まで。
+TOUR_3_TITLE,Work brings poi,働くと、ポイがもらえる
+TOUR_3_BODY,"Each shift gives poi (not tied to hours). Scoop orbs at night for obake, materials and clothes.",シフトごとにポイ（時間の長さは関係なし）。夜にすくって、おばけ・材料・服を。
+TOUR_4_TITLE,Paw Coins: %d,肉球コイン：%d
+TOUR_4_BODY,"When %s works with you, you both earn Paw Coins. Spend them on island decorations and outfits.",%s がいっしょに働くと、肉球コインがたまる。島の飾りや服に使えるよ。
+TOUR_NEXT,Next,つぎへ
+TOUR_TO_PREFS,Tell %s how you like to work,%s に、働き方を教える
+PREFS_TITLE,How do you like to work?,どんなふうに働きたい？
+PREFS_SUB,%s will look for jobs that fit.,%s が、合う仕事をさがすよ。
+PREFS_AREA,Area,場所
+PREFS_AREA_PH,Area or station (e.g. Shibuya),地域や駅（例：渋谷）
+PREFS_DAYS,Days you can work,働ける曜日
+PREFS_TIME,Time of day,時間帯
+PREFS_WIN_MORNING,Morning 6–12,朝 6〜12時
+PREFS_WIN_DAY,Daytime 11–17,昼 11〜17時
+PREFS_WIN_EVENING,Evening 17–22,夕方 17〜22時
+PREFS_WIN_NIGHT,Late night 22–5,深夜 22〜5時
+PREFS_WAGE,Minimum hourly wage,最低時給
+PREFS_WAGE_VAL,¥%s / h,¥%s／時
+PREFS_PAY,Pay schedule,お給料の受け取り方
+PREFS_SAFE,We never ask for bank or card numbers. Your choices stay on this device.,口座やカードの番号は聞きません。入れた条件は、この端末の中だけに残ります。
+PREFS_GO,Find jobs for me,この条件でさがして
+PREFS_NEED,Pick at least one day and time,曜日と時間帯を1つ以上えらんでね
+JOB_AREA_SHIBUYA,Shibuya,渋谷
+JOB_AREA_SHINJUKU,Shinjuku,新宿
+JOB_AREA_IKEBUKURO,Ikebukuro,池袋
+JOB_AREA_KICHIJOJI,Kichijoji,吉祥寺
+JOB_AREA_YOKOHAMA,Yokohama,横浜
+JOB_AREA_UMEDA,Osaka Umeda,大阪・梅田
+JOB_AREA_NEARBY,near you,近く
+JOB_PAY_DAILY,Daily pay,日払い
+JOB_PAY_WEEKLY,Weekly pay,週払い
+JOB_PAY_MONTHLY,Monthly pay,月払い
+JOB_PAY_ANY,Any,どれでも
+JOB_ROLE_REGISTER,Register,レジ
+JOB_TITLE_REGISTER,Register staff,レジスタッフ
+JOB_ROLE_DISH,Dishwashing,皿洗い
+JOB_TITLE_DISH,Dishwashing staff,洗い場スタッフ
+JOB_ROLE_HALL,Hall,ホール
+JOB_TITLE_HALL,Hall staff,ホールスタッフ
+JOB_ROLE_KITCHEN,Kitchen,キッチン
+JOB_TITLE_KITCHEN,Kitchen staff,キッチンスタッフ
+JOB_ROLE_STOCK,Stock,品出し
+JOB_TITLE_STOCK,Stock staff,品出しスタッフ
+JOB_LINE_REGISTER_1,"Beep, beep! I love the register sound.",ピッ、ピッ。レジの音、好き！
+JOB_LINE_REGISTER_2,A chance to say “thank you” a lot!,ありがとうを、たくさん言えるよ！
+JOB_LINE_REGISTER_3,I'll count the change with you.,おつり、いっしょに数えるね。
+JOB_LINE_DISH_1,Bubbles! I'm in!,泡！ まかせて！
+JOB_LINE_DISH_2,Shiny plates make me happy.,ぴかぴかのお皿、うれしい。
+JOB_LINE_DISH_3,Quiet and cozy work.,静かで、落ちつく仕事だよ。
+JOB_LINE_HALL_1,Carrying trays is my specialty!,お盆運びは、とくい！
+JOB_LINE_HALL_2,Lots of smiles in the hall.,ホールは、笑顔がいっぱい。
+JOB_LINE_HALL_3,I'll watch the tables with you.,テーブル、いっしょに見てるね。
+JOB_LINE_KITCHEN_1,It smells yummy already!,もう、いいにおいがする！
+JOB_LINE_KITCHEN_2,Sizzle sizzle! Let's cook.,ジュウジュウ！ 作ろう。
+JOB_LINE_KITCHEN_3,Maybe there's a staff meal…,まかない、あるかも…
+JOB_LINE_STOCK_1,Boxes! My favorite.,箱だ！ 大好き。
+JOB_LINE_STOCK_2,Neat shelves feel so good.,きれいな棚、気持ちいい。
+JOB_LINE_STOCK_3,"Quiet work, steady pace.",静かに、自分のペースで。
+JOB_WHEN,%s %d/%d · %02d:%02d–%02d:%02d,%s %d/%d・%02d:%02d〜%02d:%02d
+JOB_WAGE,¥%s/h,¥%s／時
+JOB_COUNT,%d / %d,%d / %d
+JOB_ACCEPT,Accept,受ける
+JOB_PASS,Pass,今回は見送る
+JOB_ADDED,Added to your shifts!,シフトに入れたよ！
+JOB_NEXT,Next job,つぎの仕事
+JOB_DONE,Done,おわり
+JOB_SAMPLE_NOTE,Sample listings for the demo — not real job offers,見本の求人です（本物の募集ではありません）
+CAL_GOOGLE,Add to Google Calendar,Google カレンダーに追加
+CAL_ICS,Download .ics,.ics をダウンロード
+CAL_ICS_DOWNLOADED,Calendar file downloaded,カレンダーのファイルをダウンロードしました
+CAL_ICS_SAVED,Saved: %s,保存しました：%s
+CAL_ICS_FAILED,Couldn't save the file,保存できませんでした
+CAL_DETAILS_WAGE,%s · %s,%s・%s
+CAL_DETAILS_SAMPLE,Sample listing (demo) — not a real job offer.,見本の求人（デモ）です。本物の募集ではありません。
+CAL_DETAILS_FROM,Added from Paw Time,Paw Time から追加
+JOY_1,Yay! I'll cheer for you!,やった！ 応援するね！
+JOY_2,Hooray! It's a date!,わーい！ 約束だよ！
+JOY_3,Great pick! Let's go together!,いいね！ いっしょに行こう！
+SHRUG_1,Okay! Maybe next time.,そっか！ またこんど。
+SHRUG_2,No worries — plenty more jobs!,だいじょうぶ、ほかにもあるよ！
+END_TITLE,That's all for today!,今日は、これでぜんぶ！
+END_BODY,Shifts accepted: %d. %s will remember them.,%d 件受けたよ。%s がおぼえておくね。
+END_BODY_NONE,None today — that's okay. %s will look again tomorrow.,今日は0件。だいじょうぶ、%s がまた明日さがすよ。
+END_SAY,See you at work!,仕事で会おうね！
+END_SAY_NONE,Rest is good too!,休むのも、だいじ！
+END_BACK,Back to the island,島にもどる
+END_EDIT,Change work conditions,働く条件を変える
+FOUND_TITLE,%s found %d jobs!,%s が %d 件みつけた！
+FOUND_BODY,"They match your area, days, time and wage. Take a look?",場所・曜日・時間・時給に合う仕事だよ。見てみる？
+FOUND_SEE,See jobs,見てみる
+FOUND_NONE_TITLE,No matches yet,まだ見つからない
+FOUND_NONE_BODY,Try a lower minimum wage or more days.,最低時給を下げるか、曜日を増やしてみて。
+FOUND_EDIT,Change conditions,条件を変える
+NOTE_MATCH,New match · %s,みつけた・%s
+NOTE_DAILY,%s brought %d jobs today,%s が今日の仕事を %d 件もってきた
+NOTE_DAILY_SUB,Tap to see · from %s,タップして見る・%s から
+NOTE_REVIEW,How was work at %s?,%s の仕事、どうだった？
+NOTE_REVIEW_SUB,10-second review · +1 poi,10秒のひとこと評価・ポイ +1
+REVIEW_TAG_BREAKS,Breaks respected,休憩がとれる
+REVIEW_TAG_INSTRUCTIONS,Clear instructions,説明がわかりやすい
+REVIEW_TAG_ON_TIME,Left on time,時間どおりに帰れる
+REVIEW_TAG_PAID,Paid on time,給料が遅れない
+REVIEW_TAG_FRIENDLY,Friendly team,人がやさしい
+REVIEW_TAG_FAIR,Busy but fair,忙しいけど公平
+REVIEW_TAG_AGAIN,Would work again,また働きたい
+REVIEW_SAYS,Workers say: %s · ★%.1f (%d),働いた人の声：%s・★%.1f（%d）
+REVIEW_ASK,How was work at %s?,%s の仕事、どうだった？
+REVIEW_TITLE,Quick review,ひとこと評価
+REVIEW_WHY,Helps other workers pick good places. Stays anonymous.,ほかの人の職場えらびに役立つよ。名前は出ません。
+REVIEW_SEND,Send review (+%d poi),送る（ポイ +%d）
+REVIEW_SKIP,Skip,とばす
+REVIEW_THANKS,Thank you! Here's %d poi.,ありがとう！ ポイ %d 本どうぞ。
+REVIEW_DONE,Review sent!,送ったよ！
+REVIEW_DONE_BODY,Your voice now shows on this workplace's job cards.,この職場の求人カードに、きみの声が入ったよ。
+QUIZ_Q1,Day off. You're…,休みの日は？
+QUIZ_Q1_A,Out and about,外へおでかけ
+QUIZ_Q1_B,Cozy at home,家でまったり
+QUIZ_Q2,"Before a shift, you…",シフトの前に、まず
+QUIZ_Q2_A,Make a plan,段取りを決める
+QUIZ_Q2_B,Wing it on site,現場で考える
+QUIZ_Q3,Your shift superpower?,シフトで得意なのは？
+QUIZ_Q3_A,Talking to people,人と話す
+QUIZ_Q3_B,Heads-down work,黙々と作業
+QUIZ_Q4,Right before bed?,寝る前は？
+QUIZ_Q4_A,Out like a light,すぐ寝る
+QUIZ_Q4_B,One more scroll…,ついスマホ
+QUIZ_Q5,Invited out after work?,バイト終わりに誘われた
+QUIZ_Q5_A,I'm in!,行く行く！
+QUIZ_Q5_B,Heading home,今日は帰る
+QUIZ_Q6,Rush hour hits!,ピークが来た！
+QUIZ_Q6_A,Stick to the steps,手順どおりに回す
+QUIZ_Q6_B,Improvise it,ひらめきで乗りきる
+QUIZ_Q7,What makes your day?,うれしいのは？
+QUIZ_Q7_A,"A warm ""thank you""",ありがとうの一言
+QUIZ_Q7_B,A perfectly neat shelf,きれいに並んだ棚
+QUIZ_Q8,Meet at 6. You show up…,集合時間には
+QUIZ_Q8_A,10 minutes early,10分前に着く
+QUIZ_Q8_B,Right at 6,ちょうどに着く
+QUIZ_Q9,What recharges you?,元気が出るのは？
+QUIZ_Q9_A,Seeing people,人と会った日
+QUIZ_Q9_B,Time alone,ひとりの時間
+QUIZ_Q10,Making the staff meal?,まかないを作るなら
+QUIZ_Q10_A,Follow the recipe,レシピどおり
+QUIZ_Q10_B,Ask the fridge,冷蔵庫と相談
+QUIZ_Q11,Stuck on something?,困ったときは
+QUIZ_Q11_A,Ask a senior,先輩に聞く
+QUIZ_Q11_B,Read the manual,マニュアルを読む
+QUIZ_Q12,Your 15-min break?,休憩15分の使い方
+QUIZ_Q12_A,Exactly 15 minutes,時計を見てきっちり
+QUIZ_Q12_B,"Oops, dozed off",気づけばうとうと
+QUIZ_AX0_A,Out,外へ
+QUIZ_AX0_B,In,内へ
+QUIZ_AX1_A,Plan,段取り
+QUIZ_AX1_B,Spark,ひらめき
+QUIZ_AX2_A,People,人
+QUIZ_AX2_B,Things,モノ
+QUIZ_AX3_A,Tidy,きっちり
+QUIZ_AX3_B,Easy,ゆったり
+QUIZ_JOB_REGISTER,Register,レジ
+QUIZ_JOB_DISH,Dish,皿洗い
+QUIZ_JOB_HALL,Hall,ホール
+QUIZ_JOB_KITCHEN,Kitchen,キッチン
+QUIZ_JOB_STOCK,Stock,品出し
+QUIZ_T_OPHK_NAME,The Floor Commander,ホールの司令塔
+QUIZ_T_OPHK_LINE,Spots an empty glass three tables away.,3卓先のお冷やまで見えている。
+QUIZ_T_OPHY_NAME,Keeper of the Regulars,常連さんの記憶係
+QUIZ_T_OPHY_LINE,Knows 'the usual' before you say it.,『いつもの』で、全部わかる。
+QUIZ_T_OPMK_NAME,Captain of the Shelves,棚の整列隊長
+QUIZ_T_OPMK_LINE,Every label faces front. Every one.,ラベルは全部、こっち向き。
+QUIZ_T_OPMY_NAME,The Staff-Meal Master,まかないの達人
+QUIZ_T_OPMY_LINE,Turns leftovers into a feast.,余りもので、ごちそうを作る。
+QUIZ_T_OFHK_NAME,Register Sunshine,笑顔のレジ番長
+QUIZ_T_OFHK_LINE,Hands back change with a kind word.,おつりと一緒に、ひと言そえる。
+QUIZ_T_OFHY_NAME,The Break-Room Mood Maker,休憩室のムードメーカー
+QUIZ_T_OFHY_LINE,"Shares snacks, lifts the whole room.",お菓子を配ると、場がなごむ。
+QUIZ_T_OFMK_NAME,The New-Menu Researcher,新メニュー研究員
+QUIZ_T_OFMK_LINE,Allows exactly three test batches.,試作は3回まで、と決めている。
+QUIZ_T_OFMY_NAME,The Easygoing Inventor,のんびり発明家
+QUIZ_T_OFMY_LINE,Still perfecting the art of the cart.,台車の押し方を、日々改良中。
+QUIZ_T_IPHK_NAME,Guardian of the Rota,シフト表の守り神
+QUIZ_T_IPHK_LINE,Knows who is off when. Mostly.,誰がいつ休みか、だいたい知ってる。
+QUIZ_T_IPHY_NAME,The Good Listener,聞き上手のおばけ
+QUIZ_T_IPHY_LINE,Everyone's go-to for a quiet chat.,バイト仲間の相談、だいたい受ける。
+QUIZ_T_IPMK_NAME,The Late-Night Artisan,深夜のひとり職人
+QUIZ_T_IPMK_LINE,Scrubs in silence until plates shine.,皿がひかるまで、黙って洗う。
+QUIZ_T_IPMY_NAME,Keeper of the Stockroom,在庫の番人
+QUIZ_T_IPMY_LINE,Knows what's in the box. Unopened.,箱の中身、開けなくてもわかる。
+QUIZ_T_IFHK_NAME,The Tidy Ninja,気配り忍者
+QUIZ_T_IFHK_LINE,Cleaned up before you even noticed.,気づいた時には、もう片付いている。
+QUIZ_T_IFHY_NAME,The Calm Companion,そばにいる癒やし係
+QUIZ_T_IFHY_LINE,Just being nearby makes it better.,となりにいるだけで、落ちつく。
+QUIZ_T_IFMK_NAME,The Prep Perfectionist,こだわりの仕込み番
+QUIZ_T_IFMK_LINE,Slices onions with total devotion.,玉ねぎの薄さに、命をかける。
+QUIZ_T_IFMY_NAME,Master of the Power Nap,おやすみ上手
+QUIZ_T_IFMY_LINE,Fully recharged in a 15-minute break.,休憩15分で、しっかり回復。
+QUIZ_UI_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
+QUIZ_UI_TITLE,"Find your
+obake cat","あなたのおばけ猫を
+さがそう"
+QUIZ_UI_SUB,"12 quick questions pick your partner.
+All about part-time life and rest.","12の質問で、相棒の猫おばけが決まる。
+バイトと休みの、ゆるい質問だよ。"
+QUIZ_UI_START,Start,はじめる
+QUIZ_UI_NOTE,About 1 min · You can retake it later,1分くらい ・ 答えはあとで変えられる
+QUIZ_UI_QNUM,Q%d,Q%d
+QUIZ_UI_BACK,Back,ひとつ戻る
+QUIZ_UI_YOURS,Your obake cat is…,あなたのマイおばけ猫は
+QUIZ_UI_JOB,Best job: %s,向いてる仕事：%s
+QUIZ_UI_MATCH,Best buddy: %s,相性のいいタイプ：%s
+QUIZ_UI_BEGIN,Start with this cat,この子と はじめる
+QUIZ_UI_SHARE,Share result,結果をシェア
+QUIZ_UI_SHARE_TITLE,Share your result,結果をシェア
+QUIZ_UI_SAVE,Save image,画像を保存
+QUIZ_UI_COPY,Copy share text,シェア文をコピー
+QUIZ_UI_MAKING,Making your card…,カードを作っています…
+QUIZ_UI_READY,Save it and post it!,画像を保存して、SNSに貼ってね
+QUIZ_UI_COPIED,Share text copied!,シェア文をコピーしました
+QUIZ_UI_DOWNLOADED,Image downloaded!,画像をダウンロードしました
+QUIZ_UI_SAVED,Saved: %s,保存しました：%s
+QUIZ_UI_SAVE_FAILED,Couldn't save (%s),保存できませんでした（%s）
+QUIZ_UI_CLOSE,Close,とじる
+QUIZ_CARD_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
+QUIZ_CARD_JOB,Best job  %s,向いてる仕事  %s
+QUIZ_CARD_MINE,My obake cat is,わたしのマイおばけ猫は
+QUIZ_SHARE_TEXT,"My obake cat is ""%s""!
+%s
+#PawTime #MyObakeCat
+%s","わたしのマイおばけ猫は「%s」！
+%s
+#PawTime #マイおばけ猫
+%s"
+JOB_STORE_CAFE_KOMOREBI,Café Komorebi,カフェ こもれび
+JOB_STORE_CAFE_SUNNYSIDE,Sunny Side Coffee,サニーサイド珈琲
+JOB_STORE_CAFE_MORI,Mori no Kissa,森の喫茶
+JOB_STORE_CAFE_TSUKI,Tsuki Café,月カフェ
+JOB_STORE_CAFE_NEKOMIMI,Nekomimi Cat Café,ねこみみカフェ
+JOB_STORE_CAFE_HARBOR,Harbor Coffee,港珈琲
+JOB_STORE_CAFE_HOSHIZORA,Kissa Hoshizora,喫茶 ほしぞら
+JOB_STORE_CAFE_MATCHA,Matcha Stand Midori,抹茶スタンド みどり
+JOB_STORE_CAFE_BEANBAG,Bean Bag Roasters,ビーンバッグ焙煎所
+JOB_STORE_CAFE_FUWARI,Pancake House Fuwari,パンケーキハウス ふわり
+JOB_STORE_IZK_TORIMARU,Izakaya Torimaru,居酒屋 とりまる
+JOB_STORE_IZK_CHOCHIN,Izakaya Chochin,居酒屋 ちょうちん
+JOB_STORE_IZK_KEMURI,Yakitori Kemuri,焼き鳥 けむり
+JOB_STORE_IZK_HANABI,Oden Stall Hanabi,おでん屋台 はなび
+JOB_STORE_IZK_DARUMA,Kushikatsu Daruma,串カツ だるま
+JOB_STORE_IZK_MINATO,Sakaba Minato,酒場 みなと
+JOB_STORE_IZK_HINOKI,Robata Hinoki,炉端 ひのき
+JOB_STORE_IZK_TANUKI,Izakaya Tanuki,居酒屋 たぬき
+JOB_STORE_CVS_HOSHI,Hoshi Mart,ほしマート
+JOB_STORE_CVS_MACHIKADO,Machikado Mart,まちかどマート
+JOB_STORE_CVS_KURUMI,Kurumi Store,くるみストア
+JOB_STORE_CVS_TSUKI24,Tsuki 24 Mart,24ツキマート
+JOB_STORE_CVS_ASAHI,Asahi Mini,あさひミニ
+JOB_STORE_CVS_POCKET,Konbini Pocket,コンビニポケット
+JOB_STORE_CVS_SAKURA,Sakura Mart,さくらマート
+JOB_STORE_WH_KITA,Kita Warehouse,北倉庫
+JOB_STORE_WH_MINATO,Minato Logistics Center,みなと物流センター
+JOB_STORE_WH_SHIORI,Book Warehouse Shiori,本の倉庫 しおり
+JOB_STORE_WH_HAYATE,Fresh Food Depot Hayate,生鮮センター はやて
+JOB_STORE_WH_TSUBAME,Parcel Hub Tsubame,宅配ハブ つばめ
+JOB_STORE_WH_NUNO,Apparel Stock Center Nuno,衣料倉庫 ぬの
+JOB_STORE_WH_OMOCHA,Toy Warehouse Omocha,おもちゃ倉庫
+JOB_STORE_BK_KOMUGI,Bakery Komugi,ベーカリー こむぎ
+JOB_STORE_BK_MORI,Pan no Mori,パンの森
+JOB_STORE_BK_MELON,Melon-Pan Workshop,メロンパン工房
+JOB_STORE_BK_TSUKIAKARI,Croissant Tsukiakari,クロワッサン 月あかり
+JOB_STORE_BK_KOGUMA,Bagel Koguma,ベーグル こぐま
+JOB_STORE_BK_TOMATO,Sandwich Tomato,サンドイッチ とまと
+JOB_STORE_SM_MARUYA,Supermarket Maruya,スーパー まるや
+JOB_STORE_SM_MIDORI,Greengrocer Midori,八百屋 みどり
+JOB_STORE_SM_KAEDE,Fresh Market Kaede,フレッシュマーケット かえで
+JOB_STORE_SM_TANE,Organic Market Tane,オーガニック市場 たね
+JOB_STORE_SM_HAKKA,Drugstore Hakka,ドラッグストア はっか
+JOB_STORE_RS_NIKONIKO,Family Diner Nikoniko,ファミレス にこにこ
+JOB_STORE_RS_YUGE,Ramen Yuge,ラーメン 湯気
+JOB_STORE_RS_TSURUTSURU,Udon Tsurutsuru,うどん つるつる
+JOB_STORE_RS_UMI,Conveyor Sushi Umi,回転寿司 うみ
+JOB_STORE_RS_HOSHI,Curry House Hoshi,カレーの店 星
+JOB_STORE_RS_HANAMARU,Gyoza Hanamaru,餃子 はなまる
+JOB_STORE_RS_TEPPAN,Okonomiyaki Teppan,お好み焼き 鉄板
+JOB_STORE_RS_KIRI,Soba Kiri,そば処 きり
+JOB_STORE_RS_TAMAGO,Omurice Tamago,オムライス たまご
+JOB_STORE_OT_SHIORIDOU,Bookstore Shiori-do,書店 しおり堂
+JOB_STORE_OT_TSUKIKAGE,Cinema Tsukikage,映画館 つきかげ
+JOB_STORE_OT_UTAYA,Karaoke Utaya,カラオケ うたや
+JOB_STORE_OT_HOTEL,Hotel Minato Breakfast Hall,ホテルみなと 朝食会場
+JOB_STORE_OT_OHISAMA,Bento Shop Ohisama,弁当屋 おひさま
+JOB_STORE_OT_YUKI,Ice Cream Yuki,アイスクリーム ゆき
+JOB_STORE_OT_HANAHANA,Flower Shop Hana-Hana,花屋 はなはな
+JOB_STORE_OT_MIMI,Crêpe Stand Mimi,クレープスタンド みみ
+JOB_STORE_OT_PON,Tapioca Tea Pon,タピオカ茶 ぽん
+JOB_STORE_OT_WA,Donut Wa,ドーナツ わ
+JOB_STORE_OT_ENPITSU,Stationery Enpitsu,文具店 えんぴつ
+JOB_STORE_OT_AWA,Laundry Café Awa,ランドリーカフェ あわ
+JOB_PLACE,%s (%s),%s（%s）
+PREFS_SUGGEST,Job suggestions,求人の知らせ
+PREFS_SUGGEST_ON,On,オン
+PREFS_SUGGEST_OFF,Off,オフ
+PREFS_SUGGEST_NOTE,Off: no daily job cards. Add your own shifts and keep playing.,オフにすると、毎日の求人カードは出ません。自分のシフトを入れて遊べます。
+PREFS_SAVE,Save,保存する
+SHIFT_FORM_OPEN,+ Add a shift myself,＋ 自分でシフトを入れる
+SHIFT_FORM_TITLE,Add a shift myself,自分でシフトを入れる
+SHIFT_FORM_SUB,For a job you already have. No pay details needed.,もう決まっている仕事に。お給料の情報はいりません。
+SHIFT_FORM_WHAT,Job,仕事
+SHIFT_FORM_WHAT_PH,e.g. Café shift,例：カフェのシフト
+SHIFT_FORM_WHERE,Place,場所
+SHIFT_FORM_WHERE_PH,e.g. Station-front café,例：駅前のカフェ
+SHIFT_FORM_DAY,Day,日
+SHIFT_FORM_START,Start,はじまり
+SHIFT_FORM_END,End,おわり
+SHIFT_FORM_DATE,%s %d/%d,%s %d/%d
+SHIFT_FORM_NEXT_DAY, (+1 day),（翌日）
+SHIFT_FORM_ADD,Add shift,シフトを入れる
+SHIFT_FORM_CANCEL,Cancel,やめる
+SHIFT_FORM_DEMO_TITLE,Café shift,カフェのシフト
+SHIFT_FORM_DEMO_PLACE,Station-front café,駅前のカフェ
+WORK_PILL,Work,しごと
+WORK_MENU_TITLE,Your shifts,あなたのシフト
+WORK_MENU_BODY,"Coming up: %d. After each shift, a 10-second review gives you 1 poi.",これからのシフト：%d 件。働いたあとの10秒のひとこと評価で、ポイが1本。
+WORK_MENU_PREFS,Work conditions & job suggestions,働く条件・求人の知らせ
+WORK_MENU_CLOSE,Close,とじる
+SHIFT_ADDED_TITLE,Shift added!,シフトを入れた！
+SHIFT_ADDED_BODY,"""%s"" is in. %s will ask how it went afterward.",「%s」を入れました。終わったら、%sが様子を聞きにきます。
+1 個,1 orb,1 個

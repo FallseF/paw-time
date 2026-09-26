@@ -32,6 +32,9 @@ static func load_result() -> Dictionary:
 		return {}
 	# look は今の定義から引き直す（タイプの見た目を後で調整しても、古い保存に引きずられない）
 	parsed["look"] = QuizData.TYPES[parsed.type_id].look.duplicate()
+	# とくべつな印（SpecialObake）は保存のほうを使う
+	if parsed.get("special", "") != "":
+		parsed.look["special"] = parsed.special
 	return parsed
 
 
