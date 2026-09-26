@@ -1122,7 +1122,7 @@ func _press(g: Vector3) -> void:
 		tut_step = 1
 		_tut_show()
 	elif tut_step < 0:
-		hint.text = "玉の下へ、そっと"
+		hint.text = "玉の下へ、そっと" if count < 3 else ""
 
 
 func _release() -> void:
@@ -1491,6 +1491,8 @@ func _update_poi(delta: float) -> void:
 			hint.text = "重すぎる！このままだと、やぶれる"
 		elif over_list.size() > 0 and tut_step < 0 and not auto:
 			hint.text = "いま離せば、すくえる" if over_list.size() == 1 else "%dつ重なっている！" % over_list.size()
+		elif tut_step < 0 and not auto and count >= 3:
+			hint.text = ""
 		dura_fill.size.x = 280.0 * frac
 		dura_fill.color = Color("7bdc6b") if frac > 0.5 else (Color("ffd23f") if frac > 0.25 else Color("ff6b5b"))
 		poi_film_mat.albedo_color.a = 0.12 + 0.45 * frac
