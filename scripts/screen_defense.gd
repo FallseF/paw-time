@@ -703,6 +703,9 @@ func _refresh_ui() -> void:
 		var frac: float = s.left / s.cd if s.cd > 0 else 0.0
 		cd.size = Vector2(81, 59 * frac)
 		var ok := sim.can_deploy(i)
+		if ok and not b.get_meta("ok", false):
+			Kit.pop(b, 1.1)
+		b.set_meta("ok", ok)
 		b.modulate = Color.WHITE if ok else Color(0.82, 0.8, 0.84)
 		var cost: Label = b.get_node("cost")
 		cost.add_theme_color_override("font_color", Kit.INK if sim.energy >= s.cost else Color("d9534f"))
@@ -809,6 +812,8 @@ func _deploy(i: int) -> void:
 		return
 	if sim.deploy(i):
 		Kit.sfx("c_pop", randf_range(0.95, 1.1))
+		if Rares.is_rare(sim.slots[i].id):
+			_callout(sim.slots[i].id)
 		Kit.pop(slot_btns[i], 0.88)
 		_hide_hint("t_deploy")
 		if not GameState.tutorial.has("t_energy"):
@@ -845,6 +850,38 @@ func _cannon() -> void:
 	else:
 		Kit.sfx("c_deny")
 		_shake_ui(cannon_btn)
+
+
+## レアを出したときに、名前と能力をひと言だけ見せる
+func _callout(id: String) -> void:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.96), 18, 0.2))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 8)
+	var pic := TextureRect.new()
+	pic.texture = Kit.portrait(id)
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.custom_minimum_size = Vector2(44, 44)
+	h.add_child(pic)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", -2)
+	v.add_child(Kit.text(GameState.info(id).name, 16, Kit.INK, true))
+	var sk := Kit.text(DefData.unit(id).get("skill", ""), 11, Kit.SUB)
+	sk.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	sk.custom_minimum_size = Vector2(230, 0)
+	v.add_child(sk)
+	h.add_child(v)
+	p.add_child(h)
+	p.position = Vector2(-340, 100)
+	add_child(p)
+	var tw := p.create_tween()
+	tw.tween_property(p, "position:x", 14.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(1.8)
+	tw.tween_property(p, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(p.queue_free)
+	Kit.sfx("c_whoosh", 1.2)
 
 
 func _shake_ui(c: Control) -> void:
@@ -1060,7 +1097,7 @@ func _handle_events(evs: Array) -> void:
 			"sleep":
 				pass
 			"drain":
-				_popup_ui("やる気 -%d" % 20, energy_bar)
+				_popup_ui("やる気 -%d" % 20, energy_lbl)
 			"surge_warn":
 				if ev.boss:
 					_banner("大ピークまで\nあと3秒", Color("ff8a3d"))
