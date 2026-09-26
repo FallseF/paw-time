@@ -55,7 +55,7 @@ void fragment() {
 	vec3 col = color.rgb;
 	if (shape == 0) {
 		float r = length(uv);
-		a = smoothstep(1.0, 0.1, r);
+		a = 1.0 - smoothstep(0.1, 1.0, r);
 	} else if (shape == 1) {
 		float d = tri_down(q, half_size.x * 0.62, half_size.y * 1.05, half_size.y * 0.32);
 		a = fill(d);
@@ -80,7 +80,7 @@ void fragment() {
 		a = fill(d);
 	} else {
 		float r = length(uv);
-		a = pow(clamp(1.0 - r, 0.0, 1.0), 1.4);
+		a = pow(clamp(1.0 - r, 0.0, 1.0), 1.2);
 	}
 	ALBEDO = col;
 	ALPHA = a * color.a;

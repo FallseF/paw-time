@@ -187,6 +187,8 @@ func _card(r: Dictionary) -> Control:
 	if tex:
 		var tr := TextureRect.new()
 		tr.texture = tex
+		# 512px の絵を小さく出すので、ミップマップでなめらかに縮める（既定はドット絵向けの最近傍）
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(78, 78)
@@ -253,6 +255,8 @@ func _show_detail(r: Dictionary) -> void:
 	if tex:
 		var tr := TextureRect.new()
 		tr.texture = tex
+		# 512px の絵を小さく出すので、ミップマップでなめらかに縮める（既定はドット絵向けの最近傍）
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(220, 220)

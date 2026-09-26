@@ -84,8 +84,9 @@ static func flat(color: Color) -> StandardMaterial3D:
 
 ## おばけの肌の材質。色ごとに使い回す。tex を渡すと色に掛ける（縦じまの塗り分けなど）。
 ## rim は縁の光の強さ、sss は明暗の境目の赤み。outline=false で輪郭なし。
-static func skin(color: Color, emission := 0.0, tex: Texture2D = null, rim := 0.32, sss := 0.3, outline := true) -> ShaderMaterial:
-	var key := "%s/%s/%s/%s/%s/%s" % [color.to_html(), emission, tex.get_instance_id() if tex else 0, rim, sss, outline]
+## sheen は光のつや（-1 でシェーダーの既定）。
+static func skin(color: Color, emission := 0.0, tex: Texture2D = null, rim := 0.15, sss := 0.1, outline := true, sheen := -1.0) -> ShaderMaterial:
+	var key := "%s/%s/%s/%s/%s/%s/%s" % [color.to_html(), emission, tex.get_instance_id() if tex else 0, rim, sss, outline, sheen]
 	if _shared.has(key):
 		return _shared[key]
 	var m := ShaderMaterial.new()
@@ -94,6 +95,8 @@ static func skin(color: Color, emission := 0.0, tex: Texture2D = null, rim := 0.
 	m.set_shader_parameter("emission_energy", emission)
 	m.set_shader_parameter("rim_strength", rim)
 	m.set_shader_parameter("sss_strength", sss)
+	if sheen >= 0.0:
+		m.set_shader_parameter("sheen", sheen)
 	if tex:
 		m.set_shader_parameter("albedo_tex", tex)
 	if outline:
@@ -105,9 +108,22 @@ static func skin(color: Color, emission := 0.0, tex: Texture2D = null, rim := 0.
 	return m
 
 
-## 持ち物の材質：肌と同じ塗りで、境目の赤みを控えめにする。rim は昔の toon() と同じ目安。
+## 持ち物の材質：肌と同じ光の当たり方で、境目の赤み（肌らしさ）は付けず、つやも控えめ。
+## rim は昔の toon() と同じ目安（大きいほど縁が明るい）。
 static func prop(color: Color, rim := 0.35, emission := 0.0) -> ShaderMaterial:
-	return skin(color, emission, null, 0.18 + rim * 0.4, 0.12)
+	return skin(color, emission, null, 0.06 + rim * 0.2, 0.0, true, 0.025)
+
+
+## 金属（冠・金具）：つやを強く、せまく
+static func metal(color: Color) -> ShaderMaterial:
+	var key := "metal/" + color.to_html()
+	if _shared.has(key):
+		return _shared[key]
+	var m := skin(color, 0.0, null, 0.12, 0.0, true, 0.35).duplicate() as ShaderMaterial
+	m.set_shader_parameter("sheen_gloss", 40.0)
+	m.set_shader_parameter("wrap", 0.2)
+	_shared[key] = m
+	return m
 
 
 ## 輪郭の色：体の色を暗く濃くしたもの（真っ黒よりやわらかい）
@@ -207,7 +223,7 @@ func _add_contact_shadow() -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "ContactShadow"
 	mi.mesh = p
-	mi.material_override = decal_mat(5, Color(0.16, 0.1, 0.18, 0.42), Vector2.ONE, 0.0, Color.WHITE, 0.0)
+	mi.material_override = decal_mat(5, Color(0.16, 0.1, 0.18, 0.26), Vector2.ONE, 0.0, Color.WHITE, 0.0)
 	mi.position = Vector3(box.get_center().x, 0.006, box.get_center().z)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.set_meta("no_frame", true)
@@ -257,8 +273,8 @@ func face(center: Vector3, k := 1.0, eye_col := INK, sleepy := false) -> Node3D:
 			e.scale = EYE_SCALE
 			eyes.append(e)
 			f.add_child(e)
-		var ch := Vector2(0.125, 0.08)
-		f.add_child(_decal(Vector2(x * 1.72, -0.085), ch, decal_mat(0, Color(PINK.lerp(Color("ff7f9a"), 0.35), 0.85), ch)))
+		var ch := Vector2(0.11, 0.072)
+		f.add_child(_decal(Vector2(x * 1.72, -0.085), ch, decal_mat(0, Color(PINK.lerp(Color("ff7f9a"), 0.35), 0.65), ch)))
 	if CAT:
 		# 鼻と「ω」の口、ひげ
 		var nh := Vector2(0.034, 0.026)

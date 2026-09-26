@@ -9,7 +9,7 @@ Blender 5.2 で、画面なしで動かす:
   2. 細かく割った立方体を球にふくらませ、耳の向きへ頂点を寄せてから、中心からの光線でその形の表面に写し取る。
   3. サブディビジョンサーフェスを 1 段かけて確定し、もう一度光線で表面に戻す。法線は距離場の勾配から付ける。
   4. 尻尾は曲線に沿った管で、別のメッシュ（Tail）にする。
-  5. Cycles で AO を頂点色に焼く（床の板も置いて、裾の足元が少し暗くなるようにする）。
+  5. Cycles で AO（耳の付け根・尻尾の付け根・裾のすき間）を頂点色に焼く。床は置かない。
      頂点色: R = AO（1 で明るい）、G = 1 - 耳の内側の印、B = 1。色を持たない部品は白 = AO なし・耳なしになる。
   6. UV は SphereMesh と同じ向き（u は正面 +Z から +X へ回る、v は上 0・下 1）。
 
@@ -393,9 +393,7 @@ def bake_ao(objs):
     if sc.world is None:
         sc.world = bpy.data.worlds.new("World")
     sc.world.light_settings.distance = 0.45
-    # 床の板（足元の接地感）
-    bpy.ops.mesh.primitive_plane_add(size=6, location=(0, 0, -0.002))
-    ground = bpy.context.active_object
+    # 床は置かない（浮いているおばけの裾まで汚れないように）。足元の影は Obake3D の接地影が受け持つ
     mat = bpy.data.materials.new("bake")
     for o in objs:
         o.data.materials.append(mat)
@@ -407,7 +405,6 @@ def bake_ao(objs):
         o.select_set(True)
     bpy.context.view_layer.objects.active = objs[0]
     bpy.ops.object.bake(type="AO")
-    bpy.data.objects.remove(ground)
     for o in objs:
         o.data.materials.clear()
 

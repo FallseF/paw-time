@@ -12,18 +12,18 @@ uniform vec4 inner_color : source_color = vec4(0.97, 0.66, 0.68, 1.0);
 uniform vec4 shadow_tint : source_color = vec4(0.56, 0.52, 0.80, 1.0);
 uniform vec4 light_tint : source_color = vec4(1.0, 0.97, 0.92, 1.0);
 uniform vec4 sss_color : source_color = vec4(1.0, 0.42, 0.32, 1.0);
-uniform float sss_strength : hint_range(0.0, 1.0) = 0.3;
-uniform float wrap : hint_range(0.0, 1.0) = 0.5;
+uniform float sss_strength : hint_range(0.0, 1.0) = 0.1;
+uniform float wrap : hint_range(0.0, 1.0) = 0.35;
 uniform float ramp_center : hint_range(0.0, 1.0) = 0.42;
-uniform float ramp_soft : hint_range(0.01, 1.0) = 0.32;
+uniform float ramp_soft : hint_range(0.01, 1.0) = 0.45;
 uniform float shadow_level : hint_range(0.0, 1.0) = 0.42;
-uniform float shadow_sat : hint_range(0.0, 1.5) = 0.45;
-uniform float ao_strength : hint_range(0.0, 1.0) = 0.9;
+uniform float shadow_sat : hint_range(0.0, 1.5) = 0.22;
+uniform float ao_strength : hint_range(0.0, 1.0) = 0.6;
 uniform vec4 rim_color : source_color = vec4(1.0, 0.97, 0.92, 1.0);
-uniform float rim_strength : hint_range(0.0, 2.0) = 0.32;
+uniform float rim_strength : hint_range(0.0, 2.0) = 0.15;
 uniform float rim_power = 3.2;
-uniform float back_rim : hint_range(0.0, 4.0) = 1.2;
-uniform float sheen : hint_range(0.0, 1.0) = 0.1;
+uniform float back_rim : hint_range(0.0, 4.0) = 0.5;
+uniform float sheen : hint_range(0.0, 1.0) = 0.05;
 uniform float sheen_gloss = 18.0;
 uniform float emission_energy = 0.0;
 uniform float top_light : hint_range(0.0, 0.5) = 0.07;
@@ -62,8 +62,13 @@ void fragment() {
 
 void light() {
 	float ndl = dot(NORMAL, LIGHT);
+	if (!LIGHT_IS_DIRECTIONAL) {
+		// 点光源・スポット：距離で弱まる、ふつうの回り込む拡散光だけ（影側の色づけは平行光に任せる）
+		float wl = clamp((ndl + wrap * 0.5) / (1.0 + wrap * 0.5), 0.0, 1.0);
+		DIFFUSE_LIGHT += LIGHT_COLOR / PI * wl * ATTENUATION;
+	} else {
 	float w = (ndl + wrap) / (1.0 + wrap);
-	float lit = smoothstep(ramp_center - ramp_soft * 0.5, ramp_center + ramp_soft * 0.5, w) * ATTENUATION;
+	float lit = smoothstep(ramp_center - ramp_soft * 0.5, ramp_center + ramp_soft * 0.5, w);
 	// 影側：青みを足し、色を少し鮮やかに
 	float l = max(luma(ALBEDO), 0.001);
 	vec3 sat = max(mix(vec3(l), ALBEDO, 1.0 + shadow_sat), vec3(0.0));
@@ -73,15 +78,17 @@ void light() {
 	vec3 shade = mix(shade_dark, shade_lit, lit);
 	// 明暗の境目の赤み（光が中を透けてくる感じ）
 	float term = exp(-pow((w - ramp_center) / (ramp_soft * 0.9), 2.0));
-	shade += sss_color.rgb * term * sss_strength * mix(1.0, ATTENUATION, 0.5);
-	DIFFUSE_LIGHT += LIGHT_COLOR / PI * shade;
+	shade += sss_color.rgb * term * sss_strength;
+	// 落ち影（ATTENUATION）は光の全体に掛ける。影の中は環境光だけになる
+	DIFFUSE_LIGHT += LIGHT_COLOR / PI * shade * ATTENUATION;
 	// やわらかいつや
 	vec3 h = normalize(LIGHT + VIEW);
 	float spec = pow(clamp(dot(NORMAL, h), 0.0, 1.0), sheen_gloss);
-	SPECULAR_LIGHT += LIGHT_COLOR / PI * spec * sheen * lit;
+	SPECULAR_LIGHT += LIGHT_COLOR / PI * spec * sheen * lit * ATTENUATION;
 	// うしろからの光は、縁を明るく縁取る
 	float ndv = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
 	float edge = pow(1.0 - ndv, 2.5);
 	float behind = clamp(-dot(LIGHT, VIEW) * 0.6 + 0.4, 0.0, 1.0);
 	SPECULAR_LIGHT += LIGHT_COLOR / PI * rim_color.rgb * edge * behind * clamp(ndl + 0.35, 0.0, 1.0) * back_rim * ATTENUATION * mix(vec3(1.0), ALBEDO, 0.5);
+	}
 }

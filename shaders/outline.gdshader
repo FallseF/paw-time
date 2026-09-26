@@ -4,11 +4,12 @@ shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_opaque, blend_mix, shadows_disabled, fog_disabled;
 
 uniform vec4 color : source_color = vec4(0.2, 0.14, 0.2, 1.0);
-uniform float width = 0.011;
+uniform float width = 0.0095;
 
 void vertex() {
 	vec4 vp = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
-	vec3 vn = normalize(mat3(MODELVIEW_MATRIX) * NORMAL);
+	// 縮尺がそろっていない部品でも、法線は正しい行列で回す
+	vec3 vn = normalize(mat3(VIEW_MATRIX) * (MODEL_NORMAL_MATRIX * NORMAL));
 	// 遠くでも細くなりすぎないよう、距離で少し太らせる
 	float d = max(-vp.z, 0.1);
 	float wdt = width * clamp(d / 3.0, 0.8, 2.2);

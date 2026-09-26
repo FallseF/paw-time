@@ -30,13 +30,13 @@ void fragment() {
 	float g = smoothstep(-0.9, 0.7, p.y);
 	vec3 col = mix(iris_bottom.rgb, iris_top.rgb, g);
 	// 縁を少し締める
-	col *= mix(0.78, 1.0, smoothstep(1.0, 0.55, length(p)));
+	col *= mix(0.78, 1.0, 1.0 - smoothstep(0.55, 1.0, length(p)));
 	// 下の淡い映り込み（三日月）
 	float cres = disc(p, vec2(0.0, -0.18), vec2(0.78, 0.7)) * (1.0 - disc(p, vec2(0.0, 0.02), vec2(0.8, 0.78)));
-	col = mix(col, mix(iris_bottom.rgb, glint.rgb, 0.45), cres * 0.55);
+	col = mix(col, mix(iris_bottom.rgb, glint.rgb, 0.45), cres * 0.2);
 	float vis = smoothstep(0.45, 0.8, v_open);
-	float big = disc(p, vec2(0.3, 0.4), vec2(0.34, 0.3));
-	float small = disc(p, vec2(-0.3, -0.34), vec2(0.13, 0.12));
+	float big = disc(p, vec2(0.28, 0.4), vec2(0.25, 0.22));
+	float small = disc(p, vec2(-0.3, -0.36), vec2(0.1, 0.09));
 	col = mix(col, glint.rgb, max(big, small * 0.9) * vis);
 	ALBEDO = col;
 }

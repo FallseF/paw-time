@@ -33,6 +33,10 @@ func _run() -> void:
 	else:
 		for r in Rares.LIST:
 			ids.append(r.id)
+		# ふつうのおばけも撮る（シートの最後の段に並ぶ）
+		for id in Obake3D.COLORS:
+			if not ids.has(id):
+				ids.append(id)
 	_make_stage()
 	var shots: Array[Image] = []
 	for id in ids:
@@ -110,11 +114,13 @@ func _sheet(shots: Array[Image], ids: Array) -> Image:
 	var cell := 256
 	var rows := ceili(shots.size() / float(cols))
 	var sheet := Image.create(cols * cell, rows * cell, false, Image.FORMAT_RGBA8)
-	for i in shots.size():
+	for i in rows * cols:
 		var x := (i % cols) * cell
 		var y := (i / cols) * cell
 		var bg := Color("fbf6ef") if (i + i / cols) % 2 == 0 else Color("f1e9df")
 		sheet.fill_rect(Rect2i(x, y, cell, cell), bg)
+		if i >= shots.size():
+			continue
 		var s := shots[i].duplicate() as Image
 		s.resize(cell, cell, Image.INTERPOLATE_LANCZOS)
 		sheet.blend_rect(s, Rect2i(0, 0, cell, cell), Vector2i(x, y))

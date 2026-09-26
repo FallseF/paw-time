@@ -266,7 +266,7 @@ func _b_kirari() -> void:
 	_mini(c2, 0.8, Vector3(0, 0, 0))
 	var crown := _node(Vector3(0.02, 0.74, 0), null, Vector3(0, 0, 0.16))
 	_p.crown = crown
-	var gold := _mat(c1, 0.35, 0.2)
+	var gold := metal(c1)
 	_add(_cyl(0.48, 0.44, 0.28, 24), gold, Vector3.ZERO, crown)
 	var gems := [Color("ff6f91"), Color("5fc4f0"), Color("7fd18a"), Color("ff6f91"), Color("b98cff")]
 	for i in 5:
