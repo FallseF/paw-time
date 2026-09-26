@@ -142,7 +142,12 @@ func _ready() -> void:
 
 
 ## 確認・デモの起動では、セーブを読まず、書かない
+var force_save := false
+
+
 func _sandboxed() -> bool:
+	if force_save:
+		return false
 	for k in ["OBAKE_FRESH", "OBAKE_SHOT", "OBAKE_DEMO", "OBAKE_NOSAVE", "OBAKE_AUTOPLAY"]:
 		if OS.get_environment(k) != "":
 			return true
@@ -769,15 +774,35 @@ func load_game() -> bool:
 	for k in SAVE_KEYS:
 		if not d.has(k):
 			continue
-		var v = d[k]
+		var v = _intify(d[k])
 		var cur = get(k)
 		# JSON は数値を float で返すので、元の型に戻す
 		if typeof(cur) == TYPE_INT:
 			v = int(v)
+		elif typeof(cur) == TYPE_FLOAT:
+			v = float(v)
 		set(k, v)
 	_fix_ints()
 	changed.emit()
 	return true
+
+
+## JSON から戻した入れ物の中の、整数だった数を int に戻す
+func _intify(v):
+	match typeof(v):
+		TYPE_FLOAT:
+			return int(v) if v == floorf(v) else v
+		TYPE_DICTIONARY:
+			var out := {}
+			for k in v:
+				out[k] = _intify(v[k])
+			return out
+		TYPE_ARRAY:
+			var arr: Array = []
+			for x in v:
+				arr.append(_intify(x))
+			return arr
+	return v
 
 
 func _fix_ints() -> void:
