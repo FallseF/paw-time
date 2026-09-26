@@ -66,7 +66,7 @@ const LIST := [
 	{"id": "morattan", "name": "モラッタン", "group": "つながり", "hint": "誰かから、受け取った",
 		"desc": "同僚からおばけを贈られると生まれる", "look": {"skin": "paper", "prop": "bell", "fx": "petals", "c1": "fff1dc", "c2": "5fc4a8"}},
 	{"id": "teamwork", "name": "テヲツナグ", "group": "つながり", "hint": "祭りの夜に、たくさんすくった",
-		"desc": "大すくい祭りで12個すくうと生まれる。みんなで手をつなぐ", "look": {"skin": "flame", "prop": "halo", "fx": "sparks", "c1": "ff8a5b", "c2": "ffe27a"}},
+		"desc": "大すくい祭りで12こすくうと生まれる。みんなで手をつなぐ", "look": {"skin": "flame", "prop": "halo", "fx": "sparks", "c1": "ff8a5b", "c2": "ffe27a"}},
 	{"id": "senpai", "name": "センパイ", "group": "つながり", "hint": "はじめての人の、となりにいた",
 		"desc": "はじめて入る人と同じシフトに入ると生まれる。頼られると伸びる", "look": {"skin": "leaf", "prop": "book", "fx": "motes", "c1": "a8e07f", "c2": "4f8a5b"}},
 

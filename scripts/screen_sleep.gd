@@ -147,9 +147,9 @@ func _set_hours(h: int) -> void:
 	lines.append(["明日のポイの強さ ×%.2f" % strength, Color("ffe27a") if strength >= 1.25 else (Color("ffb3a8") if strength < 1.0 else Color("e8e2ff"))])
 	if n > 0:
 		if hours >= 7:
-			lines.append(["すくった玉 %d 個が、★ひとつ育ってかえる" % n, Color("b8ffcf")])
+			lines.append(["すくった玉 %d こが、★ひとつ育ってかえる" % n, Color("b8ffcf")])
 		else:
-			lines.append(["すくった玉 %d 個が、朝にかえる" % n, Color("e8e2ff")])
+			lines.append(["すくった玉 %d こが、朝にかえる" % n, Color("e8e2ff")])
 	var s: Dictionary = GameState.today()
 	var worked: bool = GameState.worked_today
 	if hours >= 7 and not GameState.seen.has("nemurin"):

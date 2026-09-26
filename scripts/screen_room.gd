@@ -451,7 +451,7 @@ func _render() -> void:
 	var s: Dictionary = GameState.today()
 	var fest := GameState.is_festival()
 	if GameState.phase == "scooped":
-		card_title.text = "今夜は %d 個すくった" % GameState.tonight.get("count", 0)
+		card_title.text = "今夜は %d こすくった" % GameState.tonight.get("count", 0)
 		card_body.text = "寝ると、玉が朝にかえる。よく眠るほど、よく育つ"
 		actions.add_child(_button("寝る", Color("8b7bff"), func(): main.go("sleep")))
 		_fit_card()

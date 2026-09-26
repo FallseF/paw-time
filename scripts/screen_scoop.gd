@@ -1784,7 +1784,7 @@ func _show_result(reason: String, was_best: bool) -> void:
 	card.add_child(v)
 	v.add_child(_text(reason, 13, Color("8a7a88")))
 	v.add_child(_text("今夜のすくい", 22, Color("2a2233"), font_black))
-	var big := _text("%d 個" % count, 44, Color("5b6fc2"), font_black)
+	var big := _text("%d こ" % count, 44, Color("5b6fc2"), font_black)
 	v.add_child(big)
 	var row := HFlowContainer.new()
 	row.alignment = FlowContainer.ALIGNMENT_CENTER

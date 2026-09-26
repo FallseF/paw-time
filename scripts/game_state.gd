@@ -540,7 +540,7 @@ func night_mods() -> Dictionary:
 		m.festival = true
 		m.supply += 8
 		m.rainbow_max += 1
-		m.label.push_front("大すくい祭り：金の玉が出る。12個すくえば景品")
+		m.label.push_front("大すくい祭り：金の玉が出る。12こすくえば景品")
 	if m.label.is_empty():
 		m.label.append("晴れ：しずかな水面")
 	m.rainbow = minf(m.rainbow, 0.95)
@@ -799,7 +799,7 @@ func sleep(hours: int) -> void:
 	# 朝の報告
 	morning_report.append("%d時間ねた → ポイの強さ ×%.2f%s" % [hours, strength, "（よく寝た！玉が★1つ育った）" if qb > 0 else ""])
 	if n_orbs > 0:
-		morning_report.append("すくった玉 %d 個が、朝日でかえった" % n_orbs)
+		morning_report.append("すくった玉 %d こが、朝日でかえった" % n_orbs)
 	if free > 0:
 		morning_report.append("毎朝の紙のポイ ×%d" % free)
 	else:
