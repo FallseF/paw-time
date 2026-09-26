@@ -1,22 +1,40 @@
-# おばけの休憩室（Godot 版）
+# Paw Time
 
-働くと網が手に入り、寝ると網を振る力が溜まる。捕まえたおばけを育てて、同僚と店の困りごとを切り抜けるゲーム。
+**Worked a shift? More nets. Slept well? Your orbs hatch.**
 
-## 動かす
+A game for people who work. Your real shifts and sleep become boosts in a cozy cat-obake (cat-ghost) collecting game — and working longer hours never pays more. Built by Team Dry Grape for the Recruit Innovation Cup 2026.
 
-```
-brew install --cask godot   # 初回だけ
-godot --path ~/dev/obake-godot
-```
+- Launch page (EN / JA): https://obake-breakroom-launch.vercel.app
+- Playable prototypes (browser):
+  - A — Scoop & Collect: https://obake-breakroom-a-scoop.vercel.app
+  - B — Sleep Rhythm (build & share your island): https://obake-breakroom-b-sleep.vercel.app
+  - C — Run the Shop: https://obake-breakroom-c-defense.vercel.app
 
-## 1日の流れ（見本の1週間：月〜金）
+## Core loop
+1. **Day — shift:** you get nets (poi) matching your kind of work. Same amount however long you work.
+2. **Night — obake scooping:** gently scoop glowing glass orbs from a riverside pond.
+3. **Sleep:** length and regularity decide how strong tomorrow's nets are and how well orbs hatch.
+4. **Morning — hatch:** orbs crack open one by one and a cat-obake is born.
+5. **Always — collection:** 5 common + 30 rare cat-obake. Rares come from how you live (a rainy shift, a full-moon night, a real rest after a busy stretch), never from sheer hours.
 
-1. 朝：寝ている間に起きたこと（仕掛けた網の結果、おばけの成長）
-2. 休憩室：シフトに行く → 仕事の種類の網を、働いた時間の分だけもらう（はじめての経験ならきらきら網）
-3. 金曜だけ：大ピークの協力バトル（困りごとごとに、効くおばけの種類が違う）
-4. 帰り道：網を選び、縮む輪がおばけに重なった瞬間にタップして捕まえる
-5. 寝る：睡眠時間で、明日の振れる回数・網の強さ・おばけの成長が決まる。網を1本仕掛けられる
+## Repository layout
+| Branch | What it is |
+|---|---|
+| `main` (this) | Shared base: engine code, AAA character look, glass orbs, cat-obake, personality quiz, launch page (`launch/`) |
+| `feature/variant-a` | Prototype A — scoop mastery & collection |
+| `feature/variant-b` | Prototype B — sleep rhythm, island building & sharing |
+| `feature/variant-c` | Prototype C — run the shop |
+| `feature/aaa-look` | Character look: Blender-built body, character/eye/outline shaders, 3-point lighting |
+| `feature/my-obake-quiz` | "My Obake-Cat" personality quiz (16 types, share card) |
+| `feature/paw-cat`, `feature/rare-3d` | Cat-obake parts, 30 rares as 3D models |
 
-## 絵
+Each variant branch has a `REPORT.md` (how to play, balance notes, strengths/weaknesses).
 
-`python3 tools/gen_art.py` で assets/sprites のドット絵を全部描き直す。フォントは DotGothic16（OFL）。
+## Run
+- Godot **4.7.2** (renderer: GL Compatibility; web-exportable).
+- `godot --path .` to play. Useful env vars: `OBAKE_START=<screen>`, `OBAKE_SHOT=...`, `OBAKE_SHOT_PATH=...` (see `scripts/main.gd`).
+- Web build: `godot --headless --path . --export-release "Web" build/web/index.html` (preset in `export_presets.cfg` on variant branches).
+- Character body meshes: `tools/blender/build_cat_obake.py` (Blender 5.2, `--background --python`).
+
+## Team
+Keigo Oyama, Yuto Aoki, Risa Koyanagi — Team Dry Grape.
