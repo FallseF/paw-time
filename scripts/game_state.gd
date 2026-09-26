@@ -161,7 +161,7 @@ func reset() -> void:
 	pending_battle = {}
 	enemies_seen = {}
 	daily_pick = []
-	focus = ""
+	focus = "receipt"
 	perfect = {}
 	changed.emit()
 
@@ -367,6 +367,15 @@ func is_cleared(si: int, st: int, l := -1) -> bool:
 
 func is_perfect(si: int, st: int) -> bool:
 	return perfect.has(DefData.stage_key(si, st, lap))
+
+
+## このあと勝ったときのまかない（はじめて／くり返し／その日4勝目から）。日課と★は別
+func expected_reward(si: int, st: int) -> int:
+	var stg: Dictionary = DefData.stage(si, st)
+	var base := int(stg.reward * DefData.lap_mult(lap) * (1.5 if stg.get("boss_stage", false) and weekday() == "金" else 1.0))
+	if not is_cleared(si, st):
+		return base
+	return int(base * (0.5 if wins_today < 3 else 0.25))
 
 
 func clear_count(si: int, st: int) -> int:

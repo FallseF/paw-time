@@ -774,12 +774,17 @@ func _refresh_ui() -> void:
 		b.modulate = Color.WHITE if ok else Color(0.82, 0.8, 0.84)
 		var cost: Label = b.get_node("cost")
 		cost.add_theme_color_override("font_color", Kit.INK if sim.energy >= s.cost else Color("d9534f"))
-		if s.left > 0:
+		if s.cost > sim.energy_max():
+			cost.text = "やる気Lv%d必要" % _wallet_needed(s.cost)
+			cost.add_theme_font_size_override("font_size", 10)
+		elif s.left > 0:
 			cost.text = "%.0f秒" % ceil(s.left)
 		elif sim.energy < s.cost:
 			cost.text = "あと%d" % int(ceil(s.cost - sim.energy))
 		else:
 			cost.text = str(s.cost)
+		if s.cost <= sim.energy_max():
+			cost.add_theme_font_size_override("font_size", 13)
 		# 前の困りごとに効く仕事なら、枠を光らせる
 		var job: String = DefData.unit(s.id).get("job", "")
 		var glow := weak_job != "" and job == weak_job
@@ -952,6 +957,16 @@ func _deploy(i: int) -> void:
 	elif i < sim.slots.size():
 		Kit.sfx("c_deny")
 		_shake_ui(slot_btns[i])
+		if sim.slots[i].cost > sim.energy_max():
+			Kit.pop(wallet_btn, 1.15)
+			_popup_ui("やる気Lvを上げると出せる", wallet_btn)
+
+
+func _wallet_needed(cost: int) -> int:
+	var lv := sim.wallet_lv
+	while 300.0 + 150.0 * (lv - 1) < cost and lv < DefSim.WALLET_MAX_LV:
+		lv += 1
+	return lv
 
 
 func _wallet() -> void:
@@ -1538,7 +1553,7 @@ func _result(r: Dictionary) -> void:
 			notes.append([shop.get("thanks", ""), Kit.INK])
 			notes.append(["虹色の玉をもらった（明日の朝かえる）", Color("8b7bff")])
 		if r.lap_up:
-			notes.append(["%d周目がひらいた：もっと混む" % GameState.best_lap, Color("8b7bff")])
+			notes.append(["%d周目がひらいた：もっと混む。はじめてのまかないと虹色の玉が、また出る" % GameState.best_lap, Color("8b7bff")])
 		var nx := GameState.next_stage()
 		if r.first and not r.lap_up and not (nx[0] == si and nx[1] == st):
 			notes.append(["つぎ：%s" % DefData.stage(nx[0], nx[1]).name, Kit.INK])
@@ -1568,7 +1583,14 @@ func _result(r: Dictionary) -> void:
 			tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			v.add_child(tl)
 			v.move_child(tl, v.get_child_count() - 2)
-		var b1 := Kit.button("休憩室へ" if to_room else ("つぎへ" if r.first else "地図へ"), Kit.ACCENT, func():
+		var b1_text := "休憩室へ" if to_room else ("つぎへ" if r.first else "地図へ")
+		if r.lap_up:
+			b1_text = "%d周目へ" % GameState.best_lap
+			to_room = false
+		var b1 := Kit.button(b1_text, Kit.ACCENT, func():
+			if r.lap_up:
+				GameState.lap = GameState.best_lap
+				GameState.save_game()
 			GameState.set_meta("open_next", r.first)
 			main.go("room" if to_room else "map"))
 		b1.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -20,7 +20,7 @@ const LIST := [
 	{"id": "yomise", "name": "ヨミセ", "group": "睡眠", "hint": "夜ふかしの灯りに、寄ってくる",
 		"desc": "5時間以下の睡眠の朝に。提灯をさげて夜を歩く", "look": {"skin": "starry", "prop": "lantern", "fx": "fireflies", "c1": "2b3478", "c2": "ffb35c"}},
 	{"id": "hirunen", "name": "ヒルネン", "group": "睡眠", "hint": "休みの日に、たっぷり眠ると",
-		"desc": "休みの日に9時間ねむると生まれる。日だまりの匂い", "look": {"skin": "cloud", "prop": "leaf_hat", "fx": "motes", "c1": "ffe7a8", "c2": "8fd18a"}},
+		"desc": "休みの日に8時間ねむると生まれる。日だまりの匂い", "look": {"skin": "cloud", "prop": "leaf_hat", "fx": "motes", "c1": "ffe7a8", "c2": "8fd18a"}},
 	{"id": "totonou", "name": "トトノウ", "group": "睡眠", "hint": "同じ時間に眠る夜が、続くと",
 		"desc": "3日続けて同じ時間ねむると生まれる。いつも落ち着いている", "look": {"skin": "water", "prop": "bell", "fx": "bubbles", "c1": "8fe0d8", "c2": "3aa6a0"}},
 
@@ -108,7 +108,7 @@ static func check(ctx: Dictionary, have: Dictionary) -> Array:
 		"yumemi": hrs >= 8,
 		"asayake": hist.size() >= 3 and hist.slice(-3).all(func(h): return h >= 7),
 		"yomise": hrs <= 5,
-		"hirunen": not worked and hrs >= 9,
+		"hirunen": not worked and hrs >= 8,
 		"totonou": hist.size() >= 3 and hist.slice(-3).all(func(h): return h == hist[-1]),
 		"kirari": worked and s.get("first", false),
 		"hajimete": worked and ctx.first_role,

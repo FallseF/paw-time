@@ -192,7 +192,7 @@ func _stage_row(si: int, st: int) -> Control:
 	nv.add_theme_constant_override("separation", 0)
 	nv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	nv.add_child(Kit.text(stage.name if open else "？？？", 15, Kit.INK if open else Kit.SUB, true))
-	var sub := "まかない %d" % int(stage.reward * DefData.lap_mult(GameState.lap))
+	var sub := ("まかない %d" % GameState.expected_reward(si, st)) + ("（くり返し）" if done else "")
 	if done:
 		sub = "クリア ×%d ・ " % GameState.clear_count(si, st) + sub
 	if stage.get("boss_stage", false) and GameState.weekday() == "金":
@@ -208,7 +208,7 @@ func _stage_row(si: int, st: int) -> Control:
 			ids[s[0]] = true
 		var n := 0
 		for id in ids:
-			if n >= (2 if done else 3):
+			if n >= (1 if done else 3):
 				break
 			var tr := TextureRect.new()
 			tr.texture = Kit.enemy_tex(id)
