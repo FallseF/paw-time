@@ -581,7 +581,8 @@ func _build_ui() -> void:
 	var bbl := Kit.text("金曜の大ピーク", 12, Color("ffb07a"), true)
 	bbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bbv.add_child(bbl)
-	boss_hp = Kit.bar(1.0, Color("ff8a3d"), Color(1, 1, 1, 0.15), 8)
+	boss_hp = Kit.bar(1.0, Color("ff8a3d"), Color(1, 1, 1, 0.15), 10)
+	boss_hp.custom_minimum_size = Vector2(210, 10)
 	bbv.add_child(boss_hp)
 	boss_bar.add_child(bbv)
 	boss_bar.visible = false

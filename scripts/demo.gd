@@ -110,7 +110,13 @@ func _boss() -> void:
 	sim.ebase_hp = sim.ebase_max * 0.86
 	await get_tree().create_timer(0.8).timeout
 	sim.ebase_hp = sim.ebase_max * 0.84 # ここで大ピークが来る
-	await get_tree().create_timer(4.5).timeout
+	await get_tree().create_timer(3.0).timeout
+	# 大ピークが「！」でためた瞬間にチャイム
+	for k in 40:
+		var b := sim.find(sim.boss_uid)
+		if not b.is_empty() and b.winding and b.x >= DefData.LANE - DefSim.CANNON_REACH:
+			break
+		await get_tree().create_timer(0.1).timeout
 	sim.cannon = 1.0
 	s._cannon()
 	await get_tree().create_timer(1.5).timeout
