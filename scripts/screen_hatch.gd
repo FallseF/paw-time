@@ -509,7 +509,7 @@ func _open_all() -> void:
 
 
 func _type_label(t: String) -> String:
-	return {"register": "レジの経験", "dish": "皿洗いの経験", "hall": "ホールの経験", "kitchen": "キッチンの経験", "stock": "品出しの経験", "night": "夜ふかし", "rare": "虹の玉", "sleep": "よく眠った朝"}.get(t, "")
+	return {"register": "黄の玉から", "dish": "青の玉から", "hall": "紫の玉から", "kitchen": "橙の玉から", "stock": "茶の玉から"}.get(t, "")
 
 
 func _flash(a: float) -> void:

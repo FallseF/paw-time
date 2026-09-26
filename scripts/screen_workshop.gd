@@ -436,3 +436,7 @@ func _gift(id: String) -> void:
 		_play("chime")
 		_toast(msg)
 		_build()
+
+
+func demo_scroll() -> void:
+	scroll.scroll_vertical = 1400
