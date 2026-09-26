@@ -31,12 +31,14 @@ func _ready() -> void:
 	add_child(tag)
 
 	var v := VBoxContainer.new()
-	v.position = Vector2(60, 470)
-	v.size = Vector2(240, 140)
+	v.position = Vector2(50, 450)
+	v.size = Vector2(260, 160)
 	v.add_theme_constant_override("separation", 10)
 	add_child(v)
 	var has_save: bool = GameState.has_save() and GameState.records.nights > 0
 	if has_save:
+		var info := _text("図鑑 %d/%d ・ %s" % [GameState.seen.size(), GameState.ALL.size(), GameState.title_name()], 13, Color(1, 1, 1, 0.75))
+		v.add_child(info)
 		v.add_child(_button("つづきから（第%d週 %s曜）" % [GameState.week_no(), GameState.dow()], Color("ff8a5b"), _continue))
 		v.add_child(_button("はじめから", Color(1, 1, 1, 0.9), _ask_reset, Color("5b6fc2")))
 	else:
