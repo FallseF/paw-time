@@ -9,6 +9,7 @@
 3. 下の「統合の案」に、どれを採るかを一言返す
 
 ## 遊べる URL（Vercel、個人の eiyutos-projects、誰でも開ける）
+- ローンチ資料（3案の紹介・広告動画・レア30体の図鑑）：https://obake-breakroom-launch.vercel.app
 - A：https://obake-breakroom-a-scoop.vercel.app
 - B：https://obake-breakroom-b-sleep.vercel.app
 - C：https://obake-breakroom-c-defense.vercel.app
