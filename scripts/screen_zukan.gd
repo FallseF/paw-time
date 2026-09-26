@@ -262,7 +262,7 @@ func _card(r: Dictionary) -> Control:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(78, 78)
 		if not found:
-			tr.modulate = Color(0.15, 0.12, 0.2, 0.35)
+			tr.modulate = Color(0.1, 0.08, 0.14, 0.55)
 		art = tr
 	else:
 		var dot := Panel.new()
@@ -331,7 +331,7 @@ func _show_detail(r: Dictionary) -> void:
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(220, 220)
 		if not found:
-			tr.modulate = Color(0.15, 0.12, 0.2, 0.35)
+			tr.modulate = Color(0.1, 0.08, 0.14, 0.55)
 		v.add_child(tr)
 	var n := _text(r.name if found else "？？？", 26, Color("2a2233"), font_black)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -343,3 +343,13 @@ func _show_detail(r: Dictionary) -> void:
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
+
+
+func demo_detail() -> void:
+	_show_detail(Rares.LIST[3])
+
+
+func demo_bottom() -> void:
+	for c in get_children():
+		if c is ScrollContainer:
+			c.scroll_vertical = 99999
