@@ -46,9 +46,9 @@ const MAX_LEVEL := 5
 
 ## 工房：ずっと効く改良（3段階）と、使い切りの特別なポイ
 const UPGRADES := {
-	"fuchi": {"name": "ふちを太く", "desc": "ポイがやぶれにくくなる（+20%）", "cost": [{"stock": 2, "register": 1}, {"stock": 4, "hall": 3}, {"stock": 6, "rainbow": 2}]},
-	"wa": {"name": "輪を広く", "desc": "ポイが大きくなる（+12%）", "cost": [{"dish": 2, "register": 1}, {"dish": 4, "kitchen": 3}, {"dish": 6, "rainbow": 2}]},
-	"kami": {"name": "紙をしなやかに", "desc": "動かしても破れにくい（-20%）", "cost": [{"hall": 2, "kitchen": 1}, {"hall": 4, "register": 3}, {"hall": 6, "rainbow": 2}]},
+	"fuchi": {"name": "ふちを太く", "desc": "ポイがやぶれにくくなる（+20%）", "cost": [{"stock": 2, "register": 2}, {"stock": 7, "hall": 4}, {"stock": 12, "rainbow": 3}]},
+	"wa": {"name": "輪を広く", "desc": "ポイが大きくなる（+12%）", "cost": [{"dish": 3, "register": 2}, {"dish": 8, "kitchen": 4}, {"dish": 14, "rainbow": 3}]},
+	"kami": {"name": "紙をしなやかに", "desc": "動かしても破れにくい（-20%）", "cost": [{"hall": 2, "kitchen": 2}, {"hall": 7, "register": 4}, {"hall": 12, "rainbow": 3}]},
 }
 const CRAFTS := {
 	"lure": {"register": 2, "dish": 2},
@@ -57,12 +57,12 @@ const CRAFTS := {
 }
 ## 休憩室のかざり（かけらの使い道。見た目だけ）
 const DECOR := {
-	"chochin": {"name": "赤ちょうちん", "cost": {"register": 3, "kitchen": 3}},
-	"plant": {"name": "観葉植物", "cost": {"dish": 3, "stock": 3}},
-	"bowl": {"name": "玉の金魚鉢", "cost": {"dish": 4, "hall": 2}},
-	"poster": {"name": "すくい名人のポスター", "cost": {"hall": 3, "register": 3}},
-	"kotatsu": {"name": "こたつ", "cost": {"stock": 5, "kitchen": 3}},
-	"dango": {"name": "月見だんご", "cost": {"register": 4, "rainbow": 1}},
+	"chochin": {"name": "赤ちょうちん", "cost": {"register": 5, "kitchen": 5}},
+	"plant": {"name": "観葉植物", "cost": {"dish": 6, "stock": 4}},
+	"bowl": {"name": "玉の金魚鉢", "cost": {"dish": 8, "hall": 4}},
+	"poster": {"name": "すくい名人のポスター", "cost": {"hall": 6, "register": 6}},
+	"kotatsu": {"name": "こたつ", "cost": {"stock": 8, "kitchen": 6}},
+	"dango": {"name": "月見だんご", "cost": {"register": 8, "rainbow": 2}},
 }
 const DECOR_ORDER := ["chochin", "plant", "bowl", "poster", "kotatsu", "dango"]
 

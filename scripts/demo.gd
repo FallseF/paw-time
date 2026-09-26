@@ -254,7 +254,7 @@ func autoplay(days: int) -> void:
 			GameState.claim(key)
 		for u in ["fuchi", "wa", "kami"]:
 			if GameState.upgrade(u):
-				print("      工房: %s Lv%d" % [u, GameState.upgrades[u]])
+				print("      工房: %s Lv%d（%d日目）" % [u, GameState.upgrades[u], d + 1])
 		if d % 7 == 6:
 			print("   -- 週末: 図鑑 %d/%d  Lv %s  かけら %s  累計すくい %d" % [GameState.seen.size(), GameState.ALL.size(), str(lv), str(GameState.shards), total])
 	print("== 終了: 図鑑 %d/%d 最高コンボ %d 累計 %d" % [GameState.seen.size(), GameState.ALL.size(), GameState.records.best_combo, total])
