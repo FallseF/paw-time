@@ -488,7 +488,7 @@ func _refresh_ui() -> void:
 	var name := "なし"
 	if poi_type != "":
 		col = GameState.TYPE_COLOR.get(GameState.NETS[poi_type].type, Color("ffd84d"))
-		name = GameState.NETS[poi_type].name.replace("網", "").replace("ポイ", "")
+		name = GameState.NETS[poi_type].name.replace("のポイ", "").replace("ポイ", "")
 	var st := _pill(col, 30)
 	for k in ["normal", "hover", "pressed"]:
 		poi_btn.add_theme_stylebox_override(k, st)

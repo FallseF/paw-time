@@ -20,12 +20,12 @@ const SPECIES := {
 
 const NETS := {
 	"plain": {"name": "まかないポイ", "type": "plain"},
-	"receipt": {"name": "レシート網", "type": "register"},
-	"bubble": {"name": "泡の網", "type": "dish"},
-	"tray": {"name": "お盆網", "type": "hall"},
-	"pan": {"name": "フライパン網", "type": "kitchen"},
-	"box": {"name": "段ボール網", "type": "stock"},
-	"kira": {"name": "きらきら網", "type": "rare"},
+	"receipt": {"name": "レシートのポイ", "type": "register"},
+	"bubble": {"name": "泡のポイ", "type": "dish"},
+	"tray": {"name": "お盆のポイ", "type": "hall"},
+	"pan": {"name": "フライパンのポイ", "type": "kitchen"},
+	"box": {"name": "段ボールのポイ", "type": "stock"},
+	"kira": {"name": "きらきらポイ", "type": "rare"},
 }
 
 const ROLE_LABEL := {"register": "レジ", "dish": "皿洗い", "hall": "ホール", "kitchen": "キッチン", "stock": "品出し"}
@@ -241,7 +241,7 @@ func finish_shift() -> Array:
 	got.append("%s ×%d" % [NETS[net_id].name, n])
 	if s.first:
 		nets["kira"] += 1
-		got.append("きらきら網 ×1（はじめての経験）")
+		got.append("きらきらポイ ×1（はじめての経験）")
 	boost = {"store": s.store, "role": s.role, "hours": h}
 	changed.emit()
 	save_game()
