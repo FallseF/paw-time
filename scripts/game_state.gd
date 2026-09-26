@@ -627,8 +627,8 @@ func omen() -> String:
 	if weekday() >= 3 and weekday() <= 5:
 		var lit: int = good_hist.slice(-weekday()).count(true) if good_hist.size() >= weekday() else good_hist.count(true)
 		if lit < 4:
-			return "日曜の満月まで：よく眠れた夜 %d / 4" % lit
-		return "日曜は満月になりそう（よく眠れた夜 %d）" % lit
+			return "満月まで：よい夜 %d / 4" % lit
+		return "日曜は、満月になりそう"
 	if not seen.has("asayake"):
 		var n := 0
 		for i in range(sleep_hist.size() - 1, -1, -1):
@@ -636,12 +636,12 @@ func omen() -> String:
 				break
 			n += 1
 		if n >= 1 and n < 3:
-			return "よく眠る夜が %d つ続いている。朝焼けの色が近い" % n
+			return "よく眠る夜が %d つ続いている" % n
 	if not seen.has("totonou") and bed_hist.size() >= 2:
 		if absi(bed_hist[-1] - bed_hist[-2]) <= 20:
-			return "同じ時刻に眠る夜が続いている。鈴の音がする"
+			return "同じ時刻の夜が続いている"
 	if not seen.has("hirunen") and shift_for(day).role == "":
-		return "今日は休み。たっぷり眠ると、日だまりの匂いがするかも"
+		return "休みの日は、たっぷり眠ろう"
 	if not seen.has("mangetsu") and sleep_hist.size() >= 7:
 		return "ひと月の眠り：%d / 28 夜" % sleep_hist.size()
 	return ""
