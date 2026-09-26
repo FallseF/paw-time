@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("よく寝た朝は、おばけが育って、やる気がたまりやすい", 12, Color(1, 1, 1, 0.55))
+	var note := _text("よく寝た朝は、おばけが育つ", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 186)
 	note.size = Vector2(360, 20)
 	add_child(note)
@@ -152,8 +152,10 @@ func _set_hours(h: int) -> void:
 	elif hours <= 5:
 		lines.append("夜ふかしすると、ヨミセが寄ってくる")
 	for s in lines:
-		var l := _text("・" + s, 15, Color("e8e2ff"))
+		var l := _text("・" + s, 14, Color("e8e2ff"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		l.custom_minimum_size = Vector2(270, 0)
 		preview.add_child(l)
 
 
