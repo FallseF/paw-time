@@ -26,6 +26,7 @@ uniform float back_rim : hint_range(0.0, 4.0) = 0.5;
 uniform float sheen : hint_range(0.0, 1.0) = 0.05;
 uniform float sheen_gloss = 18.0;
 uniform float emission_energy = 0.0;
+uniform float shadow_keep : hint_range(0.0, 1.0) = 0.6;
 uniform float top_light : hint_range(0.0, 0.5) = 0.07;
 
 varying float v_ao;
@@ -79,8 +80,9 @@ void light() {
 	// 明暗の境目の赤み（光が中を透けてくる感じ）
 	float term = exp(-pow((w - ramp_center) / (ramp_soft * 0.9), 2.0));
 	shade += sss_color.rgb * term * sss_strength;
-	// 落ち影（ATTENUATION）は光の全体に掛ける。影の中は環境光だけになる
-	DIFFUSE_LIGHT += LIGHT_COLOR / PI * shade * ATTENUATION;
+	// 落ち影（ATTENUATION）は光の全体に掛ける。ただし自分の影で真っ暗にならないよう、影の中にも少し残す
+	float att = mix(shadow_keep, 1.0, ATTENUATION);
+	DIFFUSE_LIGHT += LIGHT_COLOR / PI * shade * att;
 	// やわらかいつや
 	vec3 h = normalize(LIGHT + VIEW);
 	float spec = pow(clamp(dot(NORMAL, h), 0.0, 1.0), sheen_gloss);
