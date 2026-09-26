@@ -108,6 +108,10 @@ const ENEMIES := {
 		"line": "すべての困りごとが、ひとつになってやってくる"},
 }
 
+## 倒したときのひと言（困りごとが「解決」する）
+const RESOLVED := {"iraira": "おさまった", "gyouretsu": "さばけた", "chuumon": "とおった", "araimono": "片づいた", "denwa": "切れた",
+	"shinagire": "補充した", "wasuremono": "届けた", "kakekomi": "間に合った", "oopiku": "落ちついた"}
+
 const ENEMY_COLOR := {"iraira": "e85a4f", "gyouretsu": "c9454a", "chuumon": "ffd23f", "araimono": "5fc4ff", "denwa": "e85a4f",
 	"shinagire": "e85a4f", "wasuremono": "ffd23f", "kakekomi": "5b8fd6", "oopiku": "ff8a3d"}
 

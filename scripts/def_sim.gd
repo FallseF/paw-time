@@ -474,7 +474,7 @@ func _knock(o: Dictionary) -> void:
 
 func _die(o: Dictionary, by) -> void:
 	o.hp = 0
-	events.append({"type": "die", "uid": o.uid, "side": o.side, "x": o.x, "boss": o.boss})
+	events.append({"type": "die", "uid": o.uid, "side": o.side, "x": o.x, "boss": o.boss, "id": o.id})
 	if o.side == 1:
 		kills += 1
 		var gain: float = o.drop * (2.0 if by != null and by.ability == "gold" else 1.0)

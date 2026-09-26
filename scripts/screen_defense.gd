@@ -55,6 +55,7 @@ var hint: PanelContainer
 var hint_label: Label
 var hint_target: Control
 var hint_key := ""
+var hint_time := 0.0
 var overlay: Control
 var retreated := false
 var weak_tag: PanelContainer
@@ -341,12 +342,12 @@ func _make_view(e: Dictionary) -> void:
 				disc.position = Vector3(0, 0.02, 0.2)
 				root.add_child(disc)
 			if tex:
-				var sp2 := _sprite(tex, 1.35)
+				var sp2 := _sprite(tex, 1.45)
 				inner.add_child(sp2)
 				v.spr = sp2
 			else:
 				var ob := Obake3D.make(e.id)
-				ob.scale = Vector3.ONE * 0.7
+				ob.scale = Vector3.ONE * 0.78
 				ob.rotation.y = -1.0
 				inner.add_child(ob)
 				v.ob = ob
@@ -906,6 +907,7 @@ func _show_hint(key: String, text: String, target: Control, once := true) -> voi
 	hint_label.text = text
 	hint_target = target
 	hint.visible = true
+	hint_time = 0.0
 	hint.modulate.a = 0.0
 	hint.reset_size()
 	hint.create_tween().tween_property(hint, "modulate:a", 1.0, 0.25)
@@ -919,6 +921,11 @@ func _hide_hint(key: String) -> void:
 
 func _update_hint() -> void:
 	if not hint.visible or hint_target == null:
+		return
+	hint_time += get_process_delta_time()
+	# 出しっぱなしにしない：8秒で消える。チャイムの案内は、チャイムが空になったら消える
+	if (hint_time > 8.0 and hint_key != "t_deploy") or (hint_key == "t_cannon" and not sim.can_cannon()) or (hint_key == "t_deploy" and sim.deployed > 0):
+		_hide_hint(hint_key)
 		return
 	var r := hint_target.get_global_rect()
 	hint.reset_size()
@@ -1223,6 +1230,7 @@ func _handle_events(evs: Array) -> void:
 				_fx("puff", pos2)
 				if ev.side == 1:
 					Kit.sfx("c_coin", randf_range(0.95, 1.1), -6)
+					_popup(DefData.RESOLVED.get(ev.id, "解決"), Vector3(ev.x, 1.5, 0.5), Color.WHITE, 34)
 				elif randf() < 0.5:
 					Kit.sfx("c_pop", 0.55, -10)
 				if ev.boss:
