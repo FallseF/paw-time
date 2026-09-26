@@ -26,8 +26,8 @@ func _run(si: int, st: int, ids: Array, lv: int, skill: float, n: int) -> Array:
 func _initialize() -> void:
 	var only := OS.get_environment("SIM_ONLY")
 	for sk in [0.3, 0.7]:
-		var r := _run(0, 0, ["receipt", "box"], 1, sk, 5)
-		print("1-1 はじめて（レシートン+ダンボ Lv1）skill%.1f: %d/5勝 星%d 余裕%d" % [sk, r[0], r[1], int(r[2])])
+		var r := _run(0, 0, ["receipt", "tray"], 1, sk, 5)
+		print("1-1 はじめて（レシートン+オボン Lv1）skill%.1f: %d/5勝 星%d 余裕%d" % [sk, r[0], r[1], int(r[2])])
 	var full := ["receipt", "box", "tray", "bubble", "pan"]
 	var rich := ["receipt", "box", "tray", "bubble", "pan", "nemurin", "kaminari"]
 	for si in ShopData.STAGES.size():
@@ -35,12 +35,12 @@ func _initialize() -> void:
 			if only != "" and not ("%d-%d" % [si, st]) in only.split(","):
 				continue
 			var ids: Array = full
-			if si == 0 and st == 0:
-				ids = ["receipt", "box"]
-			elif si == 0 and st == 1:
-				ids = ["receipt", "box", "tray"]
+			if si == 0 and st <= 1:
+				ids = ["receipt", "tray"]
 			elif si == 0 and st == 2:
-				ids = ["receipt", "box", "tray", "bubble"]
+				ids = ["receipt", "tray", "pan"]
+			elif si == 0 and st == 3:
+				ids = ["receipt", "tray", "pan", "bubble"]
 			var line := "%d-%d:" % [si + 1, st + 1]
 			for lv in [1, 3, 5, 7, 9]:
 				var r := _run(si, st, ids, lv, 0.5, 4)
