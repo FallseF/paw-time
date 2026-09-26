@@ -208,13 +208,13 @@ func _build_world() -> void:
 	for o in GameState.owned.slice(-18):
 		var ob := Obake3D.make(o.id)
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
-		ob.position = Vector3(randf_range(-2.4, 2.4), 0, randf_range(-1.2, 1.8))
+		ob.position = _edge_point()
 		world.add_child(ob)
 		var w := {"o": ob, "id": o.id, "target": ob.position, "wait": randf_range(0.5, 3.0), "act": "", "emote": null}
 		# けさ来た子は、縁側から出てくる
 		if GameState.newcomers.has(o.id):
 			ob.position = Vector3(randf_range(-1.0, 0.6), 0.3, -2.9)
-			w.target = Vector3(randf_range(-1.2, 1.2), 0, randf_range(0.2, 1.4))
+			w.target = Vector3(randf_range(-2.2, 2.0), 0, randf_range(-2.4, -1.9)) # 縁側の前に並ぶ
 			w.wait = 0.8 + GameState.newcomers.find(o.id) * 0.6
 			var tag := Kit.label3d("NEW " + GameState.info(o.id).name, 30, Color("ffe27a"))
 			tag.position = Vector3(0, 1.9, 0)
@@ -868,12 +868,15 @@ func _start_act(w: Dictionary) -> void:
 		w.emote = l
 	# 次の行き先
 	var go_spot := randf() < 0.6 and spots.size() > 0
+	var sp: Dictionary = spots.pick_random() if go_spot else {}
+	# まんなかは広く空けておく（まんなかへ向かう子は3体まで）
+	if go_spot and _is_center(sp.pos) and _center_count() >= 3:
+		go_spot = false
 	if go_spot:
-		var sp: Dictionary = spots.pick_random()
 		w.target = sp.pos + Vector3(randf_range(-0.12, 0.12), 0, randf_range(-0.12, 0.12))
 		w.next_act = sp.act
 	else:
-		w.target = Vector3(randf_range(-2.8, 2.8), 0, randf_range(-1.0, 2.8))
+		w.target = _edge_point()
 		w.next_act = ""
 
 
@@ -884,6 +887,26 @@ func _end_act(w: Dictionary) -> void:
 	if w.emote and is_instance_valid(w.emote):
 		w.emote.queue_free()
 	w.emote = null
+
+
+## まんなか（小道と池のまわり）を空けた、庭のふちか縁側の一点
+func _edge_point() -> Vector3:
+	if randf() < 0.25:
+		return Vector3(randf_range(-2.6, 2.4), 0, randf_range(-2.7, -2.3)) # 縁側の前
+	var side := -1.0 if randf() < 0.5 else 1.0
+	return Vector3(side * randf_range(1.6, 3.3), 0, randf_range(-1.6, 2.6))
+
+
+func _is_center(p: Vector3) -> bool:
+	return absf(p.x - 0.2) < 1.4 and p.z > -1.8 and p.z < 2.4
+
+
+func _center_count() -> int:
+	var n := 0
+	for w in walkers:
+		if _is_center(w.target):
+			n += 1
+	return n
 
 
 ## 庭のおばけをタップすると、跳ねてひとこと
