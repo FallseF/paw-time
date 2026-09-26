@@ -42,5 +42,5 @@ for c in $CAPS; do
   G="$G;[v$((k-1))][$k:v]overlay=x=(W-w)/2:y=H*${parts[4]}:enable='between(t,${parts[2]},${parts[3]})'[v$k]"
 done
 G="$G;[v$k]fade=t=out:st=$FADE:d=0.8[vout]"
-$FF -y -v error $IN -filter_complex "$G" -map "[vout]" -map 0:a -af "volume=1.6,afade=t=out:st=$FADE:d=0.8" -c:v libx264 -pix_fmt yuv420p -r 30 -crf 20 -preset medium -c:a aac -b:a 160k -shortest promo/promo.mp4
+$FF -y -v error $IN -filter_complex "$G" -map "[vout]" -map 0:a -af "volume=1.3,afade=t=out:st=$FADE:d=0.8" -c:v libx264 -pix_fmt yuv420p -r 30 -crf 20 -preset medium -c:a aac -b:a 160k -shortest promo/promo.mp4
 echo "wrote promo/promo.mp4"

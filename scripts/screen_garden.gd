@@ -32,6 +32,7 @@ var card: PanelContainer
 var card_box: VBoxContainer
 var toast: PanelContainer
 var goals_btn: Button
+var flow_label: RichTextLabel
 var goals_panel: PanelContainer
 var busy := false
 var _t := 0.0
@@ -894,6 +895,24 @@ func _build_ui() -> void:
 	top_day = Kit.text(GameState.day_label(), 15, Color("2a2233"), true)
 	dp.add_child(top_day)
 	top.add_child(dp)
+	# 1日の流れ（いまどこ）
+	flow_label = RichTextLabel.new()
+	flow_label.bbcode_enabled = true
+	flow_label.fit_content = true
+	flow_label.scroll_active = false
+	flow_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	flow_label.custom_minimum_size = Vector2(84, 18)
+	flow_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	flow_label.add_theme_font_override("normal_font", Kit.bold())
+	flow_label.add_theme_font_override("bold_font", Kit.black())
+	flow_label.add_theme_font_size_override("normal_font_size", 12)
+	flow_label.add_theme_font_size_override("bold_font_size", 13)
+	flow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fp := PanelContainer.new()
+	fp.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.85), 14, 0.08, Vector2(10, 4)))
+	fp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	fp.add_child(flow_label)
+	top.add_child(fp)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
@@ -962,6 +981,15 @@ func _build_ui() -> void:
 
 func _refresh_hud() -> void:
 	top_day.text = GameState.day_label()
+	var cur: int = {"morning": 0, "day": 1, "evening": 2}.get(GameState.phase, 1)
+	var steps := ["朝", "昼", "夜", "眠"]
+	var out := []
+	for i in steps.size():
+		if i == cur:
+			out.append("[b][color=#ff8a5b]%s[/color][/b]" % steps[i])
+		else:
+			out.append("[color=#8a7a88]%s[/color]" % steps[i])
+	flow_label.text = "[color=#c9bfc6]・[/color]".join(out)
 	goals_btn.text = "めあて %d/3 ▾" % GameState.goals_done()
 	if goals_panel:
 		_toggle_goals()
@@ -1368,6 +1396,7 @@ func _rest() -> void:
 func _to_evening() -> void:
 	GameState.phase = "evening"
 	GameState.save()
+	_refresh_hud()
 	Kit.play(self, "night", 1.3, -10)
 	card.modulate.a = 0.0
 	await _tween_night(1.0)
