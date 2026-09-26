@@ -134,19 +134,7 @@ func _shelf() -> Control:
 	box.add_child(vp)
 	var w := Node3D.new()
 	vp.add_child(w)
-	var env := Environment.new()
-	env.background_mode = Environment.BG_CLEAR_COLOR
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("fff1e0")
-	env.ambient_light_energy = 0.4
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	var we := WorldEnvironment.new()
-	we.environment = env
-	w.add_child(we)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-35, 25, 0)
-	sun.light_energy = 0.6
-	w.add_child(sun)
+	Look.apply(w, "studio", Color(0, 0, 0, 0), true)
 	var cam := Camera3D.new()
 	cam.fov = 30
 	w.add_child(cam)
@@ -232,6 +220,7 @@ func _garden_list() -> Control:
 	return m
 
 
+## カードの絵。3D で撮った assets/gen/rares3d/<id>.png を優先する（無ければ古い平たい絵）
 func _card_texture(id: String) -> Texture2D:
 	var path := RareObake3D.art_path(id)
 	return load(path) if path != "" else null
@@ -258,6 +247,8 @@ func _card(r: Dictionary) -> Control:
 	if tex:
 		var tr := TextureRect.new()
 		tr.texture = tex
+		# 512px の絵を小さく出すので、ミップマップでなめらかに縮める（既定はドット絵向けの最近傍）
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(78, 78)
@@ -327,6 +318,8 @@ func _show_detail(r: Dictionary) -> void:
 	if tex:
 		var tr := TextureRect.new()
 		tr.texture = tex
+		# 512px の絵を小さく出すので、ミップマップでなめらかに縮める（既定はドット絵向けの最近傍）
+		tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(220, 220)

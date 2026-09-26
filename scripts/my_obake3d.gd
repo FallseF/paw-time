@@ -58,8 +58,9 @@ func hold_still() -> void:
 
 # ---------------------------------------------------------------- 部品
 
-func _m(c: Color, rim := 0.3, grow := 0.016) -> StandardMaterial3D:
-	return toon(c, rim, 0.0, grow)
+## 持ち物の材質（Obake3D.prop と同じ塗り・細い輪郭）。grow は昔の輪郭の太さの名残で使わない。
+func _m(c: Color, rim := 0.3, _grow := 0.016) -> ShaderMaterial:
+	return prop(c, rim)
 
 
 func _put(m: Mesh, c: Color, pos: Vector3, rot := Vector3.ZERO, scl := Vector3.ONE, grow := 0.016) -> MeshInstance3D:
@@ -68,30 +69,6 @@ func _put(m: Mesh, c: Color, pos: Vector3, rot := Vector3.ZERO, scl := Vector3.O
 	mi.scale = scl
 	acc.add_child(mi)
 	return mi
-
-
-func _box(size: Vector3) -> BoxMesh:
-	var b := BoxMesh.new()
-	b.size = size
-	return b
-
-
-func _cyl(top: float, bottom: float, h: float, seg := 20) -> CylinderMesh:
-	var c := CylinderMesh.new()
-	c.top_radius = top
-	c.bottom_radius = bottom
-	c.height = h
-	c.radial_segments = seg
-	return c
-
-
-func _torus(inner: float, outer: float) -> TorusMesh:
-	var t := TorusMesh.new()
-	t.inner_radius = inner
-	t.outer_radius = outer
-	t.rings = 32
-	t.ring_segments = 12
-	return t
 
 
 func _dome(r: float) -> SphereMesh:

@@ -119,9 +119,10 @@ func setup(color: Color, is_rare := false, r := 0.17) -> OrbModel:
 	return self
 
 
-func set_energy(e: float) -> void:
+## e は玉の中の光の強さ。light_k はまわりを照らす光の倍率（1 で今までどおり）。
+func set_energy(e: float, light_k := 1.0) -> void:
 	core_mat.set_shader_parameter("energy", e)
-	light.light_energy = e * 0.7
+	light.light_energy = e * 0.7 * light_k
 
 
 func _process(delta: float) -> void:

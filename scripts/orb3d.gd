@@ -11,6 +11,10 @@ var halo_mat: StandardMaterial3D # 互換用（旧画面が透明度を触る）
 var _t := 0.0
 var caught := false
 var hop := 0.0 # すくい画面の「はねる玉」用
+## 画面ごとの明るさの倍率。light_energy を直接いじっても毎フレーム _process が上書きするので、こちらで絞る。
+## energy_scale は玉の中の光（輝き・グロー）、light_scale は玉がまわりを照らす光。
+var energy_scale := 1.0
+var light_scale := 1.0
 
 
 func setup(d: Dictionary) -> Orb3D:
@@ -29,7 +33,7 @@ func setup(d: Dictionary) -> Orb3D:
 func _process(delta: float) -> void:
 	_t += delta
 	var pulse := 0.5 + 0.5 * sin(_t * 2.4)
-	model.set_energy((1.3 + pulse * 0.5) if caught else (2.4 + pulse * 0.9))
+	model.set_energy(((1.3 + pulse * 0.5) if caught else (2.4 + pulse * 0.9)) * energy_scale, light_scale)
 	if caught:
 		return
 	# 水面にぷかぷか浮いて、少し傾く
