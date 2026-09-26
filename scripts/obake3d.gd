@@ -23,10 +23,20 @@ var eyes: Array[MeshInstance3D] = []
 var bob := true
 
 
+## マイおばけ猫（診断の結果）の見た目。GameState が読み込んだときに入れる
+static var MY_LOOK := {}
+
+
 static func make(id: String) -> Obake3D:
+	if id == "my" and not MY_LOOK.is_empty():
+		return make_custom(MY_LOOK)
 	if Rares.is_rare(id):
 		return RareObake3D.new().setup(id)
 	return Obake3D.new().setup(id)
+
+
+static func make_custom(look: Dictionary) -> Obake3D:
+	return MyObake3D.new().setup_look(look)
 
 
 static func toon(color: Color, rim := 0.35, emission := 0.0, grow := 0.025) -> StandardMaterial3D:

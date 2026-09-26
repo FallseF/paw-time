@@ -100,6 +100,7 @@ var total_battles := 0
 var last_result := {} # 直前の戦いの結果（結果画面が読む）
 var pending_battle := {} # これから戦うステージ {shop, stage}
 var enemies_seen := {} # 会った困りごと（図鑑）
+var my_obake := {} # マイおばけ猫 {type_id, look, answers, axes}。正本は user://my_obake.json
 
 
 func _ready() -> void:
@@ -109,13 +110,47 @@ func _ready() -> void:
 		ALL[r.id] = {"name": r.name, "type": "rare", "desc": r.desc, "hint": r.hint, "group": r.group}
 	if OS.get_environment("OBAKE_SAVE") != "":
 		SAVE_PATH = OS.get_environment("OBAKE_SAVE")
+	if OS.get_environment("OBAKE_FRESH") == "" and OS.get_environment("OBAKE_DEMO") == "":
+		my_obake = QuizResult.load_result()
+	_apply_my_obake()
 	reset()
 	if OS.get_environment("OBAKE_FRESH") == "" and OS.get_environment("OBAKE_DEMO") == "":
 		load_game()
+	_ensure_my_in_crew()
 
 
 func info(id: String) -> Dictionary:
+	if id == "my":
+		var t: Dictionary = QuizData.TYPES.get(my_obake.get("type_id", ""), {})
+		return {"name": t.get("name", "あいぼう"), "type": t.get("job", "hall"), "desc": t.get("line", "")}
 	return ALL.get(id, {"name": id, "type": "", "desc": ""})
+
+
+## 診断が終わったとき：相棒として、いちばん前に入る
+func set_my_obake(result: Dictionary) -> void:
+	my_obake = result.duplicate(true)
+	QuizResult.save(my_obake)
+	_apply_my_obake()
+	_ensure_my_in_crew()
+	changed.emit()
+	save_game()
+
+
+func _apply_my_obake() -> void:
+	Obake3D.MY_LOOK = my_obake.get("look", {})
+	var t: Dictionary = QuizData.TYPES.get(my_obake.get("type_id", ""), {})
+	ShopData.my_job = t.get("job", "")
+
+
+func _ensure_my_in_crew() -> void:
+	if my_obake.is_empty():
+		return
+	if owned_of("my").is_empty():
+		owned.push_front({"id": "my", "level": 1, "xp": 0})
+	if not "my" in deck:
+		deck.push_front("my")
+		while deck.size() > DECK_MAX:
+			deck.pop_back()
 
 
 func reset() -> void:
@@ -161,6 +196,7 @@ func reset() -> void:
 	pending_battle = {}
 	enemies_seen = {}
 	daily_pick = []
+	_ensure_my_in_crew.call_deferred()
 	focus = "receipt"
 	perfect = {}
 	changed.emit()

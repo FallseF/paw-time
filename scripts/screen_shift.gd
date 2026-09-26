@@ -384,7 +384,7 @@ func _card(i: int, w: float) -> Button:
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pic.texture = Kit.portrait(c.id)
 	b.add_child(pic)
-	var name_l := Kit.text(GameState.info(c.id).name, 10 if w < 70 else 11, Kit.INK, true)
+	var name_l := Kit.text("あいぼう" if c.id == "my" else GameState.info(c.id).name, 10 if w < 70 else 11, Kit.INK, true)
 	name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_l.position = Vector2(0, 64)
 	name_l.size = Vector2(w, 16)

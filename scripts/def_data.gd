@@ -169,6 +169,8 @@ const STORE_SHOP := {"カフェ こもれび": "cafe", "居酒屋 とりまる":
 
 
 static func unit(id: String) -> Dictionary:
+	if id == "my":
+		return UNITS[ShopData.JOB_SPECIES.get(ShopData.my_job, "tray")]
 	if UNITS.has(id):
 		return UNITS[id]
 	return RARE_UNITS.get(id, {})

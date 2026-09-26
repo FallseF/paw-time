@@ -88,11 +88,22 @@ const STAGES := [
 const HARD := [[1.0, 1.15, 1.4, 1.7], [1.7, 1.85, 1.85, 2.0], [2.2, 2.35, 2.5, 2.6], [2.3]]
 
 
+## マイおばけ猫の仕事（診断で決まる）。GameState が入れる
+static var my_job := ""
+const JOB_SPECIES := {"register": "receipt", "dish": "bubble", "hall": "tray", "kitchen": "pan", "stock": "box"}
+
+
 static func stage(si: int, st: int) -> Dictionary:
 	return STAGES[si][st]
 
 
 static func worker(id: String) -> Dictionary:
+	if id == "my":
+		# 相棒：向いている仕事のおばけと同じ働き方で、少しだけ速い
+		var w: Dictionary = WORKERS[JOB_SPECIES.get(my_job, "tray")].duplicate()
+		w.rate *= 1.1
+		w.line = "あなたの相棒。向いている持ち場で、少し速い"
+		return w
 	if WORKERS.has(id):
 		return WORKERS[id]
 	# レア：どの持ち場でも同じ速さ、そこそこ働く
@@ -109,4 +120,6 @@ const JOBS := {"receipt": "register", "bubble": "dish", "tray": "hall", "pan": "
 
 
 static func job_of(id: String) -> String:
+	if id == "my":
+		return my_job
 	return JOBS.get(id, "")

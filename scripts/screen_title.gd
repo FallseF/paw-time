@@ -79,12 +79,12 @@ func _ready() -> void:
 	bv.add_theme_constant_override("separation", 10)
 	add_child(bv)
 	if GameState.has_save():
-		bv.add_child(Kit.button("つづきから（%d週目 %s曜）" % [GameState.week_no(), GameState.weekday()], Color("ff6b5b"), func(): main.go("morning")))
+		bv.add_child(Kit.button("つづきから（%d週目 %s曜）" % [GameState.week_no(), GameState.weekday()], Color("ff6b5b"), func(): main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
 		bv.add_child(Kit.button("はじめから", Color(1, 1, 1, 0.92), _confirm_new, Kit.INK, 44, 15))
 	else:
 		bv.add_child(Kit.button("はじめる", Color("ff6b5b"), func():
 			GameState.reset()
-			main.go("morning")))
+			main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
 	var mb := Kit.button("音楽：%s" % ("ON" if Kit.music_on else "OFF"), Color(1, 1, 1, 0.8), func(): pass, Kit.INK, 34, 12)
 	mb.custom_minimum_size = Vector2(90, 34)
 	mb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -127,5 +127,5 @@ func _confirm_new() -> void:
 	v.add_child(t)
 	v.add_child(Kit.button("はじめから", Color("ff6b5b"), func():
 		GameState.wipe_save()
-		main.go("morning")))
+		main.go("quiz" if GameState.my_obake.is_empty() else "morning")))
 	v.add_child(Kit.button("やめる", Color("b0a4b8"), func(): confirm.queue_free()))

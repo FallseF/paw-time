@@ -3,6 +3,7 @@ extends Node
 
 const SCREENS := {
 	"title": preload("res://scripts/screen_title.gd"),
+	"quiz": preload("res://scripts/screen_quiz.gd"),
 	"morning": preload("res://scripts/screen_room.gd"),
 	"room": preload("res://scripts/screen_room.gd"),
 	"catch": preload("res://scripts/screen_scoop.gd"),
@@ -93,6 +94,8 @@ func go(screen_name: String, instant := false) -> void:
 	Engine.time_scale = 1.0
 	current = SCREENS[screen_name].new()
 	current_name = screen_name
+	if screen_name == "quiz":
+		current.set("next_screen", "morning")
 	current.set_anchors_preset(Control.PRESET_FULL_RECT)
 	current.set("main", self)
 	root.add_child(current)
