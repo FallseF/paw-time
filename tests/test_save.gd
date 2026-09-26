@@ -8,6 +8,7 @@ func _initialize() -> void:
 		gs.name = "GameState"
 		root.add_child(gs)
 	await process_frame
+	gs.SAVE_PATH = "user://obake_a_test_save.json" # 本物のセーブには触れない
 	gs.force_save = true
 	gs.reset()
 	gs.fast_forward(9)

@@ -7,7 +7,8 @@ extends Node
 
 signal changed
 
-const SAVE_PATH := "user://obake_a_save.json"
+const SAVE_PATH_DEFAULT := "user://obake_a_save.json"
+var SAVE_PATH := SAVE_PATH_DEFAULT # テストでは別のファイルに向ける
 
 const SPECIES := {
 	"receipt": {"name": "レシートン", "type": "register", "desc": "レジの音に寄ってくる。レシートの尻尾が長いほど長生き"},
