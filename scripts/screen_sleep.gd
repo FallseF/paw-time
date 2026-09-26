@@ -134,7 +134,16 @@ func _round(t: String, cb: Callable) -> Button:
 
 
 func _set_hours(h: int) -> void:
+	var changed_h := clampi(h, 4, 9) != hours
 	hours = clampi(h, 4, 9)
+	if changed_h and is_inside_tree():
+		var p := AudioStreamPlayer.new()
+		p.stream = load("res://assets/sfx/pop.wav")
+		p.pitch_scale = 0.7 + (hours - 4) * 0.08
+		p.volume_db = -8
+		add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
 	big.text = "%d時間" % hours
 	big.pivot_offset = big.size / 2
 	big.scale = Vector2(1.12, 1.12)
@@ -211,6 +220,12 @@ func _sleep() -> void:
 	dark.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dark.modulate.a = 0.0
 	add_child(dark)
+	var lull := AudioStreamPlayer.new()
+	lull.stream = load("res://assets/sfx/chime.wav")
+	lull.pitch_scale = 0.55
+	lull.volume_db = -6
+	add_child(lull)
+	lull.play()
 	var zz := _text("Z z z …", 40, Color(1, 1, 1, 0.8), font_black)
 	zz.position = Vector2(0, 290)
 	zz.size = Vector2(360, 60)
