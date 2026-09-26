@@ -18,6 +18,8 @@ const MATERIALS := {
 	"cloth": {"icon": "🧶", "drop": 12},
 }
 const MAT_ORDER := ["wood", "stone", "seed", "paper", "shell", "cloth"]
+## 段 2 の小島：中心 x, z と半径（tools/blender/build_island_kit.py の ISLET と同じ）
+const ISLET := Vector3(6.9, 1.4, 1.35)
 
 ## 島の広がり（地形の段）。島の段（GameState.garden_level）から決まる
 const STAGES := [

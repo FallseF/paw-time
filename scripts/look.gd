@@ -100,3 +100,41 @@ static func apply(world: Node, preset := "studio", bg := Color(0, 0, 0, 0), tran
 		world.add_child(l)
 		rig[k] = l
 	return rig
+
+
+## 島の画面用：フィルとリム（おばけの層だけに当てる）を足して返す。キーは画面の太陽をそのまま使う
+static func island_rig(world: Node) -> Dictionary:
+	var rig := {}
+	var char_bits := 1 << (CHAR_LAYER - 1)
+	for k in ["fill", "rim"]:
+		var l := DirectionalLight3D.new()
+		l.name = "LookIsland" + k.capitalize()
+		l.light_cull_mask = char_bits
+		l.light_specular = 0.2
+		world.add_child(l)
+		rig[k] = l
+	return rig
+
+
+## n = 0 昼 / 0.5 夕方 / 1 夜。島の 3 つの光を混ぜて、太陽・環境光・フィル・リムに入れる
+static func island_time(rig: Dictionary, env: Environment, sun: DirectionalLight3D, n: float) -> void:
+	var a: Dictionary = PRESETS.island_day
+	var b: Dictionary = PRESETS.island_evening
+	var t := n * 2.0
+	if n > 0.5:
+		a = PRESETS.island_evening
+		b = PRESETS.island_night
+		t = (n - 0.5) * 2.0
+	t = clampf(t, 0.0, 1.0)
+	env.ambient_light_color = (a.ambient as Color).lerp(b.ambient, t)
+	env.ambient_light_energy = lerpf(a.ambient_energy, b.ambient_energy, t)
+	if sun:
+		sun.rotation_degrees = (a.key[0] as Vector3).lerp(b.key[0], t)
+		sun.light_color = (a.key[1] as Color).lerp(b.key[1], t)
+		sun.light_energy = lerpf(a.key[2], b.key[2], t)
+	for k in ["fill", "rim"]:
+		var l: DirectionalLight3D = rig.get(k)
+		if l:
+			l.rotation_degrees = (a[k][0] as Vector3).lerp(b[k][0], t)
+			l.light_color = (a[k][1] as Color).lerp(b[k][1], t)
+			l.light_energy = lerpf(a[k][2], b[k][2], t)

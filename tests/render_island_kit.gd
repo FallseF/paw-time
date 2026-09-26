@@ -2,7 +2,7 @@ extends SceneTree
 ## 島の置き物をひとつずつ撮る（背景は透明、384x384）。カタログの一覧は tools/make_kit_sheet.py で組む。
 ##   godot --path . --always-on-top --resolution 384x384 -s tests/render_island_kit.gd
 ## （ウィンドウが隠れると macOS が描画を止めるので --always-on-top を付ける）
-## 環境変数: KIT_IDS=bench,hut … 一部だけ / KIT_OUT=/tmp/dir … 出力先（既定は ui_review/island_kit）
+## 環境変数: KIT_IDS=bench,hut … 一部だけ / KIT_OUT=/tmp/dir … 出力先（既定は assets/gen/island_kit。カタログのアイコンにも使う）
 
 const SIZE := 384
 const SS := 2
@@ -21,7 +21,7 @@ func _initialize() -> void:
 func _run() -> void:
 	var out := OS.get_environment("KIT_OUT")
 	if out == "":
-		out = ProjectSettings.globalize_path("res://ui_review/island_kit")
+		out = ProjectSettings.globalize_path("res://assets/gen/island_kit")
 	DirAccess.make_dir_recursive_absolute(out)
 	var ids: Array = []
 	if OS.get_environment("KIT_IDS") != "":

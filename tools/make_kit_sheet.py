@@ -1,11 +1,11 @@
-"""島の置き物のカタログ一覧（ui_review/island_kit/<id>.png を並べ、名前・値段・材料を添える）。
+"""島の置き物のカタログ一覧（assets/gen/island_kit/<id>.png を並べ、名前・値段・材料を添える）。
   python3 tools/make_kit_sheet.py  → ui_review/island_catalog.png
 """
 import csv, os, re
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC = os.path.join(ROOT, "ui_review", "island_kit")
+SRC = os.path.join(ROOT, "assets", "gen", "island_kit")
 names = {}
 with open(os.path.join(ROOT, "translations", "island_kit.csv"), encoding="utf-8") as f:
     for row in csv.DictReader(f):
