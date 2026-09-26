@@ -1,0 +1,12 @@
+{
+  "$schema": "../schemas/world.schema.json",
+  "version": 1,
+  "id": "employer_house",
+  "name": "みんなの休憩所",
+  "levels": [
+    { "level": 1, "requiredExperience": 0, "unlocks": ["house_empty_room"] },
+    { "level": 2, "requiredExperience": 100, "unlocks": ["house_table"] },
+    { "level": 3, "requiredExperience": 250, "unlocks": ["house_break_corner"] },
+    { "level": 4, "requiredExperience": 500, "unlocks": ["house_garden"] }
+  ]
+}

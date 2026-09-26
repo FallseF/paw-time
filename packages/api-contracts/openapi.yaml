@@ -1,0 +1,103 @@
+openapi: 3.1.0
+info:
+  title: Paw Time Platform API
+  version: 0.1.0
+  description: ワーカーアプリと採用企業アプリを接続する共通API。
+servers:
+  - url: http://localhost:8787
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: API is healthy
+  /v1/worker/jobs:
+    get:
+      operationId: listPublishedJobs
+      responses:
+        "200":
+          description: 公開中の求人
+  /v1/worker/applications:
+    post:
+      operationId: applyForJob
+      responses:
+        "201":
+          description: 応募を作成
+  /v1/worker/shifts:
+    get:
+      operationId: listWorkerShifts
+      responses:
+        "200":
+          description: ワーカーの確定シフト
+  /v1/business/jobs:
+    get:
+      operationId: listOrganizationJobs
+      responses:
+        "200":
+          description: 企業の求人一覧
+    post:
+      operationId: createJob
+      responses:
+        "201":
+          description: 求人を作成
+  /v1/business/applications:
+    get:
+      operationId: listOrganizationApplications
+      responses:
+        "200":
+          description: 企業への応募一覧
+  /v1/business/shifts:
+    get:
+      operationId: listOrganizationShifts
+      responses:
+        "200":
+          description: 企業の確定シフト
+  /v1/business/applications/{applicationId}/decision:
+    post:
+      operationId: decideApplication
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 採用または不採用を記録
+  /v1/business/shifts/{shiftId}/attendance:
+    post:
+      operationId: recordAttendance
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: 追記型の出退勤イベントを記録
+  /v1/business/shifts/{shiftId}/attendance-summary:
+    get:
+      operationId: getAttendanceSummary
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 予定時刻と実績から算出した遅刻・出退勤情報
+  /v1/business/evaluations:
+    post:
+      operationId: createEvaluation
+      responses:
+        "201":
+          description: 評価を登録
+  /v1/business/world:
+    get:
+      operationId: getEmployerWorld
+      responses:
+        "200":
+          description: 企業の家と所持品を取得

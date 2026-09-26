@@ -3,3 +3,11 @@
 art_preview.png
 _archive/
 build/
+node_modules/
+.next/
+dist/
+.turbo/
+.env
+.env.local
+coverage/
+*.tsbuildinfo

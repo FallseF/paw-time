@@ -1,0 +1,11 @@
+{
+  "name": "@paw-time/game-catalog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./employer-house": "./worlds/employer-house.json",
+    "./worker-island": "./worlds/worker-island.json",
+    "./reward-events": "./rewards/reward-events.json"
+  }
+}
