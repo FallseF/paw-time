@@ -174,33 +174,34 @@ func _acc_bow() -> void:
 
 
 func _acc_bandana() -> void:
-	# 頭を覆う布（半球を後ろに傾ける）。耳は布から出る。
-	_put(_dome(0.525), accent, Vector3(0, 0.5, -0.02), Vector3(-0.42, 0, 0))
-	# 水玉
-	for p in [Vector3(-0.2, 0.94, 0.12), Vector3(0.18, 0.96, 0.08), Vector3(0.02, 1.0, -0.12), Vector3(0.32, 0.8, 0.24), Vector3(-0.34, 0.78, 0.22)]:
-		var d := _put(_sphere(0.035), Color("fffaf2"), p, Vector3.ZERO, Vector3.ONE, 0.0)
-		# 頭の丸みに沿って、平たく貼る
-		d.basis = Basis.looking_at((p - Vector3(0, 0.5, 0)).normalized()).scaled_local(Vector3(1, 1, 0.45))
+	# 頭を覆う布（半球を後ろに傾ける）。おでこは出して、耳は布から出る。
+	var c := Vector3(0, 0.6, -0.04)
+	_put(_dome(0.5), accent, c, Vector3(-0.5, 0, 0))
+	# 水玉（布の表面に平たく貼る）
+	for d in [Vector3(-0.45, 0.75, 0.5), Vector3(0.4, 0.8, 0.45), Vector3(0.0, 1.0, 0.15), Vector3(-0.2, 0.9, -0.35), Vector3(0.3, 0.85, -0.3), Vector3(0.75, 0.55, 0.1), Vector3(-0.75, 0.55, 0.1)]:
+		var n: Vector3 = d.normalized()
+		var dot := _put(_sphere(0.05), Color("fffaf2"), c + n * 0.505, Vector3.ZERO, Vector3.ONE, 0.0)
+		dot.basis = Basis.looking_at(n).scaled_local(Vector3(1, 1, 0.3))
 	# 後ろの結び目
-	_put(_sphere(0.07), accent, Vector3(0, 0.58, -0.5))
+	_put(_sphere(0.07), accent, Vector3(0, 0.6, -0.52))
 	for sx in [-1.0, 1.0]:
-		_put(_cyl(0.0, 0.07, 0.2, 10), accent, Vector3(sx * 0.1, 0.5, -0.54), Vector3(0.3, 0, sx * 2.4))
+		_put(_cyl(0.0, 0.07, 0.2, 10), accent, Vector3(sx * 0.1, 0.52, -0.56), Vector3(0.3, 0, sx * 2.4))
 
 
 func _acc_towel() -> void:
-	# 頭に乗せた手ぬぐい（温泉の人）
-	_put(_box(Vector3(0.36, 0.07, 0.3)), accent.lightened(0.55), Vector3(0, 1.0, 0.03), Vector3(0.05, 0, 0.08))
-	_put(_box(Vector3(0.365, 0.075, 0.05)), accent, Vector3(0.0, 1.0, 0.1), Vector3(0.05, 0, 0.08), Vector3.ONE, 0.0)
-	_put(_box(Vector3(0.365, 0.075, 0.05)), accent, Vector3(0.0, 1.0, -0.05), Vector3(0.05, 0, 0.08), Vector3.ONE, 0.0)
+	# 頭に乗せた手ぬぐい（温泉の人）。たたんだ厚みと、両端の縞。
+	var rot := Vector3(0.12, 0, 0.1)
+	_put(_box(Vector3(0.44, 0.12, 0.36)), accent.lightened(0.45), Vector3(0, 0.96, 0.04), rot)
+	for z in [-0.1, 0.12]:
+		_put(_box(Vector3(0.445, 0.125, 0.05)), accent, Vector3(0, 0.96, 0.04 + z), rot, Vector3.ONE, 0.0)
 
 
 func _acc_cap() -> void:
-	_put(_dome(0.52), accent, Vector3(0, 0.52, 0), Vector3(-0.12, 0, 0))
-	var brim := _put(_cyl(0.3, 0.3, 0.03, 24), accent, Vector3(0, 0.75, 0.46), Vector3(0.28, 0, 0))
-	brim.scale = Vector3(1, 1, 0.75)
-	_put(_sphere(0.045), accent.lightened(0.4), Vector3(0, 1.03, -0.05))
-	# 前のワッペン
-	_put(_cyl(0.07, 0.07, 0.02), Color("fffaf2"), Vector3(0, 0.88, 0.42), Vector3(PI / 2 - 0.6, 0, 0), Vector3.ONE, 0.0)
+	_put(_dome(0.515), accent, Vector3(0, 0.63, -0.02), Vector3(-0.15, 0, 0))
+	# つば：前へ長めに張り出し、少し下を向ける（上から見下ろしても厚みが見えるように）
+	var brim := _put(_cyl(0.3, 0.3, 0.04, 24), accent.darkened(0.12), Vector3(0, 0.72, 0.5), Vector3(0.3, 0, 0))
+	brim.scale = Vector3(0.95, 1, 0.9)
+	_put(_sphere(0.045), accent.darkened(0.15), Vector3(0, 1.14, -0.05))
 
 
 func _acc_flower() -> void:
@@ -242,10 +243,11 @@ func _acc_star_pin() -> void:
 
 
 func _acc_leaf() -> void:
-	var leaf := _put(_sphere(0.17), accent, Vector3(0.05, 1.02, 0.0), Vector3(0.15, 0.4, 0.25), Vector3(0.55, 0.12, 1.0))
-	leaf.name = "Leaf"
-	_put(_box(Vector3(0.02, 0.012, 0.3)), accent.darkened(0.35), Vector3(0.05, 1.04, 0.0), Vector3(0.15, 0.4, 0.25), Vector3.ONE, 0.0)
-	_put(_cyl(0.012, 0.012, 0.1, 6), accent.darkened(0.35), Vector3(0.13, 1.05, 0.18), Vector3(0.9, 0.4, 0), Vector3.ONE, 0.0)
+	# 頭にちょこんと乗った葉っぱ（前から見えるよう少し手前に傾ける）
+	var rot := Vector3(0.55, 0.5, 0.3)
+	_put(_sphere(0.22), accent, Vector3(0.04, 1.02, 0.06), rot, Vector3(0.5, 0.1, 1.0))
+	_put(_box(Vector3(0.02, 0.012, 0.36)), accent.darkened(0.35), Vector3(0.04, 1.035, 0.07), rot, Vector3.ONE, 0.0)
+	_put(_cyl(0.014, 0.014, 0.12, 6), accent.darkened(0.35), Vector3(0.14, 1.12, -0.14), Vector3(0.9, 0.5, 0), Vector3.ONE, 0.0)
 
 
 func _acc_name_tag() -> void:

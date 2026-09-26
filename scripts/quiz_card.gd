@@ -13,7 +13,7 @@ const CREAM := Color("fbf3ea")
 static func render(host: Node, result: Dictionary) -> Image:
 	var type_id: String = result.type_id
 	var t: Dictionary = QuizData.TYPES[type_id]
-	var col := Color(t.look.color)
+	var col := QuizData.tone(type_id)
 	var black: FontFile = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
 	var bold: FontFile = load("res://assets/fonts/ZenMaruGothic-Bold.ttf")
 
@@ -21,7 +21,6 @@ static func render(host: Node, result: Dictionary) -> Image:
 	vp.size = Vector2i(W, H)
 	vp.transparent_bg = false
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	vp.msaa_2d = Viewport.MSAA_4X
 	vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
 	host.add_child(vp)
 
@@ -133,7 +132,7 @@ static func _stage3d(vp3: SubViewport, look: Dictionary) -> MyObake3D:
 	sun.light_energy = 0.8
 	world.add_child(sun)
 	var cam := Camera3D.new()
-	cam.fov = 30
+	cam.fov = 27
 	cam.position = Vector3(0, 0.95, 3.4)
 	world.add_child(cam)
 	cam.look_at(Vector3(0, 0.6, 0))

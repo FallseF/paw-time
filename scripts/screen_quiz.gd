@@ -17,6 +17,9 @@ const SUB := Color("6a5f70")
 const GOLD := Color("ffe27a")
 const LILAC := Color("cfc3ee")
 const ORB_COL := Color("ffd84d")
+## 結果画面のおばけの足元と大きさ（上の余白 44〜256px に収まる）
+const OBAKE_AT := Vector3(0, 1.08, 0)
+const OBAKE_SCALE := 0.54
 
 var font_bold: FontFile
 var font_black: FontFile
@@ -99,9 +102,8 @@ func _build_world() -> void:
 	env.ambient_light_color = Color("c9a8b8")
 	env.ambient_light_energy = 0.3
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	env.glow_enabled = true
-	env.glow_intensity = 0.5
-	env.glow_hdr_threshold = 1.2
+	# glow は GL Compatibility だと背景ごと白っぽく持ち上がるので使わない
+	env.glow_enabled = false
 	var we := WorldEnvironment.new()
 	we.environment = env
 	world.add_child(we)
@@ -178,7 +180,7 @@ func _process(_delta: float) -> void:
 
 
 func _orb_home() -> Vector3:
-	return Vector3(0, 1.28, 0) if layer_intro.visible else Vector3(0, 1.62, 0)
+	return Vector3(0, 1.28, 0) if layer_intro.visible else Vector3(0, 1.5, 0)
 
 
 # ---------------------------------------------------------------- UI の部品（screen_room と同じ作法）
@@ -524,7 +526,7 @@ func _reveal() -> void:
 	busy = true
 	result = QuizData.score(answers)
 	var t: Dictionary = QuizData.TYPES[result.type_id]
-	var col := Color(t.look.color)
+	var col := QuizData.tone(result.type_id)
 	_show_layer(null)
 	# 玉が真ん中に降りて、持ち主の色に染まりながら震える
 	var tw := create_tween().set_parallel()
@@ -608,14 +610,14 @@ func _crack(col: Color) -> void:
 	tw_bg.tween_property(env, "ambient_light_energy", 0.45, 0.8)
 	_spawn_obake(0.05)
 	var tw3 := create_tween()
-	tw3.tween_property(obake, "scale", Vector3.ONE * 0.78, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw3.tween_property(obake, "scale", Vector3.ONE * OBAKE_SCALE, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 func _spawn_obake(s: float) -> void:
 	if obake:
 		obake.queue_free()
 	obake = MyObake3D.new().setup_look(result.look)
-	obake.position = Vector3(0, 1.02, 0.2)
+	obake.position = OBAKE_AT
 	obake.rotation.y = 0.3
 	obake.scale = Vector3.ONE * s
 	world.add_child(obake)
@@ -631,13 +633,13 @@ func _spawn_obake(s: float) -> void:
 		smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		smat.albedo_color = Color(0.16, 0.13, 0.2, 0.13)
 		shadow.material_override = smat
-		shadow.position = Vector3(0, 0.98, 0.2)
+		shadow.position = OBAKE_AT + Vector3(0, -0.03, 0)
 		shadow.scale = Vector3(1.0, 1, 0.45)
 		world.add_child(shadow)
 
 
 func _fill_card(t: Dictionary) -> void:
-	var col := Color(t.look.color)
+	var col := QuizData.tone(result.type_id)
 	r_kicker.add_theme_color_override("font_color", col.darkened(0.5))
 	r_name.text = t.name
 	r_en.text = t.en_name

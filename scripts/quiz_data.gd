@@ -61,7 +61,7 @@ const TYPES := {
 		"name": "まかないの達人", "line": "余りもので、ごちそうを作る。",
 		"en_name": "The Staff-Meal Master", "en_line": "Turns leftovers into a feast.",
 		"job": "kitchen", "match": "IPMK",
-		"look": {"color": "ffc49b", "accessory": "bandana", "accent": "d64e48", "motion": "wiggle"},
+		"look": {"color": "ffc49b", "accessory": "bandana", "accent": "3b5ba5", "motion": "wiggle"},
 	},
 	"OFHK": {
 		"name": "笑顔のレジ番長", "line": "おつりと一緒に、ひと言そえる。",
@@ -173,6 +173,13 @@ static func answers_for(type_id: String) -> String:
 		var ax: int = q.axis
 		s += "A" if type_id[ax] == AXES[ax].letter_a else "B"
 	return s
+
+
+## 画面やカードの差し色。体が白っぽい子は、背景に溶けないよう持ち物の色を使う。
+static func tone(type_id: String) -> Color:
+	var look: Dictionary = TYPES[type_id].look
+	var c := Color(look.color)
+	return c if c.get_luminance() < 0.87 else Color(look.accent)
 
 
 ## シェア用の文面
