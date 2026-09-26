@@ -1392,6 +1392,7 @@ func _end(won: bool) -> void:
 		cam_hold = 5.0
 		cam_x = 3.0
 		_banner("守りきった！", Color("ffd23f"))
+		_confetti()
 	else:
 		Kit.sfx("c_lose")
 		shake = 1.2
@@ -1402,6 +1403,33 @@ func _end(won: bool) -> void:
 	if demo:
 		return
 	_result(r)
+
+
+func _confetti() -> void:
+	for k in 3:
+		var p := CPUParticles2D.new()
+		p.position = Vector2(60 + k * 120, -10)
+		p.amount = 40
+		p.lifetime = 2.6
+		p.one_shot = true
+		p.explosiveness = 0.8
+		p.direction = Vector2(0, 1)
+		p.spread = 50
+		p.initial_velocity_min = 120
+		p.initial_velocity_max = 260
+		p.gravity = Vector2(0, 240)
+		p.angular_velocity_min = -300
+		p.angular_velocity_max = 300
+		p.scale_amount_min = 4
+		p.scale_amount_max = 7
+		var g := Gradient.new()
+		g.set_color(0, Color("ffd23f"))
+		g.set_color(1, Color("ff6b5b"))
+		g.add_point(0.5, Color("5fc4ff"))
+		p.color_initial_ramp = g
+		add_child(p)
+		p.emitting = true
+		get_tree().create_timer(3.0).timeout.connect(p.queue_free)
 
 
 func _result(r: Dictionary) -> void:
