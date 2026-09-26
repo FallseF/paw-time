@@ -1346,6 +1346,8 @@ func _show_morning() -> void:
 	_card_fit()
 	_pop_card()
 	await get_tree().create_timer(0.4).timeout
+	if not is_instance_valid(bar) or bar.is_queued_for_deletion():
+		return
 	Kit.play(self, "chime", 0.9)
 	var tw := create_tween()
 	tw.tween_property(bar, "value", ln.rhythm / 100.0, 0.9).set_trans(Tween.TRANS_SINE)
