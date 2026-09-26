@@ -7,6 +7,20 @@
 おばけすくい（金魚すくい）を「毎晩の腕だめし」にした版。そっと動かす・真ん中ですくう・まとめてすくうが上手いほど、玉が★付きで育ち、コンボが虹の玉を呼ぶ。すくった玉は朝おばけにかえり、かぶったおばけはレベルが上がって見た目が育ち、ていねいにすくった分は「かけら」になって工房でポイや休憩室のかざりを作れる。
 仕事と睡眠は必須ではなくブースト：毎朝紙のポイ2本で遊べる。働いた日は仕事の色のポイ2本（何時間働いても同じ）、よく寝た朝はポイが強くなり玉が★ひとつ育ってかえる。夜のはじめに「働いた分のポイ +2・よく寝たポイ ×1.20」と今夜のブーストを見せる。
 
+## 監査の近道（見たい場面へ直接）
+
+```sh
+cd /Users/eiyuto/dev/obake-godot-a
+OBAKE_FRESH=1 godot --path . --resolution 360x640                       # はじめての日（チュートリアルの夜）から。保存しない
+OBAKE_FF=1  OBAKE_START=catch OBAKE_NOSAVE=1 godot --path . --resolution 360x640   # 雨の夜
+OBAKE_FF=3  OBAKE_START=catch OBAKE_NOSAVE=1 godot --path . --resolution 360x640   # 満月の夜（虹が出やすい）
+OBAKE_FF=5  OBAKE_START=catch OBAKE_NOSAVE=1 godot --path . --resolution 360x640   # 土曜の大すくい祭り
+OBAKE_FF=4  OBAKE_START=catch OBAKE_NOSAVE=1 godot --path . --resolution 360x640   # 雷の夜（光ると玉が散る）
+OBAKE_FF=16 OBAKE_START=catch OBAKE_NOSAVE=1 godot --path . --resolution 360x640   # 雪の夜
+OBAKE_FF=21 OBAKE_START=room  OBAKE_NOSAVE=1 godot --path . --resolution 360x640   # 3週間後の休憩室（図鑑・工房も）
+OBAKE_START=hatch OBAKE_RARE=tsukimi godot --path . --resolution 360x640          # 朝のお迎え（レア）
+```
+
 ## 遊び方（コマンド）
 
 ```sh
