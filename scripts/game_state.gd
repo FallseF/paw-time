@@ -718,14 +718,16 @@ func sleep(hours: int) -> void:
 				list.append(orb)
 		else:
 			list.append(orb)
+	var rainbows: Array = []
 	for orb in list:
+		if orb.kind == "rainbow":
+			rainbows.append(orb)
+			continue
 		var sid := normal_species_for(orb)
 		var q: int = clampi(orb.get("quality", 0) + qb, 0, 3)
-		var xp: int = 4 + q * 4 + (30 if orb.kind == "rainbow" else 0)
+		var xp: int = 4 + q * 4
 		var before := level_of(sid)
 		var r := add_obake(sid, xp, q)
-		if orb.kind == "rainbow":
-			shards.rainbow += 1
 		if orb.kind == "gold":
 			var t: String = NORMAL_IDS.pick_random()
 			shards[SPECIES[t].type] += 2
@@ -740,6 +742,19 @@ func sleep(hours: int) -> void:
 		var rid: String = rare_pending.pop_front()
 		add_obake(rid)
 		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rare"})
+	# 虹の玉：待っているレアがいれば、その子がかえる。いなければ大きく育ったふつうのおばけ
+	for orb in rainbows:
+		shards.rainbow += 1
+		if rare_pending.size() > 0:
+			var rid: String = rare_pending.pop_front()
+			add_obake(rid)
+			hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true, "quality": 3, "kind": "rainbow", "from_rainbow": true})
+			continue
+		var sid := normal_species_for(orb)
+		var q: int = clampi(orb.get("quality", 0) + qb, 0, 3)
+		var before := level_of(sid)
+		var r := add_obake(sid, 34 + q * 4, q)
+		hatched.append({"id": sid, "is_new": r.is_new, "level": r.level, "before": before, "leveled": r.leveled, "rare": false, "quality": q, "kind": "rainbow", "shard": r.shard})
 	# 3) 次の日へ
 	work_hist.append(worked_today)
 	var n_orbs := orbs.size()

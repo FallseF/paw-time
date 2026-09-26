@@ -354,7 +354,7 @@ func _next() -> void:
 	badge.get_parent().visible = h.is_new
 	var stars := "★".repeat(h.get("quality", 0)) + "☆".repeat(3 - h.get("quality", 0))
 	if rare:
-		card_sub.text = "レア ・ %s" % sp.group
+		card_sub.text = ("虹の玉から！ レア ・ %s" if h.get("from_rainbow", false) else "レア ・ %s") % sp.group
 	else:
 		card_sub.text = "Lv%d ・ %s  %s" % [h.level, _type_label(sp.type), stars]
 	var extra := ""
@@ -362,7 +362,7 @@ func _next() -> void:
 		extra = "Lv%d → Lv%d に育った！見た目も変わる" % [h.before, h.level]
 	elif h.get("shard", "") != "":
 		extra = "%sのかけら +1（工房で使える）" % GameState.SHARD_LABEL[h.shard]
-	if h.get("kind", "") == "rainbow":
+	if h.get("kind", "") == "rainbow" and not rare:
 		extra += ("\n" if extra != "" else "") + "虹の玉：大きく育ち、虹のかけら +1"
 	card_desc.text = sp.desc + ("\n" + extra if extra != "" else "")
 	card.position.y = 430
