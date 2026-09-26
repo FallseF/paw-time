@@ -32,6 +32,7 @@ func _ready() -> void:
 	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
 	_build_world()
 	_build_ui()
+	Kit.music("c_calm_loop")
 	for n in ["hatch", "sparkle", "chime"]:
 		var p := AudioStreamPlayer.new()
 		p.stream = load("res://assets/sfx/%s.wav" % n)

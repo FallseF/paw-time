@@ -50,6 +50,7 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	_build_audio()
+	Kit.music("") # 夜の川は、水と虫の音だけ
 	var list := GameState.tonight_orbs()
 	total_tonight = list.size()
 	for d in list:
