@@ -1,4 +1,4 @@
-# REPORT — Variant A「すくいと収集」
+# REPORT — Paw Time / Variant A「すくいと収集」
 
 ブランチ `feature/variant-a` ／ 場所 `/Users/eiyuto/dev/obake-godot-a` ／ 広告動画 `promo/promo.mp4`（43秒・720x1280・30fps・H.264＋音）
 
@@ -183,3 +183,10 @@ godot --headless --path . -s tests/sim_week.gd           # 4週間の早送り�
 - 休憩室ではレアを小さめ（0.5）、横に広い子（ヒャッキ・ワタリドリ・シュウマツ）は0.42で、まわりを広めにあける。この3体が同時に並ぶ場面は、撮って確かめてはいない。
 - Web で豆腐になる字：scripts/ の文字列をフォントで調べ、無かったのは ✓ だけ（○ に置き換え）。
 - 広告動画 promo/promo.mp4 は撮り直していないので、平たいレアのまま。
+
+## Paw Time と猫おばけ・新しい玉（09:40〜）
+
+- 題名を「Paw Time」に（タイトル画面・project.godot の名前・README・広告の締めの文字列）。セーブの場所が変わらないよう、user フォルダ名は `obake_breakroom` に固定。
+- feature/paw-cat の `obake3d.gd` の猫の耳・尻尾（`_cat_parts`）と猫の顔（鼻・ω口・ひげ）を手で取り込み。Lvの飾り（首巻き・芽・名札・王冠）は耳と重ならないのを図鑑とお迎えで確認。
+- 玉は `OrbModel`（ガラスの殻・渦を巻く光・眠る子猫の影・きらめき）に置き換え。性格（群れ・人見知り・跳ねる・重い・虹・金）の動きはそのまま。虹は OrbModel の rare、金は金色、重い玉は殻に輪、ポイに乗ると光が強くなる。明かりは虹と金だけ（Webで軽く）。
+- 図鑑カードは作り直された rares3d の絵（縮小版も作り直し）。

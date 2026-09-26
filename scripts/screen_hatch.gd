@@ -57,13 +57,11 @@ func _ready() -> void:
 			kind = "normal"
 		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "kind": kind})
 		o.caught = true
-		o.halo_mat.albedo_color.a = 0.08
-		o.light.light_energy = 0.5
+		o.dim(0.9)
 		var per_row := 6
 		var row := i / per_row
 		var in_row := mini(per_row, n_orbs - row * per_row)
 		o.position = Vector3((i % per_row - (in_row - 1) / 2.0) * 0.34, 0.36 + row * 0.26, 0.2 - row * 0.3)
-		o.halo.visible = false
 		world.add_child(o)
 		orbs.append(o)
 	var rares := GameState.hatched.filter(func(h): return h.get("rare", false)).size()

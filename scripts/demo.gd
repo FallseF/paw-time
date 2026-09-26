@@ -185,7 +185,7 @@ func promo() -> void:
 	caption("土曜の夜は、大すくい祭り。", 250)
 	await _wait(7.0)
 	caption_off()
-	_big_text(["おばけの休憩室", "働いた日は、ポイが増える。", "よく寝た朝は、玉がよくかえる。"], [Color.WHITE, Color("ffe27a"), Color("ffe27a")], 0.9, 230)
+	_big_text(["Paw Time", "働いた日は、ポイが増える。", "よく寝た朝は、玉がよくかえる。"], [Color.WHITE, Color("ffe27a"), Color("ffe27a")], 0.9, 230)
 	await _wait(3.6)
 
 
