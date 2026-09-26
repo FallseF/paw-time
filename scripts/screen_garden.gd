@@ -1581,3 +1581,10 @@ func demo_rest() -> void:
 
 func demo_morning() -> void:
 	_after_morning()
+
+
+func demo_orbit() -> void:
+	var m := InputEventMouseMotion.new()
+	m.button_mask = MOUSE_BUTTON_MASK_LEFT
+	m.relative = Vector2(-80, 0)
+	_gui_input(m)
