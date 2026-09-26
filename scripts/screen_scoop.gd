@@ -1346,7 +1346,9 @@ func _lift() -> void:
 		var head := title if special else "%dコンボ！" % combo
 		_banner(head + ("\n" + detail if detail != "" else ""), Color("fff2a8"))
 	else:
-		_float_text(title + ("  " + detail if detail != "" else ""), pos2d + Vector2(0, -50), Color("fff2a8"), 18)
+		var at := pos2d + Vector2(0, -50)
+		at.y = clampf(at.y, 205.0, 400.0) # 上のヒントや下の表示と重ならないように
+		_float_text(title + ("  " + detail if detail != "" else ""), at, Color("fff2a8"), 18)
 	_combo_pop()
 	_partner_react(true)
 	if not practice and not record_announced and combo > GameState.records.best_combo and combo >= 3 and GameState.records.nights > 0:
