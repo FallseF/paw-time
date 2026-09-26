@@ -44,6 +44,8 @@ func _ready() -> void:
 	if OS.get_environment("OBAKE_DECOR") != "":
 		for k in GameState.DECOR_ORDER:
 			GameState.decor[k] = true
+	if OS.get_environment("OBAKE_PHASE") != "":
+		GameState.phase = OS.get_environment("OBAKE_PHASE")
 	var start := OS.get_environment("OBAKE_START")
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "kind": "school", "quality": 2}, {"type": "rare", "kind": "rainbow", "quality": 1}, {"type": "stock", "kind": "heavy", "quality": 0}]

@@ -62,8 +62,8 @@ func _build_world() -> void:
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = {"morning": Color("efe4d6"), "evening": Color("e9c7a8"), "night": Color("3a3550")}[tod]
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("ffe9d6")
-	env.ambient_light_energy = 0.35
+	env.ambient_light_color = Color("ffe9d6") if tod != "night" else Color("8a90c8")
+	env.ambient_light_energy = 0.35 if tod != "night" else 0.22
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	var we := WorldEnvironment.new()
 	we.environment = env
