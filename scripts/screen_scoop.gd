@@ -199,6 +199,7 @@ func _build_world() -> void:
 	world.add_child(cam)
 	cam.look_at(Vector3(0, 0.2, -1.1))
 	cam_base = cam.transform
+	_measure_visible_width.call_deferred()
 
 	var bank := MeshInstance3D.new()
 	var bp := PlaneMesh.new()
@@ -565,7 +566,42 @@ func _make_poi() -> Node3D:
 func _rand_in_pond(scale := 0.6) -> Vector3:
 	var a := randf() * TAU
 	var r := sqrt(randf()) * scale
-	return Vector3(cos(a) * WATER_RX * r, 0.0, sin(a) * WATER_RZ * r - 0.3)
+	var p := Vector3(cos(a) * WATER_RX * r, 0.0, sin(a) * WATER_RZ * r - 0.3)
+	var hw := _visible_half_width(p.z) - 0.3
+	p.x = clampf(p.x, -hw, hw)
+	p.z = minf(p.z, _z_near_limit - 0.2)
+	return p
+
+
+## 水面で、画面の左右の端が z のところで x いくつか（遠いほど広い）
+var _hw_near := Vector2(0.3, 1.2) # (z, 半分の幅)
+var _hw_far := Vector2(-2.0, 1.9)
+var _z_near_limit := 1.2 # これより手前（画面の下の方）には玉は来ない
+
+
+func _measure_visible_width() -> void:
+	var s := Vector2(360, 640)
+	var f0 := cam.project_ray_origin(Vector2(180, 420))
+	var d0 := cam.project_ray_normal(Vector2(180, 420))
+	if absf(d0.y) > 1e-4:
+		_z_near_limit = (f0 + d0 * (-f0.y / d0.y)).z
+	for pair in [[500.0, "near"], [250.0, "far"]]:
+		var y: float = pair[0]
+		var from := cam.project_ray_origin(Vector2(s.x, y))
+		var dir := cam.project_ray_normal(Vector2(s.x, y))
+		if absf(dir.y) < 1e-4:
+			continue
+		var t := -from.y / dir.y
+		var g := from + dir * t
+		if pair[1] == "near":
+			_hw_near = Vector2(g.z, absf(g.x))
+		else:
+			_hw_far = Vector2(g.z, absf(g.x))
+
+
+func _visible_half_width(z: float) -> float:
+	var k := inverse_lerp(_hw_near.x, _hw_far.x, z)
+	return lerpf(_hw_near.y, _hw_far.y, clampf(k, -0.5, 1.5))
 
 
 func _visible_count() -> int:
@@ -586,7 +622,7 @@ func _spawn_orb(initial := false) -> void:
 	if mods.festival and randf() < 0.3:
 		kind = "gold"
 		t = "gold"
-	var at := _rand_in_pond(0.6) if initial else Vector3(randf_range(-1.6, 1.6), 0, -WATER_RZ * 0.75)
+	var at := _rand_in_pond(0.6) if initial else Vector3(randf_range(-1.2, 1.2), 0, -WATER_RZ * 0.75)
 	if kind == "school":
 		var leader := _add_orb({"type": t, "kind": kind}, at)
 		for i in 2:
@@ -1597,6 +1633,16 @@ func _update_orbs(delta: float) -> void:
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, (o.position.z + 0.2) / WATER_RZ)
 		if e.length() > 0.78:
 			o.vel -= Vector3(e.x, 0, e.y).normalized() * 6.0 * delta
+		# 画面の左右からはみ出さないように（池は画面より広い）
+		if o.position.z > _z_near_limit:
+			o.vel.z -= 4.0 * delta
+			if o.position.z > _z_near_limit + 0.3:
+				o.position.z = _z_near_limit + 0.3
+		var hw := _visible_half_width(o.position.z) - 0.2
+		if absf(o.position.x) > hw:
+			o.vel.x -= signf(o.position.x) * 4.0 * delta
+			if absf(o.position.x) > hw + 0.25:
+				o.position.x = signf(o.position.x) * (hw + 0.25)
 		o.position.y = 0.0
 
 
