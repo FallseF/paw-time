@@ -918,3 +918,32 @@ func demo_hold() -> void:
 func demo_lift() -> void:
 	pressed = false
 	_lift()
+
+
+## 確認用：本物の入力と同じ道筋で、1つ目の玉をすくう（押す→動かす→離す）
+func demo_real() -> void:
+	if orbs.is_empty():
+		return
+	var o: Orb3D = orbs[0]
+	o.set_process(false)
+	o.vel = Vector3.ZERO
+	var sp := cam.unproject_position(o.global_position)
+	var start := sp + Vector2(40, 30)
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = start
+	_gui_input(ev)
+	for i in 10:
+		await get_tree().process_frame
+		var m := InputEventMouseMotion.new()
+		m.position = start.lerp(sp, (i + 1) / 10.0)
+		m.button_mask = MOUSE_BUTTON_MASK_LEFT
+		_gui_input(m)
+	await get_tree().create_timer(0.2).timeout
+	var up := InputEventMouseButton.new()
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	up.position = sp
+	_gui_input(up)
+	print("[demo_real] caught=", caught_count, " dura=", durability)

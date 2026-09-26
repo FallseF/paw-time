@@ -1331,6 +1331,7 @@ func _rest() -> void:
 func _to_evening() -> void:
 	GameState.phase = "evening"
 	GameState.save()
+	Kit.play(self, "night", 1.3, -10)
 	card.modulate.a = 0.0
 	await _tween_night(1.0)
 	_show_card()

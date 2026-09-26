@@ -218,6 +218,12 @@ func _build_ui() -> void:
 	hint.position = Vector2(0, 560)
 	hint.size = Vector2(360, 30)
 	add_child(hint)
+	var skip := Kit.button("目をさます", Color(1, 1, 1, 0.18), func():
+		if running and not finished:
+			_finish(), Color(1, 1, 1, 0.8), 32, 12)
+	skip.position = Vector2(262, 14)
+	skip.size = Vector2(86, 32)
+	add_child(skip)
 	pop = Kit.text("", 30, Color("fff2a8"), true, HORIZONTAL_ALIGNMENT_CENTER)
 	pop.add_theme_color_override("font_outline_color", Color("2d2350"))
 	pop.add_theme_constant_override("outline_size", 10)

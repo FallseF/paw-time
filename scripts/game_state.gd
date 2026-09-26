@@ -689,7 +689,7 @@ func sleep(bed: int, wake: int) -> void:
 		orbs.append({"type": "night", "rare": false})
 		last_night.visitor = "lantern"
 	# 夢：リズムが整っていて、よく眠った夜
-	dream_pending = h >= 7.0 and (tier() >= 3 or (tier() >= 2 and randf() < 0.6))
+	dream_pending = h >= 7.0 and ((tier() >= 3 and randf() < 0.75) or (tier() == 2 and randf() < 0.45))
 	# 条件を満たしたレアが生まれる
 	var have := seen.duplicate()
 	for rid in rare_pending:
