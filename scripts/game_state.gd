@@ -248,7 +248,7 @@ func is_moon_night() -> bool:
 
 
 func day_label() -> String:
-	return "%d週目 %s曜日" % [week() + 1, WEEKDAYS[weekday()]]
+	return tr("DAY_LABEL") % [week() + 1, tr("WEEKDAY_%d" % weekday())]
 
 
 ## その日の記録（シフト・天気）。1週目の月〜金は見本、それ以外は日付から生成する。

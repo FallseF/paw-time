@@ -30,6 +30,10 @@ func setup_look(l: Dictionary) -> MyObake3D:
 	look = l
 	species = "my"
 	col = Color(l.get("color", "ffffff"))
+	# とくべつな印（SpecialObake）の子は、体に印のきらめき色を少し混ぜる
+	var special: String = l.get("special", "")
+	if SpecialObake.KINDS.has(special):
+		col = col.lerp(Color(SpecialObake.KINDS[special].shine), 0.3)
 	accent = Color(l.get("accent", "e8505b"))
 	motion = l.get("motion", "bob")
 	body = Node3D.new()
@@ -41,6 +45,8 @@ func setup_look(l: Dictionary) -> MyObake3D:
 	var a: String = l.get("accessory", "")
 	if has_method("_acc_" + a):
 		call("_acc_" + a)
+	if SpecialObake.KINDS.has(special):
+		SpecialObake.decorate(self, special)
 	bob = false # 揺れはしぐさごとに _process で付ける（まばたきは親に任せる）
 	_t = randf() * TAU
 	return self

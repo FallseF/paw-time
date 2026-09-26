@@ -49,6 +49,8 @@ func _ready() -> void:
 	if _vis():
 		_start_visit()
 		return
+	# 仕事さがし・はじめての流れ（島の説明／見つけた仕事の知らせ／毎日の求人と評価）の重ね画面。入口はこの1行だけ
+	add_child(JobDesk.new())
 	night = 1.0 if GameState.phase == "evening" else 0.0
 	_apply_time(night)
 	if night > 0.5:
@@ -519,7 +521,9 @@ func _build_host(id: String) -> void:
 		host_node.queue_free()
 	if id == "my":
 		var tid: String = V.get("my_type", "") if _vis() else GameState.my_obake.get("type_id", "")
-		host_node = Obake3D.make_custom(QuizData.TYPES[tid].look) if QuizData.TYPES.has(tid) else Obake3D.make("receipt")
+		# 自分の島なら保存した look（とくべつな印つき）、おでかけ先ならタイプの look
+		var look: Dictionary = GameState.my_obake.get("look", {}) if not _vis() and not GameState.my_obake.is_empty() else (QuizData.TYPES[tid].look if QuizData.TYPES.has(tid) else {})
+		host_node = Obake3D.make_custom(look) if not look.is_empty() else Obake3D.make("receipt")
 	else:
 		host_node = Obake3D.make(id)
 	host_node.scale = Vector3.ONE * (0.6 if Rares.is_rare(id) else 0.82)
@@ -530,7 +534,9 @@ func _build_host(id: String) -> void:
 	if id == "my":
 		var tid2: String = V.get("my_type", "") if _vis() else GameState.my_obake.get("type_id", "")
 		if QuizData.TYPES.has(tid2):
-			nm = QuizData.TYPES[tid2].name
+			nm = QuizData.type_name(tid2)
+		if not _vis() and GameState.my_obake.get("special", "") != "":
+			nm = SpecialObake.pet_name() # とくべつな子は呼び名で
 	var l := Kit.label3d(nm, 34, Color("ffe27a"))
 	l.pixel_size = 0.009
 	l.no_depth_test = true
@@ -1345,7 +1351,7 @@ func _build_ui() -> void:
 
 func _refresh_hud() -> void:
 	top_day.text = GameState.day_label()
-	rhythm_chip.text = "眠り：%s" % GameState.tier_name()
+	rhythm_chip.text = tr("眠り：%s") % tr(GameState.tier_name())
 	for k in ["normal", "hover", "pressed", "focus"]:
 		rhythm_chip.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.92), 19, 0.14, Vector2(12, 4)))
 	rhythm_chip.add_theme_color_override("font_color", GameState.TIER_COLOR[GameState.tier()].darkened(0.35))

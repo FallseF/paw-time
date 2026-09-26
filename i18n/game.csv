@@ -1,0 +1,278 @@
+keys,en,ja
+DAY_LABEL,Week %d · %s,%d週目 %s曜日
+WEEKDAY_0,Mon,月
+JOB_WD_0,Mon,月
+WEEKDAY_1,Tue,火
+JOB_WD_1,Tue,火
+WEEKDAY_2,Wed,水
+JOB_WD_2,Wed,水
+WEEKDAY_3,Thu,木
+JOB_WD_3,Thu,木
+WEEKDAY_4,Fri,金
+JOB_WD_4,Fri,金
+WEEKDAY_5,Sat,土
+JOB_WD_5,Sat,土
+WEEKDAY_6,Sun,日
+JOB_WD_6,Sun,日
+ONB_PARTNER,Your partner,あいぼう
+SPECIAL_MOON_NAME,Moon Halo,月の輪
+SPECIAL_MOON_PET,Luna,ルナ
+SPECIAL_SUN_NAME,Sun Crown,太陽の冠
+SPECIAL_SUN_PET,Sunny,サニー
+SPECIAL_STAR_NAME,Star Orbit,星めぐり
+SPECIAL_STAR_PET,Stella,ステラ
+SPECIAL_BLOSSOM_NAME,Blossom Crown,花の冠
+SPECIAL_BLOSSOM_PET,Sakura,さくら
+ONB_SPECIAL_KICKER,A SPECIAL obake cat appeared!,とくべつなおばけ猫が あらわれた！
+ONB_SPECIAL_RIBBON,★ SPECIAL · %s ★,★ とくべつ・%s ★
+ONB_SPECIAL_PET,"Say hi to %s, your partner!",あいぼうの %s だよ！
+ONB_SHIFT_PLACE,Practice shift · Café Komorebi,体験バイト・カフェ こもれび
+ONB_SHIFT_MOCK,Just pretend! 4 hours in 30 seconds,練習だよ！ 4時間を30秒で
+ONB_SHIFT_HELLO,I'm %s! Let's try a shift together!,%s だよ！ いっしょに働いてみよう！
+ONB_SHIFT_HINT_START,Tap to open the café,押して、お店をあけよう
+ONB_SHIFT_START,Open the café,お店をあける
+ONB_SHIFT_GO,Here they come!,お客さんが来るよ！
+ONB_SHIFT_HINT_WAIT,Wait for a customer…,お客さんを待とう…
+ONB_SHIFT_HINT_SERVE,A customer! Tap Serve,お客さんだ！ 「出す」を押そう
+ONB_SHIFT_SERVE,Serve,出す
+ONB_SHIFT_NOT_YET,Wait for a customer first!,まずはお客さんを待とう！
+ONB_SHIFT_SERVED,Served: %d,出した数：%d
+ONB_ORDER_1,"Latte, please!",ラテください！
+ONB_ORDER_2,One melon soda!,メロンソーダひとつ！
+ONB_ORDER_3,"Pancakes, please!",パンケーキください！
+ONB_ORDER_4,Hot cocoa!,ココアください！
+ONB_CHEER_1,Nice one!,いいね！
+ONB_CHEER_2,You're a natural!,じょうず！
+ONB_CHEER_3,They loved it!,よろこんでたよ！
+ONB_SHIFT_DONE_SAY,We did it! Great shift!,おつかれさま！ いいシフトだった！
+ONB_SHIFT_DONE,Shift done!,シフトおわり！
+ONB_SHIFT_RESULT,You served %d customers,お客さん %d 人に出したよ
+ONB_SHIFT_EARNED,+2 poi,ポイ +2
+ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
+ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
+ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Hold on the water, slide under the orb, and let go.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 水を押したまま玉の下へ、そして離す。
+ONB_NIGHT_TITLE,Good night,おやすみ
+ONB_NIGHT_BODY,Orbs hatch while you sleep. %s will keep watch.,玉は、眠っている間にかえる。%s が見てるね。
+ONB_NIGHT_SLEEP,Sleep until morning,朝まで眠る
+TOUR_1_TITLE,This is your island!,ここが、きみの島！
+TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。
+TOUR_2_TITLE,Rest grows the island,休むと、島が育つ
+TOUR_2_BODY,"Sleep at a steady time and the shore grows — flowers, a pond, a pier, even a lighthouse.",いつも同じころに眠ると、岸がひろがる。花・池・桟橋、灯台まで。
+TOUR_3_TITLE,Work brings poi,働くと、ポイがもらえる
+TOUR_3_BODY,"Each shift gives poi (not tied to hours). Scoop orbs at night for obake, materials and clothes.",シフトごとにポイ（時間の長さは関係なし）。夜にすくって、おばけ・材料・服を。
+TOUR_4_TITLE,Paw Coins: %d,肉球コイン：%d
+TOUR_4_BODY,"When %s works with you, you both earn Paw Coins. Spend them on island decorations and outfits.",%s がいっしょに働くと、肉球コインがたまる。島の飾りや服に使えるよ。
+TOUR_NEXT,Next,つぎへ
+TOUR_TO_PREFS,Tell %s how you like to work,%s に、働き方を教える
+PREFS_TITLE,How do you like to work?,どんなふうに働きたい？
+PREFS_SUB,%s will look for jobs that fit.,%s が、合う仕事をさがすよ。
+PREFS_AREA,Area,場所
+PREFS_AREA_PH,Area or station (e.g. Shibuya),地域や駅（例：渋谷）
+PREFS_DAYS,Days you can work,働ける曜日
+PREFS_TIME,Time of day,時間帯
+PREFS_WIN_MORNING,Morning 6–12,朝 6〜12時
+PREFS_WIN_DAY,Daytime 11–17,昼 11〜17時
+PREFS_WIN_EVENING,Evening 17–22,夕方 17〜22時
+PREFS_WIN_NIGHT,Late night 22–5,深夜 22〜5時
+PREFS_WAGE,Minimum hourly wage,最低時給
+PREFS_WAGE_VAL,¥%s / h,¥%s／時
+PREFS_PAY,Pay schedule,お給料の受け取り方
+PREFS_SAFE,We never ask for bank or card numbers. Your choices stay on this device.,口座やカードの番号は聞きません。入れた条件は、この端末の中だけに残ります。
+PREFS_GO,Find jobs for me,この条件でさがして
+PREFS_NEED,Pick at least one day and time,曜日と時間帯を1つ以上えらんでね
+JOB_AREA_SHIBUYA,Shibuya,渋谷
+JOB_AREA_SHINJUKU,Shinjuku,新宿
+JOB_AREA_IKEBUKURO,Ikebukuro,池袋
+JOB_AREA_KICHIJOJI,Kichijoji,吉祥寺
+JOB_AREA_YOKOHAMA,Yokohama,横浜
+JOB_AREA_UMEDA,Osaka Umeda,大阪・梅田
+JOB_AREA_NEARBY,near you,近く
+JOB_PAY_DAILY,Daily pay,日払い
+JOB_PAY_WEEKLY,Weekly pay,週払い
+JOB_PAY_MONTHLY,Monthly pay,月払い
+JOB_PAY_ANY,Any,どれでも
+JOB_ROLE_REGISTER,Register,レジ
+JOB_TITLE_REGISTER,Register staff,レジスタッフ
+JOB_ROLE_DISH,Dishwashing,皿洗い
+JOB_TITLE_DISH,Dishwashing staff,洗い場スタッフ
+JOB_ROLE_HALL,Hall,ホール
+JOB_TITLE_HALL,Hall staff,ホールスタッフ
+JOB_ROLE_KITCHEN,Kitchen,キッチン
+JOB_TITLE_KITCHEN,Kitchen staff,キッチンスタッフ
+JOB_ROLE_STOCK,Stock,品出し
+JOB_TITLE_STOCK,Stock staff,品出しスタッフ
+JOB_LINE_REGISTER_1,"Beep, beep! I love the register sound.",ピッ、ピッ。レジの音、好き！
+JOB_LINE_REGISTER_2,A chance to say “thank you” a lot!,ありがとうを、たくさん言えるよ！
+JOB_LINE_REGISTER_3,I'll count the change with you.,おつり、いっしょに数えるね。
+JOB_LINE_DISH_1,Bubbles! I'm in!,泡！ まかせて！
+JOB_LINE_DISH_2,Shiny plates make me happy.,ぴかぴかのお皿、うれしい。
+JOB_LINE_DISH_3,Quiet and cozy work.,静かで、落ちつく仕事だよ。
+JOB_LINE_HALL_1,Carrying trays is my specialty!,お盆運びは、とくい！
+JOB_LINE_HALL_2,Lots of smiles in the hall.,ホールは、笑顔がいっぱい。
+JOB_LINE_HALL_3,I'll watch the tables with you.,テーブル、いっしょに見てるね。
+JOB_LINE_KITCHEN_1,It smells yummy already!,もう、いいにおいがする！
+JOB_LINE_KITCHEN_2,Sizzle sizzle! Let's cook.,ジュウジュウ！ 作ろう。
+JOB_LINE_KITCHEN_3,Maybe there's a staff meal…,まかない、あるかも…
+JOB_LINE_STOCK_1,Boxes! My favorite.,箱だ！ 大好き。
+JOB_LINE_STOCK_2,Neat shelves feel so good.,きれいな棚、気持ちいい。
+JOB_LINE_STOCK_3,"Quiet work, steady pace.",静かに、自分のペースで。
+JOB_WHEN,%s %d/%d · %02d:%02d–%02d:%02d,%s %d/%d・%02d:%02d〜%02d:%02d
+JOB_WAGE,¥%s/h,¥%s／時
+JOB_COUNT,%d / %d,%d / %d
+JOB_ACCEPT,Accept,受ける
+JOB_PASS,Pass,今回は見送る
+JOB_ADDED,Added to your shifts!,シフトに入れたよ！
+JOB_NEXT,Next job,つぎの仕事
+JOB_DONE,Done,おわり
+JOB_SAMPLE_NOTE,Sample listings for the demo — not real job offers,見本の求人です（本物の募集ではありません）
+CAL_GOOGLE,Add to Google Calendar,Google カレンダーに追加
+CAL_ICS,Download .ics,.ics をダウンロード
+CAL_ICS_DOWNLOADED,Calendar file downloaded,カレンダーのファイルをダウンロードしました
+CAL_ICS_SAVED,Saved: %s,保存しました：%s
+CAL_ICS_FAILED,Couldn't save the file,保存できませんでした
+CAL_DETAILS_WAGE,%s · %s,%s・%s
+CAL_DETAILS_SAMPLE,Sample listing (demo) — not a real job offer.,見本の求人（デモ）です。本物の募集ではありません。
+CAL_DETAILS_FROM,Added from Paw Time,Paw Time から追加
+JOY_1,Yay! I'll cheer for you!,やった！ 応援するね！
+JOY_2,Hooray! It's a date!,わーい！ 約束だよ！
+JOY_3,Great pick! Let's go together!,いいね！ いっしょに行こう！
+SHRUG_1,Okay! Maybe next time.,そっか！ またこんど。
+SHRUG_2,No worries — plenty more jobs!,だいじょうぶ、ほかにもあるよ！
+END_TITLE,That's all for today!,今日は、これでぜんぶ！
+END_BODY,You accepted %d. %s will remember them.,%d 件受けたよ。%s がおぼえておくね。
+END_BODY_NONE,None today — that's okay. %s will look again tomorrow.,今日は0件。だいじょうぶ、%s がまた明日さがすよ。
+END_SAY,See you at work!,仕事で会おうね！
+END_SAY_NONE,Rest is good too!,休むのも、だいじ！
+END_BACK,Back to the island,島にもどる
+END_EDIT,Change work conditions,働く条件を変える
+FOUND_TITLE,%s found %d jobs!,%s が %d 件みつけた！
+FOUND_BODY,"They match your area, days, time and wage. Take a look?",場所・曜日・時間・時給に合う仕事だよ。見てみる？
+FOUND_SEE,See jobs,見てみる
+FOUND_NONE_TITLE,No matches yet,まだ見つからない
+FOUND_NONE_BODY,Try a lower minimum wage or more days.,最低時給を下げるか、曜日を増やしてみて。
+FOUND_EDIT,Change conditions,条件を変える
+NOTE_MATCH,New match · %s,みつけた・%s
+NOTE_DAILY,%s brought %d jobs today,%s が今日の仕事を %d 件もってきた
+NOTE_DAILY_SUB,Tap to see · from %s,タップして見る・%s から
+NOTE_REVIEW,How was work at %s?,%s の仕事、どうだった？
+NOTE_REVIEW_SUB,10-second review · +1 poi,10秒のひとこと評価・ポイ +1
+REVIEW_TAG_BREAKS,Breaks respected,休憩がとれる
+REVIEW_TAG_INSTRUCTIONS,Clear instructions,説明がわかりやすい
+REVIEW_TAG_ON_TIME,Left on time,時間どおりに帰れる
+REVIEW_TAG_PAID,Paid on time,給料が遅れない
+REVIEW_TAG_FRIENDLY,Friendly team,人がやさしい
+REVIEW_TAG_FAIR,Busy but fair,忙しいけど公平
+REVIEW_TAG_AGAIN,Would work again,また働きたい
+REVIEW_SAYS,Workers say: %s · ★%.1f (%d),働いた人の声：%s・★%.1f（%d）
+REVIEW_ASK,How was work at %s?,%s の仕事、どうだった？
+REVIEW_TITLE,Quick review,ひとこと評価
+REVIEW_WHY,Helps other workers pick good places. Stays anonymous.,ほかの人の職場えらびに役立つよ。名前は出ません。
+REVIEW_SEND,Send review (+%d poi),送る（ポイ +%d）
+REVIEW_SKIP,Skip,とばす
+REVIEW_THANKS,Thank you! Here's %d poi.,ありがとう！ ポイ %d 本どうぞ。
+REVIEW_DONE,Review sent!,送ったよ！
+REVIEW_DONE_BODY,Your voice now shows on this workplace's job cards.,この職場の求人カードに、きみの声が入ったよ。
+今夜のすくい,Tonight's scoop,今夜のすくい
+帰る,Home,帰る
+ポイ ×%d,Poi ×%d,ポイ ×%d
+押して、玉の下へ → 離す,"Hold, slide under an orb → let go",押して、玉の下へ → 離す
+縁が光ったら、離す,Let go when the rim glows,縁が光ったら、離す
+ぴったり。いま離す！,Perfect — let go now!,ぴったり。いま離す！
+いま離せば、すくえる,Let go now to scoop,いま離せば、すくえる
+押したまま、玉の下へ,"Keep holding, move under the orb",押したまま、玉の下へ
+すくった！,Scooped!,すくった！
+"すくった！
+ふしぎな光…","Scooped!
+A strange glow…","すくった！
+ふしぎな光…"
+ぴったり！,Perfect!,ぴったり！
+ポイを使い切った,Out of poi,ポイを使い切った
+%d 個,%d,%d 個
+玉は、眠っている間にかえる,Orbs hatch while you sleep,玉は、眠っている間にかえる
+今夜は、水の音だけ,Just the sound of water tonight,今夜は、水の音だけ
+帰って、おやすみの支度,Head home and get ready for bed,帰って、おやすみの支度
+じっと待つと、ゆめの泡が浮かぶ,Stay still and a dream bubble rises,じっと待つと、ゆめの泡が浮かぶ
+縁が金色で離すと、ぴったり,Let go on a gold rim for a perfect,縁が金色で離すと、ぴったり
+"ゆめの泡を
+すくった","Scooped a
+dream bubble","ゆめの泡を
+すくった"
+ゆめの泡だ。そのまま離す,A dream bubble — just let go,ゆめの泡だ。そのまま離す
+いつもの,Plain,いつもの
+レシート,Receipt,レシート
+泡,Bubble,泡
+お盆,Tray,お盆
+フライパン,Pan,フライパン
+段ボール,Box,段ボール
+きらきら,Sparkle,きらきら
+なし,None,なし
+ポイ,Poi,ポイ
+朝だ。光る玉が %d 個,Morning! %d glowing orbs,朝だ。光る玉が %d 個
+玉をひらく,Open the orb,玉をひらく
+つぎの玉,Next orb,つぎの玉
+庭へ,To the island,庭へ
+いつもの子たち,The usual crew,いつもの子たち
+なかまが増えて、少し育った,More friends — and they grew a little,なかまが増えて、少し育った
+レア ・ %s,Rare · %s,レア ・ %s
+レジの経験,Register experience,レジの経験
+皿洗いの経験,Dishwashing experience,皿洗いの経験
+ホールの経験,Hall experience,ホールの経験
+キッチンの経験,Kitchen experience,キッチンの経験
+品出しの経験,Stocking experience,品出しの経験
+夜ふかし,Night owl,夜ふかし
+はじめての経験,First time,はじめての経験
+よく眠った朝,A well-rested morning,よく眠った朝
+レシートン,Receipton,レシートン
+アワワ,Awawa,アワワ
+オボン,Obon,オボン
+ジュウ,Jyuu,ジュウ
+ダンボ,Dambo,ダンボ
+スヤリ,Suyari,スヤリ
+チョウチン,Chochin,チョウチン
+レジの音に寄ってくる。尻尾のレシートは、捨てないでほしいらしい,Drawn to register beeps. Please don't throw away the receipt tail.,レジの音に寄ってくる。尻尾のレシートは、捨てないでほしいらしい
+洗い場の泡から生まれる。割れても平気。割れても,"Born from dish-sink bubbles. Pops, and is fine. Pops again.",洗い場の泡から生まれる。割れても平気。割れても
+頭のお盆は絶対に落とさない。中身は気にしない,Never drops the tray on its head. Doesn't care what's on it.,頭のお盆は絶対に落とさない。中身は気にしない
+油の跳ねる音が好き。さわると少しあつい。本人は言わない,Loves sizzling oil. A little hot to touch. Won't admit it.,油の跳ねる音が好き。さわると少しあつい。本人は言わない
+住居です。資源ごみに出さないでください,This is a home. Please do not recycle.,住居です。資源ごみに出さないでください
+夢の羊を数えていたら、ついてきた。起きているところを見た者はいない,Followed you home from counting dream sheep. Nobody has seen it awake.,夢の羊を数えていたら、ついてきた。起きているところを見た者はいない
+夜ふかしの灯りに寄ってくる。本人もかなり眠い,Drawn to late-night lights. Very sleepy itself.,夜ふかしの灯りに寄ってくる。本人もかなり眠い
+睡眠,Sleep,睡眠
+時間帯,Time of day,時間帯
+はじめて,Firsts,はじめて
+図鑑,Book,図鑑
+眠り：%s,Sleep: %s,眠り：%s
+ばらばら,scattered,ばらばら
+ゆらゆら,wobbly,ゆらゆら
+ととのい,steady,ととのい
+ぐっすり,deep,ぐっすり
+あるじ,Host,あるじ
+今日のおてつだい,Today's chore,今日のおてつだい
+おてつだいする,Do the chore,おてつだいする
+今日はのんびりする,Take it easy today,今日はのんびりする
+島をつくる・シェアする,Build & share the island,島をつくる・シェアする
+落ち葉のおかんじょう,Counting fallen leaves,落ち葉のおかんじょう
+縁側へのおぜん運び,Carrying trays to the porch,縁側へのおぜん運び
+たらいでお皿あらい,Washing dishes in the tub,たらいでお皿あらい
+おでんの下ごしらえ,Prepping the oden,おでんの下ごしらえ
+物置の箱の整理,Sorting boxes in the shed,物置の箱の整理
+今日は休み,Day off,今日は休み
+よく眠ると、おまけがつく,Sleep well for a bonus,よく眠ると、おまけがつく
+夕方まで、のんびり,Relax until evening,夕方まで、のんびり
+夜の庭へ、ようこそ,Welcome to your island,夜の庭へ、ようこそ
+よく眠ると、庭が育つ,Sleep well and the island grows,よく眠ると、庭が育つ
+夜になった,Night has fallen,夜になった
+光る玉は、朝にかえる,Glowing orbs hatch in the morning,光る玉は、朝にかえる
+川べりで、おばけすくい,Scoop obake at the river,川べりで、おばけすくい
+すくわずに寝る,Sleep without scooping,すくわずに寝る
+おやすみの時間,Time for bed,おやすみの時間
+寝る,Sleep,寝る
+つづきから,Continue,つづきから
+はじめる（見本の記録つき）,Start (with sample records),はじめる（見本の記録つき）
+記録なしで、はじめる,Start without records,記録なしで、はじめる
+記録なしでも、毎晩あそべます,You can play every night without records,記録なしでも、毎晩あそべます
+島のコードで、おでかけ,Visit an island by code,島のコードで、おでかけ
+ねこおばけと、夜の庭,Cat obake and a night island,ねこおばけと、夜の庭
+はじめからにする？,Start over?,はじめからにする？
+いまの庭と図鑑は消えます,Your island and book will be erased,いまの庭と図鑑は消えます
+はじめから,Start over,はじめから
+やめる,Cancel,やめる

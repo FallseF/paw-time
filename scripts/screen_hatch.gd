@@ -54,7 +54,7 @@ func _ready() -> void:
 		o.position = Vector3((i - (n_orbs - 1) / 2.0) * 0.42, 0.42, 0.2)
 		world.add_child(o)
 		orbs.append(o)
-	header.text = "朝だ。光る玉が %d 個" % n_orbs
+	header.text = tr("朝だ。光る玉が %d 個") % n_orbs
 	next_btn.text = "玉をひらく"
 	# 最初の玉は、待たずにひらく
 	await get_tree().create_timer(0.7).timeout
@@ -335,7 +335,7 @@ func _next() -> void:
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
-	card_sub.text = ("レア ・ %s" % sp.group) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, _type_label(sp.type)])
+	card_sub.text = (tr("レア ・ %s") % tr(sp.group)) if Rares.is_rare(h.id) else ("Lv%d ・ %s" % [h.level, tr(_type_label(sp.type))])
 	card_desc.text = sp.desc
 	card.position.y = 430
 	var tw4 := create_tween().set_parallel()

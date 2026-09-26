@@ -64,7 +64,8 @@ func _ready() -> void:
 	_build_ui()
 	_build_audio()
 	extra = GameState.night_plan == "extra"
-	var list := GameState.tonight_orbs()
+	# はじめての夜（Onboarding）は、ゆっくりで逃げない玉がひとつだけ
+	var list := Onboarding.tutorial_orbs() if Onboarding.at("scoop") else GameState.tonight_orbs()
 	if extra:
 		list = list.slice(0, 3)
 	total_tonight = list.size()
@@ -74,6 +75,8 @@ func _ready() -> void:
 	_refresh_ui()
 	dream_left = 1 + GameState.tier() / 2
 	_make_breath()
+	if Onboarding.at("scoop"):
+		_tutorial_coach()
 	# 今夜の川の様子を、はじめに知らせる
 	var kind := GameState.night_kind()
 	if kind != "" and not extra and GameState.day >= 1:
@@ -587,7 +590,7 @@ func _refresh_ui() -> void:
 	var left := 0
 	for id in GameState.nets:
 		left += GameState.nets[id]
-	poi_label.text = "ポイ ×%d" % left
+	poi_label.text = tr("ポイ ×%d") % left
 	dura_bar.value = durability if poi_type != "" else 0.0
 	var fill := StyleBoxFlat.new()
 	fill.set_corner_radius_all(5)
@@ -597,7 +600,7 @@ func _refresh_ui() -> void:
 	var name := "なし"
 	if poi_type != "":
 		col = GameState.TYPE_COLOR.get(GameState.NETS[poi_type].type, Color("ffd84d"))
-		name = GameState.NETS[poi_type].get("short", "ポイ")
+		name = tr(GameState.NETS[poi_type].get("short", "ポイ"))
 	var st := _pill(col, 30)
 	for k in ["normal", "hover", "pressed"]:
 		poi_btn.add_theme_stylebox_override(k, st)
@@ -979,6 +982,8 @@ func _process(delta: float) -> void:
 			if d < 0.7 and d > 0.001:
 				steer += away.normalized() * (0.7 - d) * flee * delta
 		var cap: float = [0.32, 0.26, 0.21, 0.17][GameState.tier()] * vmax # よく眠ると、水面がしずか
+		if o.data.get("easy", false):
+			cap *= 0.3 # はじめての夜の玉
 		if t == "register":
 			var dt: float = o.get_meta("dash", randf() * 2.0) - delta
 			if dt <= 0:
@@ -1034,7 +1039,7 @@ func _finish() -> void:
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
 	v.add_child(_text("今夜のすくい", 16, Color("c9d2ff")))
-	v.add_child(_text("%d 個" % caught_count, 34, Color.WHITE, font_black))
+	v.add_child(_text(tr("%d 個") % caught_count, 34, Color.WHITE, font_black))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
@@ -1048,7 +1053,7 @@ func _finish() -> void:
 		row.add_child(dot)
 	v.add_child(row)
 	v.add_child(_text("玉は、眠っている間にかえる" if caught_count > 0 else "今夜は、水の音だけ", 13, Color(1, 1, 1, 0.7)))
-	var b := Kit.button("帰って、おやすみの支度", Color("8b7bff"), func(): main.go("sleep"), Color.WHITE, 46, 16)
+	var b := Kit.button("帰って、おやすみの支度", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "sleep")), Color.WHITE, 46, 16)
 	v.add_child(b)
 	p.pivot_offset = Vector2(140, 100)
 	p.scale = Vector2(0.8, 0.8)
@@ -1056,6 +1061,26 @@ func _finish() -> void:
 	var tw := create_tween().set_parallel()
 	tw.tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(p, "modulate:a", 1.0, 0.25)
+
+
+## はじめての夜の説明（相棒のひとこと）。玉の中身は、おばけ・島の材料・服のどれか
+var coach: PanelContainer
+
+
+func _tutorial_coach() -> void:
+	coach = PanelContainer.new()
+	coach.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.95), 18))
+	coach.position = Vector2(16, 128)
+	coach.size = Vector2(328, 0)
+	coach.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(coach)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	coach.add_child(v)
+	var who := Kit.text(SpecialObake.pet_name(), 12, Color("8a5bd6"), true)
+	v.add_child(who)
+	var l := Kit.wrap(Kit.text(tr("ONB_SCOOP_COACH"), 14, Color("2a2233"), true))
+	v.add_child(l)
 
 
 # ---------- 確認用 ----------
