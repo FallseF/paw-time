@@ -9,7 +9,7 @@ var world: Node3D
 var cam: Camera3D
 var walkers: Array = []
 ## おばけの居場所（前・中・奥に、ずらして並べる。0 は相棒）
-const HOMES := [Vector3(0.0, 0, 0.55), Vector3(-1.5, 0, -0.1), Vector3(1.5, 0, -0.1), Vector3(-0.55, 0, -0.35), Vector3(0.6, 0, -0.4), Vector3(-1.95, 0, -1.1), Vector3(-0.95, 0, -1.25), Vector3(0.05, 0, -1.2), Vector3(1.0, 0, -1.3), Vector3(1.95, 0, -1.05)]
+const HOMES := [Vector3(-1.3, 0, 0.45), Vector3(0.1, 0, 0.2), Vector3(1.5, 0, -0.1), Vector3(-0.55, 0, -0.35), Vector3(0.6, 0, -0.4), Vector3(-1.95, 0, -1.1), Vector3(-0.95, 0, -1.25), Vector3(0.05, 0, -1.2), Vector3(1.0, 0, -1.3), Vector3(1.95, 0, -1.05)]
 var font_bold: FontFile
 var font_black: FontFile
 var poi_row: HFlowContainer
@@ -135,18 +135,28 @@ func _build_world() -> void:
 	_build_decor()
 	# おばけたち
 	var ids: Array = GameState.owned.keys()
-	ids.sort_custom(func(a, b): return GameState.level_of(a) > GameState.level_of(b))
-	# 相棒はいちばん前
+	# 相棒 → 新しく会った子（5体まで） → ふつうのおばけ → そのほか
+	ids.sort_custom(func(a, b): return _met_day(a) > _met_day(b))
+	var order: Array = []
 	if ids.has(GameState.partner):
-		ids.erase(GameState.partner)
-		ids.push_front(GameState.partner)
+		order.append(GameState.partner)
+	for id in ids.slice(0, 5):
+		if not order.has(id):
+			order.append(id)
+	for id in GameState.NORMAL_IDS:
+		if ids.has(id) and not order.has(id):
+			order.append(id)
+	for id in ids:
+		if not order.has(id):
+			order.append(id)
+	ids = order
 	for i in min(ids.size(), 10):
 		var id: String = ids[i]
 		var ob := Obake3D.make(id)
 		ob.set_level(GameState.level_of(id))
 		ob.scale = Vector3.ONE * (0.45 if Rares.is_rare(id) else 0.62)
 		if i == 0:
-			ob.scale *= 1.15 # 相棒は少し大きく、前に
+			ob.scale *= 1.05 # 相棒は少し大きく、前に
 		var home: Vector3 = HOMES[i] + Vector3(randf_range(-0.15, 0.15), 0, randf_range(-0.1, 0.1))
 		ob.position = home
 		world.add_child(ob)
@@ -242,6 +252,11 @@ func _build_decor() -> void:
 			dg.position = Vector3(-2.08 + i * 0.08, 0.63 + (0.12 if i == 1 else 0.0), -1.4)
 			dg.material_override = Obake3D.toon(Color("fbf6ea"), 0.3)
 			world.add_child(dg)
+
+
+func _met_day(id: String) -> int:
+	var v = GameState.seen.get(id, 0)
+	return v if typeof(v) == TYPE_INT else 0
 
 
 func _box(size: Vector3, pos: Vector3, c: Color) -> void:
