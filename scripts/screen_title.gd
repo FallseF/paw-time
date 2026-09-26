@@ -66,7 +66,7 @@ func _build_world() -> void:
 	env.background_color = Color("0b1026")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("5a6aaa")
-	env.ambient_light_energy = 0.6
+	env.ambient_light_energy = 0.85
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	env.glow_enabled = true
 	env.glow_intensity = 1.1
@@ -77,7 +77,7 @@ func _build_world() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-40, -30, 0)
 	sun.light_color = Color("c8d4ff")
-	sun.light_energy = 0.5
+	sun.light_energy = 0.9
 	world.add_child(sun)
 	var cam := Camera3D.new()
 	cam.position = Vector3(0, 1.6, 4.2)
