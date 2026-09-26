@@ -46,9 +46,15 @@ func _build_world() -> void:
 	world = Node3D.new()
 	vp.add_child(world)
 
+	# 時間で部屋の光が変わる：朝は白っぽく、仕事のあとは夕方、すくったあとは夜
+	var tod := "morning"
+	if GameState.phase == "scooped":
+		tod = "night"
+	elif GameState.worked_today:
+		tod = "evening"
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("e9d6c2")
+	env.background_color = {"morning": Color("efe4d6"), "evening": Color("e9c7a8"), "night": Color("3a3550")}[tod]
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("ffe9d6")
 	env.ambient_light_energy = 0.35
@@ -58,8 +64,8 @@ func _build_world() -> void:
 	world.add_child(we)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-40, 35, 0)
-	sun.light_color = Color("ffe0bf")
-	sun.light_energy = 0.6
+	sun.light_color = {"morning": Color("fff4e0"), "evening": Color("ffb27a"), "night": Color("8f9bd6")}[tod]
+	sun.light_energy = {"morning": 0.65, "evening": 0.6, "night": 0.35}[tod]
 	sun.shadow_enabled = true
 	world.add_child(sun)
 
@@ -84,7 +90,7 @@ func _build_world() -> void:
 	win.position = Vector3(-1.6, 2.0, -2.48)
 	var wm := StandardMaterial3D.new()
 	wm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	wm.albedo_color = Color("ffc98a")
+	wm.albedo_color = {"morning": Color("cfeaff"), "evening": Color("ffb070"), "night": Color("1c2350")}[tod]
 	win.material_override = wm
 	world.add_child(win)
 	_box(Vector3(1.75, 0.08, 0.06), Vector3(-1.6, 1.43, -2.44), Color("7a5238"))

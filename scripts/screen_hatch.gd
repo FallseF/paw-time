@@ -369,6 +369,8 @@ func _next() -> void:
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
 	tw4.tween_property(card, "position:y", 390.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if rare:
+		_stamp("レア！" if not h.get("from_rainbow", false) else "虹から、レア！")
 	if h.get("leveled", false):
 		await get_tree().create_timer(0.5).timeout
 		sfx["levelup"].play()
@@ -387,6 +389,28 @@ func _next() -> void:
 		skip_btn.visible = orbs.size() - index >= 2
 	next_btn.disabled = false
 	busy = false
+
+
+## レアのときの、はんこ
+func _stamp(t: String) -> void:
+	var l := _text(t, 34, Color("e8483f"), font_black)
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
+	l.add_theme_color_override("font_outline_color", Color("fff6e8"))
+	l.add_theme_constant_override("outline_size", 10)
+	l.position = Vector2(0, 96)
+	l.size = Vector2(360, 50)
+	l.pivot_offset = Vector2(180, 25)
+	l.rotation = -0.12
+	l.scale = Vector2(2.2, 2.2)
+	l.modulate.a = 0.0
+	add_child(l)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(l, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, "modulate:a", 1.0, 0.12)
+	var tw2 := create_tween()
+	tw2.tween_interval(1.8)
+	tw2.tween_property(l, "modulate:a", 0.0, 0.4)
+	tw2.tween_callback(l.queue_free)
 
 
 ## 残りをまとめてひらいて、一覧で見せる

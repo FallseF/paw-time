@@ -649,6 +649,18 @@ func _build_ui() -> void:
 	home.add_theme_color_override("font_color", Color("1a1f3a"))
 	home.add_theme_color_override("font_hover_color", Color("1a1f3a"))
 	home.pressed.connect(func(): _end_night("帰り道"))
+	var help := Button.new()
+	help.text = "？"
+	help.focus_mode = Control.FOCUS_NONE
+	help.custom_minimum_size = Vector2(40, 0)
+	help.add_theme_font_override("font", font_black)
+	help.add_theme_font_size_override("font_size", 16)
+	for k in ["normal", "hover", "pressed"]:
+		help.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.9)))
+	help.add_theme_color_override("font_color", Color("1a1f3a"))
+	help.add_theme_color_override("font_hover_color", Color("1a1f3a"))
+	help.pressed.connect(_show_help)
+	top.add_child(help)
 	top.add_child(home)
 
 	var sub := _text("%s曜の夜 ・ %s%s" % [s.day, s.weather, ("・" + s.moon) if s.moon != "" else ""], 12, Color(1, 1, 1, 0.6))
@@ -698,9 +710,21 @@ func _build_ui() -> void:
 	cv.add_theme_constant_override("separation", 0)
 	cond_pill.add_child(cv)
 	for line in mods.label:
-		var l := _text(line, 12, Color("ffe7a8"))
+		var l := _text(line, 13, Color("ffe7a8"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		cv.add_child(l)
+	# 今夜のブースト（働いた・よく寝た）を、はっきり見せる
+	var boosts: Array = []
+	if GameState.worked_today:
+		boosts.append("働いた分のポイ +%d" % GameState.WORK_POI_CAP)
+	if GameState.strength > 1.0:
+		boosts.append("よく寝たポイ ×%.2f" % GameState.strength)
+	elif GameState.strength < 1.0:
+		boosts.append("寝不足のポイ ×%.2f" % GameState.strength)
+	if boosts.size() > 0:
+		var bl := _text("・".join(boosts), 13, Color("b8ffcf") if GameState.strength >= 1.0 else Color("ffb3a8"))
+		bl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		cv.add_child(bl)
 	add_child(cond_pill)
 
 
@@ -1641,6 +1665,45 @@ func _show_conditions() -> void:
 	var tw := create_tween()
 	tw.tween_interval(5.0)
 	tw.tween_property(cond_pill, "modulate:a", 0.0, 0.6)
+
+
+# ---------- コツ ----------
+
+func _show_help() -> void:
+	if pressed or ended:
+		return
+	var layer := Control.new()
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.03, 0.1, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(dim)
+	var card := PanelContainer.new()
+	var st := _pill(Color(1, 0.98, 0.95, 0.97), 24)
+	st.content_margin_left = 20
+	st.content_margin_right = 20
+	st.content_margin_top = 16
+	st.content_margin_bottom = 16
+	card.add_theme_stylebox_override("panel", st)
+	card.position = Vector2(20, 110)
+	card.size = Vector2(320, 0)
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(card)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 7)
+	card.add_child(v)
+	v.add_child(_text("すくいのコツ", 20, Color("2a2233"), font_black))
+	for t in ["押すと水に入る。離すとすくう", "そっと動かすほど、ポイは長持ち", "玉の真上ではなく、少し手前から入れる", "内側の輪が金色のとき離すと★", "ゲージの黄色は乗った玉の重さ。赤は危ない", "同じ色のポイは、その色の玉を寄せて軽くする", "破らずに続けるとコンボ。5コンボで虹の玉"]:
+		var l := _text("・" + t, 14, Color("4a3f52"))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		l.custom_minimum_size = Vector2(280, 0)
+		v.add_child(l)
+	v.add_child(_text("タップで閉じる", 12, Color("9a8e98")))
+	dim.gui_input.connect(func(e):
+		if (e is InputEventMouseButton or e is InputEventScreenTouch) and e.pressed:
+			layer.queue_free())
 
 
 # ---------- チュートリアル（はじめての夜だけ） ----------
