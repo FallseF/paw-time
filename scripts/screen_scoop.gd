@@ -1571,7 +1571,10 @@ func _update_poi(delta: float) -> void:
 		# 乗っている玉の重さを予告する
 		var over_list := _orbs_over_poi()
 		for o: Orb3D in orbs:
-			o.highlight = over_list.has(o)
+			var now_over := over_list.has(o)
+			if now_over and not o.highlight:
+				_play("pop", 1.6 + 0.1 * over_list.size(), -14) # 玉がポイに乗った、の小さな合図
+			o.highlight = now_over
 		# そっと＋真ん中がそろうと、内側の輪が金色になる（★の合図）
 		var centered := false
 		for o: Orb3D in over_list:
