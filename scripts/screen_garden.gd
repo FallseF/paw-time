@@ -19,6 +19,8 @@ var flowers: Array = []
 var fireflies: CPUParticles3D
 var burst: CPUParticles3D
 var night := 0.0 # 0 = 朝 / 1 = 夜
+var sky_moon: MeshInstance3D
+var sky_stars: CPUParticles3D
 
 var top_day: Label
 var rhythm_bar: ProgressBar
@@ -158,6 +160,26 @@ func _build_world() -> void:
 	world.add_child(fireflies)
 
 	_weather(GameState.today().weather)
+
+	# 夜空の月と星（夜だけ見える）
+	sky_moon = _ball(0.45, Color("fff1c8"), Kit.glow(Color("fff1c8"), 1.6))
+	sky_moon.position = Vector3(3.3, 1.9, -6.5)
+	world.add_child(sky_moon)
+	sky_stars = CPUParticles3D.new()
+	sky_stars.amount = 60
+	sky_stars.lifetime = 100.0
+	sky_stars.preprocess = 100.0
+	sky_stars.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	sky_stars.emission_box_extents = Vector3(8, 1.2, 0.5)
+	sky_stars.position = Vector3(0, 3.4, -8)
+	sky_stars.gravity = Vector3.ZERO
+	sky_stars.initial_velocity_max = 0.0
+	var stm := SphereMesh.new()
+	stm.radius = 0.03
+	stm.height = 0.06
+	sky_stars.mesh = stm
+	sky_stars.material_override = Kit.glow(Color("dfe6ff"), 2.0)
+	world.add_child(sky_stars)
 
 	burst = CPUParticles3D.new()
 	burst.emitting = false
@@ -643,6 +665,9 @@ func _apply_time(n: float) -> void:
 		l.light_energy = lerpf(0.4, 1.8, n)
 	if fireflies:
 		fireflies.visible = n > 0.4
+	if sky_moon:
+		sky_moon.visible = n > 0.5 and GameState.today().weather == "晴"
+		sky_stars.visible = sky_moon.visible
 	if items.has("shoji"):
 		(items.shoji.material_override as StandardMaterial3D).emission_energy_multiplier = lerpf(0.2, 1.6, n)
 
