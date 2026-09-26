@@ -41,6 +41,20 @@ func _ready() -> void:
 	if start != "" and start != "title":
 		GameState.reset(OS.get_environment("OBAKE_MODE") if OS.get_environment("OBAKE_MODE") != "" else "data")
 		_seed_for(start)
+	# 島のコード（Web は URL の #island=、手元では OBAKE_VISIT）で起動したら、その島へおでかけ
+	var code := OS.get_environment("OBAKE_VISIT")
+	if OS.has_feature("web"):
+		var h = JavaScriptBridge.eval("location.hash", true)
+		if typeof(h) == TYPE_STRING and String(h).begins_with("#island="):
+			code = String(h).substr(8)
+	if code != "":
+		if GameState.has_save():
+			GameState.load_game()
+		var d := GameState.decode_island(code)
+		if not d.is_empty():
+			d.code = code
+			GameState.visit = d
+			start = "garden"
 	go(start if SCREENS.has(start) else "title", true)
 	root.add_child(fade)
 	_music()

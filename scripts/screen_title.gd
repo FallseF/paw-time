@@ -113,7 +113,15 @@ func _ready() -> void:
 	v.add_child(Kit.button("はじめる（見本の記録つき）", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("data"), Color.WHITE, 46, 15))
 	v.add_child(Kit.button("記録なしで、はじめる", Color(1, 1, 1, 0.92), func(): _new("solo"), Color("4a3f52"), 42, 14))
 	var n := Kit.text("記録なしでも、毎晩あそべます", 12, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER)
+	var vb := Button.new()
+	vb.flat = true
+	vb.text = "島のコードで、おでかけ"
+	vb.add_theme_font_override("font", Kit.bold())
+	vb.add_theme_font_size_override("font_size", 13)
+	vb.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	vb.pressed.connect(_ask_code)
 	v.add_child(n)
+	v.add_child(vb)
 
 
 func _process(delta: float) -> void:
@@ -179,3 +187,50 @@ func _peek() -> String:
 	var lv := int(d.get("garden_level", 0))
 	var seen: Dictionary = d.get("seen", {})
 	return "%d週目 %s曜日 ・ 庭 Lv%d ・ 図鑑 %d" % [dd / 7 + 1, GameState.WEEKDAYS[dd % 7], lv + 1, seen.size()]
+
+
+## 手元で試すとき：島のコード（または URL）を貼って、おでかけ
+func _ask_code() -> void:
+	if confirm:
+		confirm.queue_free()
+	confirm = Control.new()
+	confirm.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(confirm)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.5)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	confirm.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.2, Vector2(18, 16)))
+	p.position = Vector2(24, 200)
+	p.size = Vector2(312, 0)
+	confirm.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	p.add_child(v)
+	v.add_child(Kit.text("島のコード", 18, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	var le := LineEdit.new()
+	le.placeholder_text = "コードかリンクを貼る"
+	var st := Kit.pill(Color("f3ecff"), 12, 0.0, Vector2(10, 8))
+	le.add_theme_stylebox_override("normal", st)
+	le.add_theme_stylebox_override("focus", st)
+	le.add_theme_color_override("font_color", Color("2a2233"))
+	le.add_theme_color_override("font_placeholder_color", Color("a89ea6"))
+	le.add_theme_font_override("font", Kit.bold())
+	le.add_theme_font_size_override("font_size", 13)
+	v.add_child(le)
+	var msg := Kit.text("", 12, Color("c0473b"), false, HORIZONTAL_ALIGNMENT_CENTER)
+	v.add_child(msg)
+	v.add_child(Kit.button("おでかけする", Color("ff8a5b"), func():
+		var d := GameState.decode_island(le.text)
+		if d.is_empty():
+			msg.text = "コードが読めなかった"
+			return
+		if GameState.has_save():
+			GameState.load_game()
+		d.code = le.text.strip_edges()
+		GameState.visit = d
+		main.go("garden")))
+	v.add_child(Kit.button("やめる", Color(1, 1, 1, 0.9), func():
+		confirm.queue_free()
+		confirm = null, Color("4a3f52"), 40, 14))

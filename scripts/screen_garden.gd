@@ -43,8 +43,12 @@ var _t := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	V = GameState.visit
 	_build_world()
 	_build_ui()
+	if _vis():
+		_start_visit()
+		return
 	night = 1.0 if GameState.phase == "evening" else 0.0
 	_apply_time(night)
 	if night > 0.5:
@@ -1167,6 +1171,9 @@ var cam_v := -1.6
 
 ## 庭をよこになぞると、ぐるっと少し回して見られる
 func _gui_input(event: InputEvent) -> void:
+	if editing:
+		_edit_input(event)
+		return
 	if (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) or event is InputEventScreenDrag:
 		if busy:
 			return
@@ -1611,6 +1618,8 @@ func _show_card() -> void:
 			card_box.add_child(Kit.text("よく眠ると、庭が育つ" if first else "よく眠ると、おまけがつく", 14, Color("6a5f70")))
 			var b := Kit.button("夕方まで、のんびり", Color("ff8a5b"), _rest)
 			card_box.add_child(b)
+			if GameState.day >= 2:
+				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 			if first and not GameState.tut.has("first"):
 				Kit.nudge.call_deferred(b)
 	elif GameState.phase == "evening":
@@ -1636,6 +1645,8 @@ func _show_card() -> void:
 				var c: String = GameState.today().coworkers[0]
 				row.add_child(_link("%sにおすそわけ" % c, _gift))
 			card_box.add_child(row)
+			if GameState.day >= 2:
+				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 		else:
 			card_box.add_child(Kit.text("おやすみの時間", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text("玉を %d 個持ち帰った" % GameState.orbs.size(), 14, Color("6a5f70")))
@@ -1977,3 +1988,428 @@ func demo_orbit() -> void:
 
 func demo_fps() -> void:
 	print("[fps] ", Engine.get_frames_per_second(), " walkers=", walkers.size())
+
+
+# ---------- 島をつくる（物を動かす・回す・しまう） ----------
+
+var editing := false
+var edit_ui: Control
+var edit_name: Label
+var sel := ""
+var dragging := false
+var sel_ring: MeshInstance3D
+var edit_back: Control
+
+
+func _movable_keys() -> Array:
+	var out: Array = []
+	for k in GameState.ISLAND_ITEMS:
+		if items.has(k) and is_instance_valid(items[k]):
+			out.append(k)
+	return out
+
+
+func _enter_edit() -> void:
+	if busy:
+		return
+	editing = true
+	card.visible = false
+	if handle:
+		handle.visible = false
+	goals_btn.visible = false
+	meters.visible = false
+	var to := cam_home
+	to.origin = Vector3(0, 10.5, 5.2)
+	to = to.looking_at(Vector3(0, 0, 0.1), Vector3.UP)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "transform", to, 0.6).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(cam, "v_offset", -0.6, 0.6)
+	sel_ring = MeshInstance3D.new()
+	var t := TorusMesh.new()
+	t.inner_radius = 0.55
+	t.outer_radius = 0.65
+	sel_ring.mesh = t
+	sel_ring.material_override = Kit.glow(Color("ffe27a"), 1.5)
+	sel_ring.visible = false
+	world.add_child(sel_ring)
+	_build_edit_ui()
+	if not GameState.tut.has("edit"):
+		GameState.tut["edit"] = true
+		_toast("島をつくる", "物をドラッグで動かす。おばけも寄ってくる")
+
+
+func _build_edit_ui() -> void:
+	if edit_ui:
+		edit_ui.queue_free()
+	edit_ui = Control.new()
+	edit_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
+	edit_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(edit_ui)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.96), 22, 0.18, Vector2(14, 12)))
+	p.position = Vector2(14, 470)
+	p.size = Vector2(332, 0)
+	edit_ui.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	edit_name = Kit.text("物をタップして、動かす", 15, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER)
+	v.add_child(edit_name)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	var rot := Kit.button("回す", Color("f3ecff"), _rotate_sel, Color("6a5bd6"), 38, 14)
+	rot.custom_minimum_size.x = 96
+	row.add_child(rot)
+	var hide := Kit.button("しまう", Color("fde7e3"), _hide_sel, Color("c0473b"), 38, 14)
+	hide.custom_minimum_size.x = 96
+	row.add_child(hide)
+	v.add_child(row)
+	# しまった物（タップで島に戻す）
+	var hidden: Array = []
+	for k in _movable_keys():
+		if not items[k].visible:
+			hidden.append(k)
+	if not hidden.is_empty():
+		var fl := HFlowContainer.new()
+		fl.add_theme_constant_override("h_separation", 6)
+		for k in hidden:
+			var key: String = k
+			fl.add_child(_link("＋" + GameState.ITEM_NAME[key], func(): _unhide(key)))
+		v.add_child(fl)
+	v.add_child(Kit.button("できた", Color("ff8a5b"), _exit_edit))
+	v.add_child(_link("島をシェアする", _share))
+	await get_tree().process_frame
+	p.size.y = 0
+	await get_tree().process_frame
+	p.position.y = 628 - p.size.y
+
+
+func _edit_input(event: InputEvent) -> void:
+	var pos := Vector2.ZERO
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		pos = event.position
+		if event.pressed:
+			if pos.y > 460 or pos.y < 60:
+				return
+			var best := ""
+			var bd := 56.0
+			for k in _movable_keys():
+				var g: Node3D = items[k]
+				if not g.visible:
+					continue
+				var d := cam.unproject_position(g.global_position + Vector3(0, 0.3, 0)).distance_to(pos)
+				if d < bd:
+					bd = d
+					best = k
+			if best != "":
+				_select(best)
+				dragging = true
+		else:
+			if dragging:
+				dragging = false
+				_drop()
+	elif (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) and dragging and sel != "":
+		var from := cam.project_ray_origin(event.position)
+		var dir := cam.project_ray_normal(event.position)
+		if absf(dir.y) < 1e-4:
+			return
+		var gp := from + dir * (-from.y / dir.y)
+		gp = Vector3(snappedf(gp.x, 0.25), 0, snappedf(gp.z, 0.25))
+		if not _inside(gp, 0.6) or gp.z < -2.3:
+			return
+		var g: Node3D = items[sel]
+		g.position = Vector3(gp.x, g.position.y, gp.z)
+		sel_ring.position = Vector3(gp.x, 0.05, gp.z)
+		_move_spots(sel)
+
+
+func _select(k: String) -> void:
+	sel = k
+	Kit.play(self, "tap", 1.2)
+	edit_name.text = GameState.ITEM_NAME.get(k, k)
+	var g: Node3D = items[k]
+	sel_ring.visible = true
+	sel_ring.position = Vector3(g.position.x, 0.05, g.position.z)
+	var tw := create_tween()
+	tw.tween_property(g, "scale", Vector3.ONE * 1.12, 0.1)
+	tw.tween_property(g, "scale", Vector3.ONE, 0.15)
+
+
+func _save_item(k: String) -> void:
+	var g: Node3D = items[k]
+	var l: Dictionary = GameState.layout.get(k, {})
+	l.x = snappedf(g.position.x, 0.05)
+	l.z = snappedf(g.position.z, 0.05)
+	l.r = int(round(fposmod(g.rotation.y, TAU) / (PI / 4.0))) % 8
+	l.h = not g.visible
+	GameState.layout[k] = l
+
+
+func _drop() -> void:
+	if sel == "":
+		return
+	_save_item(sel)
+	Kit.play(self, "pop", 1.0)
+	var g: Node3D = items[sel]
+	burst.position = g.position + Vector3(0, 0.3, 0)
+	burst.amount = 16
+	burst.restart()
+	burst.emitting = true
+	# 近くのおばけが寄ってきて、よろこぶ
+	for w in walkers:
+		var ob: Obake3D = w.o
+		if ob.position.distance_to(g.position) < 2.2:
+			w.target = g.position + Vector3(randf_range(-0.6, 0.6), 0, randf_range(0.5, 0.8))
+			w.next_act = "look"
+			w.wait = 0.2
+			var tw := create_tween()
+			tw.tween_property(ob, "position:y", 0.35, 0.15)
+			tw.tween_property(ob, "position:y", 0.0, 0.2).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+
+
+func _rotate_sel() -> void:
+	if sel == "":
+		return
+	var g: Node3D = items[sel]
+	create_tween().tween_property(g, "rotation:y", g.rotation.y + PI / 4.0, 0.2).set_trans(Tween.TRANS_BACK)
+	await get_tree().create_timer(0.22).timeout
+	_move_spots(sel)
+	_save_item(sel)
+
+
+func _hide_sel() -> void:
+	if sel == "":
+		return
+	items[sel].visible = false
+	_save_item(sel)
+	spots = spots.filter(func(sp): return sp.get("group", "") != sel)
+	sel = ""
+	sel_ring.visible = false
+	_build_edit_ui()
+
+
+func _unhide(k: String) -> void:
+	var g: Node3D = items[k]
+	g.visible = true
+	g.position = Vector3(0.2, g.position.y, 0.6)
+	_save_item(k)
+	_build_edit_ui()
+	_select(k)
+
+
+func _exit_edit() -> void:
+	editing = false
+	GameState.save()
+	main.go("garden")
+
+
+# ---------- シェア ----------
+
+var share_ui: Control
+
+
+func _share() -> void:
+	if GameState.nickname == "":
+		_ask_name()
+		return
+	var code := GameState.island_code(_movable_keys())
+	var url: String = GameState.SHARE_URL + code
+	DisplayServer.clipboard_set(url)
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("""(function(u){ if (navigator.share) { navigator.share({title: 'Paw Time', text: 'わたしの島', url: u}).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(u); } })('%s')""" % url)
+	Kit.play(self, "chime", 1.1)
+	_popup("島のコードをコピーした", "リンクを送ると、%sの島に遊びに来てもらえる" % GameState.nickname, code)
+
+
+func _ask_name() -> void:
+	var box := _popup("島の呼び名", "シェアしたとき、みんなに見える名前", "")
+	var le := LineEdit.new()
+	le.placeholder_text = "たとえば：みか"
+	_style_edit(le)
+	le.max_length = 10
+	le.add_theme_font_override("font", Kit.bold())
+	le.add_theme_font_size_override("font_size", 16)
+	box.add_child(le)
+	box.move_child(le, 2)
+	box.add_child(Kit.button("これにする", Color("ff8a5b"), func():
+		GameState.nickname = le.text.strip_edges() if le.text.strip_edges() != "" else "ななし"
+		GameState.save()
+		share_ui.queue_free()
+		_share()))
+
+
+func _style_edit(le: LineEdit) -> void:
+	var st := Kit.pill(Color("f3ecff"), 12, 0.0, Vector2(10, 8))
+	le.add_theme_stylebox_override("normal", st)
+	le.add_theme_stylebox_override("focus", st)
+	le.add_theme_stylebox_override("read_only", st)
+	le.add_theme_color_override("font_color", Color("2a2233"))
+	le.add_theme_color_override("font_uneditable_color", Color("4a3f52"))
+	le.add_theme_color_override("font_placeholder_color", Color("a89ea6"))
+
+
+## 小さなお知らせの箱。中の VBox を返す
+func _popup(title: String, body: String, code: String) -> VBoxContainer:
+	if share_ui and is_instance_valid(share_ui):
+		share_ui.queue_free()
+	share_ui = Control.new()
+	share_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(share_ui)
+	var dim := ColorRect.new()
+	dim.color = Color(0.08, 0.06, 0.14, 0.5)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	share_ui.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(18, 16)))
+	p.position = Vector2(24, 170)
+	p.size = Vector2(312, 0)
+	share_ui.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	p.add_child(v)
+	v.add_child(Kit.text(title, 18, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.wrap(Kit.text(body, 13, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER)))
+	if code != "":
+		var le := LineEdit.new()
+		le.text = code
+		le.editable = false
+		_style_edit(le)
+		le.add_theme_font_override("font", Kit.bold())
+		le.add_theme_font_size_override("font_size", 11)
+		v.add_child(le)
+		v.add_child(Kit.button("とじる", Color(1, 1, 1, 0.95), func(): share_ui.queue_free(), Color("6a5f70"), 40, 14))
+	return v
+
+
+# ---------- おでかけ（ほかの人の島を見る） ----------
+
+var visit_card: PanelContainer
+
+
+func _start_visit() -> void:
+	# 上は「〇〇の島」と「かえる」だけ
+	for c in get_children():
+		if c is HBoxContainer:
+			for k in c.get_children():
+				k.visible = false
+	goals_btn.visible = false
+	var top := HBoxContainer.new()
+	top.position = Vector2(12, 12)
+	top.size = Vector2(336, 40)
+	add_child(top)
+	var dp := PanelContainer.new()
+	dp.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.92), 20, 0.14, Vector2(12, 6)))
+	dp.add_child(Kit.text("%sの島" % V.name, 15, Color("2a2233"), true))
+	top.add_child(dp)
+	var sp := Control.new()
+	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(sp)
+	var back := Kit.button("かえる", Color(1, 1, 1, 0.92), _go_home, Color("8a5bd6"), 38, 15)
+	back.custom_minimum_size.x = 72
+	top.add_child(back)
+	night = 0.0
+	_apply_time(0.0)
+	_clear_card()
+	card_box.add_child(Kit.text("%sの島に、おでかけ" % V.name, 18, Color("2a2233"), true))
+	card_box.add_child(Kit.text("おばけ %d 体・島 Lv%d" % [V.residents.size() + 1, int(V.level) + 1], 14, Color("6a5f70")))
+	if not _left_here():
+		card_box.add_child(Kit.button("おばけを1体、おいていく", Color("ff8a5b"), _pick_present))
+	else:
+		card_box.add_child(Kit.text("おみやげのおばけを、おいてきた", 14, Color("3f7d4f"), true))
+	card_box.add_child(_link("自分の島にかえる", _go_home))
+	_card_fit()
+	_pop_card()
+
+
+func _left_here() -> bool:
+	for k in GameState.keepsakes:
+		if k.get("code", "") == V.get("code", ""):
+			return true
+	return false
+
+
+func _pick_present() -> void:
+	_clear_card()
+	card_box.add_child(Kit.text("どの子を、おいていく？", 16, Color("2a2233"), true))
+	var fl := HFlowContainer.new()
+	fl.add_theme_constant_override("h_separation", 6)
+	fl.add_theme_constant_override("v_separation", 6)
+	var shown := 0
+	for o in GameState.owned:
+		if shown >= 6:
+			break
+		shown += 1
+		var id: String = o.id
+		fl.add_child(Kit.button(GameState.info(id).name, Color("f3ecff"), func(): _leave(id), Color("4a3f52"), 36, 13))
+	card_box.add_child(fl)
+	card_box.add_child(_link("やめる", _start_visit_card))
+	_card_fit()
+
+
+func _start_visit_card() -> void:
+	_clear_card()
+	card_box.add_child(Kit.text("%sの島に、おでかけ" % V.name, 18, Color("2a2233"), true))
+	card_box.add_child(Kit.button("おばけを1体、おいていく", Color("ff8a5b"), _pick_present))
+	card_box.add_child(_link("自分の島にかえる", _go_home))
+	_card_fit()
+
+
+## おいていった子は、この島に立って、手紙のように記録に残る（サーバーなし：自分の端末に）
+func _leave(id: String) -> void:
+	GameState.keepsakes.append({"owner": V.name, "id": id, "day": GameState.day, "code": V.get("code", "")})
+	GameState.gifted = true
+	if GameState.has_save():
+		GameState.save()
+	var ob := Obake3D.make(id)
+	ob.scale = Vector3.ONE * 0.5
+	ob.position = Vector3(0.2, 0, 1.2)
+	world.add_child(ob)
+	walkers.append({"o": ob, "id": id, "target": Vector3(0.6, 0, -1.8), "wait": 1.0, "act": "", "emote": null})
+	burst.position = ob.position + Vector3(0, 0.5, 0)
+	burst.restart()
+	burst.emitting = true
+	Kit.play(self, "chime")
+	_toast("おみやげ", "%sを、%sの島においてきた" % [GameState.info(id).name, V.name])
+	_clear_card()
+	card_box.add_child(Kit.text("%sが、島になじんだ" % GameState.info(id).name, 16, Color("3f7d4f"), true))
+	card_box.add_child(Kit.button("自分の島にかえる", Color("ff8a5b"), _go_home))
+	_card_fit()
+
+
+func _go_home() -> void:
+	GameState.visit = {}
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("history.replaceState(null, '', location.pathname)")
+	if GameState.has_save() and GameState.load_game():
+		main.go("garden")
+	else:
+		main.go("title")
+
+
+func demo_edit() -> void:
+	_enter_edit()
+
+
+func demo_move() -> void:
+	# 花壇を右へ動かして、回す
+	var k: String = "flowerbed" if items.has("flowerbed") else _movable_keys()[0]
+	_select(k)
+	var g: Node3D = items[k]
+	g.position = Vector3(1.5, g.position.y, 1.5)
+	_move_spots(k)
+	_drop()
+	_rotate_sel()
+
+
+func demo_share() -> void:
+	_share()
+
+
+func demo_name_share() -> void:
+	GameState.nickname = "みか"
+	_share()
+
+
+func demo_leave() -> void:
+	_leave(GameState.owned[0].id)
