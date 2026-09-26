@@ -57,11 +57,6 @@ func _setup_rich() -> void:
 	GameState.scooped_tonight = false
 
 
-func _process(_d: float) -> void:
-	if OS.get_environment("OBAKE_FPS") != "" and Engine.get_process_frames() % 60 == 0:
-		print("[FPS] %d  entities=%d" % [Engine.get_frames_per_second(), main.current.sim.entities.size() if main.current and "sim" in main.current else 0])
-
-
 func _screen():
 	return main.current
 
