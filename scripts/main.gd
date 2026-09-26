@@ -14,6 +14,7 @@ const SCREENS := {
 	"moon": preload("res://scripts/screen_moon.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"quiz": preload("res://scripts/screen_quiz.gd"),
+	"wardrobe": preload("res://scripts/screen_wardrobe.gd"),
 }
 
 var root: Control

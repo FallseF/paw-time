@@ -139,6 +139,7 @@ var nickname := ""
 var host_id := "" # 島のあるじ（マイおばけ猫が決まったら、ここに入れる）。空なら最初の子
 var keepsakes: Array = [] # おでかけ先に置いてきたおばけ {owner, id, day}
 var visit := {} # いま、おでかけ中の島（空なら自分の島）
+var new_outfits: Array = [] # 光る玉から出た服（朝、庭で見せる）
 var my_obake := {} # マイおばけ猫 {type_id, look, answers, axes}。正本は user://my_obake.json
 var week_start_seen := 1
 var pending_toasts: Array = [] # 寝ている間に達成しためあての知らせ
@@ -713,6 +714,7 @@ func goal(id: String) -> void:
 	for g in goals:
 		if g.id == id and not g.done:
 			g.done = true
+			Wallet.add(10, "goal")
 			growth += 3
 			_recalc_level()
 			var all := goals.all(func(x): return x.done)
@@ -801,6 +803,12 @@ func sleep(bed: int, wake: int) -> void:
 
 func _hatch_orbs(h: float) -> void:
 	for orb in orbs:
+		# 玉の中に、服が入っていることがある（ふつうの玉 12%、虹の玉 40%）。おばけも生まれる
+		Wallet.add(3, "orb")
+		if randf() < (0.4 if orb.rare else 0.12):
+			var cloth := Wardrobe.random_drop("rare" if orb.rare else "common")
+			if cloth != "" and Wardrobe.grant(cloth):
+				new_outfits.append(cloth)
 		var sid: String = species_for_type(orb.type) if orb.type != "rare" else ["receipt", "bubble", "tray", "pan", "box"].pick_random()
 		var is_new := add_obake(sid)
 		var lv := 1

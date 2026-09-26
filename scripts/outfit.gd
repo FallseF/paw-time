@@ -411,7 +411,7 @@ func _b_wings(ob, n, c, c2) -> void:
 	for sx in [-1.0, 1.0]:
 		var g := Node3D.new()
 		g.position = Vector3(sx * 0.34, 0.62, -0.42)
-		g.scale = Vector3.ONE * 1.6
+		g.scale = Vector3.ONE * 1.3
 		g.rotation = Vector3(0, sx * 0.5, sx * -0.3)
 		n.add_child(g)
 		for i in 3:
@@ -422,7 +422,7 @@ func _b_bat_wings(ob, n, c, c2) -> void:
 	for sx in [-1.0, 1.0]:
 		var g := Node3D.new()
 		g.position = Vector3(sx * 0.34, 0.62, -0.42)
-		g.scale = Vector3.ONE * 1.6
+		g.scale = Vector3.ONE * 1.3
 		g.rotation = Vector3(0, sx * 0.4, sx * -0.2)
 		n.add_child(g)
 		for i in 3:
@@ -464,7 +464,7 @@ func _b_dragon_wings(ob, n, c, c2) -> void:
 	for sx in [-1.0, 1.0]:
 		var g := Node3D.new()
 		g.position = Vector3(sx * 0.34, 0.66, -0.42)
-		g.scale = Vector3.ONE * 1.6
+		g.scale = Vector3.ONE * 1.3
 		g.rotation = Vector3(0, sx * 0.45, sx * -0.35)
 		n.add_child(g)
 		_p(ob, g, ob._cyl(0.02, 0.03, 0.5), c.darkened(0.2), Vector3(sx * 0.2, 0.12, 0), Vector3(0, 0, sx * -1.0))

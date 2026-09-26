@@ -8,7 +8,7 @@ class_name Wardrobe
 ##   Wardrobe.check_unlocks() -> Array        仕事・眠り・図鑑の条件で届いた物（朝や画面を開いたときに呼ぶ）
 ##   Wardrobe.outfit_of(obake_id) -> Dictionary   {slot: item_id, "tint": id}
 ##   Outfit.make(obake_id) -> Obake3D         着せた姿で作る（庭・島・店で Obake3D.make の代わりに）
-##   OutfitReveal.show(parent, item_id)       「新しい服！」の演出
+##   OutfitReveal.open(parent, item_id)       「新しい服！」の演出
 ##
 ## 特別な棚（premium）は見本：買えない。肉球コインやポイとは混ざらない。
 
