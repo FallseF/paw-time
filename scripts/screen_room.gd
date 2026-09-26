@@ -157,7 +157,11 @@ func _build_world() -> void:
 		ob.scale = Vector3.ONE * (0.45 if Rares.is_rare(id) else 0.62)
 		if i == 0:
 			ob.scale *= 1.05 # 相棒は少し大きく、前に
-		var home: Vector3 = HOMES[i] + Vector3(randf_range(-0.15, 0.15), 0, randf_range(-0.1, 0.1))
+		# まだ少ないうちは、まんなかから並べる
+		var slot: int = i
+		if ids.size() <= 3:
+			slot = [1, 3, 4][i]
+		var home: Vector3 = HOMES[slot] + Vector3(randf_range(-0.15, 0.15), 0, randf_range(-0.1, 0.1))
 		ob.position = home
 		world.add_child(ob)
 		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0), "home": home})
@@ -778,7 +782,7 @@ func _partner_says() -> void:
 	bubble.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.95), 16))
 	var l := _text(line, 13, Color("2a2233"))
 	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	l.custom_minimum_size = Vector2(236, 0)
+	l.custom_minimum_size = Vector2(250, 0)
 	bubble.add_child(l)
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bubble.modulate.a = 0.0
