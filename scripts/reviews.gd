@@ -91,8 +91,8 @@ static func mock_base(listing_id: String) -> Dictionary:
 	return {"count": n, "sum": avg * n, "tags": tags}
 
 
-## 求人カードに出す声：{stars, count, tag, tag_count}（tag はいちばん多く付いたもの）
-static func summary(listing_id: String) -> Dictionary:
+## 店ごとの合計（見本の集計＋自分の評価）：{count, sum, tags: {tag: 数}}。お店の島（ShopCulture）もこれだけを読む
+static func totals(listing_id: String) -> Dictionary:
 	_ensure()
 	var b := mock_base(listing_id)
 	var n: int = b.count
@@ -106,6 +106,15 @@ static func summary(listing_id: String) -> Dictionary:
 		total += float(r.stars)
 		for tg in r.tags:
 			tags[tg] = int(tags.get(tg, 0)) + 1
+	return {"count": n, "sum": total, "tags": tags}
+
+
+## 求人カードに出す声：{stars, count, tag, tag_count}（tag はいちばん多く付いたもの）
+static func summary(listing_id: String) -> Dictionary:
+	var t := totals(listing_id)
+	var n: int = t.count
+	var total: float = t.sum
+	var tags: Dictionary = t.tags
 	var best := ""
 	for tg in TAGS:
 		if best == "" or int(tags[tg]) > int(tags[best]):

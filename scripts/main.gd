@@ -21,6 +21,8 @@ const SCREENS := {
 	"work": preload("res://scripts/screen_work.gd"),
 	"wardrobe": preload("res://scripts/screen_wardrobe.gd"),
 	"travel": preload("res://scripts/screen_travel.gd"),
+	# お店の島（実績で育つ島）。行き先は GameState.visit.shop（scripts/shop_culture.gd）
+	"shop_island": preload("res://scripts/screen_shop_island.gd"),
 }
 
 var root: Control
@@ -166,6 +168,12 @@ func _seed_for(start: String) -> void:
 	if OS.get_environment("OBAKE_EXPAND") != "":
 		IslandKit.load_all()
 		IslandKit.expanded = Array(OS.get_environment("OBAKE_EXPAND").split(","))
+	# 確認用：お店の島へ（OBAKE_SHOP=<求人の店の id>。OBAKE_START=travel なら乗り物の場面から）
+	if OS.get_environment("OBAKE_SHOP") != "":
+		GameState.visit = ShopCulture.visit_data(OS.get_environment("OBAKE_SHOP"))
+	# 確認用：前の晩・当日の朝のひとこと（OBAKE_REMIND=eve|am で、あした／きょうの 10:00 に見本のシフト。時刻は OBAKE_NOW）
+	if OS.get_environment("OBAKE_REMIND") != "":
+		Reminders.demo_shift(OS.get_environment("OBAKE_REMIND"))
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		if OS.get_environment("OBAKE_ITEMS") != "":

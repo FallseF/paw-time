@@ -1365,3 +1365,53 @@ KIT_UI_MOCK,Mock store — no real payment,見本のストア（本当の支払�
 COIN_N,%d coins,%d コイン
 COIN_HAVE_NEED,Coins %d/%d,コイン %d/%d
 朝だ。光る玉が 1 個,Morning. 1 glowing orb.,朝だ。光る玉が 1 個
+SHOP_HOME,Home,かえる
+SHOP_IN_THEIR_WORDS,"In their words: ""%s""",お店のことば：「%s」
+SHOP_BASED_ON,Based on %d worker reviews,働いた人の評価 %d 件から
+SHOP_RULE,Landmarks grow only from worker reviews. Shops can't buy them.,目印は、働いた人の評価だけで育ちます。お金では買えません。
+SHOP_HINT,Tap a landmark · Tap the ground to walk,目印をタップ・地面をタップで歩く
+SHOP_SAMPLE_NOTE,Sample shop and sample reviews for the demo,見本のお店と、見本の評価です
+SHOP_SPROUT,Sprout,芽
+SHOP_LEVEL,Level %d of %d,段 %d / %d
+SHOP_CLOSE,Close,とじる
+SHOP_WORKERS_SAID,Workers said: %s ×%d,働いた人の声：%s ×%d
+SHOP_SPROUT_BODY,A few workers said this. It grows as more workers say so.,何人かが、そう言っています。声が集まると育ちます。
+SHOP_LM_CLOCK_TOWER,Clock tower,時計台
+SHOP_LM_CLOCK_TOWER_BODY,It lights up when shifts end on time. Workers here get home when they planned.,シフトが時間どおりに終わる店で灯る時計台。予定どおりに帰れる職場です。
+SHOP_LM_REST_GROVE,Rest grove,休憩の木立
+SHOP_LM_REST_GROVE_BODY,Hammocks and benches for real breaks. Workers here say breaks are respected.,ちゃんと休めるハンモックとベンチ。ここでは休憩がとれる、という声です。
+SHOP_LM_GUIDE_POST,Guide post,道しるべ
+SHOP_LM_GUIDE_POST_BODY,Clear arrows for clear instructions. First-timers can find their way on day one.,はっきりした矢印は、わかりやすい説明のしるし。はじめての日から迷いません。
+SHOP_LM_PAYDAY_BELL,Payday bell,給料日の鐘
+SHOP_LM_PAYDAY_BELL_BODY,A bell that always rings on time. Workers here say pay arrives when promised.,いつも時間どおりに鳴る鐘。約束の日に給料が届く、という声です。
+SHOP_LM_LANTERN_PATH,Lantern path,灯りの小道
+SHOP_LM_LANTERN_PATH_BODY,Warm lights along the path. Workers here say the team is kind.,小道に並ぶ、あたたかい灯り。人がやさしい、という声です。
+SHOP_LM_FAIR_FOUNTAIN,Fair fountain,つりあいの噴水
+SHOP_LM_FAIR_FOUNTAIN_BODY,"Two bowls, always level. Busy days, but the work is shared fairly.",いつも同じ高さの、ふたつの受け皿。忙しくても、仕事は公平に分けられます。
+SHOP_LM_WELCOME_ARCH,Welcome-back arch,おかえりのアーチ
+SHOP_LM_WELCOME_ARCH_BODY,Flowers by the pier for returning workers. Many would work here again.,桟橋のそばの花のアーチ。また働きたい、という人がたくさんいます。
+SHOP_VALUES_CAFE,A calm pace and a warm cup on every shift.,あわてないペースと、あたたかい一杯を。
+SHOP_VALUES_IZAKAYA,"Lively nights, and we look out for each other.",にぎやかな夜も、おたがいさまで。
+SHOP_VALUES_KONBINI,"Clear steps, so anyone can start on day one.",だれでも初日から動ける、はっきりした手順。
+SHOP_VALUES_WAREHOUSE,"Safety first, and breaks on the clock.",安全がいちばん。休憩は時間どおりに。
+SHOP_VALUES_BAKERY,"Early mornings, fresh bread, home by noon.",朝は早く、パンは焼きたて、お昼には帰れる。
+SHOP_VALUES_SUPERMARKET,Friendly aisles and fair shifts for everyone.,やさしい売り場と、みんなに公平なシフト。
+SHOP_VALUES_RESTAURANT,"Good food, good teamwork, no rush in training.",おいしい料理と、いいチームワーク。教えるのはゆっくり。
+SHOP_VALUES_SHOP,A small shop with a big welcome for first-timers.,小さなお店。はじめての人を大歓迎。
+JOB_VISIT_ISLAND,Visit this shop's island,このお店の島を見にいく
+WORK_MENU_SHOPS,Shops you've worked at,働いたお店の島
+SHOPS_TITLE,Shops you've worked at,働いたお店
+SHOPS_BODY,Each shop's island grows only from worker reviews.,お店の島は、働いた人の評価だけで育ちます。
+SHOPS_EMPTY,No finished shifts yet. Here are sample shops to visit.,まだ働き終えたシフトがありません。見本のお店を見にいけます。
+SHOPS_SAMPLE,Sample,見本
+SHOPS_VISIT,Visit,見にいく
+INVITE_CHIP,Invited,おさそい
+INVITE_NOTE,%s would love you back,%s が、また来てほしいって
+INVITE_SAY,%s would love you back!,%s から、また来てほしいって！
+REMIND_EVE_TITLE,Tomorrow %s · %s,あした %s・%s
+REMIND_EVE_SUB,Let's sleep early!,早めに寝よう！
+REMIND_AM_TITLE,Leaving at %s?,%s に出る？
+REMIND_AM_SUB,%s · %s–%s,%s・%s–%s
+REMIND_EVE_BODY,"Pack your things tonight. If plans change, that's okay too.",持ち物は今夜のうちに。予定が変わっても、だいじょうぶ。
+REMIND_AM_BODY,"Have a good shift! If you can't make it, just let the shop know.",いってらっしゃい！ 行けなくなったら、お店に知らせればだいじょうぶ。
+REMIND_OK,Got it,わかった
