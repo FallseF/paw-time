@@ -21,6 +21,7 @@ const SCREENS := {
 	"work": preload("res://scripts/screen_work.gd"),
 	"wardrobe": preload("res://scripts/screen_wardrobe.gd"),
 	"travel": preload("res://scripts/screen_travel.gd"),
+	"chat": preload("res://scripts/screen_chat.gd"), # チャット（feature/cat-chat）。OBAKE_CHAT=me|list|shop:<id>
 }
 
 var root: Control

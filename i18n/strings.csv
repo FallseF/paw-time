@@ -1365,3 +1365,156 @@ KIT_UI_MOCK,Mock store — no real payment,見本のストア（本当の支払�
 COIN_N,%d coins,%d コイン
 COIN_HAVE_NEED,Coins %d/%d,コイン %d/%d
 朝だ。光る玉が 1 個,Morning. 1 glowing orb.,朝だ。光る玉が 1 個
+CHAT_TALK,Talk,話す
+CHAT_PRIVATE,Only you and your cat see this chat.,このチャットは、あなたと相棒だけのもの。
+CHAT_INPUT_ME,Say anything…,なんでも話してね…
+CHAT_INPUT_SHOP,Ask the shop's cat…,お店の猫に聞く…
+CHAT_SEND,Send,送る
+CHAT_YOU_VIA,You · %s,あなた・%s
+CHAT_SHOP_CAT,%s's cat,%sの猫
+CHAT_PROTECT_LINK,How this chat protects you,このチャットの守り方
+CHAT_PROTECT_TITLE,How this chat protects you,このチャットが、あなたを守ること
+CHAT_PROTECT_1,The shop never sees your phone number or your real contacts.,お店に電話番号や本当の連絡先は伝わりません。
+CHAT_PROTECT_2,Shop messages are only delivered 8:00–21:00. At night they wait until morning.,お店からのメッセージは 8:00〜21:00 だけ届きます。夜の分は朝まで待ちます。
+CHAT_PROTECT_3,"A shop can only message you about a shift you accepted, or an invite.",お店が話しかけられるのは、あなたが受けたシフトか招待があるときだけ。
+CHAT_PROTECT_4,Any shop message can be reported. Paw Time checks it.,お店のメッセージは通報できます。Paw Time が確かめます。
+CHAT_RELAYED,%s passed this on,%sが伝えたよ
+CHAT_NICE,%s phrased it nicely and passed it on,%sがていねいに言いかえて伝えたよ
+CHAT_AUTO,Auto answer from the shop's info,お店の情報からの自動の答え
+CHAT_FROM_STAFF,From the shop (staff),お店（スタッフ）から
+CHAT_DELIVERED_AT,Delivered at %s,%sに届きました
+CHAT_REPORT,Report,通報する
+CHAT_REPORTED,Reported. Paw Time will check it.,通報しました。Paw Time が確かめます。
+CHAT_HELD,The shop's reply will be delivered at %s.,お店の返事は %s に届きます。
+CHAT_HELD_WHY,Shops can't message you 21:00–8:00. It waits until morning.,21:00〜8:00 はお店から届きません。朝まで待ちます。
+CHAT_SWAP_BADGE,Swap requested,交代をお願い中
+CHAT_TELL_YES,"Yes, tell them anonymously",うん、名前を伏せて伝えて
+CHAT_TELL_NO,"No, keep it between us",ううん、ふたりの秘密にして
+CHAT_TELL_DONE_YES,"Sent anonymously, as a kind of issue only.",困りごとの種類だけ、名前を伏せて伝えました。
+CHAT_TELL_DONE_NO,Not sent. It stays between you two.,伝えていません。ふたりだけの話です。
+CHAT_SUPPORT,Report to Paw Time support (anonymous),Paw Time の窓口に知らせる（名前は伏せる）
+CHAT_SUPPORT_DONE,Reported to Paw Time support without your name.,名前を伏せて、Paw Time の窓口に知らせました。
+CHAT_TELL_NOTE,"Only the kind of issue is passed on, never your words. Shops see it only when 5+ workers say the same.",伝わるのは困りごとの種類だけで、あなたの言葉は伝わりません。お店に見えるのは、同じ声が5人以上そろってから。
+CHAT_CRISIS_TITLE,You're not alone,ひとりで抱えなくていい
+CHAT_CRISIS_BODY,"There are free, confidential places in Japan to talk by phone, chat or social media. The Ministry of Health, Labour and Welfare lists them on ""まもろうよ こころ"".",電話・チャット・SNSで、無料で秘密を守って話せる窓口があります。厚生労働省の「まもろうよ こころ」にまとまっています。
+CHAT_CRISIS_OPEN,"Open ""まもろうよ こころ""",「まもろうよ こころ」を開く
+CHAT_CRISIS_NOTE,"If you are in danger right now, please contact emergency services.",いま危ない状況なら、すぐに救急や警察に連絡してください。
+CHAT_MENU_SHOPS,Shift chats,シフトのチャット
+CHAT_MENU_DELETE,Delete chat,チャットを消す
+CHAT_MENU_ALL,All chats,チャットの一覧
+CHAT_CLOSE,Close,閉じる
+CHAT_DELETE_TITLE,Delete this chat?,このチャットを消す？
+CHAT_DELETE_BODY,"It only lives on this device, so it can't be brought back.",この端末にしか無いので、元には戻せません。
+CHAT_DELETE_YES,Delete,消す
+CHAT_DELETE_NO,Cancel,やめる
+CHAT_LIST_TITLE,Chats,チャット
+CHAT_LIST_SUB,"Your cat, and the shops of your shifts",相棒と、シフトのお店
+CHAT_LIST_SHIFTS,Your shifts,あなたのシフト
+CHAT_LIST_NONE,"No shifts yet. When you accept one, you can talk to that shop's cat here.",まだシフトがありません。仕事を受けると、ここでお店の猫と話せます。
+CHAT_LIST_NOTE,Shops can only talk to you about shifts you accepted.,お店と話せるのは、あなたが受けたシフトのことだけ。
+CHAT_NOW,Now,いま
+CHAT_PAST,Done,終わった
+CHAT_ASK_SHOP,Ask the shop,お店に聞く
+CHAT_DEMO_Q,Can I park my bike nearby?,近くに自転車を停められますか？
+CS_HELLO,Hi! I'm this shop's cat. Ask me anything about your shift ♪,こんにちは！このお店の猫です。シフトのこと、なんでも聞いてね♪
+CS_CHIP_WEAR,What should I wear?,何を着ていけばいい？
+CS_CHIP_ENTRANCE,Where's the staff entrance?,スタッフの入口はどこ？
+CS_CHIP_BREAK,Is there a meal/break?,まかないや休憩はある？
+CS_CHIP_LATE,I'm running ~10 min late,10分くらい遅れそう
+CS_CHIP_SWAP,Can I swap this shift?,このシフト、交代できる？
+CS_CHIP_THANKS,Thank you for today!,今日はありがとう！
+CS_T_LATE,Running about 10 minutes late — I'm so sorry! I'm on my way.,10分ほど遅れそうです。申し訳ありません！いま向かっています。
+CS_T_SWAP,Would it be possible to swap this shift? Sorry for the trouble. I'll keep it until someone confirms.,このシフトを交代していただくことはできますか？ご迷惑をおかけしてすみません。決まるまでは入る予定のままにしておきます。
+CS_T_THANKS,Thank you for today! It was a good shift.,今日はありがとうございました！いいシフトでした。
+CS_ACK_LATE,Got it! I told %s. Take care on the way.,わかった！%sさんに伝えたよ。気をつけて来てね。
+CS_ACK_SWAP,Got it. I passed it to %s. You'll hear back here.,わかった。%sさんに渡したよ。返事はここに届くね。
+CS_ASK_MANAGER,"Hmm, I'm not sure. I'll ask the manager ♪",うーん、わからないから店長に聞いてくるね♪
+CS_ASK_FOR,"When you arrive, ask for %s.",着いたら%sさんを呼んでね。
+CS_STAFF_LATE,"Thanks for letting us know, no problem! See you soon. — %s",連絡ありがとう、大丈夫ですよ！気をつけて。（%s）
+CS_STAFF_SWAP,Thanks for asking early. We'll look for someone and confirm here. — %s,早めにありがとう。代わりの人を探して、ここで知らせますね。（%s）
+CS_STAFF_THANKS,Thank you too! You were a great help. Hope to see you again. — %s,こちらこそ、ありがとう！助かりました。またよろしくね。（%s）
+CS_STAFF_OTHER,Thanks for asking! Let me check and get back to you before your shift. — %s,質問ありがとう！確認して、シフトの前にお返事しますね。（%s）
+CS_NAME_0,Aya,あや
+CS_NAME_1,Kenta,けんた
+CS_NAME_2,Mika,みか
+CS_NAME_3,Haruto,はると
+CS_NAME_4,Nana,なな
+CS_NAME_5,Yuki,ゆき
+CS_NAME_6,Sora,そら
+CS_NAME_7,Rin,りん
+CS_WEAR_CAFE,"A plain black or white top, dark trousers and comfy shoes. Apron provided.",黒か白の無地のトップス、暗い色のパンツ、歩きやすい靴で。エプロンは貸します。
+CS_DOOR_CAFE,"The staff door is at the back, next to the bike racks. Ring the bell.",スタッフの入口は裏手、自転車置き場の横。ベルを鳴らしてね。
+CS_BREAK_CAFE,"A 15-minute break on a 4–5 hour shift, with a free drink.",4〜5時間のシフトで15分休憩。飲み物1杯つき。
+CS_WEAR_IZAKAYA,"Black T-shirt, black trousers and non-slip shoes. Happi coat provided.",黒Tシャツ、黒パンツ、すべりにくい靴で。はっぴは貸します。
+CS_DOOR_IZAKAYA,"The side door in the alley, left of the red lanterns.",路地側の通用口、赤ちょうちんの左です。
+CS_BREAK_IZAKAYA,A 30-minute break with a staff meal (makanai).,30分休憩、まかないつき。
+CS_WEAR_KONBINI,Uniform provided. Plain trousers and clean sneakers.,制服は貸します。無地のパンツと、きれいなスニーカーで。
+CS_DOOR_KONBINI,"The back door by the loading area. If it's locked, say hi at the register.",搬入口の横の裏口から。閉まっていたらレジに声をかけてね。
+CS_BREAK_KONBINI,"15 minutes for every 4 hours, in the back room.",4時間ごとに15分、奥の部屋で休憩。
+CS_WEAR_WAREHOUSE,Clothes you can move in and closed-toe shoes. Gloves provided.,動きやすい服と、つま先の出ない靴で。軍手は貸します。
+CS_DOOR_WAREHOUSE,Gate B security office. Show your shift screen in Paw Time.,B門の守衛室へ。Paw Time のシフト画面を見せてね。
+CS_BREAK_WAREHOUSE,A 45-minute lunch break in the break room. Vending machines inside.,休憩室で45分のお昼休憩。自販機あり。
+CS_WEAR_BAKERY,"Hair tied back, no nail polish. Cap and apron provided.",髪はまとめて、ネイルはなしで。帽子とエプロンは貸します。
+CS_DOOR_BAKERY,The back door on the side street. Knock twice.,横の道の裏口から。2回ノックしてね。
+CS_BREAK_BAKERY,A 15-minute break. Some days there's leftover bread ♪,15分休憩。売れ残りのパンがもらえる日も♪
+CS_WEAR_SUPERMARKET,Uniform vest provided. Dark trousers and sneakers.,制服のベストは貸します。暗い色のパンツとスニーカーで。
+CS_DOOR_SUPERMARKET,The staff entrance is at the back of the car park.,駐車場の奥にスタッフの入口があります。
+CS_BREAK_SUPERMARKET,"15 minutes per 4 hours, 45 minutes over 6 hours, in the staff room.",4時間で15分、6時間をこえると45分。休憩室で。
+CS_WEAR_RESTAURANT,"Black top and trousers, non-slip shoes. Apron provided.",黒のトップスとパンツ、すべりにくい靴で。エプロンは貸します。
+CS_DOOR_RESTAURANT,"The back entrance, next to the kitchen exit.",厨房の出口の横の、裏口からどうぞ。
+CS_BREAK_RESTAURANT,A break with a half-price staff meal.,休憩あり。まかないは半額。
+CS_WEAR_SHOP,Neat casual clothes. Name badge provided.,きれいめの普段着で。名札は貸します。
+CS_DOOR_SHOP,"Come in the front, then through the door marked STAFF.",正面から入って、「STAFF」と書いた扉へ。
+CS_BREAK_SHOP,A 15-minute break. Lockers available.,15分休憩。ロッカーあり。
+CC_TODAY,About today…,今日のこと…
+CC_NERVOUS,Nervous about tomorrow,明日が不安
+CC_TIRED,I'm tired,つかれた
+CC_SHOP,Tell me about the shop,お店のこと教えて
+CC_ISLAND,How's the island?,島はどう？
+CC_PROBLEM,Something happened at work,仕事で困ったことがあった
+CC_TODAY_GOOD,It went well!,うまくいった！
+CC_TODAY_MEH,Meh. Just okay.,まあまあ
+CC_NERVOUS_PLAN,Give me a tiny plan,小さな作戦ちょうだい
+CC_NERVOUS_OK,I'll manage,なんとかなるかも
+CC_TIRED_SLEEPY,Just sleepy,ただ眠いだけ
+CC_TIRED_MORE,It's more than tired,疲れた、だけじゃない
+CC_TIRED_OK,I'll be okay,たぶん大丈夫
+CC_ISLAND_FAV,Who's your favourite?,いちばん好きな子は？
+CC_PROB_YELLED,My manager yelled at me,店長に怒鳴られた
+CC_PROB_BREAK,I couldn't take a break,休憩がとれなかった
+CC_PROB_PAY,I wasn't paid on time,給料が遅れた
+CC_CRISIS_CANTGO,I can't go on,もう無理かも
+CC_CRISIS_DISAPPEAR,I want to disappear,消えたい
+CC_CRISIS_STAY,Can you stay with me?,そばにいてくれる？
+CC_CRISIS_OK,Thank you,ありがとう
+CC_ASK_SHOP,Ask the shop's cat,お店の猫に聞く
+CM_HELLO,Hi! I'm right here. How are you doing?,やあ！ここにいるよ。調子はどう？
+CM_LISTEN,"I'm listening. Tell me more, or pick one below.",うん、聞いてるよ。もっと話してもいいし、下から選んでもいいよ。
+CM_TODAY,How was today? Tell me the good bit first.,今日はどうだった？いいことから教えて。
+CM_TODAY_GOOD,Yay! I'm keeping that one in my pocket.,やったね！それ、ポケットにしまっておくね。
+CM_TODAY_MEH,Some days are just days. You still went. That counts.,ふつうの日もあるよ。でも行った。それで十分。
+CM_NERVOUS,New places are scary. That's normal. Want to make it smaller?,知らない場所は、こわいよね。ふつうのことだよ。小さくしてみる？
+CM_NERVOUS_PLAN,Pack tonight. Leave 10 minutes early. Ask one question when you arrive. That's all. I'll be in your pocket.,今夜のうちに準備。10分早く出る。着いたら1つだけ質問する。それだけ。ポケットにいるからね。
+CM_NERVOUS_OK,You will. And I'll be cheering.,きっと大丈夫。応援してるよ。
+CM_TIRED,"You worked hard. Water, a snack, and early bed?",よくがんばったね。お水、おやつ、早めのおふとん？
+CM_TIRED_SLEEPY,Then let's sleep early tonight. The island will wait.,じゃあ今夜は早く寝よう。島は待っててくれるよ。
+CM_TIRED_MORE,Thank you for telling me. Is it heavy in a different way?,話してくれてありがとう。別の重さがある感じ？
+CM_TIRED_OK,Okay. I'm right here if that changes.,わかった。変わったら、いつでもここにいるよ。
+CM_SHOP,"Your next shift is at %s, %s. Want me to ask their cat anything?",次のシフトは %s、%s。お店の猫に何か聞いてこようか？
+CM_SHOP_NONE,"No shifts yet. When you pick one, I'll introduce you to the shop's cat!",まだシフトはないよ。仕事を受けたら、お店の猫を紹介するね！
+CM_ISLAND,The island's doing great. I've met %d friends so far!,島は元気だよ。いままでに %d 体の仲間に会えた！
+CM_ISLAND_FAV,My favourite is you. Don't tell the others.,いちばんはあなた。みんなにはないしょね。
+CM_PROBLEM,Oh no. What happened?,えっ、何があったの？
+CM_PROB_YELLED,"That's not okay, and it's not your fault.",それはよくない。あなたのせいじゃないよ。
+CM_PROB_BREAK,"You should get your break. That's the rule, not a favour.",休憩はとっていいんだよ。お願いじゃなくて、決まりだから。
+CM_PROB_PAY,You did the work. Being paid on time matters.,ちゃんと働いたんだもん。給料が期日に払われるのは大事なこと。
+CM_TELL_ASK,"Want me to tell %s anonymously? I'll only pass on the kind of issue, not your words.",%sに、名前を伏せて伝えようか？伝えるのは困りごとの種類だけで、あなたの言葉は伝えないよ。
+CM_TELL_NOSHOP,"I'm sorry that happened. You can let Paw Time support know, without your name.",それはつらかったね。名前を伏せて、Paw Time の窓口に知らせることもできるよ。
+CM_TELL_SENT,Sent anonymously. Shops see it only when 5+ workers say the same.,名前を伏せて送ったよ。お店に見えるのは、同じ声が5人以上そろってから。
+CM_TELL_KEPT,Okay. I won't say a thing. It stays between us.,わかった。だれにも言わない。ふたりの秘密ね。
+CM_SUPPORT_SENT,"I let Paw Time support know, without your name. They look at patterns and can step in.",名前を伏せて、Paw Time の窓口に知らせたよ。同じことが続いていないか見て、動いてくれるよ。
+CM_CRISIS,I'm really glad you told me. You don't have to carry this alone.,話してくれて、本当にありがとう。ひとりで抱えなくていいんだよ。
+CM_CRISIS_CARD,Talking to someone can help. Here's a place you can reach out to.,だれかに話すと、少し軽くなることがあるよ。相談できる場所をのせておくね。
+CM_CRISIS_STAY,I'm staying right here. Let's breathe together: in… and out.,ずっとここにいるよ。いっしょに息をしよう。すって…はいて。
+CM_CRISIS_OK,Anytime. I'm always on your side.,いつでもね。ずっとあなたの味方だよ。
+CHAT_AUTO_CAT,Auto reply from the shop's cat,お店の猫の自動の返事
