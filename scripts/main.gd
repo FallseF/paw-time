@@ -2,6 +2,7 @@ extends Node
 ## 画面の切り替え役。画面は Control を差し替え、暗転でつなぐ。
 
 const SCREENS := {
+	"title": preload("res://scripts/screen_title.gd"),
 	"morning": preload("res://scripts/screen_room.gd"),
 	"room": preload("res://scripts/screen_room.gd"),
 	"catch": preload("res://scripts/screen_scoop.gd"),
@@ -50,7 +51,7 @@ func _ready() -> void:
 		root.add_child(fade)
 		_maybe_autoshot()
 		return
-	go(start if SCREENS.has(start) else "morning", true)
+	go(start if SCREENS.has(start) else "title", true)
 	root.add_child(fade)
 	_maybe_autoshot()
 
