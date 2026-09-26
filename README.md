@@ -10,6 +10,7 @@
 | `apps/employer` | 採用企業 | 求人掲載、応募者選考、勤怠、評価、企業の家（Next.js） |
 | `apps/api` | 両方 | 求人・応募・シフト・勤怠・評価・報酬の共通API |
 | `apps/marketing` | 一般公開 | プロダクト紹介ページ |
+| `apps/insights` | 提携先・審査員 | 利用データの集計ダッシュボード（Recruit view）とプライバシー告知。詳細は `docs/architecture/insights.md` |
 
 共通仕様は `packages/api-contracts`、ゲームコンテンツ定義は `packages/game-catalog`、データベース変更は `infra/database/migrations` で管理します。
 

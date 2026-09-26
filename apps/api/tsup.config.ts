@@ -1,7 +1,8 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  // app.ts is also emitted so the Vercel function (api/index.js) can import the bundled app.
+  entry: ["src/index.ts", "src/app.ts"],
   format: ["esm"],
   dts: true,
   outDir: "dist",
