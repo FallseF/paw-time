@@ -220,6 +220,8 @@ func autoplay(days: int) -> void:
 		while not scoop.ended and frames < 60 * 240:
 			await get_tree().process_frame
 			frames += 1
+			if full_ui and frames == 60 * 6:
+				_snap("d%02d_a2_scoop" % (d + 1))
 		if not scoop.ended:
 			print("  自動すくいが時間切れ: busy=%s pressed=%s in_hand=%s sel=%s state=%s supply=%d vis=%d pois=%s tele=%.1f" % [scoop.busy, scoop.pressed, scoop.in_hand, scoop.selected, scoop.auto_state, scoop.supply, scoop._visible_count(), str(GameState.pois), scoop.telegraph_left])
 		var t: Dictionary = GameState.tonight
