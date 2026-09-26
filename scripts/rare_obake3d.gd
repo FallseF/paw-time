@@ -454,8 +454,14 @@ func _b_amagasa() -> void:
 		_add(_sphere(0.075), _mat(RED if i % 2 else PAPER, 0.2), Vector3(sin(a) * 0.6, 0.0, cos(a) * 0.6), um)
 	_add(_cyl(0.03, 0.05, 0.08, 10), _mat(RED), Vector3(0, 0.47, 0), um)
 	_add(_sphere(0.045), _mat(WOOD_DARK), Vector3(0, 0.53, 0), um)
-	# 傘はくるくる回すので、顔は回さないよう体に付ける
-	body.add_child(face(um.position + Vector3(0, 0.1, 0.2), 0.78))
+	# 傘はくるくる回すので、顔は回さないよう体に付ける。
+	# 傘の面は上向きに傾いているので、顔もその傾き（約 35 度）に合わせ、縁の玉より上に置く
+	var tilt := 0.62
+	var n := Vector3(0, sin(tilt), cos(tilt))
+	var on_canopy := Vector3(0, 0.215, 0.545)
+	var fc := face(um.position + on_canopy - n * 0.4, 0.8)
+	fc.rotation.x = -tilt
+	body.add_child(fc)
 	var leg := _node(Vector3(0, 0.0, 0.05))
 	_add(_cyl(0.028, 0.028, 0.3, 8), _mat(WOOD_DARK), Vector3(0, 0.55, 0), leg)
 	_add(_cap(0.1, 0.34), _skin(c1), Vector3(0, 0.3, 0), leg)
