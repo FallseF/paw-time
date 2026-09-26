@@ -1323,7 +1323,7 @@ func _lift() -> void:
 	if n >= 2:
 		multi_count += 1
 		tags.push_front("%dつまとめて！" % n)
-	_flash(0.25 if not special else 0.4)
+	_flash(0.1 if not special else 0.3)
 	_play("chime", 1.0 + minf(combo, 12) * 0.04)
 	if combo >= 3:
 		_play("combo", 1.0 + minf(combo, 12) * 0.05, -4)
@@ -1340,12 +1340,13 @@ func _lift() -> void:
 		title = "虹の玉！"
 	elif list.any(func(o): return o.kind == "gold"):
 		title = "金の玉！"
+	# ひとつの知らせにまとめる（題＋よかったところ）
+	var detail := "・".join(tags)
 	if special or combo in [3, 5, 8, 10, 15, 20]:
-		_banner(title if special else "%dコンボ！" % combo, Color("fff2a8"))
+		var head := title if special else "%dコンボ！" % combo
+		_banner(head + ("\n" + detail if detail != "" else ""), Color("fff2a8"))
 	else:
-		_float_text(title, pos2d + Vector2(0, -60), Color("fff2a8"), 22)
-	if tags.size() > 0:
-		_float_text("・".join(tags), pos2d + Vector2(0, -30), Color("b8ffcf"))
+		_float_text(title + ("  " + detail if detail != "" else ""), pos2d + Vector2(0, -50), Color("fff2a8"), 18)
 	_combo_pop()
 	_partner_react(true)
 	if not practice and not record_announced and combo > GameState.records.best_combo and combo >= 3 and GameState.records.nights > 0:
@@ -1759,6 +1760,7 @@ func _update_water_uniforms() -> void:
 
 func _banner(text: String, color: Color) -> void:
 	banner.text = text
+	banner.add_theme_font_size_override("font_size", 36 if not "\n" in text else 28)
 	banner.add_theme_color_override("font_color", color)
 	banner.modulate.a = 1.0
 	banner.scale = Vector2(0.5, 0.5)
@@ -1885,23 +1887,23 @@ func _show_help() -> void:
 func _tut_show() -> void:
 	tut_ring.visible = true
 	if tut_label == null:
-		tut_label = _text("", 14, Color.WHITE, font_black)
+		tut_label = _text("", 17, Color.WHITE, font_black)
 		tut_label.add_theme_color_override("font_outline_color", Color("0b1026"))
 		tut_label.add_theme_constant_override("outline_size", 6)
-		tut_label.size = Vector2(160, 22)
+		tut_label.size = Vector2(200, 26)
 		add_child(tut_label)
-	tut_label.text = ["ここを押したまま", "玉の下へ", "離す！"][clampi(tut_step, 0, 2)]
+	tut_label.text = ["玉の手前を、押したまま", "そっと玉の下へ", "いま離す！"][clampi(tut_step, 0, 2)]
 	tut_label.visible = true
+	hint.text = "" # 説明は輪のそばの一言だけ
 	match tut_step:
 		0:
-			hint.text = "玉のすこし手前を、押したままにする"
+			pass
 		1:
-			hint.text = "押したまま、玉の真下へそっと動かす"
+			pass
 		2:
-			hint.text = "いま！指を離して、すくい上げる"
 			tut_ring.visible = false
 			if tut_label:
-				tut_label.position = cam.unproject_position(poi.position) + Vector2(-80, 34)
+				tut_label.position = cam.unproject_position(poi.position) + Vector2(-100, 34)
 
 
 func _tut_follow() -> void:
@@ -1921,7 +1923,7 @@ func _tut_follow() -> void:
 	var p := cam.unproject_position(target.position + Vector3(0, 0, 0.5 if tut_step == 0 else 0.0))
 	tut_ring.position = p - Vector2(26, 26)
 	if tut_label:
-		tut_label.position = p + Vector2(-80, 30)
+		tut_label.position = p + Vector2(-100, 30)
 
 
 # ---------- 夜のおわり ----------

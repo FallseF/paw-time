@@ -8,6 +8,8 @@ var vp: SubViewport
 var world: Node3D
 var cam: Camera3D
 var walkers: Array = []
+## おばけの居場所（前・中・奥に、ずらして並べる。0 は相棒）
+const HOMES := [Vector3(0.0, 0, 0.55), Vector3(-1.5, 0, -0.1), Vector3(1.5, 0, -0.1), Vector3(-0.55, 0, -0.35), Vector3(0.6, 0, -0.4), Vector3(-1.95, 0, -1.1), Vector3(-0.95, 0, -1.25), Vector3(0.05, 0, -1.2), Vector3(1.0, 0, -1.3), Vector3(1.95, 0, -1.05)]
 var font_bold: FontFile
 var font_black: FontFile
 var poi_row: HFlowContainer
@@ -134,14 +136,21 @@ func _build_world() -> void:
 	# おばけたち
 	var ids: Array = GameState.owned.keys()
 	ids.sort_custom(func(a, b): return GameState.level_of(a) > GameState.level_of(b))
+	# 相棒はいちばん前
+	if ids.has(GameState.partner):
+		ids.erase(GameState.partner)
+		ids.push_front(GameState.partner)
 	for i in min(ids.size(), 10):
 		var id: String = ids[i]
 		var ob := Obake3D.make(id)
 		ob.set_level(GameState.level_of(id))
 		ob.scale = Vector3.ONE * (0.45 if Rares.is_rare(id) else 0.62)
-		ob.position = Vector3(randf_range(-1.8, 1.8), 0, randf_range(-1.6, 0.7))
+		if i == 0:
+			ob.scale *= 1.15 # 相棒は少し大きく、前に
+		var home: Vector3 = HOMES[i] + Vector3(randf_range(-0.15, 0.15), 0, randf_range(-0.1, 0.1))
+		ob.position = home
 		world.add_child(ob)
-		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0)})
+		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0), "home": home})
 
 
 ## 工房で作ったかざり
@@ -267,7 +276,8 @@ func _process(delta: float) -> void:
 		var to: Vector3 = w.target
 		var d := to - ob.position
 		if d.length() < 0.05:
-			w.target = Vector3(randf_range(-1.8, 1.8), 0, randf_range(-1.6, 0.7))
+			var hm: Vector3 = w.home
+			w.target = hm + Vector3(randf_range(-0.35, 0.35), 0, randf_range(-0.25, 0.25))
 			w.wait = randf_range(1.0, 4.0)
 			continue
 		ob.position += d.normalized() * min(d.length(), 0.5 * delta)
@@ -459,7 +469,7 @@ func _render() -> void:
 		if GameState.claimed.has(q.key):
 			done += 1
 	var ready := GameState.quests_claimable()
-	quest_btn.text = "今週のおねがい %d/3%s" % [done, "  受け取れる！" if ready > 0 else ""]
+	quest_btn.text = ("今週のおねがい：%dつ受け取れる！" % ready) if ready > 0 else ("今週のおねがい %d/3" % done)
 	quest_btn.visible = GameState.records.nights > 0
 	_place_quest_btn()
 	for c in poi_row.get_children():
@@ -496,11 +506,20 @@ func _render() -> void:
 		var poi_name: String = GameState.POI[GameState.ROLE_POI[s.role]].name
 		var first: bool = not GameState.stores_seen.has(s.store) or not GameState.roles_seen.has(s.role)
 		card_body.text = "%s ・ %sの%s %d時間\n働くと：%s ×%d%s" % [s.store, s.band, GameState.ROLE_LABEL[s.role], s.hours, poi_name, GameState.work_poi_count(s.hours), "＋きらきらポイ（はじめて）" if first else "（何時間でも同じ）"]
-		actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
-		var skip := _button("働かずに、" + night_label, Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
-		skip.custom_minimum_size = Vector2(0, 40)
-		skip.add_theme_font_size_override("font_size", 14)
-		actions.add_child(skip)
+		if GameState.records.nights == 0:
+			# はじめての日は、まず川へ（仕事は下の小さなボタンで。押すとポイが増える）
+			card_title.text = "まずは、夜の川べりへ"
+			actions.add_child(_button("玉をすくいに行く", night_col, func(): main.go("catch")))
+			var sh := _button("先にシフトへ（色のポイ+2）", Color(1, 1, 1, 1), _do_shift, Color("e8603c"))
+			sh.custom_minimum_size = Vector2(0, 40)
+			sh.add_theme_font_size_override("font_size", 14)
+			actions.add_child(sh)
+		else:
+			actions.add_child(_button("シフトに行く", Color("ff8a5b"), _do_shift))
+			var skip := _button("働かずに、" + night_label, Color(1, 1, 1, 1), func(): main.go("catch"), night_col)
+			skip.custom_minimum_size = Vector2(0, 40)
+			skip.add_theme_font_size_override("font_size", 14)
+			actions.add_child(skip)
 	else:
 		if GameState.worked_today:
 			card_title.text = "おつかれさま！"
