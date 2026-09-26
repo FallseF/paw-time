@@ -354,7 +354,7 @@ func _make_view(e: Dictionary) -> void:
 				v.spr = sp2
 			else:
 				var ob := Obake3D.make(e.id)
-				ob.scale = Vector3.ONE * 0.78
+				ob.scale = Vector3.ONE * 0.95
 				ob.rotation.y = -1.0
 				inner.add_child(ob)
 				v.ob = ob
@@ -396,14 +396,36 @@ func _sync_views(delta: float) -> void:
 		var inner: Node3D = v.inner
 		v.t += delta
 		if e.state == "kb":
-			inner.rotation.z = (0.35 if e.side == 1 else -0.35)
-			inner.position.y = 0.15
+			if v.ob:
+				# 押し戻されて、のけぞりながら跳ねる
+				var k: float = 1.0 - e.st / DefSim.KB_TIME
+				inner.rotation.z = -0.7 * sin(k * PI) - 0.1
+				inner.position.y = sin(k * PI) * 0.45
+				inner.scale = Vector3(0.92, 1.08, 1.0)
+			else:
+				inner.rotation.z = (0.35 if e.side == 1 else -0.35)
+				inner.position.y = 0.15
 		elif e.sleep > 0:
 			inner.rotation.z = 0.0
 			inner.position.y = 0.0
 		else:
 			inner.rotation.z = lerpf(inner.rotation.z, 0.0, minf(1.0, 10.0 * delta))
-			if v.spr and not v.busy:
+			if v.ob and not v.busy:
+				# ふつうのおばけ：ぴょこぴょこ跳ねて歩く（着地でつぶれて、跳ぶとのびる）
+				var ob: Obake3D = v.ob
+				ob.bob = false
+				if e.attacking:
+					var br := sin(v.t * 3.0) * 0.03
+					inner.position.y = 0.0
+					inner.scale = Vector3(1.0 + br, 1.0 - br, 1.0)
+				else:
+					var ph := fmod(v.t * 2.6, 1.0)
+					var up := sin(ph * PI)
+					inner.position.y = up * 0.22
+					var squash := 1.0 - clampf(up * 3.0, 0.0, 1.0)
+					inner.scale = Vector3(1.0 + 0.16 * squash - 0.05 * up, 1.0 - 0.18 * squash + 0.08 * up, 1.0)
+					inner.rotation.z = lerpf(inner.rotation.z, 0.12, minf(1.0, 8.0 * delta))
+			elif v.spr and not v.busy:
 				var hop := absf(sin(v.t * (7.0 if e.tiny else 4.5)))
 				inner.position.y = (hop * (0.1 if e.tiny else 0.07)) if not e.attacking else 0.0
 				if e.side == 1 and not e.attacking:
@@ -494,8 +516,20 @@ func _lunge(v: Dictionary, dir: float, far := 0.28) -> void:
 		return
 	v.busy = true
 	var tw := inner.create_tween()
-	tw.tween_property(inner, "position:x", dir * far, 0.07)
-	tw.tween_property(inner, "position:x", 0.0, 0.16)
+	if v.ob:
+		# 前のめりに、ぐっと体重をのせてたたく
+		inner.scale = Vector3.ONE
+		tw.tween_property(inner, "rotation:z", 0.1, 0.08)
+		tw.parallel().tween_property(inner, "scale", Vector3(0.9, 1.12, 1.0), 0.08)
+		tw.tween_property(inner, "rotation:z", -dir * 0.45, 0.06)
+		tw.parallel().tween_property(inner, "position:x", dir * far * 1.3, 0.06)
+		tw.parallel().tween_property(inner, "scale", Vector3(1.18, 0.86, 1.0), 0.06)
+		tw.tween_property(inner, "rotation:z", 0.0, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(inner, "position:x", 0.0, 0.18)
+		tw.parallel().tween_property(inner, "scale", Vector3.ONE, 0.18)
+	else:
+		tw.tween_property(inner, "position:x", dir * far, 0.07)
+		tw.tween_property(inner, "position:x", 0.0, 0.16)
 	tw.tween_callback(func(): v.busy = false)
 
 
@@ -522,9 +556,10 @@ func _build_ui() -> void:
 	tp.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.92), 18))
 	tp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var num := ("%d-%d " % [si + 1, st + 1]) if not stage.get("boss_stage", false) else ""
-	var tl := Kit.text(num + stage.name + ("" if GameState.lap <= 1 else "（%d周目）" % GameState.lap), 14, Kit.INK, true)
+	var title_s: String = num + stage.name + ("" if GameState.lap <= 1 else "（%d周目）" % GameState.lap)
+	var tl := Kit.text(title_s, 14 if title_s.length() <= 9 else 12, Kit.INK, true)
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tl.clip_text = true
+	tl.clip_text = false
 	tp.add_child(tl)
 	top.add_child(tp)
 	zoom_btn = Kit.button("広く", Color(1, 1, 1, 0.92), _toggle_zoom, Kit.INK, 36, 12)
