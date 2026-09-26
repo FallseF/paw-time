@@ -469,3 +469,8 @@ func demo_stall() -> void:
 
 func demo_home() -> void:
 	_market_home()
+
+
+func demo_parts() -> void:
+	show_parts = true
+	_set_time(bed, wake)

@@ -202,8 +202,8 @@ func _build_world() -> void:
 	world.add_child(burst)
 
 	# おばけたち（最大 14 体まで庭に出る）
-	# 新しく来た子を優先して、14 体まで
-	for o in GameState.owned.slice(-14):
+	# 新しく来た子を優先して、18 体まで
+	for o in GameState.owned.slice(-18):
 		var ob := Obake3D.make(o.id)
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
 		ob.position = Vector3(randf_range(-2.4, 2.4), 0, randf_range(-1.2, 1.8))
