@@ -62,10 +62,10 @@ apps/insights（静的サイト） ◀── GET /v1/insights/{metrics,feed} ◀
 | `faq_auto_answered` | `topic: dress\|entrance\|break` | お店の猫が勤務前の質問に自動で答えた |
 | `shop_message_sent` | `kind: late\|swap\|thanks\|question` | お店への定型メッセージ |
 
-### 同意と「ここだけの話」モード
+### 同意と「ないしょモード」
 
 - 最初の会話の前に、何を取り出し、何に使い、お店に何が届くかを示して同意をとる（ゲーム側の実装は未着手）。
-- 「ここだけの話」（Just between us）モードの会話は、`chat_open` も含めて何も送らない。サーバーは `private_mode: true` の `chat_signal` と、`private_mode` を明示しない `chat_signal` を拒否する。
+- 「ないしょモード」（英語 UI では Just between us）の会話は、`chat_open` も含めて何も送らない。サーバーは `private_mode: true` の `chat_signal` と、`private_mode` を明示しない `chat_signal` を拒否する。
 - 通常の利用データと同じく、設定でオフにでき、install_id 単位で削除できる。
 
 ### 社内での使い方
