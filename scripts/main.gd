@@ -84,11 +84,16 @@ func _maybe_autoshot() -> void:
 		return
 	var path := OS.get_environment("OBAKE_SHOT_PATH")
 	var shots := 0
+	# 何かで止まっても、90 秒で終わる
+	get_tree().create_timer(90.0, true, false, true).timeout.connect(get_tree().quit)
 	for step in target.split(","):
 		if step.begins_with("wait"):
 			await get_tree().create_timer(float(step.substr(4)), true, false, true).timeout
 		elif step.begins_with("call:"):
-			current.call(step.substr(5))
+			if current.has_method(step.substr(5)):
+				current.call(step.substr(5))
+			else:
+				push_warning("no method " + step)
 			await get_tree().create_timer(0.6, true, false, true).timeout
 		elif step == "snap":
 			await RenderingServer.frame_post_draw

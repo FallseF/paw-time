@@ -1225,7 +1225,12 @@ func _update_poi(delta: float) -> void:
 		var cf := clampf(c / dura_max, 0.0, frac)
 		dura_cost.position.x = 280.0 * (frac - cf)
 		dura_cost.size.x = 280.0 * cf
-		dura_cost.color = Color(1, 0.35, 0.3, 0.8) if c >= durability else Color(1, 0.85, 0.4, 0.7)
+		var danger := c >= durability
+		dura_cost.color = Color(1, 0.2, 0.2, 0.55 + 0.4 * absf(sin(Time.get_ticks_msec() * 0.012))) if danger else Color(1, 0.85, 0.4, 0.75)
+		if danger and not auto:
+			hint.text = "重すぎる！このままだと、やぶれる"
+		elif over_list.size() > 0 and tut_step < 0 and not auto:
+			hint.text = "いま離せば、すくえる" if over_list.size() == 1 else "%dつ重なっている！" % over_list.size()
 		dura_fill.size.x = 280.0 * frac
 		dura_fill.color = Color("7bdc6b") if frac > 0.5 else (Color("ffd23f") if frac > 0.25 else Color("ff6b5b"))
 		poi_film_mat.albedo_color.a = 0.12 + 0.45 * frac
@@ -1687,6 +1692,10 @@ func demo_hold() -> void:
 func demo_lift() -> void:
 	pressed = false
 	_lift()
+
+
+func demo_auto() -> void:
+	start_auto(0.8)
 
 
 func demo_rainbow() -> void:

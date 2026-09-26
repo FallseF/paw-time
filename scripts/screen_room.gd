@@ -63,10 +63,11 @@ func _build_world() -> void:
 	world.add_child(sun)
 
 	cam = Camera3D.new()
-	cam.position = Vector3(0, 5.2, 8.2)
-	cam.fov = 34
+	cam.position = Vector3(0, 4.4, 7.4)
+	cam.fov = 38
+	cam.v_offset = -0.55
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.6, -0.6))
+	cam.look_at(Vector3(0, 0.3, -0.6))
 
 	_box(Vector3(12, 0.1, 12), Vector3(0, -0.05, 0), Color("b98258"))
 	# 床板の目地
@@ -101,20 +102,20 @@ func _build_world() -> void:
 	tm.bottom_radius = 0.75
 	tm.height = 0.08
 	table.mesh = tm
-	table.position = Vector3(-0.3, 0.42, 0.3)
+	table.position = Vector3(-2.1, 0.42, -1.5)
 	table.material_override = Obake3D.toon(Color("8a5a3a"), 0.1)
 	world.add_child(table)
-	_box(Vector3(0.08, 0.4, 0.08), Vector3(-0.3, 0.2, 0.3), Color("6b4430"))
+	_box(Vector3(0.08, 0.4, 0.08), Vector3(-2.1, 0.2, -1.5), Color("6b4430"))
 	var cup := MeshInstance3D.new()
 	var cm := CylinderMesh.new()
 	cm.top_radius = 0.08
 	cm.bottom_radius = 0.07
 	cm.height = 0.14
 	cup.mesh = cm
-	cup.position = Vector3(-0.1, 0.53, 0.2)
+	cup.position = Vector3(-1.9, 0.53, -1.6)
 	cup.material_override = Obake3D.toon(Color("f4f1ea"), 0.2)
 	world.add_child(cup)
-	_box(Vector3(0.8, 0.1, 0.8), Vector3(1.4, 0.05, 1.0), Color("c9454a"))
+	_box(Vector3(0.8, 0.1, 0.8), Vector3(1.9, 0.05, -0.9), Color("c9454a"))
 
 	# おばけたち
 	var ids: Array = GameState.owned.keys()
@@ -124,7 +125,7 @@ func _build_world() -> void:
 		var ob := Obake3D.make(id)
 		ob.set_level(GameState.level_of(id))
 		ob.scale = Vector3.ONE * 0.62
-		ob.position = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
+		ob.position = Vector3(randf_range(-1.7, 1.7), 0, randf_range(-1.3, 1.3))
 		world.add_child(ob)
 		walkers.append({"o": ob, "target": ob.position, "wait": randf_range(0.5, 3.0)})
 
@@ -148,7 +149,7 @@ func _process(delta: float) -> void:
 		var to: Vector3 = w.target
 		var d := to - ob.position
 		if d.length() < 0.05:
-			w.target = Vector3(randf_range(-2.2, 2.2), 0, randf_range(-1.9, 0.2))
+			w.target = Vector3(randf_range(-1.7, 1.7), 0, randf_range(-1.3, 1.3))
 			w.wait = randf_range(1.0, 4.0)
 			continue
 		ob.position += d.normalized() * min(d.length(), 0.5 * delta)

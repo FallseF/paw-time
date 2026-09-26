@@ -49,7 +49,7 @@ func _ready() -> void:
 	title.position = Vector2(0, 150)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("本番ではスマホの睡眠記録から入ります（ここでは選べます）", 12, Color(1, 1, 1, 0.55))
+	var note := _text("本番はスマホの睡眠記録から（いまは選べる）", 12, Color(1, 1, 1, 0.55))
 	note.position = Vector2(0, 186)
 	note.size = Vector2(360, 20)
 	add_child(note)
@@ -162,6 +162,24 @@ func _set_hours(h: int) -> void:
 		lines.append(["休みの日の長い眠りに、何かが来そう", Color("c9bdf5")])
 	if hours == 9:
 		lines.append(["寝すぎると、少しだけぼんやり", Color(1, 1, 1, 0.6)])
+	# 何時間でポイがどれだけ強くなるかを、小さな棒で見せる
+	var bars := HBoxContainer.new()
+	bars.alignment = BoxContainer.ALIGNMENT_CENTER
+	bars.add_theme_constant_override("separation", 6)
+	for hh in range(4, 10):
+		var col := VBoxContainer.new()
+		col.alignment = BoxContainer.ALIGNMENT_END
+		col.add_theme_constant_override("separation", 2)
+		var st := GameState.sleep_strength(hh)
+		var b := ColorRect.new()
+		b.custom_minimum_size = Vector2(26, 44.0 * (st - 0.5))
+		b.color = Color("ffe27a") if hh == hours else Color(1, 1, 1, 0.25)
+		col.add_child(b)
+		var t := _text("%d" % hh, 11, Color.WHITE if hh == hours else Color(1, 1, 1, 0.5))
+		col.add_child(t)
+		col.custom_minimum_size = Vector2(26, 50)
+		bars.add_child(col)
+	preview.add_child(bars)
 	for l in lines:
 		var lab := _text("・" + l[0], 15, l[1])
 		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
