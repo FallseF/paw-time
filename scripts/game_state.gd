@@ -106,6 +106,7 @@ var garden_level := 0
 var garden_seen_level := 0 # 朝の演出で見せ終わった段
 var decos := {} # role → 届いた回数
 var deco_store := {} # role → 飾りをくれた店
+var chores := {} # ひとりのときのおてつだいの回数
 var new_decos: Array = [] # 今日届いた飾り（庭で演出する）
 var dream_flowers := 0
 
@@ -173,6 +174,7 @@ func reset(new_mode := "data") -> void:
 	garden_seen_level = 0
 	decos = {}
 	deco_store = {}
+	chores = {}
 	new_decos = []
 	dream_flowers = 0
 	roles_seen = {}
@@ -354,6 +356,13 @@ func finish_shift() -> Array:
 		if first_role_today:
 			nets["kira"] += 1
 			got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめてのおてつだい）"})
+		# おてつだい 2 回で、その仕事の飾りが（手作りで）届く
+		chores[s.role] = chores.get(s.role, 0) + 1
+		if chores[s.role] == 2 and decos.get(s.role, 0) == 0:
+			decos[s.role] = 1
+			deco_store[s.role] = "手作り"
+			new_decos.append(s.role)
+			got.append({"kind": "deco", "id": s.role, "text": "手作りの「%s」ができた" % DECOS[s.role].name})
 		save()
 		changed.emit()
 		return got
@@ -479,11 +488,11 @@ func night_score(bed: int, wake: int) -> Dictionary:
 		score += 3
 		parts.append(["いつもの時刻に近い", 3])
 	else:
-		score -= 8
-		parts.append(["時刻がずれた", -8])
+		score -= 5
+		parts.append(["時刻がずれた", -5])
 	if bed > LATE_LINE:
-		score -= 6
-		parts.append(["夜ふかし", -6])
+		score -= 4
+		parts.append(["夜ふかし", -4])
 	if not shift_done_today and h >= 7.0:
 		score += 4
 		parts.append(["休みの日の休息", 4])
@@ -841,7 +850,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers"]
 
 
 func save() -> void:

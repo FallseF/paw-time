@@ -17,6 +17,19 @@ var _t := 0.0
 var going := false
 var plan := "usual"
 var plan_btns := {}
+var go_btn: Button
+
+
+## 決定ボタンの文言を、選んだ過ごし方に合わせる
+func _label_go() -> void:
+	if go_btn == null:
+		return
+	if plan == "extra" and GameState.night_plan != "extra":
+		go_btn.text = "もうひと回り、すくいに行く"
+	elif plan == "market":
+		go_btn.text = "夜店へ"
+	else:
+		go_btn.text = "おやすみ"
 
 const PLANS := [
 	["early", "少し早めに寝る", "いつもより30分早く"],
@@ -78,6 +91,7 @@ func _style_plans() -> void:
 func _choose(id: String) -> void:
 	plan = id
 	_style_plans()
+	_label_go()
 	if id == "record":
 		var r := GameState.recorded_sleep()
 		_set_time(r.bed, r.wake)
@@ -156,11 +170,14 @@ func _ready() -> void:
 	card.add_child(preview)
 
 	var go := Kit.button("おやすみ", Color("8b7bff"), _sleep, Color.WHITE, 54, 20)
-	go.position = Vector2(70, 560)
-	go.size = Vector2(220, 54)
+	go_btn = go
+	go.position = Vector2(40, 560)
+	go.size = Vector2(280, 54)
+	go.add_theme_font_size_override("font_size", 18)
 	add_child(go)
 	if not GameState.tut.has("sleep"):
 		Kit.nudge.call_deferred(go)
+	_label_go()
 	_set_time(bed, wake)
 
 
