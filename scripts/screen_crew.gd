@@ -143,7 +143,7 @@ func _card(o: Dictionary) -> Control:
 	tag.add_child(Kit.text(tag_text, 10, Color.WHITE, true))
 	nr.add_child(tag)
 	v.add_child(nr)
-	var mult := DefData.unit_mult(o.level)
+	var mult := DefData.unit_mult(o.level) * (0.8 if rare else 1.0)
 	if o.level >= DefData.VETERAN_LV:
 		nr.add_child(Kit.text("ベテラン", 11, Color("e8792f"), true))
 	v.add_child(Kit.text("Lv%d　体力 %d　攻撃 %d　やる気 %d" % [o.level, int(u.hp * mult), int(u.atk * mult), u.cost], 11, Kit.SUB))

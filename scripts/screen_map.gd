@@ -40,7 +40,7 @@ func _ready() -> void:
 		lr.add_theme_constant_override("separation", 6)
 		add_child(lr)
 		lr.add_child(Kit.text("混み具合", 13, Kit.SUB, true))
-		for l in range(1, GameState.best_lap + 1):
+		for l in range(maxi(1, GameState.best_lap - 3), GameState.best_lap + 1):
 			var on: bool = l == GameState.lap
 			var b := Kit.button("%d周目" % l, Kit.ACCENT if on else Color.WHITE, func():
 				GameState.lap = l

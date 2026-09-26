@@ -949,7 +949,7 @@ func _toggle_speed() -> void:
 
 
 func _pause() -> void:
-	if ended:
+	if ended or paused:
 		return
 	paused = true
 	overlay = Control.new()

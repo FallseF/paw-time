@@ -347,6 +347,8 @@ func _fit_card() -> void:
 
 func _pulse(c: Control) -> void:
 	await get_tree().process_frame
+	if not is_instance_valid(c):
+		return
 	c.pivot_offset = c.size / 2
 	var tw := c.create_tween().set_loops()
 	tw.tween_property(c, "scale", Vector2.ONE * 1.04, 0.5).set_trans(Tween.TRANS_SINE)
@@ -356,7 +358,6 @@ func _pulse(c: Control) -> void:
 func _do_shift() -> void:
 	var got := GameState.finish_shift()
 	Kit.sfx("c_levelup")
-	GameState.changed.emit()
 	card_title.text = "おつかれさま！"
 	card_body.text = "ポイ：" + "、".join(got) + "\n" + "\n".join(GameState.battle_boost(DefData.STORE_SHOP.get(GameState.boost.store, "")).lines)
 

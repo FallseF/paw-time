@@ -91,6 +91,7 @@ var battles_today := 0
 var wins_today := 0
 var daily_done := false
 var consolation_done := false
+var daily_pick: Array = [] # [日, 店, 面]
 var total_battles := 0
 var last_result := {} # 直前の戦いの結果（結果画面が読む）
 var pending_battle := {} # これから戦うステージ {shop, stage}
@@ -155,6 +156,7 @@ func reset() -> void:
 	last_result = {}
 	pending_battle = {}
 	enemies_seen = {}
+	daily_pick = []
 	changed.emit()
 
 
@@ -355,6 +357,9 @@ func clear_count(si: int, st: int) -> int:
 
 ## 今日のお手伝い：ひらいているステージから日替わりで1つ。その日の最初の勝ちに +60
 func daily_stage() -> Array:
+	# その日の最初に決めたら、1日変えない
+	if daily_pick.size() == 3 and int(daily_pick[0]) == day:
+		return [int(daily_pick[1]), int(daily_pick[2])]
 	var open: Array = []
 	for si in DefData.SHOPS.size():
 		for st in DefData.shop(si).stages.size():
@@ -362,7 +367,9 @@ func daily_stage() -> Array:
 				open.append([si, st])
 	if open.is_empty():
 		return []
-	return open[(day * 7 + 3) % open.size()]
+	var pick: Array = open[(day * 7 + 3) % open.size()]
+	daily_pick = [day, pick[0], pick[1]]
+	return pick
 
 
 ## そのステージに挑めるか（前のステージを越えたら開く）
@@ -597,7 +604,7 @@ func rare_context(s: Dictionary, hours: int) -> Dictionary:
 const SAVE_KEYS := ["day", "phase", "nets", "net_strength", "last_sleep", "owned", "seen", "morning_report", "orbs", "hatched",
 	"scooped_tonight", "sleep_hist", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "weekend_days",
 	"first_role_today", "gifted", "received", "rare_pending", "coins", "deck", "cleared", "best_lap", "lap", "boost",
-	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen"]
+	"shift_done_today", "regen_bonus", "boss_won_today", "boss_wins", "tutorial", "battles_today", "total_battles", "wins_today", "daily_done", "consolation_done", "enemies_seen", "daily_pick"]
 
 
 func save_game() -> void:
