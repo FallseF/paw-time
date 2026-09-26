@@ -391,6 +391,13 @@ func _next() -> void:
 	busy = false
 
 
+## 画面のどこをタップしても、つぎの玉へ
+func _gui_input(event: InputEvent) -> void:
+	if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or event is InputEventScreenTouch:
+		if event.pressed and not busy and next_btn.visible:
+			_next()
+
+
 ## レアのときの、はんこ
 func _stamp(t: String) -> void:
 	var l := _text(t, 34, Color("e8483f"), font_black)
