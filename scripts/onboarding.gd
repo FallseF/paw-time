@@ -93,4 +93,4 @@ static func resume_screen() -> String:
 
 ## はじめての夜は、ふわふわ逃げない泡の玉がひとつだけ（ゆっくり・軽い・まだ会ったことのない子）
 static func tutorial_orbs() -> Array:
-	return [{"type": "dish", "rare": false, "weight": 0.15, "easy": true}]
+	return [{"type": "dish", "rare": false, "weight": 0.15, "easy": true, "content": {"kind": "obake"}}] # はじめての玉は必ずおばネコ

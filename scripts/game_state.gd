@@ -135,6 +135,7 @@ var last_goals := 0
 var stall_claimed := false
 var force_dream := false # 宣伝動画用
 var stash := {} # 玉から出た材料と服 "kind:id" → 数（Drops.grant が数える）
+var last_new_cat_day := 0 # 最後に新しいおばネコがかえった日（Drops.CAT_PITY_NIGHTS の数え始め）
 
 # ---------- 島（自分たちの島をつくって、シェアする） ----------
 var layout := {} # 島の物の置き場所 key → {x, z, r(45°単位), h(しまった)}
@@ -218,6 +219,7 @@ func reset(new_mode := "data") -> void:
 	pending_toasts = []
 	layout = {}
 	stash = {}
+	last_new_cat_day = 0
 	host_id = ""
 	keepsakes = []
 	visit = {}
@@ -410,7 +412,7 @@ func finish_shift() -> Array:
 		for c in s.coworkers:
 			if coworker_count.get(c, 0) >= 2:
 				received = true
-				orbs.append({"type": s.role, "rare": false})
+				orbs.append({"type": s.role, "rare": false, "content": Drops.roll(s.role, false)})
 				got.append({"kind": "gift", "id": s.role, "text": tr("%sから、光る玉をもらった") % tr(c)})
 				break
 	var before: int = decos.get(s.role, 0)
@@ -575,6 +577,9 @@ func use_net(net_id: String) -> bool:
 func add_obake(species_id: String) -> bool:
 	var is_new := not seen.has(species_id)
 	seen[species_id] = true
+	# 救済の数え直し：新しい子がかえった日。いつもの 5 種がそろったあとは、どの子でも数え直す（毎晩おばネコにならないように）
+	if is_new or ["receipt", "bubble", "tray", "pan", "box"].all(func(x): return seen.has(x)):
+		last_new_cat_day = day
 	for o in owned:
 		if o.id == species_id:
 			o.xp += 20
@@ -654,6 +659,20 @@ func tonight_orbs() -> Array:
 			wgt *= 0.8 # 泡の玉は軽い
 		var tt: String = "rare" if rare else t
 		out.append({"type": tt, "rare": rare, "weight": wgt, "content": Drops.roll(tt, rare)})
+	# しばらく新しいおばネコに会えていなければ、いちばんいい玉（虹の玉、なければ先頭）をおばネコに
+	if day - last_new_cat_day >= Drops.CAT_PITY_NIGHTS and not out.is_empty() and not out.any(func(o): return Drops.is_cat(o.content)):
+		var best := 0
+		for i in out.size():
+			if out[i].rare:
+				best = i
+				break
+		out[best].content = {"kind": "obake"}
+		# まだ会っていない、いつもの子がいれば、その子の仕事の色の玉にする（救済で同じ子ばかりにならないように）
+		for t in ["register", "dish", "hall", "kitchen", "stock"]:
+			if not seen.has(TYPE_SPECIES[t]):
+				out[best].type = t
+				out[best].rare = false
+				break
 	return out
 
 
@@ -891,7 +910,9 @@ func finish_moon(lit: int, bonus_taps: int) -> Dictionary:
 	# 月の玉：灯りの数に応じて段階的に。3つで夢の玉、4つで満月（虹の玉とツキミ）
 	var n := clampi((lit + 1) / 2, 1, 3)
 	for i in n:
-		orbs.append({"type": "rare" if won and i == 0 else ["register", "dish", "hall", "kitchen", "stock"].pick_random(), "rare": won and i == 0})
+		# 満月の虹の玉はおばネコのまま（ツキミの夜）。ほかの月の玉は、ふつうの玉と同じ割合（Drops）
+		var mt: String = "rare" if won and i == 0 else ["register", "dish", "hall", "kitchen", "stock"].pick_random()
+		orbs.append({"type": mt, "rare": won and i == 0, "content": {"kind": "obake"} if won and i == 0 else Drops.roll(mt, false)})
 	if lit >= 3:
 		orbs.append({"type": "sleep", "rare": false})
 		n += 1
@@ -961,7 +982,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "last_new_cat_day"]
 
 
 func save() -> void:

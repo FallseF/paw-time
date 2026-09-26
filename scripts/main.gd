@@ -138,10 +138,13 @@ func _seed_for(start: String) -> void:
 	var ff := int(OS.get_environment("OBAKE_FF")) if OS.get_environment("OBAKE_FF") != "" else 0
 	if ff > 0:
 		fast_forward(ff)
+	# 確認用：おばネコの玉が混ざる夜（救済を効かせる）
+	if OS.get_environment("OBAKE_CAT_ORB") != "":
+		GameState.last_new_cat_day = GameState.day - Drops.CAT_PITY_NIGHTS
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		if OS.get_environment("OBAKE_ITEMS") != "":
-			GameState.orbs = [{"type": "hall", "rare": false, "content": {"kind": "material", "id": "shell"}}, {"type": "kitchen", "rare": false, "content": {"kind": "cloth", "id": "scarf"}}]
+			GameState.orbs = [{"type": "dish", "rare": false, "content": {"kind": "obake"}}, {"type": "hall", "rare": false, "content": {"kind": "material", "id": "shell"}}, {"type": "stock", "rare": false, "content": {"kind": "material", "id": "driftwood"}}, {"type": "kitchen", "rare": false, "content": {"kind": "cloth", "id": "scarf"}}]
 		GameState.sleep(330, 420)
 		var force := OS.get_environment("OBAKE_RARE")
 		if force != "":

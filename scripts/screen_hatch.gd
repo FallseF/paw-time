@@ -38,18 +38,19 @@ func _ready() -> void:
 		p.stream = load("res://assets/sfx/%s.wav" % n)
 		add_child(p)
 		sfx[n] = p
-	# 新顔とレアを先に、いつもの子はあとでまとめて
-	var featured: Array = GameState.hatched.filter(func(x): return x.is_new or x.get("rare", false) or x.has("kind"))
-	var dupes: Array = GameState.hatched.filter(func(x): return not (x.is_new or x.get("rare", false) or x.has("kind")))
-	GameState.hatched = featured + dupes
-	batch_from = featured.size() if dupes.size() >= 2 else GameState.hatched.size()
+	# おばネコ（新顔・レア）を先に、ひとつずつ大きく。島の材料・服といつもの子は、あとでまとめて一度に（朝が長くならないように）
+	var featured: Array = GameState.hatched.filter(func(x): return not x.has("kind") and (x.is_new or x.get("rare", false) or x.get("big", false)))
+	var quick: Array = GameState.hatched.filter(func(x): return not featured.has(x))
+	GameState.hatched = featured + quick
+	var only_cat_dupe: bool = quick.size() == 1 and not quick[0].has("kind")
+	batch_from = featured.size() if not quick.is_empty() and not only_cat_dupe else GameState.hatched.size()
 	var n_orbs: int = GameState.hatched.size()
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
 		var t: String = GameState.info(h.id).type
 		if h.has("kind"):
 			t = "any"
-		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": Rares.is_rare(h.id) or h.get("big", false), "weight": 0.3, "content": h.get("content", {})})
+		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": Rares.is_rare(h.id) or h.get("big", false), "weight": 0.3, "content": h.get("content", {"kind": "obake"})})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
 		# 生まれたおばけが主役なので、棚の玉は控えめに光らせる（照らす光は特に弱く）
@@ -291,17 +292,25 @@ func _next() -> void:
 	var tw := create_tween()
 	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw.finished
-	for i in 3:
-		var amp := 0.03 + i * 0.03
+	# おばネコはいまレアなので、ひびが入るまで長めに（震えるたびに光が強くなる）
+	var is_cat: bool = not h.has("kind")
+	var shakes := 5 if is_cat else 2
+	for i in shakes:
+		var amp := 0.03 + i * 0.025
 		var tw2 := create_tween()
 		tw2.tween_property(orb, "position:x", amp, 0.06)
 		tw2.tween_property(orb, "position:x", -amp, 0.08)
 		tw2.tween_property(orb, "position:x", 0.0, 0.06)
-		tw2.parallel().tween_property(orb, "scale", Vector3.ONE * (1.0 + i * 0.25), 0.2)
+		tw2.parallel().tween_property(orb, "scale", Vector3.ONE * (1.0 + i * 0.18), 0.2)
+		if is_cat:
+			orb.energy_scale = 0.8 + i * 0.35
+			orb.light_scale = 0.3 + i * 0.3
 		await tw2.finished
-		await get_tree().create_timer(0.25 - i * 0.05).timeout
+		await get_tree().create_timer(0.3 - i * 0.04).timeout
 	# 割れる
-	_flash(0.9)
+	_flash(1.0 if is_cat else 0.9)
+	if is_cat:
+		_light_burst(orb.position)
 	sfx["hatch"].play()
 	if h.id == "kirari":
 		sfx["sparkle"].play()
@@ -364,29 +373,44 @@ func _open_batch() -> void:
 	sfx["hatch"].play()
 	var counts := {}
 	var levels := {}
+	var n_items := 0
 	for i in rest.size():
 		var h: Dictionary = GameState.hatched[index + i]
 		counts[h.id] = counts.get(h.id, 0) + 1
 		levels[h.id] = h.level
+		if h.has("kind"):
+			n_items += 1
 		var o: Orb3D = rest[i]
-		var ob := Obake3D.make(h.id)
-		ob.position = o.position + Vector3(0, -0.2, 0)
+		var item: bool = h.has("kind")
+		var ob: Node3D = Drops.make_icon(h.content) if item else Obake3D.make(h.id)
+		ob.position = o.position + Vector3(0, -0.2 if not item else -0.05, 0)
 		ob.scale = Vector3.ONE * 0.05
 		world.add_child(ob)
 		batch_obs.append(ob)
 		o.queue_free()
-		create_tween().tween_property(ob, "scale", Vector3.ONE * 0.3, 0.5).set_delay(i * 0.06).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		create_tween().tween_property(ob, "scale", Vector3.ONE * (0.3 if not item else 0.28), 0.5).set_delay(i * 0.06).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	burst.position = Vector3(0, 0.6, 0.5)
 	burst.restart()
 	burst.emitting = true
 	await get_tree().create_timer(0.5).timeout
 	sfx["chime"].play()
 	var lines: Array = []
+	var names := {}
+	for i in rest.size():
+		var hh: Dictionary = GameState.hatched[index + i]
+		names[hh.id] = tr(Drops.info(hh.content).get("name", hh.id)) if hh.has("kind") else tr(GameState.info(hh.id).name)
 	for id in counts:
-		lines.append("%s ×%d（Lv%d）" % [tr(GameState.info(id).name), counts[id], levels[id]])
-	card_title.text = "いつもの子たち"
+		lines.append(("%s ×%d" % [names[id], counts[id]]) if _is_item_id(id, index, rest.size()) else ("%s ×%d（Lv%d）" % [names[id], counts[id], levels[id]]))
 	badge.get_parent().visible = false
-	card_sub.text = "なかまが増えて、少し育った"
+	if n_items == rest.size():
+		card_title.text = "島の材料と服"
+		card_sub.text = "島づくりと着がえに使える"
+	elif n_items == 0:
+		card_title.text = "いつもの子たち"
+		card_sub.text = "なかまが増えて、少し育った"
+	else:
+		card_title.text = "今朝の見つけもの"
+		card_sub.text = "島の材料と服、いつもの子たち"
 	card_desc.text = "\n".join(lines)
 	card.position.y = 400
 	var tw4 := create_tween().set_parallel()
@@ -396,6 +420,29 @@ func _open_batch() -> void:
 	next_btn.text = "庭へ"
 	next_btn.disabled = false
 	busy = false
+
+
+## おばネコが出る瞬間の光（まわりを一度だけ強く照らす）
+func _light_burst(at: Vector3) -> void:
+	var l := OmniLight3D.new()
+	l.light_color = Color("ffe9b0")
+	l.omni_range = 4.0
+	l.light_energy = 0.0
+	l.position = at + Vector3(0, 0.1, 0.3)
+	world.add_child(l)
+	Kit.shake(cam, 0.05, 0.35)
+	var tw := create_tween()
+	tw.tween_property(l, "light_energy", 5.0, 0.12)
+	tw.tween_property(l, "light_energy", 0.0, 0.9).set_trans(Tween.TRANS_SINE)
+	tw.tween_callback(l.queue_free)
+
+
+func _is_item_id(id: String, from: int, n: int) -> bool:
+	for i in n:
+		var hh: Dictionary = GameState.hatched[from + i]
+		if hh.id == id:
+			return hh.has("kind")
+	return false
 
 
 func _type_label(t: String) -> String:

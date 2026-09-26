@@ -1,8 +1,15 @@
 class_name Drops
 ## すくった玉の中身：おばけ／島の材料／服。玉の中にヒント（小さな影）を見せ、朝の孵化で明かす。
-## いまは仮の中身。wardrobe / island-kit のブランチを取り込んだら、下の 2 か所を差しかえるだけでよい：
+## 割合は下の W_MATERIAL / W_CLOTH / W_CAT。いまは仮の中身。wardrobe / island-kit のブランチを取り込んだら、下の 2 か所を差しかえるだけでよい：
 ##   _roll_cloth()    → Wardrobe.random_drop()      grant の cloth → Wardrobe.grant(id)
 ##   _roll_material() → IslandKit.random_drop()     grant の material → IslandKit.grant_material(id)
+
+## 玉の中身の割合（持ち主の決定：玉はほぼ材料、おばネコはレア）。合計は何でもよい（比で引く）
+const W_MATERIAL := 70
+const W_CLOTH := 20
+const W_CAT := 10
+## この夜数のあいだ新しいおばネコがかえらなければ、次の夜のいちばんいい玉をおばネコにする（画面には出さない）
+const CAT_PITY_NIGHTS := 7
 
 const MATERIALS := {
 	"driftwood": {"name": "流木", "color": Color("b07a4a")},
@@ -21,15 +28,25 @@ const CLOTHES := {
 
 
 ## 玉ひとつの中身を決める（すくう前、川に浮かんだ時点で決まっている）
+## 虹の玉（rare）も同じ割合で引き、材料・服なら「レアの品」にする（tier: rare）。夢の泡・夜の玉はおばネコ。
+## 暮らしから来るレア（rares.gd）は玉とは別に決まるので、この割合には入らない。
 static func roll(orb_type: String, rare: bool) -> Dictionary:
-	if rare or orb_type in ["sleep", "night"]:
+	if orb_type in ["sleep", "night"]:
 		return {"kind": "obake"}
-	var r := randf()
-	if r < 0.22:
-		return _roll_material()
-	elif r < 0.34:
-		return _roll_cloth()
-	return {"kind": "obake"}
+	var r := randi() % (W_MATERIAL + W_CLOTH + W_CAT)
+	var c: Dictionary
+	if r < W_MATERIAL:
+		c = _roll_material()
+	elif r < W_MATERIAL + W_CLOTH:
+		c = _roll_cloth()
+	else:
+		return {"kind": "obake"}
+	c["tier"] = "rare" if rare else "common"
+	return c
+
+
+static func is_cat(c: Dictionary) -> bool:
+	return c.get("kind", "obake") == "obake"
 
 
 static func _roll_material() -> Dictionary:

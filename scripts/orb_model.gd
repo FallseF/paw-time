@@ -119,6 +119,30 @@ func setup(color: Color, is_rare := false, r := 0.17) -> OrbModel:
 	return self
 
 
+## おばネコの入った玉（いまはレア）：子猫の影をはっきり、金色の輪ときらめきを足す
+var cat_ring: MeshInstance3D
+
+
+func mark_cat() -> void:
+	for m in sleeper.get_children():
+		var mat := (m as MeshInstance3D).material_override as StandardMaterial3D
+		mat.albedo_color = Color(mat.albedo_color, 0.9)
+	sleeper.scale = Vector3.ONE * 1.2
+	var gold := Color("ffe27a")
+	cat_ring = MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = radius * 1.18
+	tm.outer_radius = radius * 1.32
+	tm.rings = 32
+	cat_ring.mesh = tm
+	cat_ring.material_override = Kit.glow(gold, 2.4)
+	cat_ring.rotation.x = 0.25
+	add_child(cat_ring)
+	sparkles.amount = 20
+	(sparkles.material_override as StandardMaterial3D).emission = gold
+	light.omni_range = radius * 9.0
+
+
 ## e は玉の中の光の強さ。light_k はまわりを照らす光の倍率（1 で今までどおり）。
 func set_energy(e: float, light_k := 1.0) -> void:
 	core_mat.set_shader_parameter("energy", e)
@@ -131,5 +155,8 @@ func _process(delta: float) -> void:
 	sleeper.scale = Vector3.ONE * (1.0 + sin(_t * 1.8) * 0.05)
 	sleeper.rotation.y = sin(_t * 0.4) * 0.6
 	shell.rotation.y += delta * 0.3
+	if cat_ring:
+		cat_ring.rotation.y += delta * 1.2
+		cat_ring.scale = Vector3.ONE * (1.0 + sin(_t * 3.0) * 0.06)
 	if rare:
 		light.light_color = Color.from_hsv(fmod(_t * 0.2, 1.0), 0.5, 1.0)

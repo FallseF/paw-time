@@ -15,6 +15,7 @@ var hop := 0.0 # すくい画面の「はねる玉」用
 ## energy_scale は玉の中の光（輝き・グロー）、light_scale は玉がまわりを照らす光。
 var energy_scale := 1.0
 var light_scale := 1.0
+var cat := false # 中身がおばネコ（強く光る）
 
 
 func setup(d: Dictionary) -> Orb3D:
@@ -27,6 +28,10 @@ func setup(d: Dictionary) -> Orb3D:
 	halo_mat = StandardMaterial3D.new()
 	# 中身のヒント：材料・服なら、眠る子猫の影の代わりに小さな影
 	var c: Dictionary = d.get("content", {})
+	# おばネコの玉（中身の決まった玉だけ。夢の泡・夜の玉は別の見た目）は、強く・ちがう色で光る
+	cat = c.get("kind", "") == "obake" and not d.type in ["sleep", "night"]
+	if cat:
+		model.mark_cat()
 	if c.get("kind", "obake") != "obake" and model.sleeper:
 		model.sleeper.visible = false
 		var ic := Drops.make_icon(c, true)
@@ -41,7 +46,8 @@ func setup(d: Dictionary) -> Orb3D:
 func _process(delta: float) -> void:
 	_t += delta
 	var pulse := 0.5 + 0.5 * sin(_t * 2.4)
-	model.set_energy(((1.3 + pulse * 0.5) if caught else (2.4 + pulse * 0.9)) * energy_scale, light_scale)
+	var boost := 1.4 if cat else 1.0
+	model.set_energy(((1.3 + pulse * 0.5) if caught else (2.4 + pulse * 0.9)) * energy_scale * boost, light_scale * boost)
 	if caught:
 		return
 	# 水面にぷかぷか浮いて、少し傾く
