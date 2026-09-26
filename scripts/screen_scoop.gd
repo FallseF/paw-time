@@ -313,12 +313,12 @@ func _build_world() -> void:
 
 	if mods.rain or mods.snow:
 		var fall := CPUParticles3D.new()
-		fall.amount = 260 if mods.rain else 160
-		fall.lifetime = 1.2 if mods.rain else 5.0
+		fall.amount = 420 if mods.rain else 180
+		fall.lifetime = 0.9 if mods.rain else 5.0
 		fall.preprocess = 5.0
 		fall.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-		fall.emission_box_extents = Vector3(4, 0.2, 4)
-		fall.position = Vector3(0, 4, 0)
+		fall.emission_box_extents = Vector3(3.5, 0.2, 2.6)
+		fall.position = Vector3(0, 3.2, -1.2)
 		fall.direction = Vector3(0, -1, 0)
 		fall.spread = 5 if mods.rain else 30
 		fall.gravity = Vector3(0, -9 if mods.rain else -0.4, 0)
@@ -327,7 +327,7 @@ func _build_world() -> void:
 		var drop_mesh: Mesh
 		if mods.rain:
 			var bm := BoxMesh.new()
-			bm.size = Vector3(0.008, 0.18, 0.008)
+			bm.size = Vector3(0.006, 0.12, 0.006)
 			drop_mesh = bm
 		else:
 			var sm2 := SphereMesh.new()
@@ -335,7 +335,12 @@ func _build_world() -> void:
 			sm2.height = 0.05
 			drop_mesh = sm2
 		fall.mesh = drop_mesh
-		fall.material_override = _glow_mat(Color("a8c8ff") if mods.rain else Color("ffffff"), 0.9)
+		var fm2 := _glow_mat(Color(0.66, 0.78, 1.0, 0.45) if mods.rain else Color("ffffff"), 0.6)
+		fm2.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		fall.material_override = fm2
+		# 雨は水面に小さな波紋を立てる（見た目だけ）
+		if mods.rain:
+			water_mat.set_shader_parameter("glint", Color(0.8, 0.85, 1.0))
 		world.add_child(fall)
 
 	drops = _burst(Color("cfe8ff"), 24, 0.7, Vector3(0, -6, 0), 1.2, 2.4)
@@ -382,17 +387,17 @@ func _build_world() -> void:
 
 func _festival_deco() -> void:
 	# 紅白の提灯をつないだ綱
-	for row in 2:
-		var z := -2.9 + row * 0.2
+	for row in 1:
+		var z := -3.1
 		for i in 13:
 			var x := -3.0 + i * 0.5
 			var l := MeshInstance3D.new()
 			var sm := SphereMesh.new()
-			sm.radius = 0.1
-			sm.height = 0.26
+			sm.radius = 0.09
+			sm.height = 0.22
 			l.mesh = sm
-			var sag := 0.25 * sin(PI * float(i) / 12.0)
-			l.position = Vector3(x, 2.1 - sag - row * 0.15, z)
+			var sag := 0.2 * sin(PI * float(i) / 12.0)
+			l.position = Vector3(x, 1.25 - sag, z)
 			l.material_override = _glow_mat(Color("ff6b5b") if i % 2 == 0 else Color("fff1dc"), 1.8)
 			world.add_child(l)
 	var ol := OmniLight3D.new()
