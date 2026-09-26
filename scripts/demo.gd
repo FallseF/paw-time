@@ -148,22 +148,22 @@ func promo() -> void:
 	# 3) 休憩室がにぎやかに（24〜29秒）
 	await main.go("room")
 	caption("かえったおばけが、休憩室に。", 250)
-	await _wait(1.2)
+	await _wait(1.0)
 	main.current._close_report()
-	await _wait(3.6)
+	await _wait(3.0)
 	# 4) 図鑑はトロフィー部屋（29〜34秒）
 	await main.go("zukan")
 	caption("レア30体。図鑑をうめよう。", 520)
 	var z = main.current
-	await _wait(0.8)
+	await _wait(0.6)
 	var sc: ScrollContainer = z.get_child(2) if z.get_child(2) is ScrollContainer else null
 	for c in z.get_children():
 		if c is ScrollContainer:
 			sc = c
 	if sc:
 		var tw := create_tween()
-		tw.tween_property(sc, "scroll_vertical", 900, 4.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await _wait(4.4)
+		tw.tween_property(sc, "scroll_vertical", 900, 3.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await _wait(3.6)
 	# 5) 土曜は大すくい祭り（34〜42秒）
 	GameState.day = 19
 	GameState.phase = "room"
@@ -172,9 +172,9 @@ func promo() -> void:
 	GameState.pois["double"] = 2
 	await main.go("catch")
 	main.current.selected = "double"
-	main.current.start_auto(0.95)
+	main.current.start_auto(1.0)
 	caption("土曜の夜は、大すくい祭り。", 250)
-	await _wait(5.2)
+	await _wait(7.0)
 	caption_off()
 	_big_text(["おばけの休憩室", "働いた日は、ポイが増える。", "よく寝た朝は、玉がよくかえる。"], [Color.WHITE, Color("ffe27a"), Color("ffe27a")], 0.9, 230)
 	await _wait(3.6)
