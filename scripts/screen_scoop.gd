@@ -1794,6 +1794,8 @@ func _show_conditions() -> void:
 
 ## 夜のはじめの一枚（曜日と空模様）
 func _night_title() -> void:
+	if OS.get_environment("OBAKE_DEMO") != "":
+		return # 広告動画では字幕と重なるので出さない
 	var s := GameState.today()
 	var t := "練習" if practice else ("大すくい祭り" if mods.festival else "%s曜の夜" % s.day)
 	var l := _text(t, 34, Color("fff6e8"), font_black)
