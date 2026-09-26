@@ -176,9 +176,13 @@ func _shelf() -> Control:
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.add_theme_constant_override("separation", 0)
 	for id in NORMAL:
-		var l := _text(GameState.info(id).name if GameState.seen.has(id) else "？？？", 10, Color("6a5f70"))
+		var nm: String = GameState.info(id).name if GameState.seen.has(id) else "？？？"
+		for o in GameState.owned:
+			if o.id == id:
+				nm += "\nLv%d" % o.level
+		var l := _text(nm, 10, Color("6a5f70"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.custom_minimum_size = Vector2(49, 18)
+		l.custom_minimum_size = Vector2(49, 30)
 		names.add_child(l)
 	v.add_child(names)
 	return v
