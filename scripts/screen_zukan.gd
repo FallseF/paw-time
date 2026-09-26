@@ -123,7 +123,7 @@ func _shelf() -> Control:
 	var vp := SubViewport.new()
 	vp.own_world_3d = true
 	vp.transparent_bg = true
-	vp.msaa_3d = Viewport.MSAA_4X
+	vp.msaa_3d = UI.msaa()
 	box.add_child(vp)
 	var w := Node3D.new()
 	vp.add_child(w)
@@ -220,7 +220,7 @@ func _show_normal(id: String) -> void:
 	var vp := SubViewport.new()
 	vp.own_world_3d = true
 	vp.transparent_bg = true
-	vp.msaa_3d = Viewport.MSAA_4X
+	vp.msaa_3d = UI.msaa()
 	box.add_child(vp)
 	var w := Node3D.new()
 	vp.add_child(w)

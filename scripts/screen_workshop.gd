@@ -346,7 +346,7 @@ func _partner_card() -> Control:
 	partner_vp = SubViewport.new()
 	partner_vp.own_world_3d = true
 	partner_vp.transparent_bg = true
-	partner_vp.msaa_3d = Viewport.MSAA_4X
+	partner_vp.msaa_3d = UI.msaa()
 	box.add_child(partner_vp)
 	partner_world = Node3D.new()
 	partner_vp.add_child(partner_world)

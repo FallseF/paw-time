@@ -14,6 +14,17 @@ const SKY := Color8(150, 206, 240)
 const GRAY := Color8(112, 104, 118)
 
 
+## 3D の画面のアンチエイリアス。Web（とくにスマホ）では軽くするため切る。
+## OBAKE_MSAA=0/2/4 で強制できる（確認用）
+static func msaa() -> Viewport.MSAA:
+	var force := OS.get_environment("OBAKE_MSAA")
+	if force != "":
+		return {"0": Viewport.MSAA_DISABLED, "2": Viewport.MSAA_2X, "4": Viewport.MSAA_4X}.get(force, Viewport.MSAA_4X)
+	if OS.has_feature("web") or OS.has_feature("mobile"):
+		return Viewport.MSAA_DISABLED
+	return Viewport.MSAA_4X
+
+
 static func box(bg: Color, border := INK, width := 2, shadow := 0) -> StyleBoxFlat:
 	# 丸いピル型（ドットの見た目はやめた）
 	var s := StyleBoxFlat.new()
