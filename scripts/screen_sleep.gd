@@ -332,22 +332,79 @@ func _sleep() -> void:
 
 
 ## 夜店：チョウチンが寄ってくる（夜ふかしの代わりに）
+const STALLS := [
+	["ちょうちん屋", "ちょうちんを一つ買う", "チョウチンがもう1体ついてくる"],
+	["お面屋", "真顔のお面を見る", "庭にお面の屋台（1回目）／きらきらポイ"],
+	["わたあめ屋", "わたあめを買う", "ふしぎな玉が1つ（虹かもしれない）"],
+]
+
+
+## 夜店：屋台をひとつ選ぶ（夜ふかしの代わりのごほうび）
 func _market() -> void:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", Kit.pill(Color(0.1, 0.08, 0.2, 0.95), 22, 0.3, Vector2(18, 16)))
-	p.position = Vector2(30, 200)
-	p.size = Vector2(300, 0)
+	p.add_theme_stylebox_override("panel", Kit.pill(Color(0.1, 0.08, 0.2, 0.96), 22, 0.3, Vector2(16, 14)))
+	p.position = Vector2(24, 150)
+	p.size = Vector2(312, 0)
 	add_child(p)
+	market_panel = p
+	if go_btn:
+		go_btn.visible = false
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
 	v.add_child(Kit.text("夜店の灯り", 22, Color("ffb35c"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.wrap(Kit.text("たこ焼きの湯気の向こうに、ぼんやり光るおばけがいた。ついてくるらしい", 14, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER)))
-	v.add_child(Kit.text("%s に寝る（リズムは下がる）" % GameState.clock(bed), 13, Color("ffc28a"), false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.wrap(Kit.text("たこ焼きの湯気の向こうで、ぼんやり光るおばけが並んでいる。屋台をひとつ、のぞいていく", 13, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER)))
+	for st in STALLS:
+		var b := Button.new()
+		b.text = "%s　%s\n%s" % [st[0], st[1], st[2]]
+		b.custom_minimum_size = Vector2(0, 56)
+		b.add_theme_font_override("font", Kit.bold())
+		b.add_theme_font_size_override("font_size", 12)
+		for k in ["normal", "hover", "pressed", "focus"]:
+			b.add_theme_stylebox_override(k, Kit.pill(Color(1, 0.7, 0.36, 0.18 if k != "pressed" else 0.35), 16, 0.0, Vector2(10, 6)))
+		b.add_theme_color_override("font_color", Color("fff2dc"))
+		b.add_theme_color_override("font_hover_color", Color("fff2dc"))
+		var name: String = st[0]
+		b.pressed.connect(func(): _stall(name))
+		v.add_child(b)
+	v.add_child(Kit.text("%s に寝る（リズムは下がる）" % GameState.clock(bed), 12, Color("ffc28a"), false, HORIZONTAL_ALIGNMENT_CENTER))
 	Kit.play(self, "bell", 0.7)
-	p.pivot_offset = Vector2(150, 80)
+	p.pivot_offset = Vector2(156, 120)
 	p.scale = Vector2(0.7, 0.7)
 	create_tween().tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+var market_panel: PanelContainer
+var stall_done := false
+
+
+func _stall(name: String) -> void:
+	if stall_done:
+		return
+	stall_done = true
+	Kit.play(self, "pop", 1.0)
+	var msg := ""
+	match name:
+		"ちょうちん屋":
+			GameState.orbs.append({"type": "night", "rare": false})
+			msg = "ちょうちんを買ったら、中の子もついてきた"
+		"お面屋":
+			if GameState.decos.get("mask", 0) == 0:
+				GameState.decos["mask"] = 1
+				GameState.deco_store["mask"] = "夜店"
+				msg = "お面屋ごと、庭についてきた。全部、真顔"
+			else:
+				GameState.nets["kira"] += 1
+				msg = "お面をひとつもらった。きらきらポイ +1"
+		"わたあめ屋":
+			var rare := randf() < 0.5
+			GameState.orbs.append({"type": "rare" if rare else ["register", "dish", "hall", "kitchen", "stock"].pick_random(), "rare": rare})
+			msg = "わたあめの中に、光る玉が入っていた" + ("。虹色だ" if rare else "")
+	for c in market_panel.get_child(0).get_children():
+		c.queue_free()
+	var v: VBoxContainer = market_panel.get_child(0)
+	v.add_child(Kit.text(name, 20, Color("ffb35c"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.wrap(Kit.text(msg, 14, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER)))
 	var bb: Button
 	bb = Kit.button("帰って寝る", Color("8b7bff"), func():
 		if bb.disabled:

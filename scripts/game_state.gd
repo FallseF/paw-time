@@ -611,7 +611,8 @@ func make_goals() -> void:
 	if bed_hist.is_empty():
 		sleep_goal = "hours7"
 	var pool := ["scoop3", "talk", "zukan"]
-	if not decos.is_empty() and weekday() != 6:
+	var role_decos := decos.keys().filter(func(k): return ROLE_NET.has(k))
+	if not role_decos.is_empty() and weekday() != 6:
 		pool.append("light")
 	var typed := false
 	for k in ["receipt", "bubble", "tray", "pan", "box"]:

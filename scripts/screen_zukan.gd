@@ -211,6 +211,11 @@ func _garden_list() -> Control:
 			t += " ★"
 		chip.add_child(_text(t, 11, Color("4a3f52") if lv > 0 else Color("a89ea6")))
 		flow.add_child(chip)
+	if GameState.decos.get("mask", 0) > 0:
+		var chip2 := PanelContainer.new()
+		chip2.add_theme_stylebox_override("panel", _pill(Color("fff0e0"), 12))
+		chip2.add_child(_text("夜店のお面屋", 11, Color("b0643a")))
+		flow.add_child(chip2)
 	v.add_child(flow)
 	return m
 

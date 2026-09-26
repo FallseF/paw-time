@@ -539,6 +539,28 @@ func _build_deco(role: String, lv: int) -> void:
 
 func _build_deco_body(role: String, lv: int) -> void:
 	match role:
+		"mask":
+			var g := _group("deco_mask", Vector3(-2.6, 0, 2.3))
+			_box(Vector3(1.1, 0.7, 0.3), Vector3(0, 0.35, 0), Color("c9454a"), g)
+			_box(Vector3(1.2, 0.08, 0.5), Vector3(0, 1.1, 0), Color("3b4a8c"), g)
+			for x in [-0.35, 0.35]:
+				_box(Vector3(0.05, 1.1, 0.05), Vector3(x * 1.5, 0.55, 0.2), Color("6b4430"), g)
+			for i in 3:
+				var m := _cyl(0.14, 0.03, Color("fffaf0"))
+				m.rotation.x = PI / 2
+				m.position = Vector3(-0.35 + i * 0.35, 0.85, 0.2)
+				g.add_child(m)
+				for ex in [-0.05, 0.05]:
+					var e := _ball(0.015, Color("2e222f"), Obake3D.flat(Color("2e222f")))
+					e.position = Vector3(-0.35 + i * 0.35 + ex, 0.88, 0.23)
+					g.add_child(e)
+			var l := OmniLight3D.new()
+			l.light_color = Color("ffb35c")
+			l.light_energy = 1.0
+			l.omni_range = 2.0
+			l.position = Vector3(0, 1.0, 0.5)
+			g.add_child(l)
+			lamp_lights.append(l)
 		"register":
 			var g := _group("deco_register", Vector3(-1.4, 0, 1.9))
 			var pole := _cyl(0.03, 1.3, Color("f4f1ea"))

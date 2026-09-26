@@ -87,6 +87,8 @@ func _process(delta: float) -> void:
 		"sleep":
 			if c.get("going"):
 				if c.plan == "market":
+					if not c.stall_done:
+						c.call("_stall", ["ちょうちん屋", "お面屋", "わたあめ屋"].pick_random())
 					c.plan = "done_market"
 					c.going = false
 					c.call("_sleep")
