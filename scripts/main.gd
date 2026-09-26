@@ -61,6 +61,12 @@ func _ready() -> void:
 	go(start if SCREENS.has(start) else "title", true)
 	root.add_child(fade)
 	_maybe_autoshot()
+	if OS.get_environment("OBAKE_FPS") != "":
+		var t := Timer.new()
+		t.wait_time = 2.0
+		t.autostart = true
+		t.timeout.connect(func(): print("fps ", Engine.get_frames_per_second(), " ", current_name))
+		add_child(t)
 
 
 func go(screen_name: String, instant := false) -> void:
