@@ -132,6 +132,79 @@ def river_loop():
     return out[: n - fade]
 
 
+def tone(f, dur, decay, harm=(1.0, 0.3), amp=1.0):
+    n = int(SR * dur)
+    return [amp * math.exp(-i / (SR * decay)) * sum(h * math.sin(2 * math.pi * f * (k + 1) * 1.0005 ** k * i / SR) for k, h in enumerate(harm)) for i in range(n)]
+
+
+def mix(dst, src, at):
+    s = int(SR * at)
+    for i, x in enumerate(src):
+        if s + i < len(dst):
+            dst[s + i] += x
+
+
+def tap():
+    out = tone(1400, 0.08, 0.012, (1.0, 0.2))
+    return out
+
+
+def pop():
+    n = int(SR * 0.18)
+    return [math.sin(2 * math.pi * (500 + 900 * (i / n)) * i / SR) * math.exp(-i / (SR * 0.04)) for i in range(n)]
+
+
+def grow():
+    out = [0.0] * int(SR * 1.4)
+    for k, f in enumerate([523.3, 659.3, 784.0, 1046.5, 1318.5]):
+        mix(out, tone(f, 1.0, 0.35, (1.0, 0.25, 0.1)), k * 0.08)
+    return out
+
+
+def bell():
+    out = [0.0] * int(SR * 1.8)
+    mix(out, tone(880, 1.8, 0.6, (1.0, 0.0, 0.4, 0.0, 0.15)), 0)
+    mix(out, tone(1320, 1.2, 0.4, (0.4,)), 0.0)
+    return out
+
+
+def night():
+    out = [0.0] * int(SR * 2.4)
+    for k, f in enumerate([392.0, 329.6, 261.6]):
+        mix(out, tone(f, 1.8, 0.7, (1.0, 0.15)), k * 0.35)
+    return out
+
+
+def dream():
+    out = [0.0] * int(SR * 3.0)
+    for k, f in enumerate([523.3, 659.3, 784.0, 987.8, 784.0, 659.3]):
+        mix(out, tone(f, 1.6, 0.5, (1.0, 0.1, 0.25)), k * 0.22)
+    return out
+
+
+def lullaby():
+    """オルゴールの子守歌（ループ用、8小節）"""
+    bpm = 84
+    beat = 60 / bpm
+    melody = [(67, 1), (64, 0.5), (65, 0.5), (67, 1), (72, 1), (69, 1), (67, 1), (64, 2),
+              (65, 1), (62, 0.5), (64, 0.5), (65, 1), (69, 1), (67, 1.5), (65, 0.5), (64, 2),
+              (67, 1), (64, 0.5), (65, 0.5), (67, 1), (72, 1), (74, 1), (72, 1), (69, 2),
+              (67, 1), (65, 1), (64, 1), (62, 1), (60, 4)]
+    total = sum(d for _, d in melody) * beat
+    out = [0.0] * int(SR * total)
+    t = 0.0
+    for m, d in melody:
+        f = 440 * 2 ** ((m - 69) / 12)
+        mix(out, tone(f, min(2.5, d * beat + 1.2), 0.45, (1.0, 0.0, 0.3, 0.0, 0.08), 0.6), t)
+        t += d * beat
+    bass = [48, 53, 55, 48, 53, 55, 53, 48]
+    for i, m in enumerate(bass):
+        f = 440 * 2 ** ((m - 69) / 12)
+        for b in range(4):
+            mix(out, tone(f * (1.5 if b % 2 else 1.0), 1.0, 0.3, (1.0, 0.2), 0.25), (i * 4 + b) * beat)
+    return out
+
+
 write("splash", splash())
 write("lift", lift())
 write("chime", chime())
@@ -139,4 +212,6 @@ write("tear", tear())
 write("hatch", hatch())
 write("sparkle", sparkle())
 write("river_loop", river_loop())
+for name, fn in [("tap", tap), ("pop", pop), ("grow", grow), ("bell", bell), ("night", night), ("dream", dream), ("lullaby", lullaby)]:
+    write(name, fn())
 print("wrote sfx to", OUT)

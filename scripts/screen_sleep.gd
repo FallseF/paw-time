@@ -1,20 +1,23 @@
 extends Control
-## 寝る前。何時間寝るかを決める。本番ではスマホの睡眠記録から入る。
-## 睡眠で、光る玉の育ち方・明日のポイの破れにくさが決まる。
+## 寝る前。寝る時刻と起きる時刻を決める（記録モードでは、スマホの睡眠記録（見本）が入る）。
+## いつもの時刻に、7〜9時間眠るとリズムが上がる。夜ふかしは夜のおばけを呼ぶが、リズムが下がる。
 
 var main
-var hours := 7
-var font_bold: FontFile
-var font_black: FontFile
-var big: Label
+var bed := 330
+var wake := 420
+var locked := false
+var bed_label: Label
+var wake_label: Label
+var hours_label: Label
 var preview: VBoxContainer
+var timeline: Control
+var bed_btns: Array = []
 var stars: Array = []
 var _t := 0.0
+var going := false
 
 
 func _ready() -> void:
-	font_bold = load("res://assets/fonts/ZenMaruGothic-Bold.ttf")
-	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
 	var bg := TextureRect.new()
 	var gt := GradientTexture2D.new()
 	var g := Gradient.new()
@@ -30,64 +33,105 @@ func _ready() -> void:
 	for i in 50:
 		var s := ColorRect.new()
 		s.size = Vector2.ONE * randf_range(1.5, 3.0)
-		s.position = Vector2(randf() * 360, randf() * 330)
+		s.position = Vector2(randf() * 360, randf() * 200)
 		s.color = Color(1, 1, 1, randf_range(0.3, 0.9))
+		s.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(s)
 		stars.append([s, randf() * TAU])
 	var moon := Panel.new()
 	var ms := StyleBoxFlat.new()
 	ms.bg_color = Color("fff1c8")
-	ms.set_corner_radius_all(40)
+	ms.set_corner_radius_all(30)
 	ms.shadow_color = Color(1, 0.95, 0.8, 0.45)
-	ms.shadow_size = 30
+	ms.shadow_size = 24
 	moon.add_theme_stylebox_override("panel", ms)
-	moon.position = Vector2(250, 60)
-	moon.size = Vector2(80, 80)
+	moon.position = Vector2(270, 40)
+	moon.size = Vector2(60, 60)
 	add_child(moon)
 
-	var title := _text("おやすみの前に", 24, Color("f3eeff"), font_black)
-	title.position = Vector2(0, 150)
+	var title := Kit.text("おやすみの前に", 24, Color("f3eeff"), true, HORIZONTAL_ALIGNMENT_CENTER)
+	title.position = Vector2(0, 50)
 	title.size = Vector2(360, 36)
 	add_child(title)
-	var note := _text("本番ではスマホの睡眠記録から自動で入ります", 12, Color(1, 1, 1, 0.55))
-	note.position = Vector2(0, 186)
+	locked = GameState.mode == "data"
+	var note_t := "スマホの睡眠記録（見本）から入ります" if locked else "いつもの時刻は %s ごろ" % GameState.clock(GameState.usual_bed())
+	var note := Kit.text(note_t, 12, Color(1, 1, 1, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
+	note.position = Vector2(0, 86)
 	note.size = Vector2(360, 20)
 	add_child(note)
 
-	var row := HBoxContainer.new()
-	row.position = Vector2(30, 222)
-	row.size = Vector2(300, 110)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 18)
-	add_child(row)
-	row.add_child(_round("−", func(): _set_hours(hours - 1)))
-	big = _text("", 64, Color.WHITE, font_black)
-	big.custom_minimum_size = Vector2(150, 100)
-	row.add_child(big)
-	row.add_child(_round("＋", func(): _set_hours(hours + 1)))
+	if locked:
+		var r := GameState.recorded_sleep()
+		bed = r.bed
+		wake = r.wake
+	else:
+		bed = GameState.usual_bed()
+		wake = 420
+
+	bed_label = _row("寝る", 118, func(d): _set_time(bed + d * 30, wake))
+	wake_label = _row("起きる", 180, func(d): _set_time(bed, wake + d * 30))
+
+	timeline = Control.new()
+	timeline.position = Vector2(24, 250)
+	timeline.size = Vector2(312, 46)
+	timeline.draw.connect(_draw_timeline)
+	add_child(timeline)
 
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.1), 22))
-	card.position = Vector2(24, 350)
-	card.size = Vector2(312, 150)
+	card.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.09), 22, 0.0, Vector2(16, 12)))
+	card.position = Vector2(24, 306)
+	card.size = Vector2(312, 220)
 	add_child(card)
 	preview = VBoxContainer.new()
-	preview.add_theme_constant_override("separation", 6)
+	preview.add_theme_constant_override("separation", 5)
 	card.add_child(preview)
 
-	var go := Button.new()
-	go.text = "おやすみ"
-	go.position = Vector2(70, 540)
+	var go := Kit.button("おやすみ", Color("8b7bff"), _sleep, Color.WHITE, 54, 20)
+	go.position = Vector2(70, 560)
 	go.size = Vector2(220, 54)
-	go.add_theme_font_override("font", font_black)
-	go.add_theme_font_size_override("font_size", 20)
-	for k in ["normal", "hover", "pressed"]:
-		go.add_theme_stylebox_override(k, _pill(Color("8b7bff"), 27))
-	go.add_theme_color_override("font_color", Color.WHITE)
-	go.add_theme_color_override("font_hover_color", Color.WHITE)
-	go.pressed.connect(_sleep)
 	add_child(go)
-	_set_hours(hours)
+	if not GameState.tut.has("sleep"):
+		Kit.nudge.call_deferred(go)
+	_set_time(bed, wake)
+
+
+func _row(label: String, y: int, cb: Callable) -> Label:
+	var row := HBoxContainer.new()
+	row.position = Vector2(24, y)
+	row.size = Vector2(312, 56)
+	row.add_theme_constant_override("separation", 10)
+	add_child(row)
+	var l := Kit.text(label, 16, Color(1, 1, 1, 0.7))
+	l.custom_minimum_size = Vector2(64, 0)
+	row.add_child(l)
+	var minus := _round("−", func(): cb.call(-1))
+	row.add_child(minus)
+	var big := Kit.text("", 36, Color.WHITE, true, HORIZONTAL_ALIGNMENT_CENTER)
+	big.custom_minimum_size = Vector2(120, 50)
+	row.add_child(big)
+	var plus := _round("＋", func(): cb.call(1))
+	row.add_child(plus)
+	if locked:
+		minus.visible = false
+		plus.visible = false
+	return big
+
+
+func _round(t: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.custom_minimum_size = Vector2(46, 46)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.add_theme_font_override("font", Kit.black())
+	b.add_theme_font_size_override("font_size", 22)
+	for k in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.16 if k != "pressed" else 0.3), 23, 0.0, Vector2(4, 2)))
+	b.add_theme_color_override("font_color", Color.WHITE)
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
+	b.pressed.connect(func():
+		Kit.play(self, "tap", 1.2)
+		cb.call())
+	return b
 
 
 func _process(delta: float) -> void:
@@ -96,79 +140,98 @@ func _process(delta: float) -> void:
 		s[0].modulate.a = 0.5 + 0.5 * sin(_t * 2.0 + s[1])
 
 
-func _pill(bg: Color, radius := 20) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = bg
-	s.set_corner_radius_all(radius)
-	s.content_margin_left = 18
-	s.content_margin_right = 18
-	s.content_margin_top = 12
-	s.content_margin_bottom = 12
-	return s
+## 21:00〜11:00 の帯に、眠る時間と「いつもの時刻」を描く
+func _draw_timeline() -> void:
+	var w := timeline.size.x
+	var x0 := 0.0
+	var span := 14.0 * 60.0 # 21:00 → 11:00
+	var to_x := func(m_from_21: float) -> float: return x0 + clampf(m_from_21 / span, 0, 1) * w
+	timeline.draw_rect(Rect2(0, 14, w, 16), Color(1, 1, 1, 0.08))
+	# いつもの時刻（±30分）
+	var u := GameState.usual_bed() - 180
+	var ux: float = to_x.call(u - 30)
+	var ux2: float = to_x.call(u + 30)
+	timeline.draw_rect(Rect2(ux, 10, ux2 - ux, 24), Color("8fe0a0", 0.35))
+	# 眠る時間
+	var bx: float = to_x.call(bed - 180)
+	var wx: float = to_x.call(wake + 360 - 180)
+	var col := Color("9fb4ff") if bed <= GameState.LATE_LINE else Color("ff9a4d")
+	timeline.draw_rect(Rect2(bx, 16, wx - bx, 12), col)
+	# 1:00 の線
+	var lx: float = to_x.call(GameState.LATE_LINE - 180)
+	timeline.draw_line(Vector2(lx, 6), Vector2(lx, 38), Color(1, 0.6, 0.4, 0.6), 1.0)
+	var f := Kit.bold()
+	for m in [0, 180, 360, 540, 720, 840]:
+		var x: float = to_x.call(m)
+		var lbl := GameState.clock(m + 180)
+		timeline.draw_string(f, Vector2(x - 12, 46), lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1, 1, 1, 0.5))
+	timeline.draw_string(f, Vector2(ux, 8), "いつも", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8fe0a0"))
 
 
-func _text(t: String, size: int, color := Color.WHITE, font: FontFile = null) -> Label:
-	var l := Label.new()
-	l.text = t
-	l.add_theme_font_override("font", font if font else font_bold)
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", color)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	return l
-
-
-func _round(t: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = t
-	b.custom_minimum_size = Vector2(56, 56)
-	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	b.add_theme_font_override("font", font_black)
-	b.add_theme_font_size_override("font_size", 26)
-	for k in ["normal", "hover", "pressed"]:
-		b.add_theme_stylebox_override(k, _pill(Color(1, 1, 1, 0.16 if k != "pressed" else 0.28), 28))
-	b.add_theme_color_override("font_color", Color.WHITE)
-	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.pressed.connect(cb)
-	return b
-
-
-func _set_hours(h: int) -> void:
-	hours = clampi(h, 4, 9)
-	big.text = "%d時間" % hours
+func _set_time(b: int, w: int) -> void:
+	bed = clampi(b, 180, 540) # 21:00〜3:00
+	wake = clampi(w, 300, 630) # 5:00〜10:30
+	bed_label.text = GameState.clock(bed)
+	wake_label.text = GameState.wake_clock(wake)
+	timeline.queue_redraw()
 	for c in preview.get_children():
 		c.queue_free()
-	var strength := 0.7 if hours < 6 else (1.0 if hours < 7 else 1.25)
+	var ns := GameState.night_score(bed, wake)
+	var h: float = ns.hours
+	var head := Kit.text("%.1f時間の眠り" % h, 18, Color.WHITE, true)
+	preview.add_child(head)
+	var parts := HFlowContainer.new()
+	parts.add_theme_constant_override("h_separation", 6)
+	parts.add_theme_constant_override("v_separation", 4)
+	for p in ns.parts:
+		var good: bool = p[1] >= 0
+		var pc := PanelContainer.new()
+		pc.add_theme_stylebox_override("panel", Kit.pill(Color(0.56, 0.88, 0.63, 0.22) if good else Color(1, 0.5, 0.45, 0.25), 12, 0.0, Vector2(8, 3)))
+		pc.add_child(Kit.text("%s %s%d" % [p[0], "+" if good else "", p[1]], 12, Color("d8ffe0") if good else Color("ffd3cc")))
+		parts.add_child(pc)
+	preview.add_child(parts)
+	var after := clampf(GameState.rhythm + ns.score, 0, 100)
+	var t_after := 3 if after >= 75 else (2 if after >= 50 else (1 if after >= 25 else 0))
+	preview.add_child(Kit.text("リズム %d → %d（%s）" % [int(GameState.rhythm), int(after), GameState.TIER_NAME[t_after]], 14, GameState.TIER_COLOR[t_after]))
+	preview.add_child(Kit.text("明日の庭のめぐみ ＋%d くらい" % GameState.growth_gain(ns.score, h), 14, Color("c8f0c0")))
 	var n := GameState.orbs.size()
-	var lines := []
 	if n > 0:
-		lines.append("光る玉 %d 個が、寝ている間に育つ" % n)
-	if hours >= 7:
-		lines.append("よく眠ると、レアなおばけが生まれやすい")
-	elif hours <= 5:
-		lines.append("夜ふかしすると、ヨミセが寄ってくる")
-	lines.append("明日のポイの強さ ×%.2f" % strength)
-	for s in lines:
-		var l := _text("・" + s, 15, Color("e8e2ff"))
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		preview.add_child(l)
+		preview.add_child(Kit.text("光る玉 %d 個が、朝にかえる" % n, 13, Color("e8e2ff")))
+	if ns.late:
+		preview.add_child(Kit.wrap(Kit.text("夜ふかし：夜のおばけが寄ってくる。でも庭はしおれる", 13, Color("ffc28a"))))
+	elif h >= 7.0 and t_after >= 2:
+		preview.add_child(Kit.text("夢を見そう（羊をかぞえる夢）", 13, Color("c9bdf5")))
 
 
 func _sleep() -> void:
+	if going:
+		return
+	going = true
+	GameState.tut["sleep"] = true
 	var dark := ColorRect.new()
 	dark.color = Color("05060f")
 	dark.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dark.modulate.a = 0.0
 	add_child(dark)
-	var zz := _text("Z z z …", 40, Color(1, 1, 1, 0.8), font_black)
+	var zz := Kit.text("Z z z …", 40, Color(1, 1, 1, 0.8), true, HORIZONTAL_ALIGNMENT_CENTER)
 	zz.position = Vector2(0, 290)
 	zz.size = Vector2(360, 60)
 	zz.modulate.a = 0.0
 	add_child(zz)
+	Kit.play(self, "night", 1.0, -4)
 	var tw := create_tween()
 	tw.tween_property(dark, "modulate:a", 1.0, 0.6)
 	tw.parallel().tween_property(zz, "modulate:a", 1.0, 0.6)
 	tw.tween_interval(0.9)
 	await tw.finished
-	GameState.sleep(hours, "")
-	main.go("hatch" if GameState.hatched.size() > 0 else "morning")
+	GameState.sleep(bed, wake)
+	if GameState.dream_pending:
+		main.go("dream")
+	elif GameState.hatched.size() > 0:
+		main.go("hatch")
+	else:
+		main.go("garden")
+
+
+func demo_late() -> void:
+	_set_time(450, 450)

@@ -262,7 +262,7 @@ func _next() -> void:
 	if busy:
 		return
 	if index >= orbs.size():
-		main.go("morning")
+		main.go("garden")
 		return
 	busy = true
 	next_btn.disabled = true

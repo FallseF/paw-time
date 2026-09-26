@@ -1,0 +1,158 @@
+extends Control
+## タイトル。つづきから／はじめから（記録とつなぐ・ゲームだけ）。
+
+var main
+var vp: SubViewport
+var obs: Array = []
+var _t := 0.0
+var confirm: Control
+
+
+func _ready() -> void:
+	var box := SubViewportContainer.new()
+	box.stretch = true
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(box)
+	vp = SubViewport.new()
+	vp.own_world_3d = true
+	vp.msaa_3d = Viewport.MSAA_4X
+	box.add_child(vp)
+	var w := Node3D.new()
+	vp.add_child(w)
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color("141a3a")
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("7a84c8")
+	env.ambient_light_energy = 0.6
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.glow_enabled = false
+	var we := WorldEnvironment.new()
+	we.environment = env
+	w.add_child(we)
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-35, 30, 0)
+	sun.light_color = Color("c8d4ff")
+	sun.light_energy = 0.5
+	w.add_child(sun)
+	var cam := Camera3D.new()
+	cam.keep_aspect = Camera3D.KEEP_WIDTH
+	cam.position = Vector3(0, 1.2, 6.0)
+	cam.fov = 44
+	w.add_child(cam)
+	cam.look_at(Vector3(0, 0.2, 0))
+	var ground := MeshInstance3D.new()
+	var gp := CylinderMesh.new()
+	gp.top_radius = 2.6
+	gp.bottom_radius = 2.6
+	gp.height = 0.1
+	ground.mesh = gp
+	ground.position = Vector3(0, -0.55, 0)
+	ground.material_override = Obake3D.toon(Color("4f7a4a"), 0.1)
+	w.add_child(ground)
+	var moon := MeshInstance3D.new()
+	var mm := SphereMesh.new()
+	mm.radius = 0.7
+	mm.height = 1.4
+	moon.mesh = mm
+	moon.material_override = Kit.glow(Color("fff1c8"), 2.0)
+	moon.position = Vector3(2.2, 2.2, -5)
+	w.add_child(moon)
+	var ids := ["nemuri", "receipt", "lantern"]
+	for i in ids.size():
+		var o := Obake3D.new().setup(ids[i])
+		o.position = Vector3((i - 1) * 1.15, -0.5, 0)
+		o.scale = Vector3.ONE * 0.75
+		o.rotation.y = (1 - i) * 0.35
+		w.add_child(o)
+		obs.append(o)
+	var flies := CPUParticles3D.new()
+	flies.amount = 30
+	flies.lifetime = 6.0
+	flies.preprocess = 6.0
+	flies.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	flies.emission_box_extents = Vector3(3, 1.5, 1.5)
+	flies.gravity = Vector3.ZERO
+	flies.initial_velocity_max = 0.1
+	flies.spread = 180
+	var fm := SphereMesh.new()
+	fm.radius = 0.02
+	fm.height = 0.04
+	flies.mesh = fm
+	flies.material_override = Kit.glow(Color("d8ff9a"), 4.0)
+	flies.position = Vector3(0, 0.8, 0)
+	w.add_child(flies)
+
+	var t1 := Kit.text("おばけの休憩室", 36, Color("fff6e8"), true, HORIZONTAL_ALIGNMENT_CENTER)
+	t1.add_theme_color_override("font_outline_color", Color("0b1026"))
+	t1.add_theme_constant_override("outline_size", 10)
+	t1.position = Vector2(0, 70)
+	t1.size = Vector2(360, 50)
+	add_child(t1)
+	var t2 := Kit.text("眠りのリズムと、夜の庭", 16, Color("c9bdf5"), false, HORIZONTAL_ALIGNMENT_CENTER)
+	t2.position = Vector2(0, 122)
+	t2.size = Vector2(360, 24)
+	add_child(t2)
+	var t3 := Kit.text("よく眠った朝は、玉がかえる。庭が育つ。", 13, Color(1, 1, 1, 0.7), false, HORIZONTAL_ALIGNMENT_CENTER)
+	t3.position = Vector2(0, 150)
+	t3.size = Vector2(360, 20)
+	add_child(t3)
+
+	var v := VBoxContainer.new()
+	v.position = Vector2(40, 430)
+	v.size = Vector2(280, 0)
+	v.add_theme_constant_override("separation", 10)
+	add_child(v)
+	if GameState.has_save():
+		var b := Kit.button("つづきから", Color("ff8a5b"), _continue)
+		v.add_child(b)
+	v.add_child(Kit.button("はじめる：記録とつなぐ（見本）", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("data"), Color.WHITE, 46, 15))
+	v.add_child(Kit.button("はじめる：ゲームだけで遊ぶ", Color(1, 1, 1, 0.92), func(): _new("solo"), Color("4a3f52"), 42, 14))
+	var n := Kit.wrap(Kit.text("記録とつなぐと、シフトの日に仕事のポイと庭の飾りが届き、睡眠は記録から入ります。ゲームだけでも毎晩遊べます。", 11, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(n)
+
+
+func _process(delta: float) -> void:
+	_t += delta
+
+
+func _continue() -> void:
+	if GameState.load_game():
+		main.go("garden")
+
+
+func _new(mode: String) -> void:
+	if GameState.has_save() and confirm == null:
+		_confirm(mode)
+		return
+	GameState.reset(mode)
+	GameState.save()
+	main.go("garden")
+
+
+func _confirm(mode: String) -> void:
+	confirm = Control.new()
+	confirm.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(confirm)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.5)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	confirm.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.2, Vector2(18, 16)))
+	p.position = Vector2(30, 230)
+	p.size = Vector2(300, 0)
+	confirm.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	p.add_child(v)
+	v.add_child(Kit.text("はじめからにする？", 18, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.wrap(Kit.text("いまの庭と図鑑は消えます", 13, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER)))
+	v.add_child(Kit.button("はじめから", Color("e85a4f"), func():
+		GameState.reset(mode)
+		GameState.save()
+		main.go("garden")))
+	v.add_child(Kit.button("やめる", Color(1, 1, 1, 0.9), func():
+		confirm.queue_free()
+		confirm = null, Color("4a3f52"), 40, 14))

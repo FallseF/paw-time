@@ -43,7 +43,7 @@ func _ready() -> void:
 		back.add_theme_stylebox_override(k, _pill(Color.WHITE, 18))
 	back.add_theme_color_override("font_color", Color("2a2233"))
 	back.add_theme_color_override("font_hover_color", Color("2a2233"))
-	back.pressed.connect(func(): main.go("room"))
+	back.pressed.connect(func(): main.go("garden"))
 	head.add_child(back)
 
 	var scroll := ScrollContainer.new()

@@ -2,23 +2,24 @@ extends Node
 ## 画面の切り替え役。画面は Control を差し替え、暗転でつなぐ。
 
 const SCREENS := {
-	"morning": preload("res://scripts/screen_room.gd"),
-	"morning2d": preload("res://scripts/screen_morning.gd"),
-	"room": preload("res://scripts/screen_room.gd"),
+	"title": preload("res://scripts/screen_title.gd"),
+	"garden": preload("res://scripts/screen_garden.gd"),
+	"morning": preload("res://scripts/screen_garden.gd"),
+	"room": preload("res://scripts/screen_garden.gd"),
+	"evening": preload("res://scripts/screen_garden.gd"),
 	"catch": preload("res://scripts/screen_scoop.gd"),
-	"catch3d": preload("res://scripts/screen_catch3d.gd"),
 	"hatch": preload("res://scripts/screen_hatch.gd"),
-	"catch2d": preload("res://scripts/screen_catch.gd"),
 	"sleep": preload("res://scripts/screen_sleep.gd"),
-	"battle": preload("res://scripts/screen_battle.gd"),
+	"dream": preload("res://scripts/screen_dream.gd"),
+	"moon": preload("res://scripts/screen_moon.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
-	"summary": preload("res://scripts/screen_summary.gd"),
 }
 
 var root: Control
 var current: Control
 var fade: ColorRect
 var busy := false
+var demo: Node
 
 
 func _ready() -> void:
@@ -27,34 +28,98 @@ func _ready() -> void:
 	root.theme = UI.make_theme()
 	add_child(root)
 	fade = ColorRect.new()
-	fade.color = UI.INK
+	fade.color = Color("0b1026")
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade.modulate.a = 0.0
 	var start := OS.get_environment("OBAKE_START")
+	if start != "" and start != "title":
+		GameState.reset(OS.get_environment("OBAKE_MODE") if OS.get_environment("OBAKE_MODE") != "" else "data")
+		_seed_for(start)
+	go(start if SCREENS.has(start) else "title", true)
+	root.add_child(fade)
+	_music()
+	if OS.get_environment("OBAKE_DEMO") != "":
+		demo = load("res://scripts/demo.gd").new()
+		demo.main = self
+		add_child(demo)
+	_maybe_autoshot()
+
+
+var music: AudioStreamPlayer
+
+
+func _music() -> void:
+	music = AudioStreamPlayer.new()
+	var loop: AudioStreamWAV = load("res://assets/sfx/lullaby.wav")
+	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	loop.loop_end = loop.data.size() / 2
+	music.stream = loop
+	music.volume_db = -13
+	add_child(music)
+	music.play()
+
+
+## 画面ごとに音楽の大きさを変える（すくいと夢では控えめ）
+func _music_for(screen_name: String) -> void:
+	if music == null:
+		return
+	var db: float = {"catch": -30.0, "dream": -22.0, "moon": -16.0}.get(screen_name, -13.0)
+	create_tween().tween_property(music, "volume_db", db, 0.6)
+
+
+## 確認用：途中の画面から始めるときの下ごしらえ
+func _seed_for(start: String) -> void:
+	var ff := int(OS.get_environment("OBAKE_FF")) if OS.get_environment("OBAKE_FF") != "" else 0
+	if ff > 0:
+		fast_forward(ff)
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
-		GameState.sleep(7, "")
+		GameState.sleep(330, 420)
 		var force := OS.get_environment("OBAKE_RARE")
 		if force != "":
 			GameState.add_obake(force)
 			GameState.hatched.push_front({"id": force, "is_new": true, "level": 1, "rare": true})
-	go(start if SCREENS.has(start) else "morning", true)
-	root.add_child(fade)
-	_maybe_autoshot()
+	elif start == "morning":
+		GameState.orbs = [{"type": "hall", "rare": false}]
+		GameState.sleep(330, 450)
+	elif start == "evening":
+		GameState.phase = "evening"
+
+
+## 何日か自動で進める（よく眠る日が多め）。監査・宣伝用
+func fast_forward(days: int) -> void:
+	for i in days:
+		var s := GameState.today()
+		if s.role != "":
+			GameState.finish_shift()
+		GameState.new_decos = []
+		GameState.orbs = [{"type": ["register", "dish", "hall", "kitchen", "stock"].pick_random(), "rare": false}, {"type": ["register", "dish", "hall"].pick_random(), "rare": randf() < 0.2}]
+		if GameState.is_moon_night():
+			var lit := 0
+			for g in GameState.moon_lanterns():
+				if g:
+					lit += 1
+			GameState.finish_moon(lit, 3)
+		var bed: int = 330 + [0, 0, 10, -10, 20, 0, 90][i % 7]
+		GameState.sleep(bed, 420 + (30 if i % 3 == 0 else 0))
+		if GameState.dream_pending:
+			GameState.finish_dream(8)
+	GameState.garden_seen_level = GameState.garden_level
+	GameState.phase = "day"
+	GameState.hatched = []
 
 
 func go(screen_name: String, instant := false) -> void:
 	if busy:
 		return
-	if screen_name == "morning" and GameState.is_week_over():
-		screen_name = "summary"
 	busy = true
 	if not instant:
 		fade.mouse_filter = Control.MOUSE_FILTER_STOP
 		var tw := create_tween()
-		tw.tween_property(fade, "modulate:a", 1.0, 0.18)
+		tw.tween_property(fade, "modulate:a", 1.0, 0.2)
 		await tw.finished
+	_music_for(screen_name)
 	if current:
 		current.queue_free()
 	current = SCREENS[screen_name].new()
@@ -64,27 +129,32 @@ func go(screen_name: String, instant := false) -> void:
 	root.move_child(current, 0)
 	if not instant:
 		var tw2 := create_tween()
-		tw2.tween_property(fade, "modulate:a", 0.0, 0.22)
+		tw2.tween_property(fade, "modulate:a", 0.0, 0.25)
 		await tw2.finished
 		fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	busy = false
 
 
-## 確認用：OBAKE_SHOT=画面名 で起動すると、その画面を撮って終わる
+## 確認用：OBAKE_SHOT="画面名,waitN,call:メソッド" で進めて撮る
 func _maybe_autoshot() -> void:
 	var target := OS.get_environment("OBAKE_SHOT")
 	if target == "":
 		return
 	var path := OS.get_environment("OBAKE_SHOT_PATH")
+	var n := 0
 	for step in target.split(","):
 		if step.begins_with("wait"):
-			await get_tree().create_timer(float(step.substr(4))).timeout
+			await get_tree().create_timer(float(step.substr(4)), true, false, true).timeout
 		elif step.begins_with("call:"):
 			current.call(step.substr(5))
-			await get_tree().create_timer(0.6).timeout
+			await get_tree().create_timer(0.6, true, false, true).timeout
+		elif step == "shot":
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(path.replace(".png", "_%d.png" % n))
+			n += 1
 		else:
 			await go(step, true)
-			await get_tree().create_timer(0.8).timeout
+			await get_tree().create_timer(0.8, true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
 	get_tree().quit()
