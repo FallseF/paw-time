@@ -1119,8 +1119,8 @@ func _pause() -> void:
 	overlay.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Kit.CREAM, 24))
-	p.position = Vector2(40, 200)
-	p.size = Vector2(280, 0)
+	p.position = Vector2(30, 110)
+	p.size = Vector2(300, 0)
 	overlay.add_child(p)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
@@ -1128,6 +1128,10 @@ func _pause() -> void:
 	var t := Kit.text("ひと休み", 22, Kit.INK, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
+	for line in ["やる気がたまったら、下のボタンでおばけを出す", "やる気Lvを上げると、たまるのが速くなる", "チャイムは「！」でためている大きな困りごとに当てると、大技が止まる"]:
+		var hl := Kit.text("・" + line, 12, Kit.INK)
+		hl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		v.add_child(hl)
 	for line in _stage_tips():
 		var l := Kit.text(line, 12, Kit.SUB)
 		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
