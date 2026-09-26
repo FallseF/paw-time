@@ -131,6 +131,7 @@ func _build_world() -> void:
 	for i in mini(GameState.dream_flowers + extra_f, 40):
 		var f := _dream_flower(Vector3(-3.3 + (i % 8) * 0.35, 0, 2.6 + (i / 8) * 0.25))
 		world.add_child(f)
+	_build_next_stake(L)
 	# 仕事の飾り
 	for role in GameState.decos:
 		var lv: int = GameState.deco_level(role)
@@ -291,6 +292,31 @@ func _group(name: String, pos: Vector3) -> Node3D:
 	world.add_child(n)
 	items[name] = n
 	return n
+
+
+const STAGE_SPOT := {1: Vector3(0.9, 0, 1.3), 2: Vector3(-2.1, 0, 0.6), 3: Vector3(2.4, 0, -1.2), 4: Vector3(-2.1, 0, 1.1), 5: Vector3(1.3, 0, 0.9), 6: Vector3(-0.9, 0, -1.4), 7: Vector3(-3.0, 0, -1.6), 8: Vector3(0, 0, 0.4), 9: Vector3(2.9, 0, 1.9), 10: Vector3(3.2, 0, -2.3)}
+
+
+## 次に育つ場所に、立て札（「予定地」）
+func _build_next_stake(L: int) -> void:
+	if items.has("stake"):
+		items.stake.queue_free()
+		items.erase("stake")
+	var nx := L + 1
+	if nx >= GameState.GARDEN.size():
+		return
+	var g := _group("stake", STAGE_SPOT.get(nx, Vector3.ZERO) + Vector3(0.3, 0, 0.3))
+	var post := _box(Vector3(0.06, 0.7, 0.06), Vector3(0, 0.35, 0), Color("a87250"), g)
+	post.name = "post"
+	_box(Vector3(1.0, 0.62, 0.04), Vector3(0, 0.85, 0), Color("f4e6cc"), g)
+	var names := {1: "芝", 2: "花壇", 3: "灯り", 4: "花", 5: "池", 6: "縁台", 7: "桜", 8: "ほたる", 9: "月見台", 10: "夢見の木"}
+	var l := Kit.label3d("%s\n予定地" % names.get(nx, ""), 44, Color("4a3f52"))
+	l.outline_size = 0
+	l.pixel_size = 0.0055
+	l.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	l.no_depth_test = false
+	l.position = Vector3(0, 0.85, 0.03)
+	g.add_child(l)
 
 
 func _build_house() -> void:
@@ -1243,6 +1269,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	burst.position = at + Vector3(0, 0.5, 0)
 	burst.restart()
 	burst.emitting = true
+	_build_next_stake(level)
 	Kit.play(self, "grow")
 	Kit.shake(cam, 0.05, 0.3)
 	_toast("庭が育った：%s" % st.name, st.desc)
