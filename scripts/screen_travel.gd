@@ -31,11 +31,13 @@ func _ready() -> void:
 	box.add_child(vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	var rig := Look.apply(world, "island_night", Color("141a3a"), false, false)
+	var rig := Look.apply(world, "island_night", Color("1d2760"), false, false)
 	var env: Environment = rig.env
 	env.glow_enabled = true
 	env.glow_intensity = 0.7
 	env.glow_hdr_threshold = 0.9
+	env.glow_enabled = false
+	env.background_energy_multiplier = 1.0
 	_build_sea()
 	var vid := OS.get_environment("OBAKE_VEHICLE") if OS.get_environment("OBAKE_VEHICLE") != "" else Vehicles.current()
 	fly = Vehicles.info(vid).get("fly", false)
@@ -46,7 +48,7 @@ func _ready() -> void:
 			spinners.append(n)
 	VehicleProps.seat(vehicle, _rider(), 0.42)
 	cam = Camera3D.new()
-	cam.fov = 40
+	cam.fov = 34
 	world.add_child(cam)
 	_build_ui()
 	_place(0.0)
@@ -160,8 +162,9 @@ func _place(t: float) -> void:
 	vehicle.position = Vector3(x, y, 0.4)
 	vehicle.rotation.z = (cos(t * PI) * 0.18 if fly else sin(_t * 2.2) * 0.05)
 	vehicle.rotation.x = sin(_t * 1.7) * (0.02 if fly else 0.05)
-	cam.position = Vector3(x * 0.55 - 0.6, 2.2 + y * 0.5, 7.2)
-	cam.look_at(Vector3(x * 0.7, 0.6 + y * 0.6, 0))
+	# 縦長の画面なので、乗り物を真ん中に、少し上から追いかける
+	cam.position = Vector3(x - 1.2, 2.6 + y * 0.6, 9.5)
+	cam.look_at(Vector3(x, 0.5 + y * 0.8, 0))
 
 
 func _process(delta: float) -> void:

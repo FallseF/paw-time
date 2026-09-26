@@ -499,7 +499,8 @@ func _build_land(L: int, ground_c: Color) -> void:
 		var bp := PlaneMesh.new()
 		bp.size = Vector2(80, 80)
 		bed.mesh = bp
-		bed.material_override = Obake3D.flat(Color("1f6f8a"))
+		# 地形の深いところと同じ色・同じ光の当たり方にして、境目を見せない
+		bed.material_override = Obake3D.skin(Color("1f6f8a"), 0.0, null, 0.0, 0.0, false, 0.0)
 		bed.position.y = -0.63
 		world.add_child(bed)
 	land_sand = _cyl(1.0, 0.12, Color("e8d3a8"))
@@ -3020,6 +3021,9 @@ func demo_catalog() -> void:
 func demo_expand_card() -> void:
 	_enter_edit()
 	await get_tree().create_timer(0.7).timeout
+	if IslandKit.can_expand("plot_left"):
+		_expand_card("plot_left")
+		return
 	for e in IslandKit.EXPANSIONS:
 		if IslandKit.can_expand(e.id):
 			_expand_card(e.id)
@@ -3028,6 +3032,9 @@ func demo_expand_card() -> void:
 
 ## 確認用：カードの「陸をあげる」を押したところ
 func demo_do_expand() -> void:
+	if IslandKit.can_expand("plot_left"):
+		_do_expand("plot_left")
+		return
 	for e in IslandKit.EXPANSIONS:
 		if IslandKit.can_expand(e.id):
 			_do_expand(e.id)
