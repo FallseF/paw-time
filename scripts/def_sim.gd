@@ -167,7 +167,7 @@ func _new_entity(side: int, id: String) -> Dictionary:
 	return {"uid": _uid, "side": side, "id": id, "x": 0.0, "z": 0.0, "hp": 1.0, "max_hp": 1.0, "atk": 0.0, "rate": 1.0, "range": 1.0,
 		"speed": 1.0, "kb": 1, "kb_done": 0, "cd": 0.3, "state": "walk", "st": 0.0, "area": false, "guard": 0.0, "ability": "",
 		"job": "", "weak": "", "drop": 0, "tiny": false, "sleep": 0.0, "slow": 0.0, "hop_cd": 0.0, "boss": false, "split": "",
-		"drain": 0, "attacking": false, "lv": 1, "big": false, "winding": false, "hits": 0}
+		"drain": 0, "attacking": false, "lv": 1, "big": false, "winding": false, "hits": 0, "dream": 0.0}
 
 
 func _spawn_ally(id: String, lv: int) -> Dictionary:
@@ -337,6 +337,7 @@ func _step(e: Dictionary, dt: float) -> void:
 	e.cd = maxf(0.0, e.cd - dt)
 	e.hop_cd = maxf(0.0, e.hop_cd - dt)
 	e.slow = maxf(0.0, e.slow - dt)
+	e.dream = maxf(0.0, e.dream - dt)
 	if e.sleep > 0:
 		e.sleep -= dt
 		return
@@ -407,6 +408,11 @@ func _attack(e: Dictionary, targets: Array, base_hit: bool) -> void:
 		hits = targets
 	elif not targets.is_empty():
 		hits = [targets[0]]
+	# カミナリ：雷が前の3体まで飛び移る
+	if e.id == "kaminari" and targets.size() > 1:
+		hits = targets.slice(0, 3)
+		for k in range(1, hits.size()):
+			events.append({"type": "attack", "uid": e.uid, "bolt": true, "tx": hits[k].x})
 	var a := _atk_of(e)
 	if e.ability == "count":
 		e.hits += 1
@@ -422,9 +428,13 @@ func _attack(e: Dictionary, targets: Array, base_hit: bool) -> void:
 				dmg *= 1.5
 			_damage(o, dmg, e)
 			if o.hp > 0:
+				if e.id == "amagasa":
+					# アマガサ：傘の雨で、困りごとの足がにぶる
+					o.slow = 2.5
 				match e.ability:
 					"sleep":
-						o.sleep = 0.5 if o.boss else 1.6
+						# ネムリン：あくびは長く、よくうつる
+						o.sleep = (0.5 if o.boss else 1.6) * (1.8 if e.id == "nemurin" else 1.0)
 						events.append({"type": "sleep", "uid": o.uid})
 					"slow":
 						o.slow = 3.0
@@ -434,6 +444,11 @@ func _attack(e: Dictionary, targets: Array, base_hit: bool) -> void:
 		if hits.is_empty() or e.area:
 			if base_hit:
 				_hit_base(e, a)
+	if e.id == "nemurin":
+		for o in entities:
+			if o.side == 1 and o.hp > 0 and not o.boss and absf(o.x - e.x) <= 3.2 and o.sleep <= 0:
+				o.sleep = 0.8
+				events.append({"type": "sleep", "uid": o.uid})
 	if e.side == 1 and e.drain > 0 and not hits.is_empty():
 		# 品出しのおばけが受けとめると、棚が埋まって、やる気は減らない
 		if hits[0].job == "stock":
@@ -453,6 +468,9 @@ func _hit_base(e: Dictionary, a: float) -> void:
 
 
 func _damage(o: Dictionary, dmg: float, by) -> void:
+	if o.dream > 0:
+		events.append({"type": "dreamblock", "uid": o.uid})
+		return
 	if o.side == 0:
 		var red: float = o.guard
 		for s in entities:
@@ -491,6 +509,11 @@ func _die(o: Dictionary, by) -> void:
 	if o.side == 1:
 		kills += 1
 		var gain: float = o.drop * (2.0 if by != null and by.ability == "gold" else 1.0)
+		# ヨミセ：提灯の灯りの中で解決した困りごとは、夜店の売上になる（やる気1.5倍）
+		for y in entities:
+			if y.id == "yomise" and y.hp > 0 and absf(y.x - o.x) <= 3.0:
+				gain *= 1.5
+				break
 		energy = minf(energy_max(), energy + gain)
 		events.append({"type": "gain", "x": o.x, "amount": gain})
 		if o.split != "":
@@ -504,6 +527,9 @@ func _heal_around(e: Dictionary) -> void:
 	for o in entities:
 		if o.side == 0 and o.hp > 0 and absf(o.x - e.x) <= e.range:
 			o.hp = minf(o.max_hp, o.hp + amount)
+			# ユメミ：夢の中にいるあいだ（1.2秒）、傷を受けない
+			if e.id == "yumemi":
+				o.dream = 1.2
 	events.append({"type": "heal", "uid": e.uid})
 
 

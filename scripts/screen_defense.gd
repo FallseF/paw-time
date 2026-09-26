@@ -1363,6 +1363,9 @@ func _handle_events(evs: Array) -> void:
 					_fx("heal", views[ev.uid].root.position + Vector3(0, 0.8, 0.3))
 			"sleep":
 				pass
+			"dreamblock":
+				if views.has(ev.uid) and randf() < 0.3:
+					_popup("すやぁ", views[ev.uid].root.position + Vector3(0, 1.0, 0.3), Color("c9bdf5"), 32)
 			"gift":
 				_popup_ui("やる気 +250 おすそわけ", energy_lbl)
 				Kit.sfx("c_coin", 1.3)
