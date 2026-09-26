@@ -64,6 +64,8 @@ var weak_uid := -1
 var boss_bar: PanelContainer
 var boss_hp: ProgressBar
 var speed_btn: Button
+var zoom_btn: Button
+var wide := false
 var drag_from := -1.0
 var drag_cam := 0.0
 
@@ -86,6 +88,8 @@ func _ready() -> void:
 	_build_ui()
 	Kit.music("c_battle_loop")
 	speed = int(GameState.get_meta("speed", 1)) if not demo else 1
+	wide = bool(GameState.get_meta("wide", false)) and not demo
+	zoom_btn.text = "近く" if wide else "広く"
 	if OS.get_environment("OBAKE_SPEED") != "":
 		speed = int(OS.get_environment("OBAKE_SPEED"))
 	speed_btn.text = "×%d" % speed
@@ -305,8 +309,9 @@ func _fx(kind: String, pos: Vector3, col := Color(0, 0, 0, 0)) -> void:
 
 func _place_cam() -> void:
 	var off := Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * shake * 0.25
-	cam.position = Vector3(cam_x, 2.5, 12.0) + off
-	cam.look_at(Vector3(cam_x, 2.35, 0) + off)
+	var dist := 19.0 if wide else 12.0
+	cam.position = Vector3(cam_x, 2.5 + (1.4 if wide else 0.0), dist) + off
+	cam.look_at(Vector3(cam_x, 2.35 + (1.2 if wide else 0.0), 0) + off)
 
 
 # ---------- おばけと困りごとの見た目 ----------
@@ -520,6 +525,9 @@ func _build_ui() -> void:
 	tl.clip_text = true
 	tp.add_child(tl)
 	top.add_child(tp)
+	zoom_btn = Kit.button("広く", Color(1, 1, 1, 0.92), _toggle_zoom, Kit.INK, 36, 12)
+	zoom_btn.custom_minimum_size = Vector2(48, 36)
+	top.add_child(zoom_btn)
 	speed_btn = Kit.button("×1", Color(1, 1, 1, 0.92), _toggle_speed, Kit.INK, 36, 15)
 	speed_btn.custom_minimum_size = Vector2(48, 36)
 	top.add_child(speed_btn)
@@ -854,7 +862,7 @@ func _draw_minimap() -> void:
 	var s := Kit.pill(Color(0, 0, 0, 0.28), 6, 0.0)
 	minimap.draw_style_box(s, Rect2(Vector2.ZERO, minimap.size))
 	var L := DefData.LANE
-	var half := 3.3
+	var half := 5.2 if wide else 3.3
 	var r := Rect2(Vector2((cam_x - half) / L * w, 0), Vector2(half * 2 / L * w, 12))
 	minimap.draw_rect(r, Color(1, 1, 1, 0.25))
 	if sim.can_cannon():
@@ -873,7 +881,7 @@ func _draw_minimap() -> void:
 
 func _on_minimap(ev: InputEvent) -> void:
 	if (ev is InputEventMouseButton and ev.pressed) or ev is InputEventMouseMotion and ev.button_mask & MOUSE_BUTTON_MASK_LEFT:
-		cam_x = clampf(ev.position.x / minimap.size.x * DefData.LANE, 2.6, DefData.LANE - 2.4)
+		cam_x = _cam_clamp(ev.position.x / minimap.size.x * DefData.LANE)
 		cam_hold = 3.0
 
 
@@ -885,7 +893,7 @@ func _on_drag(ev: InputEvent) -> void:
 		else:
 			drag_from = -1.0
 	elif ev is InputEventMouseMotion and drag_from >= 0.0:
-		cam_x = clampf(drag_cam - (ev.position.x - drag_from) / 52.0, 2.6, DefData.LANE - 2.4)
+		cam_x = _cam_clamp(drag_cam - (ev.position.x - drag_from) / (33.0 if wide else 52.0))
 		cam_hold = 3.0
 
 
@@ -1081,6 +1089,17 @@ func _popup_ui(t: String, near: Control) -> void:
 	tw.tween_callback(l.queue_free)
 
 
+## 広く：カメラを引いて、レーンの半分以上を一度に見る
+func _cam_clamp(x: float) -> float:
+	return clampf(x, 4.4 if wide else 2.6, DefData.LANE - (4.0 if wide else 2.4))
+
+
+func _toggle_zoom() -> void:
+	wide = not wide
+	zoom_btn.text = "近く" if wide else "広く"
+	GameState.set_meta("wide", wide)
+
+
 func _toggle_speed() -> void:
 	speed = 2 if speed == 1 else 1
 	speed_btn.text = "×%d" % speed
@@ -1197,7 +1216,7 @@ func _process(delta: float) -> void:
 	# カメラ：触っていなければ前線を追う
 	cam_hold -= delta
 	if cam_hold <= 0 and not ended:
-		var target := clampf(sim.front_x(), 2.6, DefData.LANE - 2.4)
+		var target := _cam_clamp(sim.front_x())
 		cam_x = lerpf(cam_x, target, minf(1.0, 1.6 * delta))
 	shake = maxf(0.0, shake - delta * 2.5)
 	_place_cam()
