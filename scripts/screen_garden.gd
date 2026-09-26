@@ -1295,40 +1295,51 @@ func _toast(title: String, body: String) -> void:
 
 func _show_morning() -> void:
 	var ln: Dictionary = GameState.last_night
-	_clear_card()
-	card_box.add_child(Kit.text("ゆうべの眠り", 18, Color("2a2233"), true))
 	if ln.is_empty():
 		GameState.phase = "day"
 		_show_card()
 		return
-	card_box.add_child(Kit.text("%s に寝て %s に起きた（%.1f時間）" % [GameState.clock(ln.bed), GameState.wake_clock(ln.wake), ln.hours], 14, Color("4a3f52")))
+	# まず、庭の変化を見せる
+	busy = true
+	card.modulate.a = 0.0
+	await get_tree().create_timer(0.7).timeout
+	while GameState.garden_seen_level < GameState.garden_level:
+		GameState.garden_seen_level += 1
+		var st: Dictionary = GameState.GARDEN[GameState.garden_seen_level]
+		await _reveal_stage(GameState.garden_seen_level, st)
+	GameState.save()
+	_refresh_hud()
+	busy = false
+	# それから、ゆうべの眠りを短く
+	_clear_card()
+	card_box.add_child(Kit.text("おはよう。%.1f 時間ねむった" % ln.hours, 19, Color("2a2233"), true))
+	card_box.add_child(Kit.text("%s に寝て %s に起きた" % [GameState.clock(ln.bed), GameState.wake_clock(ln.wake)], 13, Color("8a7a88")))
 	var parts := HFlowContainer.new()
-	parts.add_theme_constant_override("h_separation", 6)
+	parts.add_theme_constant_override("h_separation", 5)
 	parts.add_theme_constant_override("v_separation", 4)
 	for p in ln.parts:
 		var pc := PanelContainer.new()
 		var good: bool = p[1] >= 0
-		pc.add_theme_stylebox_override("panel", Kit.pill(Color("e7f6e9") if good else Color("fde7e3"), 12, 0.0, Vector2(8, 3)))
+		pc.add_theme_stylebox_override("panel", Kit.pill(Color("e7f6e9") if good else Color("fde7e3"), 11, 0.0, Vector2(7, 2)))
 		pc.add_child(Kit.text("%s %s%d" % [p[0], "+" if good else "", p[1]], 12, Color("3f7d4f") if good else Color("c0473b")))
 		parts.add_child(pc)
 	card_box.add_child(parts)
 	var r := HBoxContainer.new()
 	r.add_theme_constant_override("separation", 8)
-	r.add_child(Kit.text("リズム", 13, Color("8a7a88")))
-	var bar := Kit.bar(ln.rhythm_before / 100.0, GameState.TIER_COLOR[GameState.tier()], 140, 12)
+	r.add_child(Kit.text("リズム", 14, Color("8a7a88")))
+	var bar := Kit.bar(ln.rhythm_before / 100.0, GameState.TIER_COLOR[GameState.tier()], 130, 14)
 	r.add_child(bar)
 	var diff: float = ln.rhythm - ln.rhythm_before
-	r.add_child(Kit.text("%s%d" % ["+" if diff >= 0 else "", int(diff)], 15, Color("3f7d4f") if diff >= 0 else Color("c0473b"), true))
+	r.add_child(Kit.text("%s%d" % ["+" if diff >= 0 else "", int(diff)], 16, Color("3f7d4f") if diff >= 0 else Color("c0473b"), true))
+	r.add_child(Kit.text(GameState.tier_name(), 14, Color("4a3f52"), true))
 	card_box.add_child(r)
-	card_box.add_child(Kit.text("庭のめぐみ +%d%s" % [ln.growth_gain, ("（夢で +%d）" % ln.dream) if ln.has("dream") else ""], 14, Color("3f7d4f"), true))
+	card_box.add_child(Kit.text("庭のめぐみ +%d%s" % [ln.growth_gain, ("（夢で +%d）" % ln.dream) if ln.has("dream") else ""], 16, Color("3f7d4f"), true))
+	if ln.get("visitor", "") != "":
+		card_box.add_child(Kit.wrap(Kit.text("夜ふかしの灯りに、チョウチンがついてきた。花は少し下を向いている", 13, Color("b0643a"))))
 	var om := GameState.omen()
 	if om != "":
-		card_box.add_child(Kit.wrap(Kit.text("きざし：" + om, 12, Color("8a5bd6"))))
-	if GameState.last_goals > 0:
-		card_box.add_child(Kit.text("きのうのめあて %d/3 達成" % GameState.last_goals, 13, Color("b07a1a"), true))
-	if ln.get("visitor", "") != "":
-		card_box.add_child(Kit.wrap(Kit.text("夜ふかしの灯りに、チョウチンが寄ってきた。でも庭の花は少ししおれた", 13, Color("b0643a"))))
-	var btn := Kit.button("庭を見る", Color("ff8a5b"), _after_morning)
+		card_box.add_child(Kit.wrap(Kit.text("きざし：" + om, 13, Color("8a5bd6"))))
+	var btn := Kit.button("今日をはじめる", Color("ff8a5b"), _after_morning)
 	card_box.add_child(btn)
 	if GameState.day == 1:
 		_guide("同じころに寝て、7〜9時間眠るとリズムが上がる。リズムが高いほど庭がよく育つ")
@@ -1343,17 +1354,10 @@ func _show_morning() -> void:
 func _after_morning() -> void:
 	if busy:
 		return
-	busy = true
-	card.modulate.a = 0.0
-	# 庭が育った段を、ひとつずつ見せる
-	while GameState.garden_seen_level < GameState.garden_level:
-		GameState.garden_seen_level += 1
-		var st: Dictionary = GameState.GARDEN[GameState.garden_seen_level]
-		await _reveal_stage(GameState.garden_seen_level, st)
 	GameState.phase = "day"
 	GameState.save()
 	_refresh_hud()
-	busy = false
+	card.modulate.a = 0.0
 	_show_card()
 
 
