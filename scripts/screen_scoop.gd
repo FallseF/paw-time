@@ -1367,7 +1367,7 @@ func _lift() -> void:
 		_banner(head + ("\n" + detail if detail != "" else ""), Color("fff2a8"))
 	else:
 		var at := pos2d + Vector2(0, -50)
-		at.y = clampf(at.y, 205.0, 400.0) # 上のヒントや下の表示と重ならないように
+		at.y = clampf(at.y, 250.0, 400.0) # 上のヒントや下の表示と重ならないように
 		_float_text(title + ("  " + detail if detail != "" else ""), at, Color("fff2a8"), 18)
 	_combo_pop()
 	_partner_react(true)
