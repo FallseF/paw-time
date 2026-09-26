@@ -192,7 +192,6 @@ func _build_world() -> void:
 	rmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	rmat.albedo_color = Color(1.0, 0.8, 0.55, 0.06)
 	rays.material_override = rmat
-	rays.visible = false
 	world.add_child(rays)
 	# 座布団
 	var cushion := MeshInstance3D.new()
@@ -209,6 +208,7 @@ func _build_world() -> void:
 	cushion2.position = Vector3(0, 0.18, 0.2)
 	cushion2.material_override = Obake3D.toon(Color("dd5a5e"), 0.2)
 	world.add_child(cushion2)
+	_build_props()
 
 	burst = CPUParticles3D.new()
 	burst.emitting = false
@@ -411,6 +411,7 @@ func _next() -> void:
 	tw4.tween_property(card, "modulate:a", 1.0, 0.25)
 	tw4.tween_property(card, "position:y", 390.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if rare:
+		_rare_reaction()
 		_stamp("レア！" if not h.get("from_rainbow", false) else "虹から、レア！")
 	if h.get("leveled", false):
 		await get_tree().create_timer(0.5).timeout
@@ -437,6 +438,151 @@ func _gui_input(event: InputEvent) -> void:
 	if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or event is InputEventScreenTouch:
 		if event.pressed and not busy and next_btn.visible:
 			_next()
+
+
+## 朝の休憩室らしさ：朝日の筋、ちゃぶ台と湯のみ、観葉植物、ふわふわ漂うほこり
+func _build_props() -> void:
+	# 朝日の筋（窓から斜めに、2本）
+	for i in 2:
+		var ray := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = Vector2(0.35 + i * 0.2, 3.2)
+		ray.mesh = q
+		ray.position = Vector3(-0.75 + i * 0.35, 1.05, -0.5)
+		ray.rotation = Vector3(-0.35, 0.25, 0.55)
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		m.albedo_color = Color(1.0, 0.82, 0.55, 0.07 - i * 0.02)
+		ray.material_override = m
+		world.add_child(ray)
+	# ちゃぶ台と湯のみ（左奥）
+	var table := MeshInstance3D.new()
+	var tm := CylinderMesh.new()
+	tm.top_radius = 0.42
+	tm.bottom_radius = 0.42
+	tm.height = 0.05
+	table.mesh = tm
+	table.position = Vector3(-0.95, 0.26, -0.95)
+	table.material_override = Obake3D.toon(Color("8a5a3a"), 0.1)
+	world.add_child(table)
+	var leg := MeshInstance3D.new()
+	var lm := CylinderMesh.new()
+	lm.top_radius = 0.05
+	lm.bottom_radius = 0.05
+	lm.height = 0.25
+	leg.mesh = lm
+	leg.position = Vector3(-0.95, 0.12, -0.95)
+	leg.material_override = Obake3D.toon(Color("6b4430"), 0.1)
+	world.add_child(leg)
+	var cup := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = 0.06
+	cm.bottom_radius = 0.05
+	cm.height = 0.1
+	cup.mesh = cm
+	cup.position = Vector3(-0.85, 0.34, -0.9)
+	cup.material_override = Obake3D.toon(Color("f4f1ea"), 0.2)
+	world.add_child(cup)
+	# 湯気
+	var steam := CPUParticles3D.new()
+	steam.amount = 8
+	steam.lifetime = 1.6
+	steam.position = cup.position + Vector3(0, 0.08, 0)
+	steam.direction = Vector3(0, 1, 0)
+	steam.spread = 10
+	steam.gravity = Vector3(0, 0.05, 0)
+	steam.initial_velocity_min = 0.12
+	steam.initial_velocity_max = 0.2
+	var sm := SphereMesh.new()
+	sm.radius = 0.02
+	sm.height = 0.04
+	steam.mesh = sm
+	var stm := StandardMaterial3D.new()
+	stm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	stm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	stm.albedo_color = Color(1, 1, 1, 0.35)
+	steam.material_override = stm
+	world.add_child(steam)
+	# 観葉植物（右奥）
+	var pot := MeshInstance3D.new()
+	var pm := CylinderMesh.new()
+	pm.top_radius = 0.16
+	pm.bottom_radius = 0.12
+	pm.height = 0.26
+	pot.mesh = pm
+	pot.position = Vector3(1.05, 0.13, -1.05)
+	pot.material_override = Obake3D.toon(Color("c7744a"), 0.1)
+	world.add_child(pot)
+	for i in 4:
+		var leaf := MeshInstance3D.new()
+		var lf := SphereMesh.new()
+		lf.radius = 0.15
+		lf.height = 0.3
+		leaf.mesh = lf
+		leaf.position = pot.position + Vector3(cos(i * 1.6) * 0.1, 0.25 + i * 0.09, sin(i * 1.6) * 0.1)
+		leaf.material_override = Obake3D.toon(Color("5f9e5a"), 0.2)
+		world.add_child(leaf)
+	# 朝日の中を漂うほこり
+	var motes := CPUParticles3D.new()
+	motes.amount = 24
+	motes.lifetime = 6.0
+	motes.preprocess = 6.0
+	motes.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	motes.emission_box_extents = Vector3(0.8, 0.6, 0.3)
+	motes.position = Vector3(-0.5, 1.1, -0.4)
+	motes.gravity = Vector3.ZERO
+	motes.initial_velocity_min = 0.02
+	motes.initial_velocity_max = 0.06
+	motes.spread = 180
+	var mm := SphereMesh.new()
+	mm.radius = 0.008
+	mm.height = 0.016
+	motes.mesh = mm
+	var mmat := StandardMaterial3D.new()
+	mmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mmat.albedo_color = Color("fff1c8")
+	motes.material_override = mmat
+	world.add_child(motes)
+
+
+## レアがかえったとき：相棒が二度跳ねて、紙吹雪
+func _rare_reaction() -> void:
+	if buddy:
+		var bt := create_tween()
+		for i in 2:
+			bt.tween_property(buddy, "position:y", 0.5, 0.13).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			bt.tween_property(buddy, "position:y", 0.18, 0.18).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	var conf := CPUParticles3D.new()
+	conf.one_shot = true
+	conf.explosiveness = 0.9
+	conf.amount = 40
+	conf.lifetime = 1.8
+	conf.position = Vector3(0, 1.5, 0.3)
+	conf.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	conf.emission_box_extents = Vector3(0.9, 0.05, 0.2)
+	conf.direction = Vector3(0, -1, 0)
+	conf.gravity = Vector3(0, -1.2, 0)
+	conf.initial_velocity_min = 0.1
+	conf.initial_velocity_max = 0.4
+	conf.angular_velocity_min = -300
+	conf.angular_velocity_max = 300
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.04, 0.003, 0.03)
+	conf.mesh = bm
+	conf.color_ramp = null
+	var cm := StandardMaterial3D.new()
+	cm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	cm.vertex_color_use_as_albedo = true
+	conf.material_override = cm
+	var g := Gradient.new()
+	g.set_color(0, Color("ff6b5b"))
+	g.set_color(1, Color("fff1dc"))
+	conf.color_initial_ramp = g
+	world.add_child(conf)
+	conf.emitting = true
 
 
 ## レアのときの、はんこ
