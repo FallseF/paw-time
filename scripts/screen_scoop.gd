@@ -1185,7 +1185,7 @@ func _press(g: Vector3) -> void:
 		tut_step = 1
 		_tut_show()
 	elif tut_step < 0:
-		hint.text = "玉の下へ、そっと" if count < 3 else ""
+		hint.text = "玉の下へ、そっと" if count < 3 and not auto else ""
 
 
 func _release() -> void:
