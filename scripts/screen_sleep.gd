@@ -41,21 +41,21 @@ func _ready() -> void:
 	ms.shadow_color = Color(1, 0.95, 0.8, 0.45)
 	ms.shadow_size = 30
 	moon.add_theme_stylebox_override("panel", ms)
-	moon.position = Vector2(250, 60)
+	moon.position = Vector2(256, 34)
 	moon.size = Vector2(80, 80)
 	add_child(moon)
 
 	var title := _text("おやすみの前に", 24, Color("f3eeff"), font_black)
-	title.position = Vector2(0, 150)
+	title.position = Vector2(0, 112)
 	title.size = Vector2(360, 36)
 	add_child(title)
 	var note := _text("何時間ねる？ 選ぶと、すぐ朝になる", 12, Color(1, 1, 1, 0.55))
-	note.position = Vector2(0, 186)
+	note.position = Vector2(0, 148)
 	note.size = Vector2(360, 20)
 	add_child(note)
 
 	var row := HBoxContainer.new()
-	row.position = Vector2(30, 222)
+	row.position = Vector2(30, 176)
 	row.size = Vector2(300, 110)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 18)
@@ -68,7 +68,7 @@ func _ready() -> void:
 
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _pill(Color(1, 1, 1, 0.1), 22))
-	card.position = Vector2(24, 350)
+	card.position = Vector2(24, 290)
 	card.size = Vector2(312, 150)
 	add_child(card)
 	preview = VBoxContainer.new()
@@ -77,7 +77,7 @@ func _ready() -> void:
 
 	var go := Button.new()
 	go.text = "眠って朝へ"
-	go.position = Vector2(70, 540)
+	go.position = Vector2(70, 568)
 	go.size = Vector2(220, 54)
 	go.add_theme_font_override("font", font_black)
 	go.add_theme_font_size_override("font_size", 20)
@@ -167,6 +167,10 @@ func _set_hours(h: int) -> void:
 	var fest := GameState.is_festival(GameState.day + 1)
 	var fc := "明日の夜：%s%s%s" % [tm.weather, ("・" + tm.moon) if tm.moon != "" else "", "・大すくい祭り！" if fest else ""]
 	lines.append([fc, Color("9fe0ff")])
+	if tm.role != "":
+		lines.append(["明日のシフト：%s → %s×2" % [GameState.ROLE_LABEL[tm.role], GameState.POI[GameState.ROLE_POI[tm.role]].name], Color("ffcf9a")])
+	else:
+		lines.append(["明日はお休み。紙のポイ2本で遊べる", Color(1, 1, 1, 0.6)])
 	# 何時間でポイがどれだけ強くなるかを、小さな棒で見せる
 	var bars := HBoxContainer.new()
 	bars.alignment = BoxContainer.ALIGNMENT_CENTER
