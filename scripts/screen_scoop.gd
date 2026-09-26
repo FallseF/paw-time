@@ -70,6 +70,8 @@ var multi_count := 0
 var ended := false
 var title_before := 0
 var record_announced := false
+var sunk := 0
+var pond_cleared := false
 var tut_step := -1
 var tut_label: Label
 var goal: Dictionary
@@ -1418,8 +1420,14 @@ func _after_catch() -> void:
 		_play("fanfare")
 		_banner("特賞！", Color("ffd23f"))
 	if _visible_count() == 0 and supply <= 0 and telegraph_left <= 0.0:
-		await get_tree().create_timer(0.8).timeout
-		_end_night("今夜の玉は、もうおしまい")
+		# 池の玉をぜんぶすくいきった（虹も逃さず）
+		if sunk == 0 and not practice:
+			pond_cleared = true
+			GameState.grant({"shards": {"rainbow": 1}})
+			_play("fanfare")
+			_banner("池をすくいきった！", Color("b8ffcf"))
+		await get_tree().create_timer(1.2).timeout
+		_end_night("今夜の玉は、ぜんぶすくった" if pond_cleared else "今夜の玉は、もうおしまい")
 
 
 func _partner_react(happy: bool) -> void:
@@ -1657,6 +1665,7 @@ func _update_orbs(delta: float) -> void:
 
 func _sink(o: Orb3D) -> void:
 	o.sinking = true
+	sunk += 1
 	var tw := create_tween()
 	tw.tween_property(o, "position:y", -0.5, 0.8)
 	tw.parallel().tween_property(o, "scale", Vector3.ONE * 0.3, 0.8)
@@ -1989,6 +1998,8 @@ func _show_result(reason: String, was_best: bool) -> void:
 			lines.append("祭り %d / 12（12こで景品、20こで特賞）" % count)
 	elif goal_done:
 		lines.append("おだい達成：%s" % GameState.reward_text(goal.reward))
+	if pond_cleared:
+		lines.append("池をすくいきった：虹のかけら×1")
 	for line in lines:
 		var ll := _text(line, 15, Color("4a3f52"))
 		ll.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
