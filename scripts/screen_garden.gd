@@ -191,7 +191,7 @@ func _build_world() -> void:
 
 ## 芝の色（リズムが低いと、少し枯れた色）
 func _grass_color() -> Color:
-	return Color("8a9a62").lerp(Color("6fa05a"), GameState.tier() / 3.0)
+	return Color("7d8a58").lerp(Color("5f9150"), GameState.tier() / 3.0)
 
 
 func _grass_tufts() -> void:
@@ -466,6 +466,19 @@ func _dream_flower(at: Vector3) -> Node3D:
 
 
 func _build_deco(role: String, lv: int) -> void:
+	_build_deco_body(role, lv)
+	# 店の名札
+	var key := "deco_" + role
+	var store: String = GameState.deco_store.get(role, "")
+	if items.has(key) and store != "":
+		var tag := Kit.label3d(store.split(" ")[-1], 30, Color("fff6e8"))
+		tag.pixel_size = 0.007
+		tag.position = Vector3(0, 0.3, 0.6)
+		tag.no_depth_test = false
+		items[key].add_child(tag)
+
+
+func _build_deco_body(role: String, lv: int) -> void:
 	match role:
 		"register":
 			var g := _group("deco_register", Vector3(-1.4, 0, 1.9))

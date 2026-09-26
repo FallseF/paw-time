@@ -105,6 +105,7 @@ var growth := 0
 var garden_level := 0
 var garden_seen_level := 0 # 朝の演出で見せ終わった段
 var decos := {} # role → 届いた回数
+var deco_store := {} # role → 飾りをくれた店
 var new_decos: Array = [] # 今日届いた飾り（庭で演出する）
 var dream_flowers := 0
 
@@ -166,6 +167,7 @@ func reset(new_mode := "data") -> void:
 	garden_level = 0
 	garden_seen_level = 0
 	decos = {}
+	deco_store = {}
 	new_decos = []
 	dream_flowers = 0
 	roles_seen = {}
@@ -333,6 +335,8 @@ func finish_shift() -> Array:
 		nets["kira"] += 1
 		got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめての経験）"})
 	var before: int = decos.get(s.role, 0)
+	if before == 0:
+		deco_store[s.role] = s.store
 	decos[s.role] = before + 1
 	if before == 0:
 		new_decos.append(s.role)
@@ -752,7 +756,7 @@ func rare_context(s: Dictionary, hours: int, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store"]
 
 
 func save() -> void:
