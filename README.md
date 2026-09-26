@@ -20,3 +20,15 @@ godot --path ~/dev/obake-godot
 ## 絵
 
 `python3 tools/gen_art.py` で assets/sprites のドット絵を全部描き直す。フォントは DotGothic16（OFL）。
+
+## C案：大ピーク防衛（feature/variant-c）
+
+店の困りごとから、おばけで店を守るレーンバトル（にゃんこ大戦争のノリ）。遊び方・検証・バランスは REPORT.md。
+
+```
+godot --path ~/dev/obake-godot-c
+godot --headless --path . -s tests/sim_curve.gd   # 面ごとに要る Lv
+godot --headless --path . -s tests/sim_weeks.gd   # 28日間の進み方（記録あり／なし）
+godot --headless --path . -s tests/test_save.gd   # セーブの往復
+bash tools/make_promo.sh                          # 宣伝動画 promo/promo.mp4
+```

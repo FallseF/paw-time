@@ -113,28 +113,28 @@ const ENEMY_COLOR := {"iraira": "e85a4f", "gyouretsu": "c9454a", "chuumon": "ffd
 
 ## 店（章）とステージ。spawn: [敵, 最初に出る秒, 間隔, 数(0=ずっと), 渦の残り%以下で解禁, 強さ倍率]
 const SHOPS := [
-	{"id": "cafe", "name": "カフェ こもれび", "color": "ff9e6b", "sky": "ffd9b0", "floor": "b98258",
+	{"id": "cafe", "name": "カフェ こもれび", "thanks": "店長「今朝はなんだか、回った気がする」", "color": "ff9e6b", "sky": "ffd9b0", "floor": "b98258",
 		"stages": [
 			{"name": "朝の開店", "base": 800, "reward": 60, "spawn": [["iraira", 3, 6, 0, 100, 1.0]], "tip": "イライラが来た。レシートンを出してみよう"},
 			{"name": "モーニングの行列", "base": 900, "reward": 90, "spawn": [["iraira", 2, 7, 0, 100, 1.0], ["gyouretsu", 10, 22, 0, 100, 1.0], ["gyouretsu", 0, 14, 3, 60, 1.0]], "tip": "行列はレジに弱い。ダンボで止めて、うしろから叩く"},
 			{"name": "ランチの注文ラッシュ", "base": 1400, "reward": 120, "spawn": [["chuumon", 4, 5, 0, 100, 1.0], ["iraira", 8, 9, 0, 100, 1.0], ["gyouretsu", 20, 25, 0, 100, 1.0], ["chuumon", 0, 1.2, 8, 50, 1.2]], "tip": "伝票が一気に来る。チャイムで押し返せる"},
 			{"name": "テイクアウト渋滞", "base": 2200, "reward": 180, "spawn": [["gyouretsu", 3, 12, 0, 100, 1.1], ["iraira", 5, 5, 0, 100, 1.0], ["chuumon", 15, 11, 0, 100, 1.0], ["gyouretsu", 0, 3, 4, 70, 1.6], ["kakekomi", 0, 8, 0, 35, 1.0]], "tip": "最後に大きな行列。アワワでまとめて流そう"},
 		]},
-	{"id": "izakaya", "name": "居酒屋 とりまる", "color": "e85a4f", "sky": "3a2d5c", "floor": "7a5238",
+	{"id": "izakaya", "name": "居酒屋 とりまる", "thanks": "大将「おばけでも、まかない食ってけ」", "color": "e85a4f", "sky": "3a2d5c", "floor": "7a5238",
 		"stages": [
 			{"name": "乾杯の注文", "base": 2400, "reward": 200, "spawn": [["chuumon", 2, 4, 0, 100, 1.2], ["iraira", 6, 6, 0, 100, 1.2], ["chuumon", 0, 0.8, 10, 60, 1.2]], "tip": "注文ラッシュはキッチンのジュウが効く"},
 			{"name": "洗い物の塔", "base": 3000, "reward": 240, "spawn": [["araimono", 6, 18, 0, 100, 1.0], ["iraira", 3, 6, 0, 100, 1.2], ["chuumon", 12, 9, 0, 100, 1.2], ["araimono", 0, 6, 3, 50, 1.2]], "tip": "塔はアワワの泡で崩れる"},
 			{"name": "クレームの電話", "base": 3400, "reward": 280, "spawn": [["denwa", 5, 10, 0, 100, 1.0], ["iraira", 2, 5, 0, 100, 1.2], ["gyouretsu", 14, 16, 0, 100, 1.2], ["denwa", 0, 3, 4, 60, 1.2]], "tip": "電話は遠くから鳴る。オボンで受けて近づく"},
 			{"name": "終電前の駆け込み", "base": 4200, "reward": 340, "spawn": [["kakekomi", 25, 12, 0, 100, 1.0], ["chuumon", 2, 5, 0, 100, 1.2], ["araimono", 20, 20, 0, 100, 1.2], ["denwa", 12, 14, 0, 100, 1.2], ["kakekomi", 0, 1.5, 8, 40, 1.2]], "tip": "駆け込みは速い。壁を早めに置いておく"},
 		]},
-	{"id": "souko", "name": "北倉庫", "color": "8a9bb0", "sky": "1f2440", "floor": "6b6f7e",
+	{"id": "souko", "name": "北倉庫", "thanks": "主任「棚が、ぜんぶ合ってる……」", "color": "8a9bb0", "sky": "1f2440", "floor": "6b6f7e",
 		"stages": [
 			{"name": "深夜の品切れ", "base": 4600, "reward": 380, "spawn": [["shinagire", 4, 9, 0, 100, 1.0], ["iraira", 2, 5, 0, 100, 1.2], ["chuumon", 10, 8, 0, 100, 1.2], ["shinagire", 0, 3, 5, 55, 1.2]], "tip": "品切れに当たるとやる気が減る。ダンボで埋めよう"},
 			{"name": "忘れ物の山", "base": 5200, "reward": 420, "spawn": [["wasuremono", 8, 22, 0, 100, 1.0], ["iraira", 3, 5, 0, 100, 1.2], ["denwa", 14, 15, 0, 100, 1.2], ["wasuremono", 0, 10, 2, 50, 1.2]], "tip": "くずすとイライラが出てくる。オボンを前に"},
 			{"name": "検品の夜", "base": 5800, "reward": 480, "spawn": [["araimono", 6, 16, 0, 100, 1.2], ["shinagire", 3, 8, 0, 100, 1.2], ["kakekomi", 20, 14, 0, 100, 1.2], ["gyouretsu", 16, 14, 0, 100, 1.2], ["chuumon", 0, 0.7, 14, 50, 1.2]], "tip": "いろんな困りごとが混ざる。編成を考えよう"},
 			{"name": "棚卸しの夜", "base": 6800, "reward": 560, "spawn": [["wasuremono", 5, 18, 0, 100, 1.2], ["shinagire", 3, 7, 0, 100, 1.2], ["denwa", 10, 11, 0, 100, 1.2], ["kakekomi", 30, 12, 0, 100, 1.2], ["araimono", 0, 5, 4, 45, 1.2]], "tip": "長い夜。やる気レベルを早めに上げよう"},
 		]},
-	{"id": "peak", "name": "金曜の大ピーク", "color": "ff6b5b", "sky": "2a1a3a", "floor": "5a3a4a",
+	{"id": "peak", "name": "金曜の大ピーク", "thanks": "みんな「……今週も、終わった」", "color": "ff6b5b", "sky": "2a1a3a", "floor": "5a3a4a",
 		"stages": [
 			{"name": "金曜の大ピーク", "base": 9000, "reward": 900, "boss_stage": true, "spawn": [["iraira", 2, 4, 0, 100, 1.2], ["chuumon", 6, 6, 0, 100, 1.2], ["gyouretsu", 12, 15, 0, 100, 1.2], ["denwa", 18, 14, 0, 100, 1.2], ["oopiku", 0, 999, 1, 85, 1.0], ["kakekomi", 0, 8, 0, 40, 1.2], ["araimono", 0, 12, 0, 60, 1.2]], "tip": "渦を削ると、大ピークが来る。チャイムを温存しておく"},
 		]},

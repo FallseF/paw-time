@@ -1337,6 +1337,7 @@ func _result(r: Dictionary) -> void:
 		if r.get("daily", false):
 			notes.append(["今日のお手伝い +60", Color("e8792f")])
 		if r.orb:
+			notes.append([shop.get("thanks", ""), Kit.INK])
 			notes.append(["虹色の玉をもらった（明日の朝かえる）", Color("8b7bff")])
 		if r.lap_up:
 			notes.append(["%d周目がひらいた：もっと混む" % GameState.best_lap, Color("8b7bff")])
