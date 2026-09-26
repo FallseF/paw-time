@@ -278,6 +278,8 @@ func _process(delta: float) -> void:
 		if d.length() < 0.05:
 			var hm: Vector3 = w.home
 			w.target = hm + Vector3(randf_range(-0.35, 0.35), 0, randf_range(-0.25, 0.25))
+			w.target.x = clampf(w.target.x, -2.1, 2.1)
+			w.target.z = clampf(w.target.z, -1.8, 0.9)
 			w.wait = randf_range(1.0, 4.0)
 			continue
 		ob.position += d.normalized() * min(d.length(), 0.5 * delta)

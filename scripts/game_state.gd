@@ -170,6 +170,7 @@ func _ready() -> void:
 
 ## 確認・デモの起動では、セーブを読まず、書かない
 var force_save := false
+var suppress_save := false # 寝ている途中（日付が変わる前）は保存しない
 var demo_mode := false # タイトルの「デモ」で遊んでいるあいだは、セーブしない
 
 
@@ -826,10 +827,12 @@ func sleep(hours: int) -> void:
 	# 週が変わる前に、できていた「今週のおねがい」は受け取っておく
 	var auto_claimed := 0
 	if (day + 1) % 7 == 0:
+		suppress_save = true
 		for q in week_quests():
 			if quest_done(q) and not claimed.has(q.key):
 				claim_quest(q)
 				auto_claimed += 1
+		suppress_save = false
 	day += 1
 	# 朝に会ったので、会った日は新しい日にする
 	for h in hatched:
@@ -1092,7 +1095,7 @@ const SAVE_KEYS := ["day", "phase", "pois", "strength", "last_sleep", "owned", "
 
 
 func save_game() -> void:
-	if _sandboxed():
+	if _sandboxed() or suppress_save:
 		return
 	var d := {"v": 1}
 	for k in SAVE_KEYS:

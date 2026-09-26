@@ -439,4 +439,4 @@ func _gift(id: String) -> void:
 
 
 func demo_scroll() -> void:
-	scroll.scroll_vertical = 1400
+	scroll.scroll_vertical = 3000

@@ -72,6 +72,7 @@ var title_before := 0
 var record_announced := false
 var sunk := 0
 var pond_cleared := false
+var paused_for_dialog := false
 var tut_step := -1
 var tut_label: Label
 var tut_target: Orb3D
@@ -868,9 +869,10 @@ func _build_ui() -> void:
 	banner = _text("", 36, Color.WHITE, font_black)
 	banner.add_theme_color_override("font_outline_color", Color("0b1026"))
 	banner.add_theme_constant_override("outline_size", 10)
-	banner.position = Vector2(0, 190)
-	banner.size = Vector2(360, 120)
-	banner.pivot_offset = Vector2(180, 60)
+	banner.position = Vector2(10, 190)
+	banner.size = Vector2(340, 120)
+	banner.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	banner.pivot_offset = Vector2(170, 60)
 	banner.modulate.a = 0.0
 	add_child(banner)
 
@@ -1518,6 +1520,8 @@ func _tear(list: Array) -> void:
 func _process(delta: float) -> void:
 	ripple_t += delta
 	water_mat.set_shader_parameter("ripple_t", ripple_t)
+	if paused_for_dialog:
+		return
 	if auto:
 		_auto(delta)
 	_update_poi(delta)
@@ -1869,6 +1873,8 @@ func _ask_home() -> void:
 	var layer := Control.new()
 	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(layer)
+	paused_for_dialog = true # 考えているあいだ、池は止めておく
+	layer.tree_exited.connect(func(): paused_for_dialog = false)
 	var dim := ColorRect.new()
 	dim.color = Color(0.02, 0.03, 0.1, 0.55)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)

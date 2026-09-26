@@ -585,3 +585,9 @@ func demo_rare_detail() -> void:
 		if GameState.seen.has(r.id):
 			_show_detail(r)
 			return
+
+
+func demo_scroll() -> void:
+	for c in get_children():
+		if c is ScrollContainer:
+			c.scroll_vertical = 1500
