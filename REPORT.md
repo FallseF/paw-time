@@ -39,7 +39,7 @@ OBAKE_DEMO=1 godot --path . --resolution 720x1280      # 広告用の自動デ�
 OBAKE_AUTOPLAY=28 OBAKE_SKILL=0.6 OBAKE_WORK=1 OBAKE_SLEEP=7 godot --headless --path . --fixed-fps 60
 OBAKE_AUTOPLAY=10 OBAKE_FULLUI=1 godot --headless --path . --fixed-fps 60   # 休憩室→シフト→すくい→寝る→孵化→図鑑→工房を毎日一巡
 
-# テスト（すべて PASS を確認済み）
+# テスト（すべて PASS を確認済み）。まとめて：./tests/run_all.sh
 godot --headless --path . -s tests/test_save.gd          # セーブ往復（整数・土日のキー）
 godot --headless --path . -s tests/test_scoop_input.gd   # 本物のマウス入力で1つすくえる／すくい上げ中に「帰る」でも記録が残る
 godot --headless --path . -s tests/test_tutorial.gd      # はじめての夜の説明が 押す→寄せる→離す で進んで終わる
