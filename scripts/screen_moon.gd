@@ -35,10 +35,6 @@ func _ready() -> void:
 	hint.position = Vector2(20, 70)
 	hint.size = Vector2(320, 50)
 	add_child(hint)
-	var days := Kit.text("月　火　水　木　金　土", 12, Color(1, 1, 1, 0.5), false, HORIZONTAL_ALIGNMENT_CENTER)
-	days.position = Vector2(0, 470)
-	days.size = Vector2(360, 20)
-	add_child(days)
 	if good_total == 0:
 		hint.text = "今週は、よく眠れた夜がなかった…"
 		await get_tree().create_timer(1.5).timeout
@@ -77,7 +73,7 @@ func _build_world() -> void:
 	world.add_child(sun)
 	cam = Camera3D.new()
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
-	cam.position = Vector3(0, 2.0, 6.4)
+	cam.position = Vector3(0, 2.4, 6.6)
 	cam.fov = 58
 	world.add_child(cam)
 	cam.look_at(Vector3(0, 1.6, 0))
@@ -110,7 +106,7 @@ func _build_world() -> void:
 	mm.height = 2.0
 	moon.mesh = mm
 	moon.material_override = Kit.glow(Color("fff1c8"), 2.4)
-	moon.position = Vector3(0, 4.4, -6)
+	moon.position = Vector3(0, 3.9, -6)
 	world.add_child(moon)
 	shade = MeshInstance3D.new()
 	var sm := SphereMesh.new()
@@ -133,6 +129,7 @@ func _build_world() -> void:
 		var n := Node3D.new()
 		var a := lerpf(-2.6, 2.6, i / 5.0)
 		n.position = Vector3(a, 0, 0.6 - absf(a) * 0.25)
+		n.scale = Vector3.ONE * 1.3
 		world.add_child(n)
 		var post := MeshInstance3D.new()
 		var pb := BoxMesh.new()
@@ -156,6 +153,10 @@ func _build_world() -> void:
 		l.position.y = 0.8
 		n.add_child(l)
 		lanterns.append({"node": n, "lamp": lamp, "good": good, "lit": false, "light": l})
+		var dl := Kit.label3d(["月", "火", "水", "木", "金", "土"][i], 36, Color(1, 1, 1, 0.85) if good else Color(1, 1, 1, 0.35))
+		dl.pixel_size = 0.008
+		dl.position = Vector3(0, 1.3, 0)
+		n.add_child(dl)
 		if good:
 			good_total += 1
 			var tw := n.create_tween().set_loops()
@@ -170,7 +171,7 @@ func _build_world() -> void:
 	for i in min(8, ids.size()):
 		var o := Obake3D.make(ids[i])
 		o.scale = Vector3.ONE * 0.42
-		o.position = Vector3(lerpf(-1.8, 1.8, i / 7.0) if ids.size() > 1 else 0.0, 0, 1.8 + (i % 2) * 0.35)
+		o.position = Vector3(lerpf(-1.9, 1.9, i / 7.0) if ids.size() > 1 else 0.0, 0, 2.6 + (i % 2) * 0.3)
 		o.rotation.y = PI # 月を見上げる（背中をこちらに）
 		world.add_child(o)
 		obs.append(o)
@@ -196,6 +197,7 @@ func _build_world() -> void:
 
 ## 0 = 新月寄り、1 = 満月
 func _set_phase(p: float) -> void:
+	shade.visible = p < 0.99
 	shade.position = moon.position + Vector3(lerpf(-0.9, -2.3, p), 0, 0.4)
 	moon_light.light_energy = p * 1.6
 
