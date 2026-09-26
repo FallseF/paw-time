@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://b03dk7vpxvt6o"
+
+[deps]
+
+files=["res://translations/island_kit.en.translation", "res://translations/island_kit.ja.translation"]
+
+source_file="res://translations/island_kit.csv"
+dest_files=["res://translations/island_kit.en.translation", "res://translations/island_kit.ja.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

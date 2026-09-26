@@ -27,6 +27,30 @@ const PRESETS := {
 		"rim": [Vector3(-20, 170, 0), Color("ffe6c8"), 0.6],
 		"exposure": 1.0, "contrast": 1.05, "saturation": 1.05,
 	},
+	# 島：昼（高い太陽、白っぽい暖かいキー、空色のフィル）
+	"island_day": {
+		"ambient": Color("dfe9f2"), "ambient_energy": 0.42,
+		"key": [Vector3(-48, 32, 0), Color("fff4e2"), 0.95],
+		"fill": [Vector3(-15, -145, 0), Color("a9d4ff"), 0.3],
+		"rim": [Vector3(-22, 168, 0), Color("fff6ea"), 0.55],
+		"exposure": 1.0, "contrast": 1.03, "saturation": 1.06,
+	},
+	# 島：夕方（低い橙の太陽、紫のフィル、強めのリム）
+	"island_evening": {
+		"ambient": Color("e7c0c6"), "ambient_energy": 0.36,
+		"key": [Vector3(-16, 58, 0), Color("ffb77a"), 0.95],
+		"fill": [Vector3(-12, -130, 0), Color("a58cff"), 0.3],
+		"rim": [Vector3(-12, 175, 0), Color("ffc890"), 0.9],
+		"exposure": 1.0, "contrast": 1.05, "saturation": 1.08,
+	},
+	# 島：夜（青い月明かり、灯りが主役）
+	"island_night": {
+		"ambient": Color("5a64a8"), "ambient_energy": 0.5,
+		"key": [Vector3(-55, -30, 0), Color("a9bcff"), 0.32],
+		"fill": [Vector3(-10, 140, 0), Color("6f7fd6"), 0.18],
+		"rim": [Vector3(-20, 175, 0), Color("c9d8ff"), 0.45],
+		"exposure": 1.0, "contrast": 1.05, "saturation": 1.0,
+	},
 	# 孵化：暗い部屋にスポットの暖かい光
 	"hatch": {
 		"ambient": Color("c9a8b8"), "ambient_energy": 0.25,
