@@ -671,7 +671,8 @@ func _lift() -> void:
 	Engine.time_scale = 1.0
 	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
 	GameState.total_scooped += 1
-	if caught_count + 1 >= 3:
+	GameState.tonight_caught += 1
+	if GameState.tonight_caught >= 3:
 		GameState.goal("scoop3")
 	if GameState.NETS[poi_type].type == target.data.type:
 		GameState.goal("match")
@@ -694,6 +695,7 @@ func _lift() -> void:
 
 func _tear(target: Orb3D) -> void:
 	busy = true
+	pressed = false
 	_play("tear")
 	Input.vibrate_handheld(80)
 	_banner("やぶれた…", Color("ffb3a8"))
@@ -778,7 +780,7 @@ func _flash(a: float) -> void:
 
 
 func _finish() -> void:
-	if GameState.scooped_tonight:
+	if GameState.scooped_tonight or busy:
 		return
 	GameState.scooped_tonight = true
 	GameState.tut["scoop"] = true

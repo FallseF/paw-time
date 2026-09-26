@@ -122,7 +122,13 @@ func _process(delta: float) -> void:
 
 func _continue() -> void:
 	if GameState.load_game():
-		main.go("garden")
+		# 途中で閉じた朝の続きから
+		if GameState.dream_pending:
+			main.go("dream")
+		elif not GameState.hatched.is_empty():
+			main.go("hatch")
+		else:
+			main.go("garden")
 
 
 func _new(mode: String) -> void:

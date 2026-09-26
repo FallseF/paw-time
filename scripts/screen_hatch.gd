@@ -262,6 +262,8 @@ func _next() -> void:
 	if busy:
 		return
 	if index >= orbs.size():
+		GameState.hatched = []
+		GameState.save()
 		main.go("garden")
 		return
 	busy = true

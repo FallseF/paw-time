@@ -331,10 +331,15 @@ func _market() -> void:
 	p.pivot_offset = Vector2(150, 80)
 	p.scale = Vector2(0.7, 0.7)
 	create_tween().tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	v.add_child(Kit.button("帰って寝る", Color("8b7bff"), func():
+	var bb: Button
+	bb = Kit.button("帰って寝る", Color("8b7bff"), func():
+		if bb.disabled:
+			return
+		bb.disabled = true
 		plan = "done_market"
 		going = false
-		_sleep()))
+		_sleep())
+	v.add_child(bb)
 
 
 func demo_late() -> void:

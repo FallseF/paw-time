@@ -129,6 +129,9 @@ var night_plan := "" # "" / extra（もうひと玉）/ market（夜店）
 var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい）
 var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
+var work_hist: Array = [] # その日に実際に働いたか
+var tonight_caught := 0
+var moon_won_saved := false
 
 
 func _ready() -> void:
@@ -187,6 +190,9 @@ func reset(new_mode := "data") -> void:
 	total_scooped = 0
 	night_plan = ""
 	lit_deco = ""
+	work_hist = []
+	tonight_caught = 0
+	last_goals = 0
 	make_goals()
 	changed.emit()
 
@@ -334,6 +340,14 @@ func finish_shift() -> Array:
 	if s.first or first_role_today:
 		nets["kira"] += 1
 		got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめての経験）"})
+	# 何度も一緒に入った同僚から、おばけをもらうことがある
+	if not received:
+		for c in s.coworkers:
+			if coworker_count.get(c, 0) >= 2:
+				received = true
+				orbs.append({"type": s.role, "rare": false})
+				got.append({"kind": "gift", "id": s.role, "text": "%sから、光る玉をもらった" % c})
+				break
 	var before: int = decos.get(s.role, 0)
 	if before == 0:
 		deco_store[s.role] = s.store
@@ -347,6 +361,22 @@ func finish_shift() -> Array:
 	save()
 	changed.emit()
 	return got
+
+
+## 今日の同僚に、おばけをおすそわけする（オクリモノの条件）
+func can_gift() -> bool:
+	return shift_done_today and today().coworkers.size() > 0 and not gifted_today and owned.size() > 1
+
+
+var gifted_today := false
+
+
+func gift() -> String:
+	gifted = true
+	gifted_today = true
+	var c: String = today().coworkers[0]
+	save()
+	return c
 
 
 func deco_level(role: String) -> int:
@@ -429,7 +459,7 @@ func night_score(bed: int, wake: int) -> Dictionary:
 	if bed > LATE_LINE:
 		score -= 6
 		parts.append(["夜ふかし", -6])
-	if today().role == "" and h >= 7.0:
+	if not shift_done_today and h >= 7.0:
 		score += 4
 		parts.append(["休みの日の休息", 4])
 	return {"score": score, "hours": h, "parts": parts, "late": bed > LATE_LINE, "good": score >= 14}
@@ -547,7 +577,7 @@ func make_goals() -> void:
 	if bed_hist.is_empty():
 		sleep_goal = "hours7"
 	var pool := ["scoop3", "talk", "zukan"]
-	if not decos.is_empty():
+	if not decos.is_empty() and weekday() != 6:
 		pool.append("light")
 	var typed := false
 	for k in ["receipt", "bubble", "tray", "pan", "box"]:
@@ -565,15 +595,21 @@ func make_goals() -> void:
 		goals.append({"id": g, "text": GOAL_TEXT[g], "done": false})
 
 
-## めあてを達成したら、めぐみ +3。3つそろうと、いつものポイ +1
+func _recalc_level() -> void:
+	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:
+		garden_level += 1
+
+
+## めあてを達成したら、めぐみ +3。3つそろうと、きらきらポイ +1
 func goal(id: String) -> void:
 	for g in goals:
 		if g.id == id and not g.done:
 			g.done = true
 			growth += 3
+			_recalc_level()
 			var all := goals.all(func(x): return x.done)
 			if all:
-				nets["plain"] = mini(nets["plain"] + 1, 6)
+				nets["kira"] += 1
 			goal_completed.emit(g.text, all)
 			changed.emit()
 			return
@@ -621,14 +657,17 @@ func sleep(bed: int, wake: int) -> void:
 	var have := seen.duplicate()
 	for rid in rare_pending:
 		have[rid] = true
-	var fresh: Array = Rares.check(rare_context(s, hours, bed), have)
+	var fresh: Array = Rares.check(rare_context(s, h, bed), have)
 	rare_pending = fresh + rare_pending
 	for i in min(RARES_PER_NIGHT, rare_pending.size()):
 		var rid: String = rare_pending.pop_front()
 		add_obake(rid)
 		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true})
 	_hatch_orbs(h)
+	work_hist.append(shift_done_today)
+	gifted_today = false
 	scooped_tonight = false
+	tonight_caught = 0
 	night_plan = ""
 	shift_done_today = false
 	moon_won_today = false
@@ -717,11 +756,11 @@ func finish_moon(lit: int, bonus_taps: int) -> Dictionary:
 
 # ---------- レア条件 ----------
 
-func rare_context(s: Dictionary, hours: int, bed: int) -> Dictionary:
+func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 	var worked: bool = s.get("role", "") != "" and shift_done_today
 	var streak := 0
-	for d in range(day - 1, -1, -1):
-		if shift_for(d).role == "":
+	for i in range(work_hist.size() - 1, -1, -1):
+		if not work_hist[i]:
 			break
 		streak += 1
 	var same_max := 0
@@ -750,7 +789,7 @@ func rare_context(s: Dictionary, hours: int, bed: int) -> Dictionary:
 	return {
 		"shift": sh,
 		"sleep": hours,
-		"sleep_hist": sleep_hist.map(func(x): return int(round(x))),
+		"sleep_hist": sleep_hist,
 		"first_role": worked and first_role_today and day > 0,
 		"roles_seen": roles_seen.size(),
 		"stores_week": stores_week.size(),
@@ -776,7 +815,7 @@ func rare_context(s: Dictionary, hours: int, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals"]
 
 
 func save() -> void:
@@ -823,7 +862,6 @@ func load_game() -> bool:
 	for k in weekend_shifts:
 		ws[int(k)] = true
 	weekend_shifts = ws
-	hatched = []
 	changed.emit()
 	return true
 

@@ -177,11 +177,8 @@ func _build_world() -> void:
 	world.add_child(burst)
 
 	# おばけたち（最大 14 体まで庭に出る）
-	var shown := 0
-	for o in GameState.owned:
-		if shown >= 14:
-			break
-		shown += 1
+	# 新しく来た子を優先して、14 体まで
+	for o in GameState.owned.slice(-14):
 		var ob := Obake3D.make(o.id)
 		ob.scale = Vector3.ONE * (0.5 + min(o.level, 6) * 0.02)
 		ob.position = Vector3(randf_range(-2.4, 2.4), 0, randf_range(-1.2, 1.8))
@@ -948,12 +945,23 @@ func _show_card() -> void:
 			if not GameState.tut.has("scoop"):
 				Kit.nudge.call_deferred(b)
 			card_box.add_child(Kit.button("すくわずに、もう寝る", Color(1, 1, 1, 0.9), func(): main.go("sleep"), Color("6a5f70"), 40, 14))
+			if GameState.can_gift():
+				var c: String = GameState.today().coworkers[0]
+				card_box.add_child(Kit.button("%sに、おばけをおすそわけ" % c, Color("fff1dc"), _gift, Color("b0643a"), 36, 13))
 		else:
 			card_box.add_child(Kit.text("おやすみの時間", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.wrap(Kit.text("玉を %d 個持ち帰った。寝る時刻で、明日の庭が変わる" % GameState.orbs.size(), 14, Color("6a5f70"))))
 			card_box.add_child(Kit.button("寝る", Color("8b7bff"), func(): main.go("sleep")))
 	_card_fit()
 	_pop_card()
+
+
+func _gift() -> void:
+	var c := GameState.gift()
+	var o: Dictionary = GameState.owned.pick_random()
+	Kit.play(self, "pop", 1.1)
+	_toast("おすそわけ", "%sに、%sを1体わたした（写しなので、庭の子はそのまま）" % [c, GameState.info(o.id).name])
+	_show_card()
 
 
 ## 今夜ともす飾りを選ぶ。その仕事の玉が川べりに出やすくなる

@@ -100,7 +100,7 @@ static func is_rare(id: String) -> bool:
 static func check(ctx: Dictionary, have: Dictionary) -> Array:
 	var got: Array = []
 	var s: Dictionary = ctx.shift
-	var hrs: int = ctx.sleep
+	var hrs: float = ctx.sleep
 	var hist: Array = ctx.sleep_hist
 	var worked: bool = s.get("role", "") != ""
 	var conds := {
