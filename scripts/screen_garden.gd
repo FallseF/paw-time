@@ -20,6 +20,7 @@ var fireflies: CPUParticles3D
 var burst: CPUParticles3D
 var night := 0.0 # 0 = 朝 / 1 = 夜
 var sky_moon: MeshInstance3D
+var night_sky := Color("141a3a")
 var sky_stars: CPUParticles3D
 
 var top_day: Label
@@ -135,6 +136,7 @@ func _build_world() -> void:
 		var f := _dream_flower(Vector3(-3.3 + (i % 8) * 0.35, 0, 2.6 + (i / 8) * 0.25))
 		world.add_child(f)
 	_build_next_stake(L)
+	_build_dressing(L)
 	# 仕事の飾り
 	for role in GameState.decos:
 		var lv: int = GameState.deco_level(role)
@@ -360,6 +362,60 @@ func _group(name: String, pos: Vector3) -> Node3D:
 	world.add_child(n)
 	items[name] = n
 	return n
+
+
+## 段が上がるほど、ひと目で分かる変化：道の灯り（段の数だけ）・生け垣・野の花・夜空の色
+func _build_dressing(L: int) -> void:
+	if items.has("dressing"):
+		items.dressing.queue_free()
+		items.erase("dressing")
+		lamp_lights = lamp_lights.filter(func(l): return is_instance_valid(l) and not l.is_queued_for_deletion() and not l.has_meta("dressing"))
+	var g := _group("dressing", Vector3.ZERO)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	# 道の灯り：段の数だけ、小道の両側に並ぶ（夜に灯る）
+	for i in L:
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var z := 2.7 - (i / 2) * 0.62
+		var at := Vector3(0.2 + side * 0.75, 0, z)
+		var post := _box(Vector3(0.1, 0.32, 0.1), at + Vector3(0, 0.16, 0), Color("9a948c"), g)
+		post.name = "lamp_post"
+		var bulb := _ball(0.07, Color("ffe7a8"), Kit.glow(Color("ffd98a"), 2.0))
+		bulb.position = at + Vector3(0, 0.38, 0)
+		g.add_child(bulb)
+		if i % 3 == 0:
+			var l := OmniLight3D.new()
+			l.light_color = Color("ffc98a")
+			l.omni_range = 1.4
+			l.light_energy = 1.0
+			l.position = at + Vector3(0, 0.45, 0)
+			l.set_meta("dressing", true)
+			g.add_child(l)
+			lamp_lights.append(l)
+	# 生け垣：庭の両脇に、段が上がるほど奥から手前へのびる
+	var n_hedge := 0 if L < 2 else (3 if L < 5 else (5 if L < 8 else 7))
+	for side in [-1.0, 1.0]:
+		for k in n_hedge:
+			var b := _ball(rng.randf_range(0.3, 0.42), Color("5a8a4a").lerp(Color("3f6d3a"), L / 10.0))
+			b.scale = Vector3(0.9, 0.85, 1.2)
+			b.position = Vector3(side * rng.randf_range(3.7, 4.0), 0.24, -2.4 + k * 0.85)
+			g.add_child(b)
+			if L >= 8 and k % 2 == 0:
+				var f := _ball(0.07, Color("ffd1e0"))
+				f.position = b.position + Vector3(-side * 0.2, 0.25, 0.15)
+				g.add_child(f)
+	# 野の花：芝のあちこちに（段 4 から、8 で倍）
+	var n_flower := 0 if L < 4 else (26 if L < 8 else 56)
+	var cols := [Color("ffd36b"), Color("ffffff"), Color("ff9fb8"), Color("b9a7ff")]
+	for i in n_flower:
+		var p := Vector3(rng.randf_range(-3.6, 3.6), 0.05, rng.randf_range(-2.4, 3.0))
+		if absf(p.x - 0.2) < 0.9:
+			continue
+		var f := _ball(0.045, cols[i % cols.size()])
+		f.position = p
+		g.add_child(f)
+	# 夜空の色：段が上がるほど、深い紫に（満開で、ほんのり夢の色）
+	night_sky = Color("141a3a").lerp(Color("2a1f4f"), L / 10.0)
 
 
 const STAGE_SPOT := {1: Vector3(0.9, 0, 1.3), 2: Vector3(-2.1, 0, 0.6), 3: Vector3(2.4, 0, -1.2), 4: Vector3(-2.1, 0, 1.1), 5: Vector3(1.3, 0, 0.9), 6: Vector3(-0.9, 0, -1.4), 7: Vector3(-3.0, 0, -1.6), 8: Vector3(0, 0, 0.4), 9: Vector3(2.9, 0, 1.9), 10: Vector3(3.2, 0, -2.3)}
@@ -709,14 +765,14 @@ func _apply_time(n: float) -> void:
 		crickets.play()
 	crickets.volume_db = lerpf(-60.0, -14.0, n)
 	var day_bg := Color("f3d9c4").lerp(Color("cfe3ef"), 0.3)
-	env.background_color = day_bg.lerp(Color("141a3a"), n)
+	env.background_color = day_bg.lerp(night_sky, n)
 	env.ambient_light_color = Color("ffe9d6").lerp(Color("5a64a8"), n)
 	env.ambient_light_energy = lerpf(0.4, 0.55, n)
 	sun.light_color = Color("ffe0bf").lerp(Color("9fb4ff"), n)
 	sun.light_energy = lerpf(0.75, 0.3, n)
 	lamp_lights = lamp_lights.filter(func(l): return is_instance_valid(l) and not l.is_queued_for_deletion())
 	for l in lamp_lights:
-		l.light_energy = lerpf(0.4, 1.8, n)
+		l.light_energy = lerpf(0.0, 1.0, n) if l.has_meta("dressing") else lerpf(0.4, 1.8, n)
 	if fireflies:
 		fireflies.visible = n > 0.4
 	if sky_moon:
@@ -1592,6 +1648,8 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	burst.restart()
 	burst.emitting = true
 	_build_next_stake(level)
+	_build_dressing(level)
+	_apply_time(night)
 	Kit.play(self, "grow")
 	Kit.shake(cam, 0.05, 0.3)
 	_toast("庭が育った：%s" % st.name, st.desc)
