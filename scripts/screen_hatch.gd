@@ -40,7 +40,7 @@ func _ready() -> void:
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
 		var t: String = GameState.info(h.id).type
-		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": h.id == "kirari", "weight": 0.3})
+		var o := Orb3D.new().setup({"type": t if GameState.TYPE_COLOR.has(t) else "rare", "rare": Rares.is_rare(h.id) or h.get("big", false), "weight": 0.3})
 		o.caught = true
 		o.halo_mat.albedo_color.a = 0.08
 		o.light.light_energy = 0.5
