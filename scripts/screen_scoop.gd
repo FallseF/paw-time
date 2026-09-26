@@ -911,7 +911,10 @@ func _refresh_ui() -> void:
 	if goal_label:
 		_update_goal()
 	combo_label.text = ("%d" % combo) if combo >= 2 else ""
-	combo_sub.text = "コンボ" if combo >= 2 else ("最高 %d" % best_combo if best_combo >= 2 else "")
+	if combo >= 2:
+		combo_sub.text = "コンボ（5で虹）" if combo < 5 and not rainbow_done_combo else "コンボ"
+	else:
+		combo_sub.text = ("最高 %d" % best_combo) if best_combo >= 2 else ""
 	# ポイの丈夫さ
 	var frac := clampf(durability / max(dura_max, 0.01), 0.0, 1.0) if in_hand else (1.0 if pool.get(selected, 0) > 0 else 0.0)
 	dura_fill.size.x = 280.0 * frac
