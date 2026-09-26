@@ -11,7 +11,7 @@ const SCREENS := {
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"map": preload("res://scripts/screen_map.gd"),
 	"crew": preload("res://scripts/screen_crew.gd"),
-	"defense": preload("res://scripts/screen_defense.gd"),
+	"defense": preload("res://scripts/screen_shift.gd"),
 }
 
 var root: Control
@@ -72,7 +72,7 @@ func _debug_setup() -> void:
 		for o in GameState.owned:
 			o.level = 6
 		GameState.coins = 3000
-		for id in ["iraira", "gyouretsu", "chuumon", "araimono", "denwa"]:
+		for id in ["gyouretsu", "mizu", "chuumon", "araimono", "kakekomi"]:
 			GameState.enemies_seen[id] = true
 		for si in (3 if OS.get_environment("OBAKE_BOSS") != "" else 2):
 			for st in DefData.shop(si).stages.size():

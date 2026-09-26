@@ -34,13 +34,13 @@ func _run(plan: Array) -> String:
 			var st: int = nx[1]
 			if gs.is_cleared(si, st):
 				break
-			var sim := DefSim.new()
+			var sim := ShopSim.new()
 			sim.setup(si, st, gs.deck_for_battle(), gs.battle_boost(DefData.shop(si).id), gs.lap)
-			while sim.result == "" and sim.t < 300.0:
-				sim.ai_step(1.0 / 20.0, 0.5)
-				sim.tick(1.0 / 20.0)
+			while sim.result == "":
+				sim.ai_step(0.1, 0.5)
+				sim.tick(0.1)
 				sim.pop_events()
-			var r: Dictionary = gs.record_battle(si, st, sim.result == "win", {"time": sim.t, "kills": sim.kills})
+			var r: Dictionary = gs.record_battle(si, st, sim.result == "win", {"time": sim.t, "kills": sim.solved, "stars": sim.stars()})
 			if r.won:
 				cleared_day["%s%d-%d" % ["" if gs.lap == 1 else "L%d:" % gs.lap, si + 1, st + 1]] = d + 1
 			if gs.best_lap > gs.lap:

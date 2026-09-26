@@ -204,25 +204,17 @@ func _stage_row(si: int, st: int) -> Control:
 	nv.add_child(Kit.text(sub, 11, Kit.SUB))
 	row.add_child(nv)
 	if open:
-		var ids := {}
-		for s in stage.spawn:
-			ids[s[0]] = true
 		var n := 0
-		for id in ids:
+		for kind in ShopData.stage(si, st).kinds:
 			if n >= (1 if done else 3):
 				break
-			var tr := TextureRect.new()
-			tr.texture = Kit.enemy_tex(id)
-			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			tr.custom_minimum_size = Vector2(30, 30)
-			tr.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			row.add_child(tr)
+			var chip := Kit.trouble_chip(kind, 28)
+			chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			row.add_child(chip)
 			n += 1
 	if done:
 		var star := Kit.text("★" if GameState.is_perfect(si, st) else "☆", 18, Color("e8a317") if GameState.is_perfect(si, st) else Color("d8cfc6"), true)
-		star.tooltip_text = "お店を無傷で守ると★"
+		star.tooltip_text = "★3つ：店の余裕を7割のこす"
 		row.add_child(star)
 	if open and not done:
 		var np := PanelContainer.new()
@@ -278,35 +270,31 @@ func _open_sheet(si: int, st: int) -> void:
 	tip.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(tip)
 	if GameState.is_cleared(si, st):
-		var goal := Kit.text(("★ 無傷で守った" if GameState.is_perfect(si, st) else "★ 無傷で守ると +30%"), 12, Color("e8a317"), true)
+		var goal := Kit.text(("★3つ とった" if GameState.is_perfect(si, st) else "★3つで、まかない +30%"), 12, Color("e8a317"), true)
 		v.add_child(goal)
-	# 出てくる困りごと
+	# 出てくる困りごとと、片づく持ち場
 	var er := HBoxContainer.new()
 	er.add_theme_constant_override("separation", 6)
-	var ids := {}
-	for s in stage.spawn:
-		ids[s[0]] = true
-	for id in ids:
-		var d: Dictionary = DefData.ENEMIES[id]
+	var sstage: Dictionary = ShopData.stage(si, st)
+	for kind in sstage.kinds:
+		var d: Dictionary = ShopData.TROUBLES[kind]
 		var c := VBoxContainer.new()
 		c.add_theme_constant_override("separation", 0)
-		c.custom_minimum_size = Vector2(60, 0)
-		var tr := TextureRect.new()
-		tr.texture = Kit.enemy_tex(id)
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.custom_minimum_size = Vector2(52, 44)
-		c.add_child(tr)
+		c.custom_minimum_size = Vector2(54, 0)
+		var cc := CenterContainer.new()
+		cc.add_child(Kit.trouble_chip(kind, 38))
+		c.add_child(cc)
 		var nl := Kit.text(d.name, 9, Kit.INK, true)
 		nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		nl.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		c.add_child(nl)
-		var wk := Kit.text(("弱点 " + GameState.ROLE_LABEL[d.weak]) if d.weak != "" else "弱点なし", 9, DefData.job_color(d.weak), true)
+		var sj: String = ShopData.STATIONS[d.station].job
+		var wk := Kit.text(ShopData.STATIONS[d.station].name, 9, DefData.job_color(sj), true)
 		wk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		c.add_child(wk)
 		er.add_child(c)
 	var es := ScrollContainer.new()
-	es.custom_minimum_size = Vector2(324, 86)
+	es.custom_minimum_size = Vector2(324, 84)
 	es.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	es.add_child(er)
 	v.add_child(es)
@@ -330,8 +318,8 @@ func _open_sheet(si: int, st: int) -> void:
 	var dr := HBoxContainer.new()
 	dr.add_theme_constant_override("separation", 4)
 	var weak_jobs := {}
-	for id2 in ids:
-		weak_jobs[DefData.ENEMIES[id2].weak] = true
+	for sid in sstage.stations:
+		weak_jobs[ShopData.STATIONS[sid].job] = true
 	for id in GameState.deck:
 		var cell := VBoxContainer.new()
 		cell.add_theme_constant_override("separation", -4)
@@ -343,7 +331,7 @@ func _open_sheet(si: int, st: int) -> void:
 		cell.add_child(pic)
 		# この夜の困りごとに効く仕事なら「効く」
 		var job: String = DefData.unit(id).get("job", "")
-		var tag := Kit.text("効く" if job != "" and weak_jobs.has(job) else " ", 9, Color("e8792f"), true)
+		var tag := Kit.text("出番" if job != "" and weak_jobs.has(job) else " ", 9, Color("e8792f"), true)
 		tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cell.add_child(tag)
 		dr.add_child(cell)

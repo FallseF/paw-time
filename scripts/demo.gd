@@ -47,7 +47,7 @@ func _setup_rich() -> void:
 		GameState.add_obake(id)
 	for o in GameState.owned:
 		o.level = 9
-	GameState.deck = ["receipt", "box", "tray", "bubble", "pan", "kaminari", "hyakki"]
+	GameState.deck = ["receipt", "box", "tray", "bubble", "pan", "nemurin", "kaminari"]
 	GameState.coins = 2480
 	for si in 3:
 		for st in DefData.shop(si).stages.size():
@@ -61,92 +61,17 @@ func _screen():
 	return main.current
 
 
-## 大乱戦：少し進めた状態から、百鬼があふれ、雷が落ち、チャイムが鳴る
+## 店を回す：少し進めた状態から、自動で回す
 func _rush() -> void:
 	var s = _screen()
-	var sim: DefSim = s.sim
-	s.auto = false
-	sim.energy = 1500
-	sim.wallet_lv = 6
-	sim.cannon = 0.6
-	# 前もって少し戦わせておく
-	for i in 30 * 14:
-		sim.ai_step(1.0 / 30.0, 1.0)
-		sim.tick(1.0 / 30.0)
-	sim.pop_events()
-	s.cam_x = 9.0
-	s.cam_hold = 1.0
 	s.auto = true
-	await get_tree().create_timer(1.0).timeout
-	sim.energy = sim.energy_max()
-	var hy := _slot(sim, "hyakki")
-	sim.slots[hy].left = 0
-	s._deploy(hy)
-	s.cam_x = DefData.LANE - 3.0
-	s.cam_hold = 2.2
-	await get_tree().create_timer(2.6).timeout
-	var kz := _slot(sim, "kaminari")
-	sim.slots[kz].left = 0
-	sim.energy = sim.energy_max()
-	s._deploy(kz)
-	await get_tree().create_timer(2.0).timeout
-	sim.cannon = 1.0
-	s._cannon()
+	s.speed = 1
 
 
 func _boss() -> void:
 	var s = _screen()
-	var sim: DefSim = s.sim
 	s.auto = true
-	s.speed = 1
-	sim.wallet_lv = 7
-	for i in 30 * 30:
-		sim.ai_step(1.0 / 30.0, 1.0)
-		sim.tick(1.0 / 30.0)
-	sim.pop_events()
-	sim.ebase_hp = sim.ebase_max * 0.86
-	await get_tree().create_timer(0.8).timeout
-	sim.ebase_hp = sim.ebase_max * 0.84 # ここで大ピークが来る
-	await get_tree().create_timer(1.6).timeout
-	# 見せ場のために、大ピークをチャイムの届くところまで進めておく
-	var bb := sim.find(sim.boss_uid)
-	if not bb.is_empty():
-		bb.x = maxf(bb.x, DefData.LANE - DefSim.CANNON_REACH + 1.5)
-	s.cam_x = DefData.LANE - DefSim.CANNON_REACH + 2.5
-	s.cam_hold = 6.0
-	# 大ピークが「！」でためた瞬間にチャイム
-	for k in 30:
-		var b := sim.find(sim.boss_uid)
-		if not b.is_empty() and b.winding and b.x >= DefData.LANE - DefSim.CANNON_REACH:
-			break
-		await get_tree().create_timer(0.1).timeout
-	sim.cannon = 1.0
-	s._cannon()
-	await get_tree().create_timer(1.2).timeout
-	# 大ピークを弱らせて、見せ場を早める
-	for e in sim.entities:
-		if e.boss:
-			e.hp = minf(e.hp, 500)
-	sim.energy = sim.energy_max()
-	var kz := _slot(sim, "kaminari")
-	sim.slots[kz].left = 0
-	s._deploy(kz)
-	await get_tree().create_timer(1.8).timeout
-	for sp in sim.spawners:
-		if not sp.on:
-			sp.on = true
-			sp.next = 9999.0
-	sim.ebase_hp = minf(sim.ebase_hp, 300)
-	while sim.result == "":
-		await get_tree().create_timer(0.15).timeout
-		sim.ebase_hp -= 150
-
-
-func _slot(sim: DefSim, id: String) -> int:
-	for i in sim.slots.size():
-		if sim.slots[i].id == id:
-			return i
-	return 0
+	s.speed = 2
 
 
 func _scoop() -> void:

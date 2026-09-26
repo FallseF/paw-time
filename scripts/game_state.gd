@@ -124,8 +124,8 @@ func reset() -> void:
 	nets = {"plain": 2, "receipt": 0, "bubble": 0, "tray": 0, "pan": 0, "box": 0, "kira": 0}
 	net_strength = 1.0
 	last_sleep = 7
-	owned = [{"id": "receipt", "level": 1, "xp": 0}, {"id": "box", "level": 1, "xp": 0}]
-	seen = {"receipt": true, "box": true}
+	owned = [{"id": "receipt", "level": 1, "xp": 0}, {"id": "tray", "level": 1, "xp": 0}]
+	seen = {"receipt": true, "tray": true}
 	morning_report = []
 	orbs = []
 	hatched = []
@@ -142,7 +142,7 @@ func reset() -> void:
 	received = false
 	rare_pending = []
 	coins = 0
-	deck = ["receipt", "box"]
+	deck = ["receipt", "tray"]
 	cleared = {}
 	best_lap = 1
 	lap = 1
@@ -250,11 +250,11 @@ func finish_shift() -> Array:
 
 ## 戦いのブースト。shop_id の店で働いた日なら、開始やる気とその仕事のおばけが強くなる。
 func battle_boost(shop_id: String) -> Dictionary:
-	var b := {"regen": regen_bonus, "start_energy": 0.0, "job": "", "job_mult": 1.0, "lines": [], "weekly": DefData.weekly(week_no())}
+	var b := {"regen": regen_bonus, "start_bonus": 0.0, "job": "", "job_mult": 1.0, "lines": [], "weekly": DefData.weekly(week_no())}
 	if not b.weekly.is_empty():
 		b.lines.append("今週のお題「%s」：%s" % [b.weekly.name, b.weekly.desc])
 	if regen_bonus > 1.0:
-		b.lines.append("よく寝た：やる気のたまり ×%.2f" % regen_bonus)
+		b.lines.append("よく寝た：スタミナ ×%.2f" % regen_bonus)
 	if boost.is_empty():
 		return b
 	var here: bool = DefData.STORE_SHOP.get(boost.store, "") == shop_id or (shop_id == "peak")
@@ -437,7 +437,7 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 			r.daily = true
 		r.first = first
 		# お店が無傷なら★（はじめての★で +30%）
-		if stats.get("base", 0.0) >= 0.999 and not perfect.has(key):
+		if stats.get("stars", 0) >= 3 and not perfect.has(key):
 			perfect[key] = true
 			r["perfect"] = true
 			r.coins += int(r.coins * 0.3)
@@ -451,9 +451,9 @@ func record_battle(si: int, st: int, won: bool, stats: Dictionary) -> Dictionary
 		if first and st == DefData.shop(si).stages.size() - 1:
 			orbs.append({"type": "rare", "rare": true})
 			r.orb = true
-		# 最初の2面で、戦い方を教える仲間が加わる
-		if first and lap == 1 and si == 0 and st <= 1:
-			var jid := "tray" if st == 0 else "bubble"
+		# 次の面で増える持ち場の係が、先に仲間になる（1-2→キッチンのジュウ、1-3→洗い場のアワワ）
+		if first and lap == 1 and si == 0 and st in [1, 2]:
+			var jid := "pan" if st == 1 else "bubble"
 			if not seen.has(jid):
 				add_obake(jid)
 				r.join = jid

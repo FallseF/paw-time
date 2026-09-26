@@ -73,7 +73,11 @@ func _ready() -> void:
 		for r in Rares.LIST:
 			if r.group == g:
 				grid.add_child(_card(r))
-	col.add_child(_section("困りごと（%d / %d）" % [GameState.enemies_seen.size(), DefData.ENEMIES.size()]))
+	var seen_n := 0
+	for kind in ShopData.TROUBLES:
+		if GameState.enemies_seen.has(kind):
+			seen_n += 1
+	col.add_child(_section("困りごと（%d / %d）" % [seen_n, ShopData.TROUBLES.size()]))
 	var eg := GridContainer.new()
 	eg.columns = 3
 	eg.add_theme_constant_override("h_separation", 8)
@@ -83,8 +87,8 @@ func _ready() -> void:
 	em.add_theme_constant_override("margin_right", 12)
 	em.add_child(eg)
 	col.add_child(em)
-	for id in DefData.ENEMIES:
-		eg.add_child(_enemy_card(id))
+	for kind in ShopData.TROUBLES:
+		eg.add_child(_enemy_card(kind))
 	var pad := Control.new()
 	pad.custom_minimum_size = Vector2(0, 30)
 	col.add_child(pad)
@@ -246,39 +250,29 @@ func _card(r: Dictionary) -> Control:
 	return p
 
 
-func _enemy_card(id: String) -> Control:
-	var d: Dictionary = DefData.ENEMIES[id]
-	var found: bool = GameState.enemies_seen.has(id)
+func _enemy_card(kind: String) -> Control:
+	var d: Dictionary = ShopData.TROUBLES[kind]
+	var found: bool = GameState.enemies_seen.has(kind)
 	var p := PanelContainer.new()
 	var st := _pill(Color.WHITE if found else Color("ece4da"), 14)
 	st.content_margin_left = 6
 	st.content_margin_right = 6
 	p.add_theme_stylebox_override("panel", st)
-	p.custom_minimum_size = Vector2(100, 150)
+	p.custom_minimum_size = Vector2(100, 110)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 4)
 	p.add_child(v)
-	var tr := TextureRect.new()
-	tr.texture = Kit.enemy_tex(id)
-	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	tr.custom_minimum_size = Vector2(80, 70)
-	if not found:
-		tr.modulate = Color(0.15, 0.12, 0.2, 0.3)
-	v.add_child(tr)
+	var cc := CenterContainer.new()
+	cc.add_child(Kit.trouble_chip(kind, 48, found))
+	v.add_child(cc)
 	var n := _text(d.name if found else "？？？", 12, Color("2a2233") if found else Color("9a8e98"), font_black)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	n.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(n)
 	if found:
-		var w := _text(("弱点 " + GameState.ROLE_LABEL[d.weak]) if d.weak != "" else "弱点なし", 10, DefData.job_color(d.weak), font_black)
+		var sj: String = ShopData.STATIONS[d.station].job
+		var w := _text(ShopData.STATIONS[d.station].name + "で片づく", 10, DefData.job_color(sj), font_black)
 		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(w)
-		var l := _text(d.line, 9, Color("7a6f7c"))
-		l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.custom_minimum_size = Vector2(86, 0)
-		v.add_child(l)
 	return p
 
 
@@ -327,7 +321,7 @@ func _show_detail(r: Dictionary) -> void:
 	v.add_child(g)
 	var dtext: String = r.desc if found else "ヒント：" + r.hint
 	if found and DefData.RARE_UNITS.has(r.id):
-		dtext += "\n\n戦いでは：" + DefData.RARE_UNITS[r.id].skill
+		dtext += "\n\n店では：" + ShopData.HELP_TEXT.get(ShopData.help_of(r.id), "")
 	var d := _text(dtext, 15, Color("4a3f52"))
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY

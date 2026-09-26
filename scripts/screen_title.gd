@@ -39,10 +39,11 @@ func _ready() -> void:
 	line.size = Vector2(360, 3)
 	add_child(line)
 	# 困りごとが、画面の下を横切る
-	var ids := ["gyouretsu", "iraira", "chuumon", "araimono", "denwa", "kakekomi"]
+	var ids := ["receipt", "tray", "bubble", "pan", "box"]
+	Kit.make_portraits(ids)
 	for i in ids.size():
 		var tr := TextureRect.new()
-		tr.texture = Kit.enemy_tex(ids[i])
+		tr.set_meta("id", ids[i])
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.size = Vector2(70, 70)
@@ -97,6 +98,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	for tr: TextureRect in walkers:
+		if tr.texture == null:
+			tr.texture = Kit.portrait(tr.get_meta("id"))
 		tr.position.x += 38.0 * delta
 		tr.position.y = 528 - absf(sin(tr.position.x * 0.08)) * 6
 		if tr.position.x > 380:
