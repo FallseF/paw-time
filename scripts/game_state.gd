@@ -616,7 +616,7 @@ func tonight_orbs() -> Array:
 func omen() -> String:
 	# 週の後半は、満月の夜までの数を
 	if weekday() >= 3 and weekday() <= 5:
-		var lit: int = moon_lanterns().count(true)
+		var lit: int = good_hist.slice(-weekday()).count(true) if good_hist.size() >= weekday() else good_hist.count(true)
 		if lit < 4:
 			return "日曜の満月まで：よく眠れた夜 %d / 4" % lit
 		return "日曜は満月になりそう（よく眠れた夜 %d）" % lit
