@@ -70,6 +70,7 @@ var multi_count := 0
 var ended := false
 var title_before := 0
 var tut_step := -1
+var tut_label: Label
 var goal: Dictionary
 var goal_done := false
 var goal_label: Label
@@ -334,7 +335,7 @@ func _build_world() -> void:
 		_festival_deco()
 
 	var flies := CPUParticles3D.new()
-	flies.amount = 50
+	flies.amount = 24
 	flies.lifetime = 7.0
 	flies.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	flies.emission_box_extents = Vector3(4, 0.6, 3)
@@ -1338,6 +1339,8 @@ func _after_catch() -> void:
 	if tut_step >= 1:
 		tut_step = -1
 		tut_ring.visible = false
+		if tut_label:
+			tut_label.visible = false
 		GameState.tut["scoop"] = true
 		hint.text = "できた！ゆっくり動かすほど、ポイは長持ち"
 	else:
@@ -1788,6 +1791,14 @@ func _show_help() -> void:
 
 func _tut_show() -> void:
 	tut_ring.visible = true
+	if tut_label == null:
+		tut_label = _text("", 14, Color.WHITE, font_black)
+		tut_label.add_theme_color_override("font_outline_color", Color("0b1026"))
+		tut_label.add_theme_constant_override("outline_size", 6)
+		tut_label.size = Vector2(160, 22)
+		add_child(tut_label)
+	tut_label.text = ["ここを押したまま", "玉の下へ", "離す！"][clampi(tut_step, 0, 2)]
+	tut_label.visible = true
 	match tut_step:
 		0:
 			hint.text = "玉のすこし手前を、押したままにする"
@@ -1796,6 +1807,8 @@ func _tut_show() -> void:
 		2:
 			hint.text = "いま！指を離して、すくい上げる"
 			tut_ring.visible = false
+			if tut_label:
+				tut_label.position = cam.unproject_position(poi.position) + Vector2(-80, 34)
 
 
 func _tut_follow() -> void:
@@ -1812,6 +1825,8 @@ func _tut_follow() -> void:
 		return
 	var p := cam.unproject_position(target.position + Vector3(0, 0, 0.5 if tut_step == 0 else 0.0))
 	tut_ring.position = p - Vector2(26, 26)
+	if tut_label:
+		tut_label.position = p + Vector2(-80, 30)
 
 
 # ---------- 夜のおわり ----------
@@ -1979,6 +1994,8 @@ func _hatch_preview() -> String:
 	if mystery > 0:
 		parts.append("？×%d" % mystery)
 	var t := "朝かえる：" + "・".join(parts)
+	if school >= 2:
+		t += "（青の群れは2つでひとり）"
 	for sid in xp:
 		var own: Dictionary = GameState.owned.get(sid, {})
 		if own.is_empty() or own.level >= GameState.MAX_LEVEL:

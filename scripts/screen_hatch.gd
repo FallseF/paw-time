@@ -221,9 +221,9 @@ func _pill(bg: Color, radius := 20) -> StyleBoxFlat:
 	s.content_margin_right = 16
 	s.content_margin_top = 10
 	s.content_margin_bottom = 10
-	s.shadow_color = Color(0, 0, 0, 0.25)
-	s.shadow_size = 10
-	s.shadow_offset = Vector2(0, 4)
+	s.shadow_color = Color(0, 0, 0, 0.12)
+	s.shadow_size = 6
+	s.shadow_offset = Vector2(0, 2)
 	return s
 
 
@@ -316,6 +316,10 @@ func _next() -> void:
 		current_obake = null
 	var orb: Orb3D = orbs[index]
 	var h: Dictionary = GameState.hatched[index]
+	# 開けるあいだは、ほかの玉は下がって見えなくする（主役をひとりに）
+	for i in orbs.size():
+		if i != index and is_instance_valid(orbs[i]):
+			orbs[i].visible = false
 	# 玉が前に出て、震える
 	var tw := create_tween()
 	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -351,7 +355,7 @@ func _next() -> void:
 	sfx["fanfare" if rare or h.is_new else "chime"].play()
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
-	badge.get_parent().visible = h.is_new
+	badge.get_parent().visible = h.is_new and not h.get("rare", false)
 	var stars := "★".repeat(h.get("quality", 0)) + "☆".repeat(3 - h.get("quality", 0))
 	if rare:
 		card_sub.text = ("虹の玉から！ レア ・ %s" if h.get("from_rainbow", false) else "レア ・ %s") % sp.group

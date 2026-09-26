@@ -218,10 +218,15 @@ func _gem(k: String, size := 14) -> Control:
 func _cost_row(cost: Dictionary) -> Control:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 4)
+	if not GameState.can_pay(cost):
+		h.add_child(_text("あと", 12, Color("e85a4f")))
 	for k in cost:
 		var have: int = GameState.shards.get(k, 0)
 		h.add_child(_gem(k, 11))
-		h.add_child(_text("%s %d/%d" % [GameState.SHARD_LABEL[k], mini(have, cost[k]), cost[k]], 13, Color("2a2233") if have >= cost[k] else Color("e85a4f")))
+		if have >= cost[k]:
+			h.add_child(_text("%s ✓" % GameState.SHARD_LABEL[k], 13, Color("5fa05a")))
+		else:
+			h.add_child(_text("%s%d" % [GameState.SHARD_LABEL[k], cost[k] - have], 13, Color("e85a4f")))
 	return h
 
 
@@ -246,12 +251,11 @@ func _upgrade_card(key: String) -> Control:
 	v.add_child(d)
 	if lv < 3:
 		v.add_child(_cost_row(u.cost[lv]))
-		var ok: bool = GameState.can_pay(u.cost[lv])
-		var b := _button("作る" if ok else "かけら\n不足", Color("ff8a5b"), _do_upgrade.bind(key))
-		b.custom_minimum_size = Vector2(70, 44)
-		b.disabled = not ok
-		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		h.add_child(b)
+		if GameState.can_pay(u.cost[lv]):
+			var b := _button("作る", Color("ff8a5b"), _do_upgrade.bind(key))
+			b.custom_minimum_size = Vector2(70, 44)
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			h.add_child(b)
 	else:
 		v.add_child(_text("これ以上は改良できない", 12, Color("8a7a88")))
 	return p
@@ -283,12 +287,11 @@ func _craft_card(pid: String) -> Control:
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
 	v.add_child(_cost_row(GameState.CRAFTS[pid]))
-	var ok: bool = GameState.can_pay(GameState.CRAFTS[pid])
-	var b := _button("作る" if ok else "かけら\n不足", Color("5b6fc2"), _do_craft.bind(pid))
-	b.custom_minimum_size = Vector2(70, 44)
-	b.disabled = not ok
-	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	h.add_child(b)
+	if GameState.can_pay(GameState.CRAFTS[pid]):
+		var b := _button("作る", Color("5b6fc2"), _do_craft.bind(pid))
+		b.custom_minimum_size = Vector2(70, 44)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(b)
 	return p
 
 
@@ -309,12 +312,11 @@ func _decor_row(key: String) -> Control:
 		v.add_child(_cost_row(d.cost))
 	h.add_child(v)
 	if not have:
-		var ok: bool = GameState.can_pay(d.cost)
-		var b := _button("かざる" if ok else "かけら\n不足", Color("5fb07a"), _do_decor.bind(key))
-		b.custom_minimum_size = Vector2(76, 40)
-		b.disabled = not ok
-		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		h.add_child(b)
+		if GameState.can_pay(d.cost):
+			var b := _button("かざる", Color("5fb07a"), _do_decor.bind(key))
+			b.custom_minimum_size = Vector2(76, 40)
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			h.add_child(b)
 	return p
 
 

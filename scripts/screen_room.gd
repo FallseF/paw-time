@@ -508,14 +508,16 @@ func _render() -> void:
 		actions.add_child(_button(night_label, night_col, func(): main.go("catch")))
 	card_body.text += "\n今夜：" + String(GameState.night_mods().label[0])
 	card_body.text += "\nおだい：" + String(GameState.night_goal().text)
-	var nu := GameState.next_unlock_text()
-	if nu != "" and GameState.records.nights > 0:
-		card_body.text += "\n" + nu
-	var normals: int = GameState.NORMAL_IDS.filter(func(i): return GameState.owned.has(i)).size()
-	if normals >= 2 and not GameState.tut.has("partner"):
-		card_body.text += "\n工房で「相棒」を選べるようになった"
+	# お知らせは1つだけ（カードが大きくなりすぎないように）
+	var note := ""
 	if GameState.claimable().size() > 0:
-		card_body.text += "\n図鑑に受け取れるごほうびがある"
+		note = "図鑑に受け取れるごほうびがある"
+	elif GameState.NORMAL_IDS.filter(func(i): return GameState.owned.has(i)).size() >= 2 and not GameState.tut.has("partner"):
+		note = "工房で「相棒」を選べるようになった"
+	elif GameState.records.nights > 0:
+		note = GameState.next_unlock_text()
+	if note != "":
+		card_body.text += "\n" + note
 	_fit_card()
 
 
