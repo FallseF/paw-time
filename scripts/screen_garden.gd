@@ -1314,10 +1314,12 @@ func _build_ui() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
-	if GameState.day >= 1 or not Wardrobe.fresh.is_empty():
-		var wd := Kit.button(tr("Wardrobe"), Color(1, 1, 1, 0.92), func(): main.go("wardrobe"), Color("ff8a5b"), 38, 13)
-		wd.custom_minimum_size.x = 64
-		top.add_child(wd)
+	# キセカエ（2日目から、または新しい服が届いたら）。上の3つとは別に、左下の小さな札
+	if (GameState.day >= 1 or not Wardrobe.fresh.is_empty()) and not _vis():
+		var wd := Kit.button(tr("Wardrobe") + ("  NEW" if not Wardrobe.fresh.is_empty() else ""), Color(1, 1, 1, 0.92), func(): main.go("wardrobe"), Color("ff8a5b"), 32, 13)
+		wd.position = Vector2(12, 58)
+		wd.size = Vector2(0, 32)
+		add_child(wd)
 	var zk := Kit.button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"), 38, 15)
 	zk.custom_minimum_size.x = 64
 	top.add_child(zk)

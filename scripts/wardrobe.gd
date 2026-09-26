@@ -28,6 +28,9 @@ static func _ensure() -> void:
 	for it in WardrobeData.ITEMS:
 		if WardrobeData.kind(it) == "free":
 			owned[it.id] = true
+	if OS.get_environment("OBAKE_WARDROBE_DEMO") != "":
+		_demo()
+		return
 	if OS.get_environment("OBAKE_NOSAVE") != "" or not FileAccess.file_exists(PATH):
 		return
 	var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
@@ -196,6 +199,24 @@ static func unpack(b: PackedByteArray) -> Dictionary:
 	if b.size() >= 7 and b[6] > 0 and b[6] < WardrobeData.TINTS.size():
 		o["tint"] = WardrobeData.TINTS[b[6]].id
 	return o
+
+
+## 撮影用：いくつかの子に服を着せておく
+static func _demo() -> void:
+	for it in WardrobeData.ITEMS:
+		if WardrobeData.kind(it) != "premium":
+			owned[it.id] = true
+	outfits = {
+		"my": {"head": "straw_hat", "neck": "red_scarf", "hand": "balloon"},
+		"receipt": {"body": "reg_vest", "head": "reg_visor"},
+		"tray": {"neck": "hall_bowtie"},
+		"bubble": {"body": "dish_apron", "hand": "dish_gloves"},
+		"pan": {"head": "chef_hat", "neck": "chef_scarf"},
+		"box": {"head": "stock_cap", "back": "backpack"},
+		"nemuri": {"head": "nightcap", "body": "pajamas"},
+		"lantern": {"back": "bat_wings"},
+		"kirari": {"head": "crown"},
+	}
 
 
 ## テスト・はじめから用

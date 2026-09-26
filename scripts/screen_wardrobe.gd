@@ -151,7 +151,7 @@ func _build_ui() -> void:
 	top.size = Vector2(336, 40)
 	top.add_theme_constant_override("separation", 8)
 	add_child(top)
-	var back := Kit.button(tr("Back"), Color.WHITE, _back, INK, 38, 14)
+	var back := Kit.button(tr("Done"), Color.WHITE, _back, INK, 38, 14)
 	back.custom_minimum_size.x = 70
 	top.add_child(back)
 	var t := Kit.text(tr("Wardrobe"), 20, INK, true)
@@ -673,3 +673,7 @@ func demo_tint() -> void:
 	draft["hand"] = "balloon"
 	_rebuild_obake()
 	_fill_grid()
+
+
+func demo_reveal() -> void:
+	OutfitReveal.open(self, "moon_cape", who_list[who_i])

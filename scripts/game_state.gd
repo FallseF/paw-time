@@ -1033,7 +1033,7 @@ func host() -> String:
 ## 今の島をコードにする：版・段・リズム段・名前・あるじ・住人・物（番号＋位置＋向き＋豪華さ）
 func island_code(items_present: Array) -> String:
 	var b := PackedByteArray()
-	b.append(2)
+	b.append(3)
 	b.append(garden_level)
 	b.append(tier())
 	var nm := (nickname if nickname != "" else "ななし").to_utf8_buffer()
@@ -1071,6 +1071,18 @@ func island_code(items_present: Array) -> String:
 		b.append(clampi(int(round((float(l.get("x", 99.0)) + 6.0) * 20.0)), 0, 255) if l.has("x") else 255)
 		b.append(clampi(int(round((float(l.get("z", 0.0)) + 6.0) * 20.0)), 0, 255) if l.has("x") else 255)
 		b.append(int(l.get("r", 0)) & 7)
+	# 版3：服。あるじ（255）と住人の番号ごとに、6 か所＋色の 7 バイト。着ている子だけ、最大 6 体
+	var dressed: Array = []
+	if not Wardrobe.outfit_of(host()).is_empty():
+		dressed.append([255, host()])
+	for k in res.size():
+		var rid: String = owned.slice(-12)[k].id
+		if rid != host() and not Wardrobe.outfit_of(rid).is_empty() and dressed.size() < 6:
+			dressed.append([k, rid])
+	b.append(dressed.size())
+	for dd in dressed:
+		b.append(dd[0])
+		b.append_array(Wardrobe.pack(dd[1]))
 	return Marshalls.raw_to_base64(b).replace("+", "-").replace("/", "_").replace("=", "")
 
 
@@ -1083,7 +1095,7 @@ func decode_island(code: String) -> Dictionary:
 	while code.length() % 4 != 0:
 		code += "="
 	var b := Marshalls.base64_to_raw(code)
-	if b.size() < 6 or (b[0] != 1 and b[0] != 2):
+	if b.size() < 6 or not b[0] in [1, 2, 3]:
 		return {}
 	var i := 1
 	var d := {"level": b[1], "tier": clampi(b[2], 0, 3)}
@@ -1135,4 +1147,19 @@ func decode_island(code: String) -> Dictionary:
 			d.layout[key] = {"x": x / 20.0 - 6.0, "z": z / 20.0 - 6.0, "r": r}
 		if key.begins_with("deco_"):
 			d.decos[key.substr(5)] = maxi(1, lv)
+	# 版3：服（なければ空）。あるじの服は "my"／あるじの id で引けるようにする
+	d.outfits = {}
+	if b[0] >= 3 and i < b.size():
+		var dn: int = b[i]
+		i += 1
+		for k in dn:
+			if i + 8 > b.size():
+				break
+			var who: int = b[i]
+			var o := Wardrobe.unpack(b.slice(i + 1, i + 8))
+			i += 8
+			if who == 255:
+				d.outfits[d.host] = o
+			elif who < d.residents.size():
+				d.outfits[d.residents[who]] = o
 	return d
