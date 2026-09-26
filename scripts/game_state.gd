@@ -20,13 +20,13 @@ const SPECIES := {
 const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "nemuri", "lantern"]
 
 const NETS := {
-	"plain": {"name": "いつものポイ", "type": "any"},
-	"receipt": {"name": "レシートのポイ", "type": "register"},
-	"bubble": {"name": "泡のポイ", "type": "dish"},
-	"tray": {"name": "お盆のポイ", "type": "hall"},
-	"pan": {"name": "フライパンのポイ", "type": "kitchen"},
-	"box": {"name": "段ボールのポイ", "type": "stock"},
-	"kira": {"name": "きらきらポイ", "type": "rare"},
+	"plain": {"name": "いつものポイ", "short": "いつもの", "type": "any"},
+	"receipt": {"name": "レシートのポイ", "short": "レシート", "type": "register"},
+	"bubble": {"name": "泡のポイ", "short": "泡", "type": "dish"},
+	"tray": {"name": "お盆のポイ", "short": "お盆", "type": "hall"},
+	"pan": {"name": "フライパンのポイ", "short": "フライパン", "type": "kitchen"},
+	"box": {"name": "段ボールのポイ", "short": "段ボール", "type": "stock"},
+	"kira": {"name": "きらきらポイ", "short": "きらきら", "type": "rare"},
 }
 
 const ROLE_LABEL := {"register": "レジ", "dish": "皿洗い", "hall": "ホール", "kitchen": "キッチン", "stock": "品出し"}
@@ -45,16 +45,16 @@ const DECOS := {
 ## 庭の育ち。めぐみ（毎朝、リズムと睡眠で溜まる）がこの値をこえると、庭が一段育つ。
 const GARDEN := [
 	{"need": 0, "name": "さびしい庭", "desc": "土と、灯っていない灯籠がひとつ"},
-	{"need": 18, "name": "芝が生えた", "desc": "足もとがやわらかくなった"},
-	{"need": 42, "name": "花壇に芽が出た", "desc": "よく眠った朝ほど、まっすぐ伸びる"},
-	{"need": 72, "name": "灯籠がともった", "desc": "庭がほんのり明るくなった"},
-	{"need": 108, "name": "花が咲いた", "desc": "リズムが整うと、花がひらく"},
-	{"need": 150, "name": "小さな池ができた", "desc": "月が映るようになった"},
-	{"need": 198, "name": "縁台が置かれた", "desc": "おばけたちが並んで座る"},
-	{"need": 255, "name": "桜の木が育った", "desc": "いつ見ても、少しだけ咲いている"},
-	{"need": 320, "name": "ほたるが住みついた", "desc": "ぐっすりの夜は、数が増える"},
-	{"need": 395, "name": "月見台ができた", "desc": "満月の夜の、特等席"},
-	{"need": 480, "name": "夢見の木が光った", "desc": "眠りを大切にした庭にだけ育つ木"},
+	{"need": 21, "name": "芝が生えた", "desc": "足もとがやわらかくなった"},
+	{"need": 48, "name": "花壇に芽が出た", "desc": "よく眠った朝ほど、まっすぐ伸びる"},
+	{"need": 83, "name": "灯籠がともった", "desc": "庭がほんのり明るくなった"},
+	{"need": 124, "name": "花が咲いた", "desc": "リズムが整うと、花がひらく"},
+	{"need": 172, "name": "小さな池ができた", "desc": "月が映るようになった"},
+	{"need": 228, "name": "縁台が置かれた", "desc": "おばけたちが並んで座る"},
+	{"need": 293, "name": "桜の木が育った", "desc": "いつ見ても、少しだけ咲いている"},
+	{"need": 368, "name": "ほたるが住みついた", "desc": "ぐっすりの夜は、数が増える"},
+	{"need": 454, "name": "月見台ができた", "desc": "満月の夜の、特等席"},
+	{"need": 552, "name": "夢見の木が光った", "desc": "眠りを大切にした庭にだけ育つ木"},
 ]
 
 ## 見本の1週間（みか、大学2年）。月〜金。土日と2週目以降は記録を生成する。
@@ -74,9 +74,10 @@ const STORES := [
 ]
 const COWORKERS := ["さとう", "りん", "けん", "ようこ", "みお", "だいち", "はる", "ゆい"]
 
-const RARES_PER_NIGHT := 2
+const RARES_PER_NIGHT := 1
 const USUAL_DEFAULT := 330 # 23:30（18:00 からの分）
-const LATE_LINE := 420 # 1:00 より遅いと夜ふかし
+const LATE_LINE := 420
+const RHYTHM_RATE := 0.6 # 1晩の点数がリズムに効く割合（良い夜 +15、悪い夜 -12 くらい） # 1:00 より遅いと夜ふかし
 
 var mode := "data" # data = 記録をつなぐ（見本）, solo = ゲームだけ
 var seed_base := 0
@@ -122,6 +123,8 @@ var moon_nights := 0
 var rare_pending: Array = []
 var tut := {} # チュートリアルの済み印
 var total_scooped := 0
+var night_plan := "" # "" / extra（もうひと玉）/ market（夜店）
+var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい）
 
 
 func _ready() -> void:
@@ -275,6 +278,29 @@ func recorded_sleep() -> Dictionary:
 	return {"bed": clampi(bed, 180, 540), "wake": clampi(wake, 300, 630)}
 
 
+## 明日の予定から決まる、起きる時刻
+func wake_for_tomorrow() -> int:
+	var nx := shift_for(day + 1)
+	if nx.band == "朝":
+		return 390
+	if nx.role == "" and (day + 1) % 7 >= 5:
+		return 480
+	return 420
+
+
+## ひとりで遊ぶときの、夜の過ごし方。寝る時刻が決まる。
+func plan_bed(plan: String) -> int:
+	var u := usual_bed()
+	match plan:
+		"extra":
+			return u + 60
+		"market":
+			return maxi(u + 120, 450)
+		"early":
+			return u - 30
+	return u
+
+
 # ---------- シフト（ブースト） ----------
 
 ## シフトを終えたとき。種類つきのポイ2本と、はじめての仕事なら庭の飾り・きらきらポイ。時間は関係ない。
@@ -381,12 +407,12 @@ func night_score(bed: int, wake: int) -> Dictionary:
 	if bed_hist.is_empty():
 		score += 4
 		parts.append(["はじめての夜", 4])
-	elif diff <= 30:
+	elif diff <= 20:
 		score += 10
 		parts.append(["いつもの時刻", 10])
-	elif diff <= 60:
-		score += 4
-		parts.append(["いつもの時刻に近い", 4])
+	elif diff <= 45:
+		score += 3
+		parts.append(["いつもの時刻に近い", 3])
 	else:
 		score -= 8
 		parts.append(["時刻がずれた", -8])
@@ -400,9 +426,9 @@ func night_score(bed: int, wake: int) -> Dictionary:
 
 
 func growth_gain(score: int, h: float) -> int:
-	var g: int = 4 + int(rhythm / 100.0 * 10.0) + maxi(0, score) / 3
+	var g: int = 3 + int(rhythm / 100.0 * 8.0) + maxi(0, score) / 4
 	if h < 6.0:
-		g = maxi(2, g - 4)
+		g = maxi(3, g - 3)
 	return g
 
 
@@ -449,7 +475,7 @@ func species_for_type(t: String) -> String:
 
 ## ポイの破れにくさ（リズムで決まる）
 func poi_strength() -> float:
-	return [0.85, 1.0, 1.2, 1.4][tier()]
+	return [0.9, 1.0, 1.15, 1.3][tier()]
 
 
 ## 今夜の水面に出る玉。今日の仕事の種類が多めに出る。リズムが整うと、虹の玉が混ざりやすい。
@@ -463,6 +489,8 @@ func tonight_orbs() -> Array:
 		var t: String = types.pick_random()
 		if s.get("role", "") != "" and randf() < 0.45:
 			t = s.role
+		elif lit_deco != "" and randf() < 0.4:
+			t = lit_deco
 		var rare: bool = randf() < rare_p
 		out.append({"type": "rare" if rare else t, "rare": rare, "weight": 0.5 if rare else randf_range(0.22, 0.34)})
 	return out
@@ -477,7 +505,7 @@ func sleep(bed: int, wake: int) -> void:
 	var hours := int(round(h))
 	var s: Dictionary = today()
 	var rhythm_before := rhythm
-	rhythm = clampf(rhythm + ns.score, 0.0, 100.0)
+	rhythm = clampf(rhythm + ns.score * RHYTHM_RATE, 0.0, 100.0)
 	var gain := growth_gain(ns.score, h)
 	var level_before := garden_level
 	growth += gain
@@ -506,6 +534,7 @@ func sleep(bed: int, wake: int) -> void:
 		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true})
 	_hatch_orbs(h)
 	scooped_tonight = false
+	night_plan = ""
 	shift_done_today = false
 	moon_won_today = false
 	day += 1
@@ -538,7 +567,7 @@ func _hatch_orbs(h: float) -> void:
 func finish_dream(count: int) -> Dictionary:
 	dream_pending = false
 	var n_orbs := 1 + count / 5
-	var bonus := count
+	var bonus := count / 2
 	for i in n_orbs:
 		var is_new := add_obake("nemuri")
 		var lv := 1
@@ -578,10 +607,13 @@ func finish_moon(lit: int, bonus_taps: int) -> Dictionary:
 	growth += gain
 	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:
 		garden_level += 1
-	# 月の玉：灯りの数だけ（最大3）、満月なら虹の玉
-	var n := clampi(lit / 2, 1, 3)
+	# 月の玉：灯りの数に応じて段階的に。3つで夢の玉、4つで満月（虹の玉とツキミ）
+	var n := clampi((lit + 1) / 2, 1, 3)
 	for i in n:
 		orbs.append({"type": "rare" if won and i == 0 else ["register", "dish", "hall", "kitchen", "stock"].pick_random(), "rare": won and i == 0})
+	if lit >= 3:
+		orbs.append({"type": "sleep", "rare": false})
+		n += 1
 	scooped_tonight = true
 	save()
 	return {"won": won, "growth": gain, "orbs": n}
@@ -648,7 +680,7 @@ func rare_context(s: Dictionary, hours: int, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco"]
 
 
 func save() -> void:

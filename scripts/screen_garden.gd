@@ -39,6 +39,8 @@ func _ready() -> void:
 	_build_ui()
 	night = 1.0 if GameState.phase == "evening" else 0.0
 	_apply_time(night)
+	if night > 0.5:
+		_light_deco()
 	_refresh_hud()
 	if GameState.phase == "morning":
 		_show_morning()
@@ -808,6 +810,7 @@ func _show_card() -> void:
 			for id in GameState.nets:
 				left += GameState.nets[id]
 			card_box.add_child(Kit.wrap(Kit.text("川べりで、光る玉をすくって帰ろう。玉は、眠っている間にかえる（ポイ %d 本）" % left, 14, Color("6a5f70"))))
+			_deco_chips()
 			var b := Kit.button("夜の川べりで、おばけすくい", Color("5b6fc2"), func(): main.go("catch"))
 			card_box.add_child(b)
 			if not GameState.tut.has("scoop"):
@@ -819,6 +822,60 @@ func _show_card() -> void:
 			card_box.add_child(Kit.button("寝る", Color("8b7bff"), func(): main.go("sleep")))
 	_card_fit()
 	_pop_card()
+
+
+## 今夜ともす飾りを選ぶ。その仕事の玉が川べりに出やすくなる
+func _deco_chips() -> void:
+	var owned_roles: Array = []
+	for r in ["register", "hall", "dish", "kitchen", "stock"]:
+		if GameState.deco_level(r) > 0:
+			owned_roles.append(r)
+	if owned_roles.is_empty():
+		return
+	card_box.add_child(Kit.text("今夜ともす飾り（その玉が出やすい）", 12, Color("8a7a88")))
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 6)
+	row.add_theme_constant_override("v_separation", 6)
+	card_box.add_child(row)
+	for r in owned_roles:
+		var on: bool = GameState.lit_deco == r
+		var c: Color = GameState.TYPE_COLOR[GameState.SPECIES[GameState.TYPE_SPECIES[r]].type]
+		var b := Button.new()
+		b.text = GameState.DECOS[r].name
+		b.add_theme_font_override("font", Kit.bold())
+		b.add_theme_font_size_override("font_size", 12)
+		for k in ["normal", "hover", "pressed", "focus"]:
+			var st := Kit.pill(c if on else Color(1, 1, 1, 1), 14, 0.08, Vector2(10, 5))
+			st.border_color = c
+			st.set_border_width_all(2)
+			b.add_theme_stylebox_override(k, st)
+		b.add_theme_color_override("font_color", Color("2a2233"))
+		b.add_theme_color_override("font_hover_color", Color("2a2233"))
+		var role: String = r
+		b.pressed.connect(func():
+			GameState.lit_deco = "" if GameState.lit_deco == role else role
+			Kit.play(self, "bell", 1.2, -6)
+			_light_deco()
+			_show_card())
+		row.add_child(b)
+
+
+var deco_glow: OmniLight3D
+
+
+func _light_deco() -> void:
+	if deco_glow:
+		deco_glow.queue_free()
+		deco_glow = null
+	var key := "deco_" + GameState.lit_deco
+	if GameState.lit_deco == "" or not items.has(key):
+		return
+	deco_glow = OmniLight3D.new()
+	deco_glow.light_color = GameState.TYPE_COLOR[GameState.SPECIES[GameState.TYPE_SPECIES[GameState.lit_deco]].type]
+	deco_glow.light_energy = 3.0
+	deco_glow.omni_range = 2.2
+	deco_glow.position = Vector3(0, 1.2, 0.4)
+	items[key].add_child(deco_glow)
 
 
 func _do_shift() -> void:

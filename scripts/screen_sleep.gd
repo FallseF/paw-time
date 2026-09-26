@@ -15,6 +15,66 @@ var bed_btns: Array = []
 var stars: Array = []
 var _t := 0.0
 var going := false
+var plan := "usual"
+var plan_btns := {}
+
+const PLANS := [
+	["early", "少し早めに寝る", "いつもより30分早く"],
+	["usual", "いつもの時刻に寝る", "リズムがととのう"],
+	["extra", "もうひと回り、すくう", "玉が増える・1時間おそく"],
+	["market", "夜店をのぞく", "夜のおばけ・夜ふかし"],
+]
+
+
+## ひとりで遊ぶときは、夜の過ごし方を選ぶ（寝る時刻が決まる）
+func _build_plans() -> void:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.position = Vector2(20, 106)
+	grid.size = Vector2(320, 0)
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	add_child(grid)
+	var locked_extra := GameState.night_plan == "extra"
+	for p in PLANS:
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(156, 62)
+		b.text = "%s\n%s" % [p[1], p[2]]
+		b.add_theme_font_override("font", Kit.bold())
+		b.add_theme_font_size_override("font_size", 12)
+		b.add_theme_color_override("font_color", Color.WHITE)
+		b.add_theme_color_override("font_hover_color", Color.WHITE)
+		b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.3))
+		var id: String = p[0]
+		b.pressed.connect(func():
+			Kit.play(self, "tap", 1.2)
+			_choose(id))
+		if locked_extra and id != "extra":
+			b.disabled = true
+		grid.add_child(b)
+		plan_btns[id] = b
+	_style_plans()
+
+
+func _style_plans() -> void:
+	for id in plan_btns:
+		var b: Button = plan_btns[id]
+		var on: bool = id == plan
+		var c := Color("8b7bff") if on else Color(1, 1, 1, 0.1)
+		if id == "market" and on:
+			c = Color("d9773a")
+		for k in ["normal", "hover", "pressed", "focus", "disabled"]:
+			var st := Kit.pill(c, 16, 0.0, Vector2(8, 6))
+			if on:
+				st.border_color = Color.WHITE
+				st.set_border_width_all(2)
+			b.add_theme_stylebox_override(k, st)
+
+
+func _choose(id: String) -> void:
+	plan = id
+	_style_plans()
+	_set_time(GameState.plan_bed(id), wake)
 
 
 func _ready() -> void:
@@ -64,12 +124,13 @@ func _ready() -> void:
 		var r := GameState.recorded_sleep()
 		bed = r.bed
 		wake = r.wake
+		bed_label = _row("寝た", 118, func(d): _set_time(bed + d * 30, wake))
+		wake_label = _row("起きた", 180, func(d): _set_time(bed, wake + d * 30))
 	else:
-		bed = GameState.usual_bed()
-		wake = 420
-
-	bed_label = _row("寝る", 118, func(d): _set_time(bed + d * 30, wake))
-	wake_label = _row("起きる", 180, func(d): _set_time(bed, wake + d * 30))
+		wake = GameState.wake_for_tomorrow()
+		plan = GameState.night_plan if GameState.night_plan != "" else "usual"
+		bed = GameState.plan_bed(plan)
+		_build_plans()
 
 	timeline = Control.new()
 	timeline.position = Vector2(24, 250)
@@ -171,14 +232,15 @@ func _draw_timeline() -> void:
 func _set_time(b: int, w: int) -> void:
 	bed = clampi(b, 180, 540) # 21:00〜3:00
 	wake = clampi(w, 300, 630) # 5:00〜10:30
-	bed_label.text = GameState.clock(bed)
-	wake_label.text = GameState.wake_clock(wake)
+	if bed_label:
+		bed_label.text = GameState.clock(bed)
+		wake_label.text = GameState.wake_clock(wake)
 	timeline.queue_redraw()
 	for c in preview.get_children():
 		c.queue_free()
 	var ns := GameState.night_score(bed, wake)
 	var h: float = ns.hours
-	var head := Kit.text("%.1f時間の眠り" % h, 18, Color.WHITE, true)
+	var head := Kit.text("%s → %s　%.1f時間の眠り" % [GameState.clock(bed), GameState.wake_clock(wake), h], 17, Color.WHITE, true)
 	preview.add_child(head)
 	var parts := HFlowContainer.new()
 	parts.add_theme_constant_override("h_separation", 6)
@@ -190,7 +252,7 @@ func _set_time(b: int, w: int) -> void:
 		pc.add_child(Kit.text("%s %s%d" % [p[0], "+" if good else "", p[1]], 12, Color("d8ffe0") if good else Color("ffd3cc")))
 		parts.add_child(pc)
 	preview.add_child(parts)
-	var after := clampf(GameState.rhythm + ns.score, 0, 100)
+	var after := clampf(GameState.rhythm + ns.score * GameState.RHYTHM_RATE, 0, 100)
 	var t_after := 3 if after >= 75 else (2 if after >= 50 else (1 if after >= 25 else 0))
 	preview.add_child(Kit.text("リズム %d → %d（%s）" % [int(GameState.rhythm), int(after), GameState.TIER_NAME[t_after]], 14, GameState.TIER_COLOR[t_after]))
 	preview.add_child(Kit.text("明日の庭のめぐみ ＋%d くらい" % GameState.growth_gain(ns.score, h), 14, Color("c8f0c0")))
@@ -208,6 +270,17 @@ func _sleep() -> void:
 		return
 	going = true
 	GameState.tut["sleep"] = true
+	if not locked and plan == "extra" and GameState.night_plan != "extra":
+		# もうひと回り：川べりへ戻る（寝るのは1時間おそく）
+		GameState.night_plan = "extra"
+		GameState.scooped_tonight = false
+		main.go("catch")
+		return
+	if not locked:
+		GameState.night_plan = plan
+	if plan == "market":
+		_market()
+		return
 	var dark := ColorRect.new()
 	dark.color = Color("05060f")
 	dark.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -231,6 +304,29 @@ func _sleep() -> void:
 		main.go("hatch")
 	else:
 		main.go("garden")
+
+
+## 夜店：チョウチンが寄ってくる（夜ふかしの代わりに）
+func _market() -> void:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color(0.1, 0.08, 0.2, 0.95), 22, 0.3, Vector2(18, 16)))
+	p.position = Vector2(30, 200)
+	p.size = Vector2(300, 0)
+	add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(Kit.text("夜店の灯り", 22, Color("ffb35c"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.wrap(Kit.text("たこ焼きの湯気の向こうに、ぼんやり光るおばけがいた。ついてくるらしい", 14, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER)))
+	v.add_child(Kit.text("%s に寝る（リズムは下がる）" % GameState.clock(bed), 13, Color("ffc28a"), false, HORIZONTAL_ALIGNMENT_CENTER))
+	Kit.play(self, "bell", 0.7)
+	p.pivot_offset = Vector2(150, 80)
+	p.scale = Vector2(0.7, 0.7)
+	create_tween().tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	v.add_child(Kit.button("帰って寝る", Color("8b7bff"), func():
+		plan = "done_market"
+		going = false
+		_sleep()))
 
 
 func demo_late() -> void:

@@ -23,6 +23,8 @@ var caught_count := 0
 
 var poi_type := ""
 var durability := 1.0
+var dura_by := {} # ポイの種類ごとの残り（切りかえても回復しない）
+var extra := false
 var pressed := false
 var last_ground := Vector3.ZERO
 var busy := false
@@ -50,7 +52,10 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	_build_audio()
+	extra = GameState.night_plan == "extra"
 	var list := GameState.tonight_orbs()
+	if extra:
+		list = list.slice(0, 3)
 	total_tonight = list.size()
 	for d in list:
 		_spawn_orb(d)
@@ -487,7 +492,7 @@ func _refresh_ui() -> void:
 	var name := "なし"
 	if poi_type != "":
 		col = GameState.TYPE_COLOR.get(GameState.NETS[poi_type].type, Color("ffd84d"))
-		name = GameState.NETS[poi_type].name.replace("網", "")
+		name = GameState.NETS[poi_type].get("short", "ポイ")
 	var st := _pill(col, 30)
 	for k in ["normal", "hover", "pressed"]:
 		poi_btn.add_theme_stylebox_override(k, st)
@@ -501,11 +506,12 @@ func _refresh_ui() -> void:
 
 func _pick_poi() -> void:
 	poi_type = ""
-	for id in GameState.nets:
-		if GameState.nets[id] > 0:
+	# 種類つきのポイを先に使う（今夜の仕事の玉に合う）
+	for id in ["kira", "receipt", "bubble", "tray", "pan", "box", "plain"]:
+		if GameState.nets.get(id, 0) > 0:
 			poi_type = id
 			break
-	durability = 1.0
+	durability = dura_by.get(poi_type, 1.0)
 
 
 func _cycle_poi() -> void:
@@ -516,8 +522,10 @@ func _cycle_poi() -> void:
 	for i in range(1, ids.size() + 1):
 		var id: String = ids[(start + i) % ids.size()]
 		if GameState.nets.get(id, 0) > 0:
+			dura_by[poi_type] = durability
 			poi_type = id
-			durability = 1.0
+			durability = dura_by.get(id, 1.0)
+			Kit.play(self, "tap", 1.1)
 			break
 	_refresh_ui()
 
@@ -575,7 +583,7 @@ func _gui_input(event: InputEvent) -> void:
 	elif motion:
 		if pressed:
 			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
-			durability -= (0.02 + speed * 0.02) * get_process_delta_time() / GameState.poi_strength()
+			durability -= (0.008 + speed * 0.012) * get_process_delta_time() / GameState.poi_strength()
 			last_ground = g
 			poi.position = Vector3(g.x, -0.04, g.z)
 			if durability <= 0:
@@ -613,7 +621,7 @@ func _lift() -> void:
 		drops.restart()
 		drops.emitting = true
 		await tw.finished
-		durability -= 0.05 / GameState.poi_strength()
+		durability -= 0.03 / GameState.poi_strength()
 		if durability <= 0:
 			_tear(null)
 			return
@@ -622,7 +630,12 @@ func _lift() -> void:
 		busy = false
 		return
 
-	var match_mult := 0.7 if GameState.NETS[poi_type].type == target.data.type else 1.0
+	var pt: String = GameState.NETS[poi_type].type
+	var match_mult := 1.0
+	if pt == target.data.type:
+		match_mult = 0.55 # 仕事の種類が合うポイは、その玉に強い
+	elif pt != "any":
+		match_mult = 0.85
 	var cost: float = target.data.weight * match_mult / GameState.poi_strength()
 	var will_hold := durability - cost > 0.0
 	target.caught = true
@@ -657,6 +670,7 @@ func _lift() -> void:
 	stars.emitting = true
 	Engine.time_scale = 1.0
 	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
+	GameState.total_scooped += 1
 	caught_count += 1
 	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
@@ -680,6 +694,7 @@ func _tear(target: Orb3D) -> void:
 	Input.vibrate_handheld(80)
 	_banner("やぶれた…", Color("ffb3a8"))
 	GameState.nets[poi_type] -= 1
+	dura_by.erase(poi_type)
 	var tw := create_tween().set_parallel()
 	tw.tween_property(poi_film_mat, "albedo_color:a", 0.0, 0.2)
 	tw.tween_property(cam, "transform", cam_base, 0.5)
@@ -731,8 +746,8 @@ func _process(delta: float) -> void:
 			away.y = 0
 			var d: float = away.length()
 			if d < 0.7 and d > 0.001:
-				steer += away.normalized() * (0.7 - d) * 1.6 * delta
-		o.vel = (o.vel + steer).limit_length(0.35)
+				steer += away.normalized() * (0.7 - d) * 1.0 * delta
+		o.vel = (o.vel + steer).limit_length(0.24)
 		o.position += o.vel * delta
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
 		if e.length() > 0.8:
@@ -762,7 +777,9 @@ func _finish() -> void:
 	if GameState.scooped_tonight:
 		return
 	GameState.scooped_tonight = true
+	GameState.tut["scoop"] = true
 	Engine.time_scale = 1.0
+	GameState.save()
 	main.go("sleep")
 
 
