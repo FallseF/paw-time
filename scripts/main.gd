@@ -23,6 +23,9 @@ const SCREENS := {
 	"travel": preload("res://scripts/screen_travel.gd"),
 	# お店の島（実績で育つ島）。行き先は GameState.visit.shop（scripts/shop_culture.gd）
 	"shop_island": preload("res://scripts/screen_shop_island.gd"),
+	# おさらい（練習）とスキルの記録（feature/skills）
+	"practice": preload("res://scripts/screen_practice.gd"),
+	"skills": preload("res://scripts/screen_skills.gd"),
 }
 
 var root: Control
@@ -174,6 +177,15 @@ func _seed_for(start: String) -> void:
 	# 確認用：前の晩・当日の朝のひとこと（OBAKE_REMIND=eve|am で、あした／きょうの 10:00 に見本のシフト。時刻は OBAKE_NOW）
 	if OS.get_environment("OBAKE_REMIND") != "":
 		Reminders.demo_shift(OS.get_environment("OBAKE_REMIND"))
+	# 確認用：スキルの記録（OBAKE_SKILLS=register:2:3,dish:1:0 … 仕事:星:シフト回数）と、おさらいの仕事（OBAKE_PRACTICE=dish）
+	if OS.get_environment("OBAKE_SKILLS") != "":
+		var roles := {}
+		for e in OS.get_environment("OBAKE_SKILLS").split(","):
+			var p := e.split(":")
+			roles[p[0]] = {"stars": int(p[1]) if p.size() > 1 else 0, "clears": 0, "shifts": int(p[2]) if p.size() > 2 else 0}
+		Skills.from_dict({"roles": roles})
+	if OS.get_environment("OBAKE_PRACTICE") != "":
+		Skills.practice_role = OS.get_environment("OBAKE_PRACTICE")
 	if start == "hatch":
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		if OS.get_environment("OBAKE_ITEMS") != "":

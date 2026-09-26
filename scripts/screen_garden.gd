@@ -1514,6 +1514,17 @@ func _line_for(id: String) -> String:
 
 # ---------- UI ----------
 
+## マイスキル（スキルの記録）への小さな札。左の列、キセカエの下（キセカエが無い日はその場所）
+func _skills_pill() -> void:
+	if _vis():
+		return
+	var y := 98 if (GameState.day >= 1 or not Wardrobe.fresh.is_empty()) else 58
+	var sk := Kit.button(tr("SK_PILL"), Color(1, 1, 1, 0.92), func(): main.go("skills"), Color("3f8a55"), 32, 13)
+	sk.position = Vector2(12, y)
+	sk.size = Vector2(0, 32)
+	add_child(sk)
+
+
 func _build_ui() -> void:
 	# いつも見えるのは3つだけ：曜日・リズム（ことば）・図鑑
 	var top := HBoxContainer.new()
@@ -1541,6 +1552,7 @@ func _build_ui() -> void:
 		wd.position = Vector2(12, 58)
 		wd.size = Vector2(0, 32)
 		add_child(wd)
+	_skills_pill()
 	var zk := Kit.button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"), 38, 15)
 	zk.custom_minimum_size.x = 64
 	top.add_child(zk)

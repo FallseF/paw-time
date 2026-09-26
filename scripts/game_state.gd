@@ -403,6 +403,9 @@ func finish_shift() -> Array:
 		save()
 		changed.emit()
 		return got
+	# スキルの記録：本物のシフトは 1 回＝経験 1（時間は見ない）。早送り（監査・宣伝）では数えない
+	if not quiet:
+		Skills.record_shift(s.role, "day:%d:%d" % [seed_base, day])
 	nets[net_id] = mini(nets[net_id] + 2, 4) # 種類つきのポイは4本まで（ためこみすぎない）
 	got.append({"kind": "poi", "id": net_id, "n": 2, "text": "%s ×2" % tr(NETS[net_id].name)})
 	if s.first or first_role_today:
