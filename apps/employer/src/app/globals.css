@@ -1,0 +1,94 @@
+:root {
+  color-scheme: light;
+  --ink: #2d2934;
+  --muted: #746d7c;
+  --paper: #fffdf7;
+  --surface: #ffffff;
+  --line: #e9e1d5;
+  --violet: #6f58a8;
+  --violet-soft: #eee8fa;
+  --yellow: #f5bd4b;
+  --green: #4b936b;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: #f7f3eb; font-family: ui-rounded, "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; }
+.shell { min-height: 100vh; display: grid; grid-template-columns: 230px 1fr; }
+.sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 20px; background: var(--ink); color: white; display: flex; flex-direction: column; }
+.brand { display: flex; gap: 12px; align-items: center; font-size: 20px; margin-bottom: 38px; }
+.brand span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; background: var(--yellow); }
+.brand div { display: flex; flex-direction: column; }
+.brand small { color: #bdb5c6; font-size: 11px; letter-spacing: .09em; }
+nav { display: grid; gap: 8px; }
+nav a { padding: 12px 14px; border-radius: 12px; color: #ddd6e6; }
+nav a:hover { background: #423b4b; color: white; }
+.organization { margin-top: auto; padding: 14px; border: 1px solid #4e4658; border-radius: 14px; display: grid; gap: 5px; }
+.organization small { color: #aaa2b5; }
+main { width: min(1180px, 100%); padding: 54px clamp(28px, 5vw, 76px); }
+.pageHeader { display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; margin-bottom: 32px; }
+.pageHeader h1 { margin: 4px 0 8px; font-size: clamp(30px, 4vw, 46px); line-height: 1.1; }
+.pageHeader p { margin: 0; color: var(--muted); }
+.eyebrow { color: var(--violet) !important; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
+.primaryButton { border: 0; border-radius: 999px; padding: 13px 20px; background: var(--ink); color: white; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.metricGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.metricCard, .panel, .tableCard, .personCard, .emptyState, .houseCard { border: 1px solid var(--line); background: var(--surface); border-radius: 20px; box-shadow: 0 8px 30px rgba(61, 48, 31, .05); }
+.metricCard { padding: 22px; display: grid; gap: 14px; }
+.metricCard span { color: var(--muted); font-size: 13px; }
+.metricCard strong { font-size: 36px; }
+.metricCard small { margin-left: 5px; font-size: 13px; color: var(--muted); }
+.twoColumns { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.panel { padding: 28px; }
+.panel h2 { margin: 8px 0 10px; }
+.panel p { color: var(--muted); line-height: 1.75; }
+.panel a { color: var(--violet); font-weight: 800; }
+.accentPanel { background: var(--violet-soft); }
+.tableCard { overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-size: 12px; letter-spacing: .04em; background: #faf8f3; }
+td span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.status { display: inline-block; width: fit-content; margin: 0; padding: 6px 9px; border-radius: 999px; color: var(--ink); background: #eee; font-size: 12px; }
+.status-published, .status-selected { color: #216344; background: #e2f3e8; }
+.status-applied { color: #5b458f; background: var(--violet-soft); }
+.status-closed, .status-rejected { color: #7c413b; background: #f7e4df; }
+.status-draft { background: #eeeae2; }
+.cardGrid { display: grid; gap: 14px; }
+.personCard { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; padding: 20px; }
+.personCard h2, .personCard p { margin: 0; }
+.personCard p { margin-top: 5px; color: var(--muted); font-size: 13px; }
+.avatar { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; color: var(--violet); background: var(--violet-soft); font-weight: 800; }
+.emptyState { padding: 42px; text-align: center; }
+.emptyState strong { font-size: 20px; }
+.emptyState p, .hint { color: var(--muted); line-height: 1.7; }
+.tableCard > .hint { padding: 0 20px 18px; }
+.houseCard { overflow: hidden; display: grid; grid-template-columns: minmax(320px, 1.2fr) 1fr; }
+.houseScene { position: relative; min-height: 380px; overflow: hidden; background: linear-gradient(#c7e8f0 0 62%, #8dbe7a 62%); }
+.sun { position: absolute; top: 44px; right: 64px; width: 58px; height: 58px; border-radius: 50%; background: #ffe492; }
+.ground { position: absolute; bottom: -45px; left: -10%; width: 120%; height: 150px; border-radius: 50%; background: #6fa25e; }
+.house { position: absolute; z-index: 1; left: 50%; bottom: 75px; width: 190px; transform: translateX(-50%); }
+.roof { width: 0; height: 0; border-left: 120px solid transparent; border-right: 120px solid transparent; border-bottom: 100px solid #73526d; transform: translateX(-25px); }
+.wall { position: relative; height: 150px; background: #fff1d4; border: 7px solid #5a4556; border-radius: 5px; }
+.door { position: absolute; left: 72px; bottom: 0; width: 52px; height: 92px; border-radius: 28px 28px 0 0; background: #9c6c56; }
+.window { position: absolute; top: 26px; right: 18px; width: 38px; height: 38px; border: 5px solid #5a4556; background: #b8e1ea; }
+.houseInfo { align-self: center; padding: 40px; }
+.houseInfo h2 { margin: 7px 0 10px; font-size: 30px; }
+.progress { height: 10px; margin: 20px 0; overflow: hidden; border-radius: 999px; background: #eee9df; }
+.progress span { display: block; height: 100%; border-radius: inherit; background: var(--yellow); }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .sidebar nav { grid-template-columns: repeat(3, 1fr); }
+  .organization { display: none; }
+  .metricGrid { grid-template-columns: repeat(2, 1fr); }
+  .houseCard { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  main { padding: 32px 18px; }
+  .sidebar nav { grid-template-columns: repeat(2, 1fr); }
+  .metricGrid, .twoColumns { grid-template-columns: 1fr; }
+  .pageHeader { align-items: flex-start; flex-direction: column; }
+  .tableCard { overflow-x: auto; }
+  table { min-width: 680px; }
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "events": [
+    { "code": "application_selected", "audience": "worker", "experience": 10 },
+    { "code": "shift_completed", "audience": "worker", "experience": 30 },
+    { "code": "review_submitted", "audience": "worker", "experience": 5 },
+    { "code": "job_published", "audience": "employer", "experience": 5 },
+    { "code": "application_decided_in_time", "audience": "employer", "experience": 10 },
+    { "code": "attendance_confirmed", "audience": "employer", "experience": 20 },
+    { "code": "evaluation_submitted", "audience": "employer", "experience": 5 }
+  ]
+}

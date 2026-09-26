@@ -1,0 +1,17 @@
+{
+  "name": "paw-time",
+  "private": true,
+  "packageManager": "pnpm@9.6.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:api": "pnpm --filter @paw-time/api dev",
+    "dev:employer": "pnpm --filter @paw-time/employer dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.2"
+  }
+}

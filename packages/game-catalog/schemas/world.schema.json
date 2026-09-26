@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paw-time.example/schemas/world.schema.json",
+  "type": "object",
+  "required": ["version", "id", "name", "levels"],
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "levels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["level", "requiredExperience", "unlocks"],
+        "properties": {
+          "level": { "type": "integer", "minimum": 1 },
+          "requiredExperience": { "type": "integer", "minimum": 0 },
+          "unlocks": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

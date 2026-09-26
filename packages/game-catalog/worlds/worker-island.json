@@ -1,0 +1,11 @@
+{
+  "$schema": "../schemas/world.schema.json",
+  "version": 1,
+  "id": "worker_island",
+  "name": "おばネコの島",
+  "levels": [
+    { "level": 1, "requiredExperience": 0, "unlocks": ["island_home"] },
+    { "level": 2, "requiredExperience": 100, "unlocks": ["island_dock"] },
+    { "level": 3, "requiredExperience": 250, "unlocks": ["island_garden"] }
+  ]
+}

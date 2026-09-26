@@ -20,7 +20,7 @@ A game for people who work. Your real shifts and sleep become boosts in a cozy c
 ## Repository layout
 | Branch | What it is |
 |---|---|
-| `main` (this) | Shared base: engine code, AAA character look, glass orbs, cat-obake, personality quiz, launch page (`launch/`) |
+| `main` (this) | Shared base: engine code, AAA character look, glass orbs, cat-obake, personality quiz, launch page (`apps/marketing/`) |
 | `feature/variant-a` | Prototype A — scoop mastery & collection |
 | `feature/variant-b` | Prototype B — sleep rhythm, island building & sharing |
 | `feature/variant-c` | Prototype C — run the shop |
