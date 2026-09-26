@@ -423,6 +423,10 @@ func _build_ui() -> void:
 	ws.custom_minimum_size = Vector2(62, 44)
 	ws.visible = GameState.records.nights > 0 # はじめての夜が終わるまでは出さない
 	top.add_child(ws)
+	if not GameState.tut.has("partner") or GameState.next_unlock_text().begins_with("工房で"):
+		var wdot := _dot(Color("ff5b5b"))
+		wdot.position = Vector2(50, -2)
+		ws.add_child(wdot)
 	var zk := _button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
 	zk.custom_minimum_size = Vector2(62, 44)
 	top.add_child(zk)
