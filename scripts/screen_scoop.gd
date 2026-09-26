@@ -1745,13 +1745,17 @@ func _auto(delta: float) -> void:
 					auto_t = 0.6
 					return
 			var to := Vector3(auto_target.position.x - poi_target.x, 0, auto_target.position.z - poi_target.z)
-			var spd := lerpf(2.0, 0.6, auto_skill)
+			var spd := lerpf(2.0, 0.78, auto_skill)
 			var step := minf(to.length(), spd * delta)
 			if to.length() > 0.001:
 				poi_target += to.normalized() * step
 			var need := lerpf(0.95, 0.35, auto_skill) * radius
 			var over := _orbs_over_poi()
 			var ok_gentle := gentle_time >= 0.22 or auto_skill < 0.5
+			# 上手いなら、重すぎて破れそうなときは離さずに、ひとつだけ乗るところへずらす
+			if auto_skill > 0.7 and over.size() > 1 and _cost_of(over) >= durability and auto_t > 1.5:
+				poi_target += Vector3(to.x, 0, to.z).normalized() * 0.3 * delta
+				return
 			if (to.length() < need and ok_gentle and submerge <= 0.0) or auto_t <= 0.0:
 				# 上手いほど、群れが重なるのを少し待つ
 				if auto_skill > 0.7 and over.size() == 1 and over[0].kind == "school" and auto_t > 5.0:

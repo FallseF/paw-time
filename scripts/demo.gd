@@ -132,7 +132,7 @@ func promo() -> void:
 	scoop.ended = true
 	GameState.record_scoop_night({"count": scoop.count, "best_combo": scoop.best_combo, "clean": scoop.clean_count, "rainbow": scoop.rainbow_count})
 	# 朝の見せ場：ふつうの玉ふたつと、最後にレア
-	GameState.orbs = GameState.orbs.slice(0, 2)
+	GameState.orbs = GameState.orbs.slice(0, 1)
 	GameState.rare_pending = ["tsukimi"]
 	await main.go("sleep")
 	caption("よく寝た朝は、玉がよくかえる。", 470)
@@ -141,10 +141,10 @@ func promo() -> void:
 	await _wait(2.6)
 	var hatch = main.current
 	caption("よく寝た朝は、玉がよくかえる。", 90)
-	for i in 3:
+	for i in 2:
 		if hatch.has_method("_next"):
 			hatch._next()
-		await _wait(2.7)
+		await _wait(4.0)
 	# 3) 休憩室がにぎやかに（24〜29秒）
 	await main.go("room")
 	caption("かえったおばけが、休憩室に。", 250)
@@ -169,7 +169,9 @@ func promo() -> void:
 	GameState.phase = "room"
 	GameState.orbs = []
 	GameState.pois["paper"] = 6
+	GameState.pois["double"] = 2
 	await main.go("catch")
+	main.current.selected = "double"
 	main.current.start_auto(0.95)
 	caption("土曜の夜は、大すくい祭り。", 250)
 	await _wait(5.2)
