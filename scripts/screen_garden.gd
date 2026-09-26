@@ -160,6 +160,7 @@ func _build_world() -> void:
 	world.add_child(fireflies)
 
 	_weather(GameState.today().weather)
+	_season_fx(GameState.season(), GameState.today().weather)
 
 	# 夜空の月と星（夜だけ見える）
 	sky_moon = _ball(0.45, Color("fff1c8"), Kit.glow(Color("fff1c8"), 1.6))
@@ -277,6 +278,36 @@ func _weather(w: String) -> void:
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = Color(0.8, 0.88, 1.0, 0.55) if w != "雪" else Color(1, 1, 1, 0.9)
 	p.material_override = mat
+	world.add_child(p)
+
+
+## 季節の気配：秋は落ち葉、春は花びら（晴れの日だけ、ゆっくり）
+func _season_fx(sea: String, w: String) -> void:
+	if w != "晴" or sea not in ["秋", "春"]:
+		return
+	var p := CPUParticles3D.new()
+	p.amount = 26
+	p.lifetime = 8.0
+	p.preprocess = 8.0
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(4, 0.2, 3)
+	p.position = Vector3(0, 3.2, 0)
+	p.direction = Vector3(1, -0.3, 0)
+	p.spread = 30
+	p.gravity = Vector3(0.1, -0.25, 0)
+	p.initial_velocity_min = 0.1
+	p.initial_velocity_max = 0.3
+	p.angular_velocity_min = -120
+	p.angular_velocity_max = 120
+	var q := QuadMesh.new()
+	q.size = Vector2(0.16, 0.1)
+	p.mesh = q
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.albedo_color = Color("e8904a") if sea == "秋" else Color("ffc4d6")
+	p.material_override = m
+	p.color_ramp = null
 	world.add_child(p)
 
 
