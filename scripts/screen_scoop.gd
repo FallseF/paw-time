@@ -1353,6 +1353,9 @@ func _after_catch() -> void:
 	if mods.festival and count >= 12 and count - 1 < 12:
 		_play("fanfare")
 		_banner("祭り達成！", Color("ffb35c"))
+	if mods.festival and count >= 20 and count - 1 < 20:
+		_play("fanfare")
+		_banner("特賞！", Color("ffd23f"))
 	if _visible_count() == 0 and supply <= 0 and telegraph_left <= 0.0:
 		await get_tree().create_timer(0.8).timeout
 		_end_night("今夜の玉は、もうおしまい")
@@ -1889,7 +1892,10 @@ func _show_result(reason: String, was_best: bool) -> void:
 	if rainbow_count > 0:
 		lines.append("虹の玉 %d" % rainbow_count)
 	if mods.festival:
-		lines.append("祭り %s" % ("達成！景品はレアの気配" if count >= 12 else "%d / 12" % count))
+		if GameState.tonight.has("prize"):
+			lines.append("祭りの%s：%s" % ["特賞" if count >= 20 else "景品", GameState.reward_text(GameState.tonight.prize)])
+		else:
+			lines.append("祭り %d / 12（12こで景品、20こで特賞）" % count)
 	elif goal_done:
 		lines.append("おだい達成：%s" % GameState.reward_text(goal.reward))
 	for line in lines:

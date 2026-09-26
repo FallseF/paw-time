@@ -543,7 +543,7 @@ func night_mods() -> Dictionary:
 		m.festival = true
 		m.supply += 8
 		m.rainbow_max += 1
-		m.label.push_front("大すくい祭り：金の玉が出る。12こすくえば景品")
+		m.label.push_front("大すくい祭り：金の玉が出る。12こで景品、20こで特賞")
 	if m.label.is_empty():
 		m.label.append("晴れ：しずかな水面")
 	m.rainbow = minf(m.rainbow, 0.95)
@@ -638,6 +638,10 @@ func next_unlock_text() -> String:
 	return best
 
 
+const FESTIVAL_PRIZE := {"shards": {"rainbow": 2}, "poi": {"double": 1}}
+const FESTIVAL_PRIZE_BIG := {"shards": {"rainbow": 3}, "poi": {"double": 1, "akari": 1, "kira": 1}}
+
+
 ## 祭りの夜は、紙のポイを3本もらえる（1晩1回）
 var festival_gift_day := -1
 
@@ -706,6 +710,10 @@ func record_scoop_night(result: Dictionary) -> void:
 		records.festival_best = max(records.festival_best, result.get("count", 0))
 		if result.get("count", 0) >= 12:
 			festival_cleared = true
+			# 祭りの景品（毎週もらえる。20こなら特賞）
+			var prize := FESTIVAL_PRIZE_BIG if result.get("count", 0) >= 20 else FESTIVAL_PRIZE
+			grant(prize)
+			tonight["prize"] = prize
 	phase = "scooped"
 	changed.emit()
 	save_game()
