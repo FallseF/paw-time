@@ -278,9 +278,14 @@ func shift_for(d: int) -> Dictionary:
 		# ひとりのときは、庭のおてつだい（仕事の代わり。ポイ1本、飾りは届かない）
 		if d > 0 and rng.randf() < 0.45:
 			s.role = ["register", "hall", "dish", "kitchen", "stock"][rng.randi() % 5]
-			s.store = "庭のおてつだい"
-			s.band = "昼"
+			# 場所・時間帯・いっしょに手伝う近所のおばけ（ひとりでも、ゆっくり出会える）
+			s.store = ["庭のおてつだい", "となりの庭", "川べりの番小屋"][rng.randi() % 3]
+			s.band = ["朝", "昼", "昼", "夜", "深夜"][rng.randi() % 5]
 			s.hours = 1
+			s.first = rng.randf() < 0.06
+			if rng.randf() < 0.5:
+				s.coworkers = [["ぬらりさん", "こだまくん", "ろくろさん"][rng.randi() % 3]]
+				s.newbie = rng.randf() < 0.1
 			s["chore"] = true
 	s["day"] = WEEKDAYS[wd]
 	s["moon"] = "満月" if wd == 6 else ""

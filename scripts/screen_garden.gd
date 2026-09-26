@@ -1219,7 +1219,8 @@ func _show_card() -> void:
 	if GameState.phase == "day":
 		if s.get("chore", false):
 			card_box.add_child(Kit.text("今日のおてつだい", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.wrap(Kit.text("%s（%sの経験になる）\n天気：%s" % [GameState.CHORE_TEXT[s.role], GameState.ROLE_LABEL[s.role], s.weather], 14, Color("6a5f70"))))
+			var with := ("　%sといっしょ" % s.coworkers[0]) if s.coworkers.size() > 0 else ""
+			card_box.add_child(Kit.wrap(Kit.text("%s・%s（%sの経験）%s\n天気：%s" % [s.store, GameState.CHORE_TEXT[s.role], GameState.ROLE_LABEL[s.role], with, s.weather], 14, Color("6a5f70"))))
 			if not GameState.tut.has("shift"):
 				_guide("おてつだいで、その仕事のポイが1本。記録とつなぐと、本物のシフトで庭に飾りも届く")
 			var b := Kit.button("おてつだいする", Color("ff8a5b"), _do_shift)
