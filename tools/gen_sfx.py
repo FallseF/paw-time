@@ -1,0 +1,142 @@
+"""効果音を合成して assets/sfx に WAV で出す。python3 tools/gen_sfx.py"""
+
+import math
+import random
+import struct
+import wave
+from pathlib import Path
+
+OUT = Path(__file__).resolve().parent.parent / "assets" / "sfx"
+OUT.mkdir(parents=True, exist_ok=True)
+SR = 44100
+random.seed(3)
+
+
+def write(name, samples):
+    peak = max(1e-6, max(abs(s) for s in samples))
+    gain = 0.85 / peak
+    with wave.open(str(OUT / f"{name}.wav"), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes(b"".join(struct.pack("<h", int(max(-1, min(1, s * gain)) * 32767)) for s in samples))
+
+
+def env(i, n, attack=0.01, release=0.5):
+    t = i / SR
+    a = min(1.0, t / attack) if attack > 0 else 1.0
+    r = max(0.0, 1.0 - i / n) ** (1.0 / max(release, 1e-3))
+    return a * r
+
+
+def lowpass(xs, alpha):
+    y = 0.0
+    out = []
+    for x in xs:
+        y += alpha * (x - y)
+        out.append(y)
+    return out
+
+
+def splash():
+    n = int(SR * 0.6)
+    noise = [random.uniform(-1, 1) for _ in range(n)]
+    f = lowpass(noise, 0.25)
+    out = [f[i] * env(i, n, 0.003, 0.25) for i in range(n)]
+    # 小さな水滴
+    for k in range(6):
+        start = int(SR * random.uniform(0.08, 0.45))
+        freq = random.uniform(900, 1600)
+        for j in range(int(SR * 0.06)):
+            if start + j < n:
+                out[start + j] += 0.35 * math.sin(2 * math.pi * (freq + j * 8) * j / SR) * math.exp(-j / (SR * 0.015))
+    return out
+
+
+def lift():
+    n = int(SR * 0.5)
+    noise = [random.uniform(-1, 1) for _ in range(n)]
+    out = []
+    y = 0.0
+    for i, x in enumerate(noise):
+        a = 0.02 + 0.3 * (i / n)
+        y += a * (x - y)
+        out.append(y * math.sin(math.pi * i / n))
+    return out
+
+
+def chime():
+    n = int(SR * 1.6)
+    notes = [(0.0, 1046.5), (0.09, 1318.5), (0.18, 1568.0), (0.27, 2093.0)]
+    out = [0.0] * n
+    for t0, f in notes:
+        s = int(SR * t0)
+        for j in range(n - s):
+            e = math.exp(-j / (SR * 0.45))
+            out[s + j] += e * (math.sin(2 * math.pi * f * j / SR) + 0.3 * math.sin(2 * math.pi * f * 2.01 * j / SR))
+    return out
+
+
+def tear():
+    n = int(SR * 0.45)
+    out = []
+    for i in range(n):
+        crackle = random.uniform(-1, 1) if random.random() < 0.25 else 0.0
+        out.append(crackle * env(i, n, 0.001, 0.6))
+    return lowpass(out, 0.6)
+
+
+def hatch():
+    n = int(SR * 1.2)
+    out = [0.0] * n
+    # 殻が割れる音 + きらめき
+    for i in range(int(SR * 0.08)):
+        out[i] += random.uniform(-1, 1) * math.exp(-i / (SR * 0.02))
+    for k, f in enumerate([784, 988, 1175, 1568, 1976]):
+        s = int(SR * (0.1 + k * 0.06))
+        for j in range(n - s):
+            out[s + j] += 0.5 * math.exp(-j / (SR * 0.35)) * math.sin(2 * math.pi * f * j / SR)
+    return out
+
+
+def sparkle():
+    n = int(SR * 1.0)
+    out = [0.0] * n
+    for k in range(14):
+        s = int(SR * random.uniform(0, 0.7))
+        f = random.uniform(2400, 4200)
+        for j in range(int(SR * 0.25)):
+            if s + j < n:
+                out[s + j] += 0.4 * math.exp(-j / (SR * 0.06)) * math.sin(2 * math.pi * f * j / SR)
+    return out
+
+
+def river_loop():
+    n = int(SR * 6.0)
+    noise = [random.uniform(-1, 1) for _ in range(n)]
+    f = lowpass(noise, 0.04)
+    out = [x * 0.6 for x in f]
+    # 虫の声とたまの水音
+    for k in range(10):
+        s = int(SR * random.uniform(0, 5.5))
+        freq = random.uniform(3800, 4600)
+        for j in range(int(SR * 0.3)):
+            if s + j < n:
+                am = 0.5 + 0.5 * math.sin(2 * math.pi * 30 * j / SR)
+                out[s + j] += 0.05 * am * math.sin(2 * math.pi * freq * j / SR) * math.sin(math.pi * j / (SR * 0.3))
+    # つなぎ目をなめらかに
+    fade = int(SR * 0.3)
+    for i in range(fade):
+        a = i / fade
+        out[i] = out[i] * a + out[n - fade + i] * (1 - a)
+    return out[: n - fade]
+
+
+write("splash", splash())
+write("lift", lift())
+write("chime", chime())
+write("tear", tear())
+write("hatch", hatch())
+write("sparkle", sparkle())
+write("river_loop", river_loop())
+print("wrote sfx to", OUT)

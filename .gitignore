@@ -1,0 +1,5 @@
+.godot/
+*.import.bak
+art_preview.png
+_archive/
+build/
