@@ -526,6 +526,71 @@ func next_orb_type(rng_val: float) -> String:
 	return types.pick_random()
 
 
+## 今夜のおだい（毎晩ひとつ。できたら、その場でごほうび）
+const TYPE_LABEL := {"register": "黄", "dish": "青", "hall": "紫", "kitchen": "橙", "stock": "茶"}
+
+
+func night_goal() -> Dictionary:
+	if is_festival():
+		return {"id": "count", "n": 12, "text": "祭り：12こすくう", "reward": {"shards": {"rainbow": 1}}}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = day * 31 + 7
+	var w := mini(week_no(), 4)
+	var types := ["register", "dish", "hall", "kitchen", "stock"]
+	var t: String = types[rng.randi() % types.size()]
+	var s := today()
+	if s.role != "" and rng.randf() < 0.5:
+		t = s.role
+	var pick := rng.randi() % 5
+	if day == 0:
+		pick = 0
+	var g := {}
+	match pick:
+		0:
+			g = {"id": "count", "n": 3 + w, "text": "%dこすくう" % (3 + w)}
+		1:
+			g = {"id": "combo", "n": 2 + w, "text": "%dコンボ" % (2 + w)}
+		2:
+			g = {"id": "clean", "n": 1 + w, "text": "ていねいに%dこ" % (1 + w)}
+		3:
+			g = {"id": "multi", "n": 1, "text": "2こ以上まとめてすくう"}
+		_:
+			g = {"id": "type", "type": t, "n": 1 + (w + 1) / 2, "text": "%sの玉を%dこ" % [TYPE_LABEL[t], 1 + (w + 1) / 2]}
+	var rt: String = types[rng.randi() % types.size()] if g.id != "type" else t
+	g["reward"] = {"shards": {rt: 2}} if rng.randf() < 0.7 else {"poi": {"kira": 1}}
+	return g
+
+
+func grant(rw: Dictionary) -> void:
+	for p in rw.get("poi", {}):
+		pois[p] += rw.poi[p]
+	for k in rw.get("shards", {}):
+		shards[k] += rw.shards[k]
+	changed.emit()
+
+
+## 工房の、いちばん近い次の改良
+func next_unlock_text() -> String:
+	var best := ""
+	var best_need := 999
+	for key in UPGRADES:
+		var lv: int = upgrades[key]
+		if lv >= 3:
+			continue
+		var cost: Dictionary = UPGRADES[key].cost[lv]
+		var need := 0
+		var parts: Array = []
+		for k in cost:
+			var miss: int = max(0, cost[k] - shards.get(k, 0))
+			need += miss
+			if miss > 0:
+				parts.append("%s×%d" % [SHARD_LABEL[k], miss])
+		if need < best_need:
+			best_need = need
+			best = "工房で「%s」が作れる！" % UPGRADES[key].name if need == 0 else "「%s」まで かけら %s" % [UPGRADES[key].name, "・".join(parts)]
+	return best
+
+
 ## 祭りの夜は、紙のポイを3本もらえる（1晩1回）
 var festival_gift_day := -1
 

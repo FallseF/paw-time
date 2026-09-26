@@ -62,6 +62,21 @@ var gold_count := 0
 var multi_count := 0
 var ended := false
 var tut_step := -1
+var goal: Dictionary
+var goal_done := false
+var goal_label: Label
+var tip_pill: PanelContainer
+var tip_label: Label
+var tip_queue: Array = []
+var tip_t := 0.0
+const KIND_TIPS := {
+	"school": "青は群れ。重ねて、まとめてすくえる",
+	"shy": "紫は人見知り。速いポイからは逃げる",
+	"jumper": "橙はときどき跳ねる。着水を待とう",
+	"heavy": "茶は重い。真ん中で、元気なポイで",
+	"rainbow": "虹の玉は少しだけ。きらきらポイなら逃げない",
+	"gold": "金の玉は祭りの玉。朝、かけらになる",
+}
 
 # 自動ですくう（バランス確認・デモ動画用）
 var auto := false
@@ -106,6 +121,7 @@ func _ready() -> void:
 		rainbow_t = randf_range(10.0, 30.0)
 	radius = POI_R * GameState.poi_radius_mult()
 	var gift := GameState.festival_gift()
+	goal = GameState.night_goal()
 	_build_world()
 	_build_ui()
 	_build_audio()
@@ -613,6 +629,25 @@ func _build_ui() -> void:
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	add_child(sub)
 
+	var gp := PanelContainer.new()
+	gp.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.72), 14))
+	gp.position = Vector2(12, 440)
+	gp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	goal_label = _text("", 13, Color("ffe7a8"))
+	gp.add_child(goal_label)
+	add_child(gp)
+
+	tip_pill = PanelContainer.new()
+	tip_pill.add_theme_stylebox_override("panel", _pill(Color(1, 0.98, 0.93, 0.95), 16))
+	tip_pill.position = Vector2(20, 140)
+	tip_pill.size = Vector2(320, 0)
+	tip_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tip_pill.modulate.a = 0.0
+	tip_label = _text("", 14, Color("2a2233"))
+	tip_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	tip_pill.add_child(tip_label)
+	add_child(tip_pill)
+
 	combo_label = _text("", 34, Color("fff2a8"), font_black)
 	combo_label.add_theme_color_override("font_outline_color", Color("0b1026"))
 	combo_label.add_theme_constant_override("outline_size", 8)
@@ -772,6 +807,8 @@ func _refresh_ui() -> void:
 		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		jar_row.add_child(dot)
 	count_label.text = "すくった %d" % count
+	if goal_label:
+		_update_goal()
 	if mods.festival:
 		fest_label.text = "大すくい祭り  %d / 12%s" % [count, "  達成！" if count >= 12 else ""]
 	combo_label.text = ("%d" % combo) if combo >= 2 else ""
@@ -815,6 +852,40 @@ func _chip(pid: String, n: int, sel: bool) -> Control:
 	b.text = "%s\n×%d%s" % [GameState.POI[pid].short, n, hand]
 	b.pressed.connect(_select_poi.bind(pid))
 	return b
+
+
+func _goal_progress() -> int:
+	match goal.get("id", ""):
+		"count":
+			return count
+		"combo":
+			return best_combo
+		"clean":
+			return clean_count
+		"multi":
+			return multi_count
+		"type":
+			return GameState.orbs.filter(func(o): return o.type == goal.type).size()
+	return 0
+
+
+func _update_goal() -> void:
+	var p := mini(_goal_progress(), goal.n)
+	goal_label.text = "おだい：%s  %d/%d%s" % [goal.text, p, goal.n, "  達成！" if goal_done else ""]
+	if not goal_done and p >= goal.n:
+		goal_done = true
+		GameState.grant(goal.reward)
+		goal_label.text = "おだい：%s  達成！" % goal.text
+		_play("fanfare", 1.1, -3)
+		_float_text("おだい達成！ " + GameState.reward_text(goal.reward), Vector2(180, 400), Color("ffe27a"), 16)
+
+
+func _tip(kind: String) -> void:
+	var key: String = "kind_" + kind
+	if GameState.tut.has(key) or auto:
+		return
+	GameState.tut[key] = true
+	tip_queue.append(KIND_TIPS[kind])
 
 
 func _pick_default_poi() -> void:
@@ -1331,6 +1402,19 @@ func _sink(o: Orb3D) -> void:
 func _update_events(delta: float) -> void:
 	if ended:
 		return
+	# はじめて見る玉の性格は、一行で教える
+	if tut_step < 0:
+		for o: Orb3D in orbs:
+			if KIND_TIPS.has(o.kind) and not GameState.tut.has("kind_" + o.kind):
+				_tip(o.kind)
+	tip_t -= delta
+	if tip_t <= 0.0 and tip_queue.size() > 0 and not busy:
+		tip_label.text = tip_queue.pop_front()
+		tip_t = 3.6
+		var tw := create_tween()
+		tw.tween_property(tip_pill, "modulate:a", 1.0, 0.2)
+		tw.tween_interval(3.0)
+		tw.tween_property(tip_pill, "modulate:a", 0.0, 0.3)
 	# 新しい玉が流れてくる
 	spawn_t -= delta
 	if spawn_t <= 0.0:
@@ -1531,6 +1615,8 @@ func _show_result(reason: String, was_best: bool) -> void:
 		lines.append("虹の玉 %d" % rainbow_count)
 	if mods.festival:
 		lines.append("祭り %s" % ("達成！景品はレアの気配" if count >= 12 else "%d / 12" % count))
+	elif goal_done:
+		lines.append("おだい達成：%s" % GameState.reward_text(goal.reward))
 	for line in lines:
 		v.add_child(_text(line, 15, Color("4a3f52")))
 	v.add_child(_text(_rank_text(), 14, Color("8b7bff")))

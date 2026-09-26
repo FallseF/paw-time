@@ -315,6 +315,10 @@ func _render() -> void:
 			card_body.text += "\n今夜は大すくい祭り。12個すくうと景品"
 		actions.add_child(_button(night_label, night_col, func(): main.go("catch")))
 	card_body.text += "\n今夜の池：" + String(GameState.night_mods().label[0])
+	card_body.text += "\n今夜のおだい：" + String(GameState.night_goal().text)
+	var nu := GameState.next_unlock_text()
+	if nu != "":
+		card_body.text += "\n" + nu
 	if GameState.day == 0 and not GameState.worked_today:
 		card_body.text += "\nまずは働いてポイを増やすか、そのまま川へ"
 
