@@ -1192,6 +1192,8 @@ func _handle_events(evs: Array) -> void:
 		match ev.type:
 			"spawn":
 				var se := sim.find(ev.uid)
+				if not se.is_empty() and se.side == 1:
+					_fx("puff", Vector3(se.x, 0.6, se.z + 0.3))
 				if not se.is_empty() and se.side == 1 and not demo:
 					if not GameState.enemies_seen.has(se.id) and not se.boss:
 						_enemy_intro(se.id)
