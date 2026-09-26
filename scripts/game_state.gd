@@ -613,6 +613,10 @@ func tonight_orbs() -> Array:
 		var wgt: float = 0.5 if rare else randf_range(0.22, 0.34)
 		if kind == "rain":
 			wgt *= 1.25
+		if t == "stock" and not rare:
+			wgt *= 1.3 # 箱の玉は重い
+		elif t == "dish" and not rare:
+			wgt *= 0.8 # 泡の玉は軽い
 		out.append({"type": "rare" if rare else t, "rare": rare, "weight": wgt})
 	return out
 

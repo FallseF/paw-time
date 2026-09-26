@@ -483,6 +483,14 @@ func _build_ui() -> void:
 	tip.position = Vector2(0, 116)
 	tip.size = Vector2(360, 20)
 	add_child(tip)
+	var tips := ["水の中でじっとしていると、ゆめの泡が浮いてくる", "青い泡の玉はのんびり。紫のお盆の玉はまっすぐ逃げる", "茶色の箱の玉は重くて動かない。でも破れやすい", "黄色のレジの玉は、ピッと動いて止まる", "縁が金色のときに離すと、ぴったり"]
+	var tt := create_tween().set_loops()
+	for i in tips.size():
+		var txt: String = tips[(i + 1) % tips.size()]
+		tt.tween_interval(6.0)
+		tt.tween_property(tip, "modulate:a", 0.0, 0.3)
+		tt.tween_callback(func(): tip.text = txt)
+		tt.tween_property(tip, "modulate:a", 1.0, 0.3)
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
