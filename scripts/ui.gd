@@ -15,18 +15,20 @@ const GRAY := Color8(112, 104, 118)
 
 
 static func box(bg: Color, border := INK, width := 2, shadow := 0) -> StyleBoxFlat:
+	# 丸いピル型（ドットの見た目はやめた）
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
 	s.border_color = border
-	s.set_border_width_all(width)
+	s.set_border_width_all(0 if width <= 2 else width)
+	s.set_corner_radius_all(18)
 	s.content_margin_left = 8
 	s.content_margin_right = 8
 	s.content_margin_top = 6
 	s.content_margin_bottom = 6
 	if shadow > 0:
-		s.shadow_color = INK
-		s.shadow_size = 0
-		s.shadow_offset = Vector2(0, shadow)
+		s.shadow_color = Color(0, 0, 0, 0.15)
+		s.shadow_size = 6
+		s.shadow_offset = Vector2(0, 2)
 	return s
 
 
