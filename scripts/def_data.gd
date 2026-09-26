@@ -119,10 +119,10 @@ const ENEMY_COLOR := {"iraira": "e85a4f", "gyouretsu": "c9454a", "chuumon": "ffd
 const SHOPS := [
 	{"id": "cafe", "name": "カフェ こもれび", "thanks": "店長「今朝はなんだか、回った気がする」", "color": "ff9e6b", "sky": "ffd9b0", "floor": "b98258",
 		"stages": [
-			{"name": "朝の開店", "base": 800, "reward": 60, "spawn": [["iraira", 3, 6, 0, 100, 1.0]], "tip": "イライラが来た。レシートンを出してみよう"},
+			{"name": "朝の開店", "base": 1100, "reward": 60, "spawn": [["iraira", 3, 6, 0, 100, 1.0]], "tip": "イライラが来た。レシートンを出してみよう"},
 			{"name": "モーニングの行列", "base": 900, "reward": 90, "spawn": [["iraira", 2, 7, 0, 100, 1.0], ["gyouretsu", 10, 22, 0, 100, 1.0], ["gyouretsu", 0, 14, 3, 60, 1.0]], "tip": "行列はレジに弱い。ダンボで止めて、うしろから叩く"},
 			{"name": "ランチの注文ラッシュ", "base": 1400, "reward": 120, "spawn": [["chuumon", 4, 5, 0, 100, 1.0], ["iraira", 8, 9, 0, 100, 1.0], ["gyouretsu", 20, 25, 0, 100, 1.0], ["chuumon", 0, 1.2, 8, 50, 1.2]], "tip": "伝票が一気に来る。チャイムで押し返せる"},
-			{"name": "テイクアウト渋滞", "base": 2200, "reward": 180, "spawn": [["gyouretsu", 3, 12, 0, 100, 1.1], ["iraira", 5, 5, 0, 100, 1.0], ["chuumon", 15, 11, 0, 100, 1.0], ["gyouretsu", 0, 3, 4, 70, 1.6], ["kakekomi", 0, 8, 0, 35, 1.0]], "tip": "最後に大きな行列。アワワでまとめて流そう"},
+			{"name": "テイクアウト渋滞", "base": 1700, "reward": 180, "spawn": [["gyouretsu", 3, 12, 0, 100, 1.1], ["iraira", 5, 5, 0, 100, 1.0], ["chuumon", 15, 11, 0, 100, 1.0], ["gyouretsu", 0, 3, 4, 70, 1.6], ["kakekomi", 0, 8, 0, 35, 1.0]], "tip": "最後に大きな行列。アワワでまとめて流そう"},
 		]},
 	{"id": "izakaya", "name": "居酒屋 とりまる", "thanks": "大将「おばけでも、まかない食ってけ」", "color": "e85a4f", "sky": "3a2d5c", "floor": "7a5238",
 		"stages": [
