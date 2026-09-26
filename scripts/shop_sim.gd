@@ -45,7 +45,7 @@ func setup(si: int, st: int, deck: Array, boost: Dictionary, lap := 1) -> void:
 	rush = s.get("rush", false)
 	for sg in s.surges:
 		surges.append([float(sg[0]), int(sg[1]), false])
-	hard = ShopData.HARD[si][st] * (1.0 + 0.35 * (lap - 1))
+	hard = ShopData.HARD[si][st] * (1.0 + 0.8 * (lap - 1))
 	yoyu_max = 100.0 + boost.get("start_bonus", 0.0)
 	yoyu = yoyu_max
 	stamina_mult = boost.get("regen", 1.0)

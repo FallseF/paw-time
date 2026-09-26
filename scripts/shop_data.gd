@@ -96,7 +96,7 @@ static func worker(id: String) -> Dictionary:
 	if WORKERS.has(id):
 		return WORKERS[id]
 	# レア：どの持ち場でも同じ速さ、そこそこ働く
-	return {"rate": 1.8, "stamina": 30.0, "multi": 1, "line": ""}
+	return {"rate": 1.4, "stamina": 28.0, "multi": 1, "line": ""}
 
 
 static func help_of(id: String) -> String:
