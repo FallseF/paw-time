@@ -187,7 +187,11 @@ func _button(t: String, bg: Color, cb: Callable, fg := Color.WHITE) -> Button:
 
 
 func _continue() -> void:
-	main.go("room")
+	# 朝の玉をまだ開けていなければ、朝から
+	if GameState.phase == "morning" and GameState.hatched.size() > 0:
+		main.go("hatch")
+	else:
+		main.go("room")
 
 
 func _ask_reset() -> void:
