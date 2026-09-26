@@ -661,7 +661,9 @@ func _lift() -> void:
 		drops.restart()
 		drops.emitting = true
 		await tw.finished
-		durability -= 0.03 / GameState.poi_strength()
+		perfect_streak = 0
+		if GameState.tut.has("scoop") or GameState.total_scooped > 0:
+			durability -= 0.03 / GameState.poi_strength()
 		if durability <= 0:
 			_tear(null)
 			return
@@ -755,6 +757,7 @@ func _lift() -> void:
 func _tear(target: Orb3D) -> void:
 	busy = true
 	pressed = false
+	perfect_streak = 0
 	_play("tear")
 	Input.vibrate_handheld(80)
 	_banner("やぶれた…", Color("ffb3a8"))
@@ -859,7 +862,8 @@ func _finish() -> void:
 	if GameState.scooped_tonight or busy:
 		return
 	GameState.scooped_tonight = true
-	GameState.tut["scoop"] = true
+	if GameState.total_scooped > 0:
+		GameState.tut["scoop"] = true
 	Engine.time_scale = 1.0
 	GameState.save()
 	busy = true

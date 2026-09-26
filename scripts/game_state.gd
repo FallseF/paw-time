@@ -130,6 +130,7 @@ var night_plan := "" # "" / extra（もうひと玉）/ market（夜店）
 var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい）
 var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
+var stall_claimed := false
 var quiet := false # 早送り中は知らせを出さない
 var newcomers: Array = [] # けさ初めて来た子（庭で縁側から出てくる）
 var work_hist: Array = [] # その日に実際に働いたか
@@ -704,6 +705,7 @@ func sleep(bed: int, wake: int) -> void:
 	gifted_today = false
 	scooped_tonight = false
 	tonight_caught = 0
+	stall_claimed = false
 	night_plan = ""
 	shift_done_today = false
 	moon_won_today = false
@@ -851,7 +853,7 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed"]
 
 
 func save() -> void:

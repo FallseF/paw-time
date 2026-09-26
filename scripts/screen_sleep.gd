@@ -349,6 +349,18 @@ func _market() -> void:
 	market_panel = p
 	if go_btn:
 		go_btn.visible = false
+	for id in plan_btns:
+		plan_btns[id].disabled = true
+	GameState.night_plan = "market"
+	GameState.save()
+	if GameState.stall_claimed:
+		stall_done = true
+		var v0 := VBoxContainer.new()
+		p.add_child(v0)
+		v0.add_child(Kit.text("夜店の帰り道", 20, Color("ffb35c"), true, HORIZONTAL_ALIGNMENT_CENTER))
+		market_btn = Kit.button("帰って寝る", Color("8b7bff"), _market_home)
+		v0.add_child(market_btn)
+		return
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
@@ -375,13 +387,24 @@ func _market() -> void:
 
 
 var market_panel: PanelContainer
+var market_btn: Button
 var stall_done := false
+
+
+func _market_home() -> void:
+	if market_btn == null or market_btn.disabled:
+		return
+	market_btn.disabled = true
+	plan = "done_market"
+	going = false
+	_sleep()
 
 
 func _stall(name: String) -> void:
 	if stall_done:
 		return
 	stall_done = true
+	GameState.stall_claimed = true
 	Kit.play(self, "pop", 1.0)
 	var msg := ""
 	match name:
@@ -400,21 +423,28 @@ func _stall(name: String) -> void:
 			var rare := randf() < 0.5
 			GameState.orbs.append({"type": "rare" if rare else ["register", "dish", "hall", "kitchen", "stock"].pick_random(), "rare": rare})
 			msg = "わたあめの中に、光る玉が入っていた" + ("。虹色だ" if rare else "")
+	GameState.save()
 	for c in market_panel.get_child(0).get_children():
 		c.queue_free()
 	var v: VBoxContainer = market_panel.get_child(0)
 	v.add_child(Kit.text(name, 20, Color("ffb35c"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.wrap(Kit.text(msg, 14, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER)))
-	var bb: Button
-	bb = Kit.button("帰って寝る", Color("8b7bff"), func():
-		if bb.disabled:
-			return
-		bb.disabled = true
-		plan = "done_market"
-		going = false
-		_sleep())
-	v.add_child(bb)
+	market_btn = Kit.button("帰って寝る", Color("8b7bff"), _market_home)
+	v.add_child(market_btn)
 
 
 func demo_late() -> void:
 	_set_time(450, 450)
+
+
+func demo_market() -> void:
+	_choose("market")
+	_sleep()
+
+
+func demo_stall() -> void:
+	_stall("わたあめ屋")
+
+
+func demo_home() -> void:
+	_market_home()

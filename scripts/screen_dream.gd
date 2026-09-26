@@ -438,7 +438,7 @@ func _setup_stars() -> void:
 
 
 func _spawn_star() -> void:
-	var fake := spawned == 3 or spawned == 7 or spawned == 10
+	var fake := spawned == 3 or spawned == 8
 	var n := Node3D.new()
 	if fake:
 		# 雨雲（受けとめると、しょんぼり）
