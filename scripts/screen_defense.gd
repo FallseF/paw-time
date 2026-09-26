@@ -1240,7 +1240,10 @@ func _handle_events(evs: Array) -> void:
 				_flash(0.12, Color("ff6b5b"))
 			"cannon":
 				_cannon_fx()
-				if ev.get("boss_stun", false):
+				if ev.get("stopped", 0) > 0:
+					_hitstop()
+					_banner("大技を止めた！", Color("ffd23f"))
+				elif ev.get("boss_stun", false):
 					_popup("ひるんだ！", Vector3(cam_x, 3.2, 0.5), Color("ff8a3d"), 60)
 				if ev.hit >= 3:
 					_banner("%d体、押し返した！" % ev.hit, Color("fff6e0"))
@@ -1274,6 +1277,21 @@ func _handle_events(evs: Array) -> void:
 					_popup("補充！", views[ev.uid].root.position + Vector3(0, 1.1, 0.3), Color("e8b878"), 40)
 			"wallet":
 				pass
+			"windup":
+				if views.has(ev.uid):
+					var vw: Dictionary = views[ev.uid]
+					var ent := sim.find(ev.uid)
+					if vw.spr and not ent.is_empty():
+						var sp: Sprite3D = vw.spr
+						var tw := sp.create_tween()
+						tw.tween_property(sp, "modulate", Color(1, 0.45, 0.4), 0.25)
+						tw.tween_property(sp, "modulate", Color.WHITE, 0.25)
+						tw.tween_property(sp, "modulate", Color(1, 0.45, 0.4), 0.25)
+						tw.tween_property(sp, "modulate", Color.WHITE, 0.25)
+						_popup("!", vw.root.position + Vector3(0, DefData.ENEMIES[ent.id].h + 0.2, 0.3), Color("ff6b5b"), 90)
+						if sim.can_cannon() and not GameState.tutorial.has("t_windup") and ent.x >= DefData.LANE - DefSim.CANNON_REACH:
+							_show_hint("t_windup", "「！」のあいだにチャイムを当てると、大技が止まる", cannon_btn)
+							get_tree().create_timer(3.0).timeout.connect(func(): _hide_hint("t_windup"))
 			"closing":
 				_banner("閉店時間が近い。\n渦が弱ってきた", Color("b9c4ff"))
 			"win":
@@ -1403,6 +1421,13 @@ func _end(won: bool) -> void:
 	if demo:
 		return
 	_result(r)
+
+
+## ヒットストップ：一瞬だけ時間を止める
+func _hitstop() -> void:
+	Engine.time_scale = 0.05
+	await get_tree().create_timer(0.07, true, false, true).timeout
+	Engine.time_scale = 1.0
 
 
 func _confetti() -> void:

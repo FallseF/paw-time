@@ -11,6 +11,7 @@ const CANNON_REACH := 11.0
 const MAX_ENEMIES := 40
 const WARN_TIME := 3.0 # 増援の予告
 const CLOSING_TIME := 200.0
+const WINDUP := 1.0
 const WALLET_MAX_LV := 8
 
 var L: float = DefData.LANE
@@ -132,9 +133,16 @@ func fire_cannon() -> bool:
 	cannon = 0.0
 	var hit := 0
 	var stun := false
+	var stopped := 0
 	for e in entities:
 		if e.side == 1 and e.x >= L - CANNON_REACH:
 			hit += 1
+			if e.winding:
+				# ため中に当てると、大技が止まる
+				e.winding = false
+				e.cd = e.rate
+				e.sleep = 1.5
+				stopped += 1
 			_damage(e, 60.0 + e.max_hp * 0.06, null)
 			if e.hp > 0 and not e.boss:
 				_knock(e)
@@ -142,7 +150,7 @@ func fire_cannon() -> bool:
 				# 大ピークは押し返せないが、チャイムで1.5秒ひるむ
 				e.sleep = 1.5
 				stun = true
-	events.append({"type": "cannon", "hit": hit, "boss_stun": stun})
+	events.append({"type": "cannon", "hit": hit, "boss_stun": stun, "stopped": stopped})
 	return true
 
 
@@ -151,7 +159,7 @@ func _new_entity(side: int, id: String) -> Dictionary:
 	return {"uid": _uid, "side": side, "id": id, "x": 0.0, "z": 0.0, "hp": 1.0, "max_hp": 1.0, "atk": 0.0, "rate": 1.0, "range": 1.0,
 		"speed": 1.0, "kb": 1, "kb_done": 0, "cd": 0.3, "state": "walk", "st": 0.0, "area": false, "guard": 0.0, "ability": "",
 		"job": "", "weak": "", "drop": 0, "tiny": false, "sleep": 0.0, "slow": 0.0, "hop_cd": 0.0, "boss": false, "split": "",
-		"drain": 0, "attacking": false, "lv": 1}
+		"drain": 0, "attacking": false, "lv": 1, "big": false, "winding": false}
 
 
 func _spawn_ally(id: String, lv: int) -> Dictionary:
@@ -217,6 +225,7 @@ func _spawn_enemy(id: String, mult: float) -> Dictionary:
 	e.weak = d.weak
 	e.drop = d.drop
 	e.boss = d.get("boss", false)
+	e.big = e.boss or id == "araimono"
 	e.split = d.get("split", "")
 	e.drain = d.get("drain", 0)
 	e.cd = d.rate * 0.5
@@ -355,9 +364,14 @@ func _step(e: Dictionary, dt: float) -> void:
 		e.cd = 0.25
 		events.append({"type": "hop", "uid": e.uid})
 		return
+	# 大きな困りごとは、攻撃の前に1秒ためる（ここでチャイムを当てると止まる）
+	if e.big and not e.winding and e.cd <= WINDUP and e.cd > 0:
+		e.winding = true
+		events.append({"type": "windup", "uid": e.uid})
 	if e.cd > 0:
 		return
 	e.cd = e.rate
+	e.winding = false
 	_attack(e, targets, base_hit)
 
 
@@ -451,6 +465,7 @@ func _damage(o: Dictionary, dmg: float, by) -> void:
 
 
 func _knock(o: Dictionary) -> void:
+	o.winding = false
 	o.state = "kb"
 	o.st = KB_TIME
 	o.cd = maxf(o.cd, 0.3)
@@ -520,12 +535,15 @@ func ai_step(dt: float, skill := 1.0) -> void:
 	_ai_t = lerpf(1.2, 0.35, skill)
 	var threat := 0
 	var boss_near := false
+	var winding := false
 	for e in entities:
 		if e.side == 1 and e.x >= L - CANNON_REACH:
 			threat += 1
+			if e.winding:
+				winding = true
 			if e.boss:
 				boss_near = true
-	if can_cannon() and cannon_targets() > 0 and (threat >= 4 or boss_near):
+	if can_cannon() and cannon_targets() > 0 and (threat >= 4 or winding or boss_near):
 		fire_cannon()
 		return
 	# 最初はやる気Lvを上げる（うまい人ほど早く）
