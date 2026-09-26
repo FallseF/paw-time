@@ -162,6 +162,11 @@ func _set_hours(h: int) -> void:
 		lines.append(["休みの日の長い眠りに、何かが来そう", Color("c9bdf5")])
 	if hours == 9:
 		lines.append(["寝すぎると、少しだけぼんやり", Color(1, 1, 1, 0.6)])
+	# 明日の夜の池を、少しだけ先に見せる
+	var tm: Dictionary = GameState.shift_for(GameState.day + 1)
+	var fest := GameState.is_festival(GameState.day + 1)
+	var fc := "明日の夜：%s%s%s" % [tm.weather, ("・" + tm.moon) if tm.moon != "" else "", "・大すくい祭り！" if fest else ""]
+	lines.append([fc, Color("9fe0ff")])
 	# 何時間でポイがどれだけ強くなるかを、小さな棒で見せる
 	var bars := HBoxContainer.new()
 	bars.alignment = BoxContainer.ALIGNMENT_CENTER

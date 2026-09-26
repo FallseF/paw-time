@@ -1167,7 +1167,7 @@ func _lift() -> void:
 	if n >= 2:
 		multi_count += 1
 		tags.push_front("%dつまとめて！" % n)
-	_flash(0.35 if not special else 0.6)
+	_flash(0.25 if not special else 0.4)
 	_play("chime", 1.0 + minf(combo, 12) * 0.04)
 	if combo >= 3:
 		_play("combo", 1.0 + minf(combo, 12) * 0.05, -4)

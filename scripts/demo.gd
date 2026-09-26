@@ -187,9 +187,18 @@ func autoplay(days: int) -> void:
 	for x in (OS.get_environment("OBAKE_SLEEP") if OS.get_environment("OBAKE_SLEEP") != "" else "7").split(","):
 		pattern.append(int(x))
 	var total := 0
+	var full_ui := OS.get_environment("OBAKE_FULLUI") != ""
 	for d in days:
 		var s := GameState.today()
-		if work and s.role != "":
+		if full_ui:
+			await main.go("room")
+			await _wait(0.3)
+			if main.current.has_method("_close_report"):
+				main.current._close_report()
+			if work and s.role != "":
+				main.current._do_shift()
+			await _wait(0.2)
+		elif work and s.role != "":
 			GameState.finish_shift()
 		var mods := GameState.night_mods()
 		var pois_before := GameState.total_pois()
@@ -205,6 +214,23 @@ func autoplay(days: int) -> void:
 		var t: Dictionary = GameState.tonight
 		total += t.get("count", 0)
 		var h: int = pattern[d % pattern.size()]
+		if full_ui:
+			await _wait(0.8)
+			await main.go("sleep")
+			main.current._set_hours(h)
+			main.current._sleep()
+			await _wait(2.2)
+			if main.current_name == "hatch":
+				main.current._next()
+				await _wait(3.0)
+				main.current._open_all()
+				await _wait(0.5)
+			await main.go("zukan")
+			await _wait(0.2)
+			await main.go("workshop")
+			await _wait(0.2)
+			print("D%02d 画面を一巡: %s" % [d + 1, main.current_name])
+			continue
 		print("D%02d %s曜 %s %s%s | ポイ%2d 使%2d | すくい%2d コンボ%2d ていねい%2d 虹%d | %4.0f秒 | 寝%d" % [d + 1, s.day, s.weather, s.moon if s.moon != "" else "--", " 祭" if mods.festival else "", pois_before, pois_before - GameState.total_pois(), t.get("count", 0), t.get("best_combo", 0), t.get("clean", 0), t.get("rainbow", 0), frames / 60.0, h])
 		var kinds := {}
 		for o in GameState.orbs:

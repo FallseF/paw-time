@@ -360,6 +360,7 @@ func _build_ui() -> void:
 	top.add_child(sp)
 	var ws := _button("工房", Color(1, 1, 1, 0.92), func(): main.go("workshop"), Color("d9774a"))
 	ws.custom_minimum_size = Vector2(62, 44)
+	ws.visible = GameState.records.nights > 0 # はじめての夜が終わるまでは出さない
 	top.add_child(ws)
 	var zk := _button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"))
 	zk.custom_minimum_size = Vector2(62, 44)
