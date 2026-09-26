@@ -198,7 +198,7 @@ func reset() -> void:
 	strength = 1.0
 	last_sleep = 7
 	owned = {"receipt": {"level": 1, "xp": 0, "count": 1}}
-	seen = {"receipt": true}
+	seen = {"receipt": 1} # 値は「会った日 + 1」
 	shards = {"register": 0, "dish": 0, "hall": 0, "kitchen": 0, "stock": 0, "rainbow": 0}
 	upgrades = {"fuchi": 0, "wa": 0, "kami": 0}
 	partner = "receipt"
@@ -467,7 +467,8 @@ func xp_to_next(level: int) -> int:
 ## おばけを1体ふやす。かぶったら経験値とかけら。{is_new, level, leveled, shard}
 func add_obake(id: String, xp := 0, quality := 3) -> Dictionary:
 	var is_new := not seen.has(id)
-	seen[id] = true
+	if is_new:
+		seen[id] = day + 1
 	var res := {"is_new": is_new, "level": 1, "leveled": false, "shard": ""}
 	if not owned.has(id):
 		owned[id] = {"level": 1, "xp": 0, "count": 1}
@@ -493,6 +494,15 @@ func add_obake(id: String, xp := 0, quality := 3) -> Dictionary:
 			shards[t] += 1
 	res.level = o.level
 	return res
+
+
+## いつ会ったか（図鑑に出す）
+func met_text(id: String) -> String:
+	var v = seen.get(id, null)
+	if typeof(v) != TYPE_INT or v <= 0:
+		return ""
+	var d: int = v - 1
+	return "第%d週 %s曜に会った" % [d / 7 + 1, DOW[d % 7]]
 
 
 func level_of(id: String) -> int:
@@ -821,6 +831,10 @@ func sleep(hours: int) -> void:
 				claim_quest(q)
 				auto_claimed += 1
 	day += 1
+	# 朝に会ったので、会った日は新しい日にする
+	for h in hatched:
+		if h.get("is_new", false):
+			seen[h.id] = day + 1
 	if day % 7 == 0:
 		stores_week = {}
 		bands_week = {}

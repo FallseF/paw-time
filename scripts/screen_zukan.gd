@@ -257,6 +257,8 @@ func _show_normal(id: String) -> void:
 	else:
 		lines.append("Lv5（王冠）。かぶると、かけらになる")
 	lines.append("これまでに %d 体" % own.count)
+	if GameState.met_text(id) != "":
+		lines.append(GameState.met_text(id))
 	lines.append("相棒にすると：" + GameState.PARTNER_SKILL[id])
 	for t in lines:
 		var l := _text(t, 13, Color("6a5f70"))
@@ -564,6 +566,10 @@ func _show_detail(r: Dictionary) -> void:
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	v.add_child(d)
+	if found and GameState.met_text(r.id) != "":
+		var mt := _text(GameState.met_text(r.id), 12, Color("b07a3a"))
+		mt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(mt)
 
 
 func demo_normal_tray() -> void:
@@ -572,3 +578,10 @@ func demo_normal_tray() -> void:
 
 func demo_normal_box() -> void:
 	_show_normal("box")
+
+
+func demo_rare_detail() -> void:
+	for r in Rares.LIST:
+		if GameState.seen.has(r.id):
+			_show_detail(r)
+			return
