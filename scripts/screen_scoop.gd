@@ -69,6 +69,7 @@ var gold_count := 0
 var multi_count := 0
 var ended := false
 var title_before := 0
+var record_announced := false
 var tut_step := -1
 var tut_label: Label
 var goal: Dictionary
@@ -1345,6 +1346,9 @@ func _lift() -> void:
 		_float_text("・".join(tags), pos2d + Vector2(0, -30), Color("b8ffcf"))
 	_combo_pop()
 	_partner_react(true)
+	if not practice and not record_announced and combo > GameState.records.best_combo and combo >= 3 and GameState.records.nights > 0:
+		record_announced = true
+		_float_text("最高コンボ更新！", Vector2(180, 180), Color("ffd23f"), 20)
 	var tw2 := create_tween().set_parallel()
 	var back_t := 0.45 if special else 0.3
 	tw2.tween_property(cam, "transform", cam_base, back_t).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
