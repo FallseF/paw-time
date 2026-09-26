@@ -562,6 +562,29 @@ func _do_shift() -> void:
 		parts.append("%s ×%d（%s）" % [GameState.POI[g.poi].name, g.n, g.why])
 	_got_text = "もらった：" + "、".join(parts)
 	_play_sfx("chime")
+	# もらったポイが、上のポイの棚へ飛んでいく
+	for i in got.size():
+		var g: Dictionary = got[i]
+		var chip := PanelContainer.new()
+		var st := _pill(Color(GameState.POI[g.poi].color), 16)
+		chip.add_theme_stylebox_override("panel", st)
+		chip.add_child(_text("+%d %s" % [g.n, GameState.POI[g.poi].short], 15, Color("2a2233"), font_black))
+		chip.position = Vector2(110 + i * 20, 470)
+		chip.modulate.a = 0.0
+		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(chip)
+		var tw := create_tween()
+		tw.tween_interval(0.15 * i)
+		tw.tween_property(chip, "modulate:a", 1.0, 0.12)
+		tw.tween_property(chip, "position", Vector2(60 + i * 60, 72), 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(chip, "modulate:a", 0.0, 0.2)
+		tw.tween_callback(chip.queue_free)
+	if is_instance_valid(poi_panel):
+		poi_panel.pivot_offset = poi_panel.size / 2
+		var bump := create_tween()
+		bump.tween_interval(0.75)
+		bump.tween_property(poi_panel, "scale", Vector2(1.06, 1.06), 0.1)
+		bump.tween_property(poi_panel, "scale", Vector2.ONE, 0.2)
 	GameState.save_game()
 	_render()
 	_pop_card()
