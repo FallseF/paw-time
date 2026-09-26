@@ -383,6 +383,9 @@ func _build_ui() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
+	var hb := _button("？", Color(1, 1, 1, 0.92), _show_boost_help, Color("5b6fc2"))
+	hb.custom_minimum_size = Vector2(40, 44)
+	top.add_child(hb)
 	var ws := _button("工房", Color(1, 1, 1, 0.92), func(): main.go("workshop"), Color("d9774a"))
 	ws.custom_minimum_size = Vector2(62, 44)
 	ws.visible = GameState.records.nights > 0 # はじめての夜が終わるまでは出さない
@@ -591,6 +594,42 @@ func _place_quest_btn() -> void:
 	await get_tree().process_frame
 	if is_instance_valid(poi_panel):
 		quest_btn.position.y = poi_panel.position.y + poi_panel.size.y + 6
+
+
+## 仕事と睡眠が、どう効くか
+func _show_boost_help() -> void:
+	if quest_panel:
+		quest_panel.queue_free()
+	quest_panel = Control.new()
+	quest_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(quest_panel)
+	var dim := ColorRect.new()
+	dim.color = Color(0.1, 0.08, 0.15, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(e):
+		if (e is InputEventMouseButton or e is InputEventScreenTouch) and e.pressed:
+			quest_panel.queue_free()
+			quest_panel = null)
+	quest_panel.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.98), 24))
+	p.position = Vector2(16, 110)
+	p.size = Vector2(328, 0)
+	quest_panel.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(_text("ポイのもらい方", 19, Color("2a2233"), font_black))
+	for pair in [["毎朝", "紙のポイ 2本（働かない日も）"], ["働いた日", "色のポイ 2本（何時間でも同じ）。はじめての店・仕事なら、きらきらポイも"], ["よく寝た朝", "ポイが ×1.2 強くなり、玉が★ひとつ育ってかえる（寝すぎは得しない）"], ["工房", "かぶったおばけのかけらで、ポイを作る・改良する"], ["レア", "いろんな働き方・休み方・眠り方、そして虹の玉で出会える"]]:
+		var row := VBoxContainer.new()
+		row.add_theme_constant_override("separation", 0)
+		row.add_child(_text(pair[0], 14, Color("e8603c"), font_black))
+		var d := _text(pair[1], 13, Color("4a3f52"))
+		d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		d.custom_minimum_size = Vector2(296, 0)
+		row.add_child(d)
+		v.add_child(row)
+	v.add_child(_text("タップで閉じる", 11, Color("9a8e98")))
 
 
 ## 今週のおねがい（3つ。そろうと、おまけ）
