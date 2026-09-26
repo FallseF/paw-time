@@ -181,6 +181,9 @@ func setup(id: String) -> Obake3D:
 func _ready() -> void:
 	if contact_shadow:
 		_add_contact_shadow()
+	# おばけだけに当てる光（Look のフィル・リム）を受けられるよう、キャラの層にも乗せる
+	for n in find_children("*", "GeometryInstance3D", true, false):
+		(n as VisualInstance3D).layers |= 1 << (Look.CHAR_LAYER - 1)
 
 
 ## 足元のぼんやりした影。地面に近い部品の広がりに合わせる。
