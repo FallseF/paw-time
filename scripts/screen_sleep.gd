@@ -187,7 +187,14 @@ func _set_hours(h: int) -> void:
 		preview.add_child(lab)
 
 
+var sleeping := false
+
+
 func _sleep() -> void:
+	# 二度押しで2日進まないように
+	if sleeping:
+		return
+	sleeping = true
 	var dark := ColorRect.new()
 	dark.color = Color("05060f")
 	dark.set_anchors_preset(Control.PRESET_FULL_RECT)
