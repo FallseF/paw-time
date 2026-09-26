@@ -59,10 +59,10 @@ static func decorate(ob: Obake3D, kind: String) -> void:
 		"moon":
 			_halo(root, g)
 			var moon := _ball(0.085, Kit.glow(Color("fff6d8"), 2.2))
-			moon.position = Vector3(0.36, 1.28, 0.05)
+			moon.position = Vector3(0.42, 1.12, 0.05)
 			root.add_child(moon)
 			var bite := _ball(0.08, Obake3D.flat(Color("2a2233")))
-			bite.position = Vector3(0.4, 1.3, 0.1)
+			bite.position = Vector3(0.46, 1.14, 0.1)
 			bite.scale = Vector3(1, 1, 0.6)
 			root.add_child(bite)
 		"sun":
@@ -136,7 +136,7 @@ static func _halo(root: Node3D, g: Color) -> void:
 	tm.ring_segments = 10
 	h.mesh = tm
 	h.material_override = Kit.glow(g, 2.4)
-	h.position = Vector3(0, 1.22, -0.02)
+	h.position = Vector3(0, 1.12, -0.02)
 	h.rotation = Vector3(-0.25, 0, 0.12)
 	var bob := Spin.new()
 	bob.speed = 0.0

@@ -46,7 +46,7 @@ ONB_CHEER_2,You're a natural!,じょうず！
 ONB_CHEER_3,They loved it!,よろこんでたよ！
 ONB_SHIFT_DONE_SAY,We did it! Great shift!,おつかれさま！ いいシフトだった！
 ONB_SHIFT_DONE,Shift done!,シフトおわり！
-ONB_SHIFT_RESULT,You served %d customers,お客さん %d 人に出したよ
+ONB_SHIFT_RESULT,Customers served: %d,お客さん %d 人に出したよ
 ONB_SHIFT_EARNED,+2 poi,ポイ +2
 ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
 ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
@@ -139,7 +139,7 @@ JOY_3,Great pick! Let's go together!,いいね！ いっしょに行こう！
 SHRUG_1,Okay! Maybe next time.,そっか！ またこんど。
 SHRUG_2,No worries — plenty more jobs!,だいじょうぶ、ほかにもあるよ！
 END_TITLE,That's all for today!,今日は、これでぜんぶ！
-END_BODY,You accepted %d. %s will remember them.,%d 件受けたよ。%s がおぼえておくね。
+END_BODY,Shifts accepted: %d. %s will remember them.,%d 件受けたよ。%s がおぼえておくね。
 END_BODY_NONE,None today — that's okay. %s will look again tomorrow.,今日は0件。だいじょうぶ、%s がまた明日さがすよ。
 END_SAY,See you at work!,仕事で会おうね！
 END_SAY_NONE,Rest is good too!,休むのも、だいじ！
@@ -207,7 +207,7 @@ dream bubble","ゆめの泡を
 きらきら,Sparkle,きらきら
 なし,None,なし
 ポイ,Poi,ポイ
-朝だ。光る玉が %d 個,Morning! %d glowing orbs,朝だ。光る玉が %d 個
+朝だ。光る玉が %d 個,Morning! Glowing orbs: %d,朝だ。光る玉が %d 個
 玉をひらく,Open the orb,玉をひらく
 つぎの玉,Next orb,つぎの玉
 庭へ,To the island,庭へ
@@ -276,3 +276,35 @@ dream bubble","ゆめの泡を
 いまの庭と図鑑は消えます,Your island and book will be erased,いまの庭と図鑑は消えます
 はじめから,Start over,はじめから
 やめる,Cancel,やめる
+"%s
+予定地","Coming soon:
+%s","%s
+予定地"
+芝,Lawn,芝
+花壇,Flowerbed,花壇
+灯り,Lights,灯り
+花,Flowers,花
+池,Pond,池
+縁台,Bench,縁台
+桜,Cherry tree,桜
+ほたる,Fireflies,ほたる
+月見台,Moon deck,月見台
+夢見の木,Dream tree,夢見の木
+今日のシフト,Today's shift,今日のシフト
+シフトに行く,Go to your shift,シフトに行く
+今日は休む,Take the day off,今日は休む
+働くと、庭に飾りが届く,Working brings decorations to your island,働くと、庭に飾りが届く
+めあて %d/3 ▼,Goals %d/3 ▼,めあて %d/3 ▼
+▼ しまう,▼ Hide,▼ しまう
+▲ カードを出す,▲ Show card,▲ カードを出す
+めあて達成　めぐみ +3,Goal done! Growth +3,めあて達成　めぐみ +3
+3つそろった！ きらきらポイ +1,All 3 done! Sparkle poi +1,3つそろった！ きらきらポイ +1
+玉を3個すくう,Scoop 3 orbs,玉を3個すくう
+庭のおばけに話しかける,Talk to an obake on the island,庭のおばけに話しかける
+いつもの時刻（±20分）に寝る,Sleep at your usual time (±20 min),いつもの時刻（±20分）に寝る
+7時間以上眠る,Sleep 7+ hours,7時間以上眠る
+飾りをひとつともす,Light up one decoration,飾りをひとつともす
+仕事のポイで、同じ色の玉をすくう,Scoop a same-color orb with a job poi,仕事のポイで、同じ色の玉をすくう
+図鑑でヒントを見る,Check a hint in the Book,図鑑でヒントを見る
+0時までに寝る,Go to bed by midnight,0時までに寝る
+満月の夜に、灯りを4つともす,Light 4 lanterns on the full-moon night,満月の夜に、灯りを4つともす

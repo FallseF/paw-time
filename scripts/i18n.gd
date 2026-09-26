@@ -44,3 +44,10 @@ static func lang() -> String:
 
 static func t(key: String) -> String:
 	return String(TranslationServer.translate(key))
+
+
+## 折り返すラベル（英語は単語の切れ目で、日本語は文節で折り返す。Kit.wrap は字の途中でも切るので英語には使わない）
+static func wrap(l: Label) -> Label:
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return l

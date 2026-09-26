@@ -57,8 +57,8 @@ func _ready() -> void:
 	var hv := VBoxContainer.new()
 	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hv.alignment = BoxContainer.ALIGNMENT_CENTER
-	hv.add_child(Kit.wrap(Kit.text(tr("PREFS_TITLE"), 20, INK, true)))
-	hv.add_child(Kit.wrap(Kit.text(tr("PREFS_SUB") % SpecialObake.pet_name(), 13, SUB)))
+	hv.add_child(I18n.wrap(Kit.text(tr("PREFS_TITLE"), 20, INK, true)))
+	hv.add_child(I18n.wrap(Kit.text(tr("PREFS_SUB") % SpecialObake.pet_name(), 13, SUB)))
 	head.add_child(hv)
 	v.add_child(head)
 
@@ -150,7 +150,7 @@ func _ready() -> void:
 	# 本物のお金の情報は聞かない
 	var note := PanelContainer.new()
 	note.add_theme_stylebox_override("panel", Kit.pill(Color("eef6ea"), 14, 0.0, Vector2(12, 8)))
-	note.add_child(Kit.wrap(Kit.text(tr("PREFS_SAFE"), 12, Color("3f6a4a"), true)))
+	note.add_child(I18n.wrap(Kit.text(tr("PREFS_SAFE"), 12, Color("3f6a4a"), true)))
 	v.add_child(note)
 
 	go_btn = Kit.button(tr("PREFS_GO"), ORANGE, _save)

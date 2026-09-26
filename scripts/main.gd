@@ -49,7 +49,8 @@ func _ready() -> void:
 		_seed_for(start)
 	# はじめて起動した人は、タイトルを飛ばしてマイおばけ猫の診断から（scripts/onboarding.gd の順番）
 	if start == "" and not GameState.has_save() and Onboarding.at("quiz"):
-		GameState.reset("solo")
+		GameState.reset("solo") # 見本の記録ではなく、自分で受けた仕事（Shifts）で遊ぶ
+		GameState.save()
 		start = "quiz"
 	# 島のコード（Web は URL の #island=、手元では OBAKE_VISIT）で起動したら、その島へおでかけ
 	var code := OS.get_environment("OBAKE_VISIT")
@@ -221,6 +222,9 @@ func _maybe_autoshot() -> void:
 	if target == "":
 		return
 	var path := OS.get_environment("OBAKE_SHOT_PATH")
+	# 途中の画面から撮るとき（OBAKE_START なし）は、保存を読んでから（はじめての流れを段ごとに撮るため）
+	if OS.get_environment("OBAKE_START") == "" and GameState.has_save():
+		GameState.load_game()
 	var n := 0
 	for step in target.split(","):
 		if step.begins_with("wait"):

@@ -138,29 +138,28 @@ func _hop(ob: Node3D, h := 0.25) -> void:
 # ---------------------------------------------------------------- 体験バイト
 
 func _build_shift() -> void:
-	# カフェ：床・奥の壁と窓・カウンター・コーヒーマシン
+	# カフェ：床・奥の壁と窓・カウンター（奥）・コーヒーマシン。相棒は手前の左、お客さんは右から来る
 	var floor_m := MeshInstance3D.new()
 	var fm := CylinderMesh.new()
-	fm.top_radius = 3.2
-	fm.bottom_radius = 3.2
+	fm.top_radius = 7.0
+	fm.bottom_radius = 7.0
 	fm.height = 0.1
 	floor_m.mesh = fm
 	floor_m.material_override = Obake3D.toon(Color("c99a6e"), 0.1)
 	floor_m.position = Vector3(0, -0.05, -0.4)
 	world.add_child(floor_m)
-	_box(Vector3(6, 3, 0.1), Vector3(0, 1.4, -1.8), Color("f3e1c7"))
-	var win := _box(Vector3(1.4, 0.9, 0.05), Vector3(-1.2, 1.7, -1.72), Color("ffd9a0"))
+	_box(Vector3(8, 4, 0.1), Vector3(0, 1.6, -1.9), Color("f7e6cf"))
+	var win := _box(Vector3(1.3, 0.8, 0.05), Vector3(-1.1, 1.75, -1.82), Color("ffd9a0"))
 	window_mat = Obake3D.toon(Color("ffd9a0"), 0.1, 0.4, 0.012)
 	win.material_override = window_mat
-	_box(Vector3(0.9, 0.9, 0.05), Vector3(1.3, 1.7, -1.72), Color("7fb7e8")) # 黒板のかわりの看板
-	_box(Vector3(2.6, 0.62, 0.55), Vector3(-0.35, 0.31, 0.15), Color("a0673f"))
-	_box(Vector3(2.7, 0.06, 0.62), Vector3(-0.35, 0.64, 0.15), Color("f6efe4"))
-	_box(Vector3(0.36, 0.42, 0.3), Vector3(-1.25, 0.88, 0.05), Color("6b6f7a"))
-	var cup := _box(Vector3(0.12, 0.12, 0.12), Vector3(-0.2, 0.73, 0.25), Color("fffaf2"))
-	cup.name = "Cup"
-	partner.position = Vector3(-0.45, 0.0, -0.55)
-	partner.scale = Vector3.ONE * 0.62
-	partner.rotation.y = 0.2
+	_box(Vector3(0.8, 0.6, 0.05), Vector3(1.15, 1.75, -1.82), Color("4f7a5a")) # メニューの黒板
+	_box(Vector3(3.2, 0.5, 0.5), Vector3(0, 0.25, -0.9), Color("a0673f"))
+	_box(Vector3(3.3, 0.06, 0.58), Vector3(0, 0.52, -0.9), Color("f6efe4"))
+	_box(Vector3(0.36, 0.42, 0.3), Vector3(-1.1, 0.76, -0.95), Color("6b6f7a"))
+	_box(Vector3(0.12, 0.12, 0.12), Vector3(0.1, 0.61, -0.8), Color("fffaf2"))
+	partner.position = Vector3(-0.75, 0.0, 0.55)
+	partner.scale = Vector3.ONE * 0.7
+	partner.rotation.y = 0.45
 	world.add_child(partner)
 
 	# 上：どこで・いま何時（早送り）
@@ -181,22 +180,22 @@ func _build_shift() -> void:
 	top.add_child(tp)
 	bar = Kit.bar(0.0, ORANGE, 328, 8, Color(1, 1, 1, 0.6))
 	top.add_child(bar)
-	var mock := _text(tr("ONB_SHIFT_MOCK"), 11, Color(0.42, 0.37, 0.44, 0.9))
+	var mock := _text(tr("ONB_SHIFT_MOCK"), 12, Color("7a5a48"), true)
 	top.add_child(mock)
 
 	# 相棒のひとこと
 	bubble = _panel(Color("fffaf2"), 16)
-	bubble.position = Vector2(24, 128)
+	bubble.position = Vector2(20, 150)
 	bubble.size = Vector2(190, 0)
-	bubble_l = Kit.wrap(Kit.text("", 14, INK, true))
+	bubble_l = I18n.wrap(Kit.text("", 14, INK, true))
 	bubble_l.custom_minimum_size = Vector2(160, 0)
 	bubble.add_child(bubble_l)
 	add_child(bubble)
 	# お客さんの注文
 	order = _panel(Color("fff6d8"), 16)
-	order.position = Vector2(206, 200)
+	order.position = Vector2(196, 190)
 	order.size = Vector2(140, 0)
-	order_l = Kit.wrap(Kit.text("", 13, Color("8a5a10"), true))
+	order_l = I18n.wrap(Kit.text("", 13, Color("8a5a10"), true))
 	order_l.custom_minimum_size = Vector2(112, 0)
 	order.add_child(order_l)
 	order.visible = false
@@ -263,12 +262,12 @@ func _customer_in() -> void:
 	if customer:
 		customer.queue_free()
 	customer = Obake3D.make(CUSTOMERS[served % CUSTOMERS.size()])
-	customer.scale = Vector3.ONE * 0.5
-	customer.position = Vector3(2.6, 0, 0.9)
+	customer.scale = Vector3.ONE * 0.55
+	customer.position = Vector3(2.6, 0, 0.5)
 	customer.rotation.y = -1.2
 	world.add_child(customer)
 	var tw := create_tween()
-	tw.tween_property(customer, "position", Vector3(1.05, 0, 0.9), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(customer, "position", Vector3(0.8, 0, 0.5), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await tw.finished
 	if not is_instance_valid(customer):
 		return
@@ -299,7 +298,7 @@ func _serve() -> void:
 	if is_instance_valid(c):
 		c.rotation.y = 1.2
 		var tw := create_tween()
-		tw.tween_property(c, "position", Vector3(2.8, 0, 1.0), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		tw.tween_property(c, "position", Vector3(2.8, 0, 0.6), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 		tw.tween_callback(c.queue_free)
 	next_customer = 1.3
 	busy = false
@@ -321,7 +320,7 @@ func _end_shift() -> void:
 	GameState.save()
 	sheet = _panel(CREAM, 24)
 	sheet.mouse_filter = Control.MOUSE_FILTER_STOP
-	sheet.position = Vector2(16, 360)
+	sheet.position = Vector2(16, 396)
 	sheet.size = Vector2(328, 0)
 	add_child(sheet)
 	var v := VBoxContainer.new()
@@ -344,7 +343,7 @@ func _end_shift() -> void:
 		row.add_child(dot)
 	row.add_child(Kit.text(tr("ONB_SHIFT_EARNED"), 17, Color("2f7bb0"), true))
 	v.add_child(row)
-	var why := Kit.wrap(_text(tr("ONB_SHIFT_POI_WHY"), 13, SUB))
+	var why := I18n.wrap(_text(tr("ONB_SHIFT_POI_WHY"), 13, SUB))
 	v.add_child(why)
 	var b := Kit.button(tr("ONB_SHIFT_TO_RIVER"), Color("5b6fc2"), _to_river)
 	v.add_child(b)
@@ -411,7 +410,7 @@ func _build_night() -> void:
 	v.add_theme_constant_override("separation", 8)
 	add_child(v)
 	v.add_child(_text(tr("ONB_NIGHT_TITLE"), 24, Color("fff6e8"), true))
-	var l := Kit.wrap(_text(tr("ONB_NIGHT_BODY") % SpecialObake.pet_name(), 14, Color("c9bdf5")))
+	var l := I18n.wrap(_text(tr("ONB_NIGHT_BODY") % SpecialObake.pet_name(), 14, Color("c9bdf5")))
 	v.add_child(l)
 	main_btn = Kit.button(tr("ONB_NIGHT_SLEEP"), Color("8b7bff"), _on_main)
 	main_btn.position = Vector2(40, 552)
@@ -434,6 +433,13 @@ func _sleep() -> void:
 	await tw.finished
 	# 23:30 に寝て 7:00 に起きた夜にする（はじめての夜は、よく眠れた夜）。玉は GameState.sleep() の中でかえる
 	GameState.sleep(330, 780)
+	# はじめての朝は「すくった玉から、新しい子」だけを見せる。条件を満たしたレアは、次の夜まで待ってもらう
+	for h in GameState.hatched.duplicate():
+		if h.get("rare", false):
+			GameState.hatched.erase(h)
+			GameState.seen.erase(h.id)
+			GameState.owned = GameState.owned.filter(func(o): return o.id != h.id)
+			GameState.rare_pending.push_front(h.id)
 	# 朝の庭の演出（ねむりのまとめ）は2日目から。今朝は孵化 → 島の説明へ
 	GameState.phase = "day"
 	GameState.garden_seen_level = GameState.garden_level

@@ -726,7 +726,7 @@ func _build_next_stake(L: int) -> void:
 	post.name = "post"
 	_box(Vector3(1.0, 0.62, 0.04), Vector3(0, 0.85, 0), Color("f4e6cc"), g)
 	var names := {1: "芝", 2: "花壇", 3: "灯り", 4: "花", 5: "池", 6: "縁台", 7: "桜", 8: "ほたる", 9: "月見台", 10: "夢見の木"}
-	var l := Kit.label3d("%s\n予定地" % names.get(nx, ""), 44, Color("4a3f52"))
+	var l := Kit.label3d(tr("%s\n予定地") % tr(names.get(nx, "")), 44, Color("4a3f52"))
 	l.outline_size = 0
 	l.pixel_size = 0.0055
 	l.billboard = BaseMaterial3D.BILLBOARD_DISABLED
@@ -1365,7 +1365,7 @@ func _refresh_hud() -> void:
 		else:
 			out.append("[color=#8a7a88]%s[/color]" % steps[i])
 	flow_label.text = "[color=#c9bfc6]・[/color]".join(out)
-	goals_btn.text = "めあて %d/3 ▼" % GameState.goals_done()
+	goals_btn.text = tr("めあて %d/3 ▼") % GameState.goals_done()
 	if goals_panel:
 		_toggle_goals()
 		_toggle_goals()

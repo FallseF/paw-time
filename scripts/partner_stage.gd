@@ -41,9 +41,10 @@ func _init(px := Vector2(200, 180), bg := Color(0, 0, 0, 0)) -> void:
 	cam = Camera3D.new()
 	cam.fov = 30
 	cam.keep_aspect = Camera3D.KEEP_HEIGHT
-	cam.position = Vector3(0, 0.8, 3.6)
+	# まだツリーの外なので look_at は使えない。向きを直接つくる
+	var eye := Vector3(0, 0.8, 3.6)
+	cam.transform = Transform3D(Basis.looking_at(Vector3(0, 0.62, 0) - eye), eye)
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.62, 0))
 	ob = MyObake3D.from_saved()
 	if ob == null:
 		ob = MyObake3D.new().setup_look(QuizData.TYPES["IFHY"].look)

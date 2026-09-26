@@ -213,7 +213,7 @@ func _text(t: String, size: int, color := Color("2a2233"), font: FontFile = null
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART # 英語は単語の切れ目で（日本語も文節で折り返る）
 	return l
 
 

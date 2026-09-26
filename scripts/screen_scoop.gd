@@ -1024,6 +1024,8 @@ func _finish() -> void:
 	if GameState.scooped_tonight or busy:
 		return
 	GameState.scooped_tonight = true
+	if coach:
+		coach.visible = false
 	if GameState.total_scooped > 0:
 		GameState.tut["scoop"] = true
 	Engine.time_scale = 1.0
@@ -1079,7 +1081,7 @@ func _tutorial_coach() -> void:
 	coach.add_child(v)
 	var who := Kit.text(SpecialObake.pet_name(), 12, Color("8a5bd6"), true)
 	v.add_child(who)
-	var l := Kit.wrap(Kit.text(tr("ONB_SCOOP_COACH"), 14, Color("2a2233"), true))
+	var l := I18n.wrap(Kit.text(tr("ONB_SCOOP_COACH"), 14, Color("2a2233"), true))
 	v.add_child(l)
 
 

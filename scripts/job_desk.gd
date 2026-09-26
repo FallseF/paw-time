@@ -29,7 +29,9 @@ var busy := false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# 画面は 360x640 固定の座標で組む（庭の画面と同じ作法。アンカー任せだと大きさ 0 になることがある）
+	position = Vector2.ZERO
+	size = Vector2(360, 640)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	garden = get_parent() as Control
 	_start.call_deferred()
@@ -162,6 +164,7 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 	add_child(sheet)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
+	v.custom_minimum_size = Vector2(300, 0)
 	sheet.add_child(v)
 	var top := HBoxContainer.new()
 	top.add_child(_text(who, 12, Color("8a5bd6"), true))
@@ -171,8 +174,8 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 	if dots > 0:
 		top.add_child(_text("%d / %d" % [dots, of], 12, SUB, true))
 	v.add_child(top)
-	v.add_child(Kit.wrap(_text(title, 19, INK, true)))
-	v.add_child(Kit.wrap(_text(body, 14, SUB)))
+	v.add_child(I18n.wrap(_text(title, 19, INK, true)))
+	v.add_child(I18n.wrap(_text(body, 14, SUB)))
 	var b := Kit.button(btn, ORANGE, cb)
 	v.add_child(b)
 	await get_tree().process_frame
@@ -299,6 +302,8 @@ func _tour_step() -> void:
 func _found_jobs() -> void:
 	_garden_card(false)
 	await get_tree().create_timer(0.8).timeout
+	if viewer:
+		return
 	var list := today_jobs()
 	var pet := SpecialObake.pet_name()
 	if list.is_empty():
@@ -308,6 +313,8 @@ func _found_jobs() -> void:
 		var j: Dictionary = list[i]
 		_notify(i, tr("NOTE_MATCH") % j.title, "%s · %s" % [JobListings.wage_text(j), j.store], role_color(j.role), _open_viewer)
 	await get_tree().create_timer(0.35 * mini(3, list.size()) + 0.4).timeout
+	if viewer:
+		return
 	_sheet(pet, tr("FOUND_TITLE") % [pet, list.size()], tr("FOUND_BODY"), tr("FOUND_SEE"), _open_viewer)
 
 
@@ -333,12 +340,12 @@ func _build_viewer() -> void:
 		sheet.queue_free()
 	_garden_card(false)
 	viewer = Control.new()
-	viewer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	viewer.size = Vector2(360, 640)
 	viewer.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(viewer)
 	var dim := ColorRect.new()
 	dim.color = Color(0.12, 0.1, 0.2, 0.62)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.size = Vector2(360, 640)
 	viewer.add_child(dim)
 	stage = PartnerStage.new(Vector2(170, 150))
 	stage.position = Vector2(95, 18)
@@ -348,7 +355,8 @@ func _build_viewer() -> void:
 	bub.position = Vector2(30, 166)
 	bub.size = Vector2(300, 0)
 	bub.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bubble_l = Kit.wrap(_text("", 14, INK, true, HORIZONTAL_ALIGNMENT_CENTER))
+	bubble_l = I18n.wrap(_text("", 14, INK, true, HORIZONTAL_ALIGNMENT_CENTER))
+	bubble_l.custom_minimum_size = Vector2(276, 0)
 	bub.add_child(bubble_l)
 	viewer.add_child(bub)
 	card = PanelContainer.new()
@@ -358,6 +366,7 @@ func _build_viewer() -> void:
 	viewer.add_child(card)
 	card_box = VBoxContainer.new()
 	card_box.add_theme_constant_override("separation", 6)
+	card_box.custom_minimum_size = Vector2(292, 0) # 折り返すラベルが幅 0 で縦に伸びないように
 	card.add_child(card_box)
 	var note := _text(tr("JOB_SAMPLE_NOTE"), 11, Color(1, 1, 1, 0.75), false, HORIZONTAL_ALIGNMENT_CENTER)
 	note.position = Vector2(0, 614)
@@ -368,7 +377,7 @@ func _build_viewer() -> void:
 func _say(t: String) -> void:
 	bubble_l.text = t
 	var bub := bubble_l.get_parent() as Control
-	bub.size.y = 0
+	_fit(bub)
 	bub.pivot_offset = Vector2(150, 16)
 	bub.scale = Vector2(0.9, 0.9)
 	create_tween().tween_property(bub, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -391,8 +400,16 @@ func _clear_card() -> void:
 		c.queue_free()
 
 
+## 折り返しの高さが決まってから、中身に合わせて縮める（2 フレーム待つ。庭の _card_fit と同じ）
+func _fit(p: Control) -> void:
+	for i in 2:
+		await get_tree().process_frame
+		if is_instance_valid(p):
+			p.size.y = 0
+
+
 func _pop_card() -> void:
-	card.size.y = 0
+	_fit(card)
 	card.pivot_offset = Vector2(164, 120)
 	card.scale = Vector2(0.95, 0.95)
 	card.modulate.a = 0.0
@@ -418,8 +435,8 @@ func _show_job() -> void:
 	top.add_child(sp)
 	top.add_child(_text(tr("JOB_COUNT") % [index + 1, jobs.size()], 12, SUB, true))
 	card_box.add_child(top)
-	card_box.add_child(Kit.wrap(_text(j.title, 21, INK, true)))
-	card_box.add_child(Kit.wrap(_text(j.place, 14, SUB)))
+	card_box.add_child(I18n.wrap(_text(j.title, 21, INK, true)))
+	card_box.add_child(I18n.wrap(_text(j.place, 14, SUB)))
 	var row := HBoxContainer.new()
 	row.add_child(_text(JobListings.when_text(j), 15, INK, true))
 	var sp2 := Control.new()
@@ -430,7 +447,7 @@ func _show_job() -> void:
 	# 働いた人の声（見本の集計＋自分の評価）
 	var voice := PanelContainer.new()
 	voice.add_theme_stylebox_override("panel", Kit.pill(Color("f1f7f1"), 12, 0.0, Vector2(10, 5)))
-	voice.add_child(Kit.wrap(_text(Reviews.summary_text(j.listing), 12, GREEN, true)))
+	voice.add_child(I18n.wrap(_text(Reviews.summary_text(j.listing), 12, GREEN, true)))
 	card_box.add_child(voice)
 	var acc := Kit.button(tr("JOB_ACCEPT"), ORANGE, _accept)
 	card_box.add_child(acc)
@@ -455,11 +472,11 @@ func _accept() -> void:
 	_say(tr("JOY_%d" % (accepted % 3 + 1)))
 	_clear_card()
 	card_box.add_child(_text(tr("JOB_ADDED"), 18, GREEN, true))
-	card_box.add_child(Kit.wrap(_text("%s · %s" % [j.title, j.store], 14, INK, true)))
+	card_box.add_child(I18n.wrap(_text("%s · %s" % [j.title, j.store], 14, INK, true)))
 	card_box.add_child(_text(JobListings.when_text(j), 14, SUB))
 	var cal := Kit.button(tr("CAL_GOOGLE"), Color("eef3ff"), func(): CalendarLink.open_google(s), Color("3b5ba5"), 44, 15)
 	card_box.add_child(cal)
-	var status := Kit.wrap(_text("", 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+	var status := I18n.wrap(_text("", 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
 	card_box.add_child(_link(tr("CAL_ICS"), func(): status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
 	card_box.add_child(status)
 	index += 1
@@ -494,7 +511,7 @@ func _show_end() -> void:
 	var pet := SpecialObake.pet_name()
 	_say(tr("END_SAY") if accepted > 0 else tr("END_SAY_NONE"))
 	card_box.add_child(_text(tr("END_TITLE"), 20, INK, true))
-	card_box.add_child(Kit.wrap(_text(tr("END_BODY") % [accepted, pet] if accepted > 0 else tr("END_BODY_NONE") % pet, 14, SUB)))
+	card_box.add_child(I18n.wrap(_text(tr("END_BODY") % [accepted, pet] if accepted > 0 else tr("END_BODY_NONE") % pet, 14, SUB)))
 	card_box.add_child(Kit.button(tr("END_BACK"), ORANGE, _close_viewer))
 	card_box.add_child(_link(tr("END_EDIT"), func(): _go("prefs")))
 	_pop_card()
@@ -515,9 +532,13 @@ var rv_star_btns: Array[Button] = []
 var rv_send: Button
 
 
+var rv_shift := {}
+
+
 func _open_review(s: Dictionary) -> void:
 	if viewer:
 		return
+	rv_shift = s
 	_build_viewer()
 	rv_stars = 0
 	rv_tags = {}
@@ -601,7 +622,7 @@ func _send_review(s: Dictionary) -> void:
 	_say(tr("REVIEW_THANKS") % Reviews.BONUS_POI)
 	_clear_card()
 	card_box.add_child(_text(tr("REVIEW_DONE"), 18, GREEN, true, HORIZONTAL_ALIGNMENT_CENTER))
-	card_box.add_child(Kit.wrap(_text(tr("REVIEW_DONE_BODY"), 13, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)))
+	card_box.add_child(I18n.wrap(_text(tr("REVIEW_DONE_BODY"), 13, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)))
 	card_box.add_child(Kit.button(tr("TOUR_NEXT"), ORANGE, func():
 		_close_viewer()
 		_daily()))
@@ -633,6 +654,10 @@ func demo_review() -> void:
 		Shifts.add(s)
 	_clear_notes()
 	_open_review(s)
+
+
+func demo_send() -> void:
+	_send_review(rv_shift)
 
 
 func demo_stars() -> void:

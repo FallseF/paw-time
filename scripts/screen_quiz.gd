@@ -487,7 +487,7 @@ func _build_reveal() -> void:
 
 	reveal_card = PanelContainer.new()
 	reveal_card.add_theme_stylebox_override("panel", _pill(PAPER, 24))
-	reveal_card.position = Vector2(16, 262)
+	reveal_card.position = Vector2(16, 250)
 	reveal_card.size = Vector2(328, 0)
 	layer_reveal.add_child(reveal_card)
 	var v := VBoxContainer.new()
@@ -573,11 +573,11 @@ func _reveal() -> void:
 	reveal_card.modulate.a = 0.0
 	r_buttons.modulate.a = 0.0
 	r_kicker.modulate.a = 0.0
-	reveal_card.position.y = 300
+	reveal_card.position.y = 288
 	var tw4 := create_tween().set_parallel()
 	tw4.tween_property(r_kicker, "modulate:a", 1.0, 0.3)
 	tw4.tween_property(reveal_card, "modulate:a", 1.0, 0.3)
-	tw4.tween_property(reveal_card, "position:y", 262.0, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw4.tween_property(reveal_card, "position:y", 250.0, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw4.tween_property(r_buttons, "modulate:a", 1.0, 0.3).set_delay(0.3)
 	await tw4.finished
 	busy = false
