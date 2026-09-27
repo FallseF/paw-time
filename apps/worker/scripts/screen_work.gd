@@ -322,7 +322,7 @@ func _set_coins(n: int, fly: bool) -> void:
 			var tw := create_tween()
 			tw.tween_property(coin, "position", target + Vector3(0, 0.4, 0), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			tw.tween_property(coin, "position", target, 0.2).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-			Kit.play(self, "pop", 1.2 + randf() * 0.2, -6)
+			Sfx.coin_tick(self, 0.45) # トレイに落ちたときに
 		else:
 			coin.position = target
 	while coin_nodes.size() > want:
@@ -400,6 +400,8 @@ func _show_result(r: Dictionary) -> void:
 	var nets := int(r.get("nets", 0))
 	got.add_child(_stat(tr("R2_WT_POI") % nets if nets > 0 else tr("R2_WT_POI_DONE"), Color("eef3ff"), Color("3b5ba5")))
 	v.add_child(got)
+	if int(r.get("coins", 0)) > 0:
+		Sfx.coins(self, int(r.get("coins", 0)), 0.35)
 	if int(r.get("coins", 0)) == 0:
 		v.add_child(Kit.text(tr("R2_WT_COINS_ZERO"), 12, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(_pay_box(WorkTogether.pay_estimate(r, Shifts.all())))

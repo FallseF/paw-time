@@ -136,7 +136,7 @@ func _on_goal(text: String, all_done: bool) -> void:
 		return
 	# ほかの知らせと重ならないよう、順番に（Toasts）
 	Toasts.push(tr("めあて達成　めぐみ +3"), tr(text) + ("\n" + tr("3つそろった！ 肉球コイン +10") if all_done else ""), "goal")
-	Kit.play(self, "coin")
+	Sfx.coins(self, 20 if all_done else 10)
 	Music.duck("jingle", -6.0, 1.6)
 
 
