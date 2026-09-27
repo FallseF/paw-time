@@ -99,6 +99,8 @@ func _run() -> void:
 	main.current._to_garden()
 	# 6 最後のカード
 	await _until(func(): return DemoRoute.node != null and DemoRoute.node.layer.get_node_or_null("Final") != null, 8.0, "the final card")
+	var url := DemoRoute.recruit_view_url()
+	_check(url.begins_with("https://paw-time-insights.vercel.app/?mode=sim&view=at-risk&drawer=live&demo=1&lang=") and url.ends_with("&lang=" + ("en" if Kit.is_en() else "ja")), "the Recruit view button opens the insights mock (%s)" % url)
 	print("demo route (automated) took %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
 	# テレメトリーを本当に送るとき（OBAKE_NOSAVE なし・TELEMETRY_LIVE=1）：デモの間のイベントが、API に受け付けられるか
 	if OS.get_environment("TELEMETRY_LIVE") != "":
