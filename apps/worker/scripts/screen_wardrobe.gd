@@ -181,6 +181,7 @@ func _build_ui() -> void:
 	scroll.position = Vector2(8, 384)
 	scroll.size = Vector2(344, 168)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	TouchScroll.enable(scroll)
 	add_child(scroll)
 	grid = GridContainer.new()
 	grid.columns = 4

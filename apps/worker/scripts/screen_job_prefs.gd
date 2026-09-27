@@ -160,6 +160,7 @@ func _ready() -> void:
 	var own := Kit.button(tr("SHIFT_FORM_OPEN"), Color("f3ecff"), open_shift_form, Color("6a5bd6"), 40, 14)
 	sug_box.add_child(own)
 
+	TouchScroll.enable(scroll) # まん中のボタンの上からでも、指でなぞってスクロール
 	go_btn = Kit.button(tr("PREFS_GO"), ORANGE, _save)
 	go_btn.position = Vector2(24, 570)
 	go_btn.size = Vector2(312, 54)

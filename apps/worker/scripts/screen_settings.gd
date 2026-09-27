@@ -77,6 +77,7 @@ func _build() -> void:
 	scroll.position = Vector2(0, 66)
 	scroll.size = Vector2(360, 574)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	TouchScroll.enable(scroll)
 	add_child(scroll)
 	add_child(head)
 	var pad := MarginContainer.new()

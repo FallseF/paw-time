@@ -183,6 +183,7 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 	var sc := ScrollContainer.new()
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sc.custom_minimum_size = Vector2(300, 0)
+	TouchScroll.enable(sc)
 	sheet.add_child(sc)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
