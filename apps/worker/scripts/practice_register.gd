@@ -4,6 +4,8 @@ extends PracticeGame
 
 const CUSTOMERS := ["receipt", "tray", "bubble", "box", "pan"]
 const COIN_COL := {1000: Color("cfe3c4"), 500: Color("e8c35a"), 100: Color("d9dde3"), 50: Color("e6e9ee"), 10: Color("c98552")}
+## ドル：札はみどり、25¢・10¢ は銀
+const COIN_COL_USD := {1000: Color("c4dcb8"), 500: Color("cfe3c4"), 100: Color("d8e8cf"), 25: Color("d9dde3"), 10: Color("e6e9ee")}
 
 var phase := "" # order / change / phrase
 var cur := 0
@@ -15,9 +17,12 @@ var tray_items: Node3D
 var change_tray: Node3D
 var change_l: Label
 var tile_btns: Array = []
+var money := Money.JPY # この回の通貨（はじめたときの言語で決まる。注文の currency と同じ）
 
 
 func build() -> void:
+	if not rounds.is_empty():
+		money = String(rounds[0].get("currency", Money.JPY))
 	var p: Node3D = s.props
 	# カウンター（天板は明るい木）・レジ・品を置くトレー・おつりの皿
 	s.frame(Vector3(0, 1.6, 3.7), Vector3(0, 0.28, -0.3))
@@ -45,7 +50,7 @@ func build() -> void:
 	glass.position = Vector3(0.1, 0.52, -0.09)
 	glass.rotation.x = -0.25
 	reg.add_child(glass)
-	screen_l = Kit.label3d("¥0", 30, Color("1f4a2a"))
+	screen_l = Kit.label3d(_m(0), 30, Color("1f4a2a"))
 	screen_l.position = Vector3(0.1, 0.52, -0.075)
 	screen_l.rotation.x = -0.25
 	screen_l.pixel_size = 0.0035
@@ -66,7 +71,7 @@ func build() -> void:
 	for i in PracticeData.MENU.size():
 		var m: Dictionary = PracticeData.MENU[i]
 		var x := 0.0 if i < 3 else 0.7
-		var l: Label3D = s.label3(tr("PR_ITEM_" + String(m.id).to_upper()) + "  " + str(m.price), Vector3(x, 1.95 - (i % 3) * 0.22, -1.8), 24, Color("fffaf0"), p)
+		var l: Label3D = s.label3(tr("PR_ITEM_" + String(m.id).to_upper()) + "  " + _m(PracticeData.price_of(m.id, money)), Vector3(x, 1.95 - (i % 3) * 0.22, -1.8), 24, Color("fffaf0"), p)
 		l.outline_size = 0
 	# 相棒はカウンターの左、お客さんは右から来る
 	s.cat.position = Vector3(-0.98, 0, 0.2)
@@ -98,7 +103,7 @@ func _customer_in() -> void:
 	for c in change_tray.get_children():
 		if c.get_index() > 0:
 			c.queue_free()
-	screen_l.text = "¥0"
+	screen_l.text = _m(0)
 	customer = Obake3D.make(CUSTOMERS[cur % CUSTOMERS.size()])
 	customer.scale = Vector3.ONE * 0.55
 	customer.position = Vector3(2.4, 0, 0.45)
@@ -126,7 +131,7 @@ func _show_menu() -> void:
 	var want := _wanted()
 	for m in PracticeData.MENU:
 		var id: String = m.id
-		list.append({"text": tr("PR_ITEM_" + id.to_upper()), "sub": "¥%d" % m.price, "color": Color(m.c).lerp(Color.WHITE, 0.55), "cb": func(b): _pick(id, b), "glow": hints() and want.has(id)})
+		list.append({"text": tr("PR_ITEM_" + id.to_upper()), "sub": _m(PracticeData.price_of(id, money)), "color": Color(m.c).lerp(Color.WHITE, 0.55), "cb": func(b): _pick(id, b), "glow": hints() and want.has(id)})
 	tile_btns = s.tiles(list, 3)
 	s.task(tr("PR_REG_TASK_ITEMS"), tr("PR_REG_HINT_ITEMS") if level < 3 else "")
 
@@ -208,10 +213,10 @@ func _item_mesh(id: String) -> Node3D:
 func _ring_up() -> void:
 	phase = "change"
 	var o := _order()
-	screen_l.text = "¥%s" % _yen(int(o.total))
+	screen_l.text = _m(int(o.total))
 	s.hop(customer, 0.15)
 	Kit.play(s, "chime", 1.4, -8)
-	s.order(tr("PR_REG_PAID") % _yen(int(o.paid)))
+	s.order(tr("PR_REG_PAID") % _m(int(o.paid)))
 	# お札・お金がお客さんからおつりの皿へ
 	var paid_mesh := _money_mesh(1000 if int(o.paid) >= 1000 else 500)
 	paid_mesh.position = customer.position + Vector3(0, 0.6, 0)
@@ -219,11 +224,11 @@ func _ring_up() -> void:
 	s.move(paid_mesh, Vector3(-0.12, 0.86, -0.22), 0.45)
 	var list: Array = []
 	var ch := PracticeData.change_for(o)
-	for v in [500, 100, 50, 10]:
+	for v in PracticeData.change_money(money):
 		var val: int = v
-		list.append({"text": "¥%d" % val, "color": COIN_COL[val].lerp(Color.WHITE, 0.25), "cb": func(b): _give(val, b)})
+		list.append({"text": _m(val), "color": _col(val).lerp(Color.WHITE, 0.25), "cb": func(b): _give(val, b)})
 	tile_btns = s.tiles(list, 4)
-	var hint := tr("PR_REG_HINT_CHANGE_1") % _yen(ch) if hints() else tr("PR_REG_HINT_CHANGE") % [_yen(int(o.paid)), _yen(int(o.total))]
+	var hint := tr("PR_REG_HINT_CHANGE_1") % _m(ch) if hints() else tr("PR_REG_HINT_CHANGE") % [_m(int(o.paid)), _m(int(o.total))]
 	s.task(tr("PR_REG_TASK_CHANGE"), hint)
 	s.say(tr("PR_REG_SAY_CHANGE"))
 	change_l = Kit.text("", 16, Color("3f8a55"), true, HORIZONTAL_ALIGNMENT_CENTER)
@@ -241,9 +246,13 @@ func _ring_up() -> void:
 	s._fit_panel()
 
 
-func _yen(v: int) -> String:
-	var t := str(v)
-	return t if v < 1000 else t.left(t.length() - 3) + "," + t.right(3)
+## お金の字（この回の通貨で：¥1,080 / $10.75）
+func _m(v: int) -> String:
+	return PracticeData.money_text(v, money)
+
+
+func _col(v: int) -> Color:
+	return (COIN_COL_USD if money == Money.USD else COIN_COL).get(v, Color("d9dde3"))
 
 
 func _given_sum() -> int:
@@ -255,7 +264,7 @@ func _given_sum() -> int:
 
 func _change_text() -> void:
 	if change_l:
-		change_l.text = tr("PR_REG_GIVING") % _yen(_given_sum())
+		change_l.text = tr("PR_REG_GIVING") % _m(_given_sum())
 
 
 func _give(v: int, _b: Control) -> void:
@@ -267,7 +276,7 @@ func _give(v: int, _b: Control) -> void:
 	m.position = Vector3((k % 3 - 1) * 0.1, 0.03 + (k / 3) * 0.025, (k % 2) * 0.04 - 0.02)
 	change_tray.add_child(m)
 	s.pop_in(m)
-	Kit.play(s, "pop", 1.5 if v < 100 else 1.2, -6)
+	Kit.play(s, "pop", 1.2 if PracticeData.is_bill(v, money) or v >= 100 else 1.5, -6)
 	_change_text()
 
 
@@ -286,7 +295,7 @@ func _hand_over() -> void:
 	var ch := PracticeData.change_for(o)
 	if not PracticeData.change_ok(o, given):
 		var got := _given_sum()
-		s.oops(tr("PR_REG_OOPS_MORE") % _yen(ch - got) if got < ch else tr("PR_REG_OOPS_LESS") % _yen(got - ch))
+		s.oops(tr("PR_REG_OOPS_MORE") % _m(ch - got) if got < ch else tr("PR_REG_OOPS_LESS") % _m(got - ch))
 		if got > ch:
 			_undo()
 		return
@@ -302,13 +311,13 @@ func _hand_over() -> void:
 
 func _money_mesh(v: int) -> Node3D:
 	var n := Node3D.new()
-	if v >= 1000:
-		s.box3(Vector3(0.3, 0.012, 0.15), Vector3.ZERO, COIN_COL[1000], n)
+	if PracticeData.is_bill(v, money):
+		s.box3(Vector3(0.3, 0.012, 0.15), Vector3.ZERO, _col(v), n)
 		s.cyl3(0.04, 0.014, Vector3(0.08, 0.006, 0), Color("9fbf94"), n)
 	else:
-		var r: float = {500: 0.09, 100: 0.08, 50: 0.072, 10: 0.076}[v]
-		var m: MeshInstance3D = s.cyl3(r, 0.02, Vector3.ZERO, COIN_COL[v], n)
-		m.material_override = Obake3D.metal(COIN_COL[v]) if v != 10 else Obake3D.toon(COIN_COL[v], 0.4)
+		var r: float = ({25: 0.08, 10: 0.064} if money == Money.USD else {500: 0.09, 100: 0.08, 50: 0.072, 10: 0.076}).get(v, 0.075)
+		var m: MeshInstance3D = s.cyl3(r, 0.02, Vector3.ZERO, _col(v), n)
+		m.material_override = Obake3D.metal(_col(v)) if (v != 10 or money == Money.USD) else Obake3D.toon(_col(v), 0.4)
 	return n
 
 
@@ -371,7 +380,7 @@ func demo_step() -> void:
 			if need <= 0:
 				_hand_over()
 				return
-			for v in [500, 100, 50, 10]:
+			for v in PracticeData.change_money(money):
 				if v <= need:
 					_give(v, null)
 					return

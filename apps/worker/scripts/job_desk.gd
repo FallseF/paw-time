@@ -53,6 +53,10 @@ func _start() -> void:
 			_daily()
 			if not focus_job.is_empty():
 				_open_focus()
+			elif focus_shifts_at >= 0:
+				var at := focus_shifts_at
+				focus_shifts_at = -1.0
+				open_work_menu(at)
 
 
 ## 島の上に、この係の何かが開いているか（シート・吹き出し・求人カード／評価・シフトの入力・チャット）。島の札を隠すのに使う
@@ -690,6 +694,7 @@ func open_shift_form() -> void:
 	f.added.connect(func(s: Dictionary):
 		var pet := SpecialObake.pet_name()
 		_sheet(pet, tr("SHIFT_ADDED_TITLE"), tr("SHIFT_ADDED_BODY") % [s.title, pet], tr("WORK_MENU_CLOSE"), _close_sheet))
+	f.see_shifts.connect(func(at: float): open_work_menu(at))
 	f.closed.connect(func():
 		if not (sheet and is_instance_valid(sheet) and not sheet.is_queued_for_deletion()):
 			_garden_card(true))
@@ -771,6 +776,8 @@ var done_ids := {} # この知らせの中で、受けた・見送った仕事
 
 ## お店の島の「いまの募集」から選んだ仕事。島に戻ったら、そのくわしいカードを開く（受けるのはここから）
 static var focus_job := {}
+## ほかの画面（しごとの条件）で「マイシフトで見る ›」を押した：島に戻ったら、マイシフトのその日を開く
+static var focus_shifts_at := -1.0
 
 
 func _open_focus() -> void:

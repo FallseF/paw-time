@@ -3,17 +3,19 @@ class_name PracticeData
 ## 画面を持たない：同じ seed なら同じ問題が出る（tests/test_skills.gd で確かめる）。
 ## 段（level）は 1〜3。段が上がると、数が少しふえて、ヒントが減る。時間の制限はない。
 
-## レジの品（英語のキー。値段は円、10 円単位）
+## レジの品（英語のキー）。値段は通貨の小さい単位の整数：price は円（10 円単位）、usd はセント（サンフランシスコのカフェくらい、25¢ 単位）
 const MENU := [
-	{"id": "coffee", "price": 300, "c": "8a5a3c"},
-	{"id": "tea", "price": 250, "c": "d9a441"},
-	{"id": "juice", "price": 200, "c": "ff9a3d"},
-	{"id": "cookie", "price": 150, "c": "c98d4f"},
-	{"id": "sandwich", "price": 380, "c": "f2d58c"},
-	{"id": "onigiri", "price": 140, "c": "f4f1ea"},
+	{"id": "coffee", "price": 300, "usd": 450, "c": "8a5a3c"},
+	{"id": "tea", "price": 250, "usd": 375, "c": "d9a441"},
+	{"id": "juice", "price": 200, "usd": 500, "c": "ff9a3d"},
+	{"id": "cookie", "price": 150, "usd": 325, "c": "c98d4f"},
+	{"id": "sandwich", "price": 380, "usd": 950, "c": "f2d58c"},
+	{"id": "onigiri", "price": 140, "usd": 350, "c": "f4f1ea"},
 ]
-## おつりに使うお金（大きい順）
+## おつりに使うお金（大きい順）。円は 千円札・500・100・50・10 円玉、ドルは $10・$5・$1 札・25¢・10¢
+## （どちらも小さい単位の整数。桁の並びが同じなので、あずかりの決め方は共通で使える）
 const MONEY := [1000, 500, 100, 50, 10]
+const MONEY_USD := [1000, 500, 100, 25, 10]
 ## 帰るお客さんへの、ひとこと（0 が正しい）
 const PHRASES := ["PR_REG_PHRASE_OK", "PR_REG_PHRASE_NEXT", "PR_REG_PHRASE_HURRY"]
 
@@ -61,17 +63,39 @@ static func _rng(seed: int, salt: int) -> RandomNumberGenerator:
 	return r
 
 
-static func price_of(id: String) -> int:
+static func price_of(id: String, currency := Money.JPY) -> int:
 	for m in MENU:
 		if m.id == id:
-			return int(m.price)
+			return int(m.usd if currency == Money.USD else m.price)
 	return 0
+
+
+## そのお金の並び（大きい順）
+static func money_for(currency: String) -> Array:
+	return MONEY_USD if currency == Money.USD else MONEY
+
+
+## おつりの皿に出すお金（札の束より小さいもの）
+static func change_money(currency: String) -> Array:
+	return money_for(currency).slice(1)
+
+
+## 札か（円は千円札だけ、ドルは $1 から上）
+static func is_bill(v: int, currency: String) -> bool:
+	return v >= (100 if currency == Money.USD else 1000)
+
+
+## 小さい単位の整数を表示に（円 1080 → "¥1,080"、セント 1075 → "$10.75"）
+static func money_text(v: int, currency: String) -> String:
+	return Money.fmt(v / 100.0 if currency == Money.USD else float(v), currency)
 
 
 # ---------------------------------------------------------------- レジ
 
-## お客さんごとの注文 [{items: [{id, qty}], total, paid}]。★1 は 1 品・2 人、★2 は 2 品・3 人、★3 は 2〜3 品（2 こ買いあり）・3 人
-static func register_orders(level: int, seed := 0) -> Array:
+## お客さんごとの注文 [{items: [{id, qty}], total, paid, currency}]。★1 は 1 品・2 人、★2 は 2 品・3 人、★3 は 2〜3 品（2 こ買いあり）・3 人
+## total・paid は currency の小さい単位（円／セント）。currency を省くと今の言語の通貨（英語＝ドル、日本語＝円）
+static func register_orders(level: int, seed := 0, currency := "") -> Array:
+	var cur := currency if currency != "" else Money.current()
 	var r := _rng(seed, 11 + level)
 	var n: int = [2, 3, 3][clampi(level, 1, 3) - 1]
 	var out: Array = []
@@ -85,12 +109,13 @@ static func register_orders(level: int, seed := 0) -> Array:
 			items.append({"id": id, "qty": qty})
 		var total := 0
 		for it in items:
-			total += price_of(it.id) * int(it.qty)
-		out.append({"items": items, "total": total, "paid": paid_for(total, level, r.randi())})
+			total += price_of(it.id, cur) * int(it.qty)
+		out.append({"items": items, "total": total, "paid": paid_for(total, level, r.randi()), "currency": cur})
 	return out
 
 
 ## お客さんが出すお金。★1・★2 は 500 円玉か千円札でちょうど上、★3 は 10 円玉を足して、おつりをきりよくすることも
+## （ドルはセントで同じ決め方：$5 札か $10 札でちょうど上、★3 は小銭を足しておつりを $1 単位に）
 static func paid_for(total: int, level: int, roll := 0) -> int:
 	var base := 500 if total <= 500 and level == 1 else 1000 * int(ceil(total / 1000.0))
 	if level == 3 and roll % 2 == 0 and total % 100 != 0:

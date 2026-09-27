@@ -1396,16 +1396,16 @@ PR_REG_HINT_ITEMS,Check the yellow bubble for what they want.,黄色の吹き出
 PR_REG_OOPS_ITEM,"Hmm, they didn't ask for that one. Check the order again.",それは頼まれてないかも。もう一度注文を見てみよう
 PR_REG_OOPS_ENOUGH,We already have enough of that one.,それはもう足りてるよ
 PR_REG_GOOD_ITEMS,All there! Now the money.,そろった！ 次はお会計
-PR_REG_PAID,Here's ¥%s.,%s円で
+PR_REG_PAID,Here's %s.,%sで
 PR_REG_SAY_CHANGE,Count the change onto the tray.,おつりを皿にのせよう
 PR_REG_TASK_CHANGE,Give the right change,おつりを正しく渡そう
-PR_REG_HINT_CHANGE_1,Change: ¥%s,おつり：%s円
-PR_REG_HINT_CHANGE,Paid ¥%s − total ¥%s = change. Count up from the total.,あずかり %s円 − 合計 %s円 = おつり。合計から数え上げるとかんたん
-PR_REG_GIVING,On the tray: ¥%s,皿の上：%s円
+PR_REG_HINT_CHANGE_1,Change: %s,おつり：%s
+PR_REG_HINT_CHANGE,Paid %s − total %s = change. Count up from the total.,あずかり %s − 合計 %s = おつり。合計から数え上げるとかんたん
+PR_REG_GIVING,On the tray: %s,皿の上：%s
 PR_REG_UNDO,Start over,やり直す
 PR_REG_HAND,Hand over,渡す
-PR_REG_OOPS_MORE,Almost! ¥%s more.,あと少し！ あと%s円
-PR_REG_OOPS_LESS,That's ¥%s too much. Let's count again.,%s円多いよ。もう一度数えよう
+PR_REG_OOPS_MORE,Almost! %s more.,あと少し！ あと%s
+PR_REG_OOPS_LESS,That's %s too much. Let's count again.,%s多いよ。もう一度数えよう
 PR_REG_GOOD_CHANGE,Right change!,おつりぴったり！
 PR_REG_TASK_PHRASE,Send them off with the right words,ひとことで見送ろう
 PR_REG_HINT_PHRASE,A warm goodbye makes people want to come back.,あたたかい見送りは、また来たくなる

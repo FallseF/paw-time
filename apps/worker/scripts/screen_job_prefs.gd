@@ -138,8 +138,11 @@ func _ready() -> void:
 
 	# 受け取り方の希望
 	var pay_box := _section(v, tr("PREFS_PAY"))
-	var ph := HBoxContainer.new()
-	ph.add_theme_constant_override("separation", 6)
+	# 4 つを 1 行に。英語は語が長く（Biweekly pay など）1 行では 360 幅からはみ出すので、2 つずつ 2 行に
+	var ph := GridContainer.new()
+	ph.columns = 2 if Kit.is_en() else 4
+	ph.add_theme_constant_override("h_separation", 6)
+	ph.add_theme_constant_override("v_separation", 6)
 	for p in ["daily", "weekly", "monthly", "any"]:
 		var c := _chip(tr("JOB_PAY_" + p.to_upper()), func(): _set_pay(p), 40)
 		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -214,7 +217,9 @@ func _head(t: String, cb: Callable) -> Button:
 	b.add_theme_font_size_override("font_size", 12)
 	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(k, SUB)
-	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	# 見出しは字だけ（ボタンの余白を 0 に：英語の Mon・Night などで列が広がり、カードが 360 幅からはみ出さないように）
+	for k in ["normal", "hover", "pressed", "disabled", "focus"]:
+		b.add_theme_stylebox_override(k, StyleBoxEmpty.new())
 	b.pressed.connect(func():
 		Kit.play(self, "tap", 1.1)
 		cb.call())
@@ -322,6 +327,9 @@ func _set_suggest(on: bool) -> void:
 func open_shift_form() -> void:
 	var f := ShiftForm.new()
 	f.added.connect(func(_s): stage.joy())
+	f.see_shifts.connect(func(at: float):
+		JobDesk.focus_shifts_at = at # マイシフトは島のしごとのシートにある
+		main.go("garden"))
 	add_child(f)
 
 
