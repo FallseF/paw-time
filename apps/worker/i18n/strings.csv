@@ -1643,9 +1643,10 @@ CHAT_AUTO_CAT,Auto reply from the shop's cat,お店の猫の自動の返事
 CHAT_MODE_SHARED,"Your cat remembers, to find jobs that fit you",あなたに合う仕事さがしのために、相棒が覚えておくよ
 CHAT_MODE_PRIVATE,Just between us: your cat keeps nothing,ふたりだけのひみつ：相棒は何も覚えない
 CHAT_CONSENT_TITLE,Before we talk,話すまえに
-CHAT_CONSENT_BODY,"Your cat remembers what you share to find jobs that fit you. Shops never see your words — only anonymous totals when 5+ workers say the same, or things you choose to tell them.",相棒は、あなたに合う仕事をさがすために、話してくれたことを覚えておきます。お店にあなたの言葉が見えることはありません。見えるのは、同じ声が5人以上そろったときの名前のない合計か、あなたが伝えると決めたことだけです。
+CHAT_CONSENT_BODY,Your cat remembers what you share to find better jobs. Your words never go to shops.,話したことは、合う仕事さがしのために相棒が覚えておくよ。あなたの言葉はお店に届きません。
 CHAT_CONSENT_OK,OK,OK
 CHAT_CONSENT_PRIVATE,Just between us,ふたりだけのひみつにする
+CHAT_CONSENT_DETAILS,Details,くわしく
 CHAT_MENU_PRIVATE_OFF,Just between us: Off,ふたりだけのひみつ：オフ
 CHAT_MENU_PRIVATE_ON,Just between us: On,ふたりだけのひみつ：オン
 シフトの日は、猫もいっしょに働いた,Worked a shift? Your cat worked too.,シフトの日は、猫もいっしょに働いた

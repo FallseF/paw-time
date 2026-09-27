@@ -170,7 +170,8 @@ static func mode_text() -> String:
 	return I18n.t("CHAT_MODE_PRIVATE") if ChatMe.is_private() else I18n.t("CHAT_MODE_SHARED")
 
 
-## First open: say honestly what your cat remembers, and let the worker choose "Just between us"
+## First open: say in one or two lines what your cat remembers, and let the worker choose "Just between us".
+## The full text is in My page ("Details" opens it at Privacy)
 func _consent_card() -> void:
 	var dim := ColorRect.new()
 	dim.color = Color(0.12, 0.1, 0.2, 0.55)
@@ -188,7 +189,8 @@ func _consent_card() -> void:
 	var t := I18n.wrap(Kit.text(tr("CHAT_CONSENT_TITLE"), 17, INK, true))
 	t.custom_minimum_size = Vector2(276, 0)
 	v.add_child(t)
-	var b := I18n.wrap(Kit.text(tr("CHAT_CONSENT_BODY"), 13, SUB))
+	# 1〜2 行だけ。くわしい説明はマイページのプライバシー（「くわしく」）
+	var b := I18n.wrap(Kit.text(tr("CHAT_CONSENT_BODY"), 14, SUB))
 	b.custom_minimum_size = Vector2(276, 0)
 	v.add_child(b)
 	var pick := func(private: bool):
@@ -197,6 +199,9 @@ func _consent_card() -> void:
 		_build()
 	v.add_child(Kit.button(tr("CHAT_CONSENT_OK"), PURPLE, pick.bind(false), Color.WHITE, 42, 15))
 	v.add_child(_link(tr("CHAT_CONSENT_PRIVATE"), pick.bind(true), Color("3b7a57"), 14))
+	var more := _link(tr("CHAT_CONSENT_DETAILS") + " ›", func(): SettingsScreen.open(self, "privacy"), SUB, 12)
+	more.custom_minimum_size.y = 28
+	v.add_child(more)
 	Kit.keep_fit(p, func():
 		p.size.y = 0
 		p.position.y = (640.0 - p.size.y) / 2.0)

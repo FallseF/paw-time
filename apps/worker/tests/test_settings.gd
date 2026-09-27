@@ -107,6 +107,24 @@ func _run() -> void:
 	await main.go("settings", true)
 	_check(main.current is SettingsScreen, "settings is a registered screen")
 
+	# 10 チャットの同意：短い文と「くわしく」→ マイページのプライバシー
+	ChatMe._consent = ""
+	await main.go("title", true)
+	var chat := ChatHub.open(main.current, "me")
+	await get_tree().create_timer(0.3).timeout
+	var body := tr("CHAT_CONSENT_BODY")
+	_check(_texts(chat).contains(body) and body.length() <= 120, "short consent text (%d chars)" % body.length())
+	var details: Button = null
+	for c in chat.find_children("*", "Button", true, false):
+		if (c as Button).text.begins_with(tr("CHAT_CONSENT_DETAILS")):
+			details = c
+	_check(details != null, "a Details link on the consent card")
+	if details:
+		details.pressed.emit()
+		await get_tree().create_timer(0.2).timeout
+		var opened := chat.find_children("*", "SettingsScreen", true, false)
+		_check(not opened.is_empty() and opened[0].focus == "privacy", "Details opens My page at Privacy")
+
 	QuizResult.clear()
 	print("SETTINGS TEST ", "OK" if fails == 0 else "FAILED (%d)" % fails)
 	get_tree().quit(1 if fails else 0)

@@ -178,7 +178,9 @@ func _link(t: String, cb: Callable, color := PURPLE, fs := 14) -> Button:
 # ---------------------------------------------------------------- 項目
 
 func _name_section() -> void:
-	if GameState.my_obake.is_empty():
+	# GameState は名前で引く（チャットのテストの -s 実行では、自動読み込みより先にこのスクリプトが読まれるため）
+	var gs := get_node_or_null("/root/GameState")
+	if gs == null or gs.my_obake.is_empty():
 		return
 	var v := _section(tr("SETTINGS_NAME"))
 	name_edit = LineEdit.new()
