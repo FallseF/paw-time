@@ -28,6 +28,9 @@ uniform float sheen_gloss = 18.0;
 uniform float emission_energy = 0.0;
 // 1 なら頂点色をそのまま色に使う（地形：芝・砂・岩と AO を Blender で焼いてある）
 uniform float vertex_albedo : hint_range(0.0, 1.0) = 0.0;
+// 頂点色のガンマを 1 回もどす指数（1 = そのまま）。島の地形は Blender で sRGB → 線形にしてから書き出し、
+// 取りこみでもう一度線形として読まれて（二重の線形化）、芝が #79E438 の蛍光色になっていた。1/2.2 で 1 回分もどす
+uniform float vertex_gamma = 1.0;
 // 地形の芝に、世界座標のまだらを少し足す（近くで見ても単色に見えないように）
 uniform float ground_mottle : hint_range(0.0, 0.3) = 0.0;
 uniform float shadow_keep : hint_range(0.0, 1.0) = 0.6;
@@ -108,7 +111,7 @@ float luma(vec3 c) {
 void fragment() {
 	vec3 alb = base_color.rgb * texture(albedo_tex, UV).rgb;
 	if (vertex_albedo > 0.5) {
-		alb = base_color.rgb * v_col;
+		alb = base_color.rgb * pow(max(v_col, vec3(0.0)), vec3(vertex_gamma));
 		if (ground_mottle > 0.0) {
 			vec2 q = v_world.xz;
 			float n = sin(q.x * 2.3 + sin(q.y * 1.7)) * sin(q.y * 2.9 + sin(q.x * 1.3));

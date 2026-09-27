@@ -136,8 +136,9 @@ func _build_world() -> void:
 	var rig := Look.apply(world, "hatch", Color("2a2233"), false, true)
 	var env: Environment = rig.env
 	env.glow_enabled = true
-	env.glow_intensity = 0.5
-	env.glow_hdr_threshold = 1.2
+	# 壁が #FFFB9B・座布団が #FF4E37 に飛んでいた：グローは明るいところだけ・弱く
+	env.glow_intensity = 0.3
+	env.glow_hdr_threshold = 1.6
 
 	cam = Camera3D.new()
 	cam.position = Vector3(0, 1.35, 3.1)
@@ -201,14 +202,14 @@ func _build_world() -> void:
 	cm.size = Vector3(1.9, 0.16, 1.1)
 	cushion.mesh = cm
 	cushion.position = Vector3(0, 0.08, 0.2)
-	cushion.material_override = Obake3D.toon(Color("c9454a"), 0.2)
+	cushion.material_override = Obake3D.toon(Color("b04a55"), 0.2) # 座布団は飛ばない赤（前は #FF4E37 に飽和）
 	world.add_child(cushion)
 	var cushion2 := MeshInstance3D.new()
 	var cm2 := BoxMesh.new()
 	cm2.size = Vector3(1.8, 0.04, 1.0)
 	cushion2.mesh = cm2
 	cushion2.position = Vector3(0, 0.18, 0.2)
-	cushion2.material_override = Obake3D.toon(Color("dd5a5e"), 0.2)
+	cushion2.material_override = Obake3D.toon(Color("c45c64"), 0.2)
 	world.add_child(cushion2)
 
 	burst = CPUParticles3D.new()
@@ -263,8 +264,11 @@ func _text(t: String, size: int, color := Color("2a2233"), font: FontFile = null
 func _build_ui() -> void:
 	header = _text("", 20, Color("fff6e8"), font_black)
 	header.autowrap_mode = TextServer.AUTOWRAP_OFF
-	header.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.4))
-	header.add_theme_constant_override("outline_size", 6)
+	# 黒い縁取りではなく、やわらかい影（墨色）
+	header.add_theme_color_override("font_shadow_color", Color(Tokens.SHADOW, 0.45))
+	header.add_theme_constant_override("shadow_offset_x", 0)
+	header.add_theme_constant_override("shadow_offset_y", 2)
+	header.add_theme_constant_override("shadow_outline_size", 6)
 	header.position = Vector2(0, 30)
 	header.size = Vector2(360, 40)
 	add_child(header)
@@ -640,3 +644,20 @@ func _reveal_item(h: Dictionary) -> void:
 	next_btn.disabled = false
 	busy = false
 	_refresh_buttons()
+
+
+## 玉がまわりを照らす光は、合わせて ORB_LIGHT_MAX まで（玉が 3 つ光っても、壁と座布団が白く飛ばないように）
+const ORB_LIGHT_MAX := 1.2
+
+
+func _process(_delta: float) -> void:
+	process_priority = 100 # 玉（Orb3D）が光を決めたあとで、合計を抑える
+	var total := 0.0
+	var ls: Array = []
+	for o in orbs:
+		if is_instance_valid(o) and o.model and o.model.light and o.model.light.is_visible_in_tree():
+			ls.append(o.model.light)
+			total += o.model.light.light_energy
+	if total > ORB_LIGHT_MAX:
+		for l in ls:
+			l.light_energy *= ORB_LIGHT_MAX / total

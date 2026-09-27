@@ -154,6 +154,7 @@ func _build_sea() -> void:
 func _build_terrain(stage: int) -> void:
 	var m := Obake3D.skin(Color.WHITE, 0.0, null, 0.06, 0.0, false, 0.02).duplicate() as ShaderMaterial
 	m.set_shader_parameter("vertex_albedo", 1.0)
+	IslandProps.terrain_look(m)
 	m.set_shader_parameter("ground_mottle", 0.07)
 	m.set_shader_parameter("top_light", 0.0)
 	var t := MeshInstance3D.new()

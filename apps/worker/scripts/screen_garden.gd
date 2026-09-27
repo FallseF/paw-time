@@ -47,7 +47,7 @@ func _ready() -> void:
 	# 仕事さがし・はじめての流れ（島の説明／見つけた仕事の知らせ／毎日の求人と評価）の重ね画面。入口はこの1行だけ
 	add_child(JobDesk.new())
 	add_child(ChatHub.new()) # チャット（相棒をタップ →「話す」）。入口はこの1行だけ
-	night = 1.0 if GameState.phase == "evening" else 0.0
+	night = _eve_n() if GameState.phase == "evening" else 0.0
 	if OS.get_environment("OBAKE_NIGHT") != "":
 		night = float(OS.get_environment("OBAKE_NIGHT")) # 確認用：0 昼 / 0.5 夕方 / 1 夜
 	_apply_time(night)
@@ -647,6 +647,7 @@ func _build_terrain(L: int) -> bool:
 		terrain.name = "terrain"
 		var m := Obake3D.skin(Color.WHITE, 0.0, null, 0.06, 0.0, false, 0.02).duplicate() as ShaderMaterial
 		m.set_shader_parameter("vertex_albedo", 1.0)
+		IslandProps.terrain_look(m) # 芝の蛍光色（二重の線形化）をもどす
 		m.set_shader_parameter("ground_mottle", 0.07)
 		m.set_shader_parameter("top_light", 0.0)
 		terrain.material_override = m
@@ -923,7 +924,7 @@ func _build_dressing(L: int) -> void:
 		roof.position = lh + Vector3(0, 2.0, 0)
 		g.add_child(roof)
 		var ll := OmniLight3D.new()
-		ll.light_color = Color("ffe08a")
+		ll.light_color = Color("ffc98a")
 		ll.omni_range = 3.5
 		ll.position = lh + Vector3(0, 1.8, 0.3)
 		ll.set_meta("dressing", true)
@@ -1058,7 +1059,7 @@ func _build_lantern(at: Vector3, lit: bool) -> void:
 	if lit:
 		lamp.material_override = Kit.glow(Color("ffcf7a"), 2.4)
 		var l := OmniLight3D.new()
-		l.light_color = Color("ffc070")
+		l.light_color = Color("ffc98a")
 		l.light_energy = 1.8
 		l.omni_range = 3.0
 		l.position = Vector3(0, 1.0, 0)
@@ -1373,13 +1374,13 @@ func _apply_time(n: float) -> void:
 		add_child(crickets)
 		crickets.play()
 	crickets.volume_db = lerpf(-60.0, -4.0, n) # 夜の環境音：BGM より約20dB 下（前は約30dB 下で静かすぎた）
-	# 空：水平線の上は空の色（昼は水色、夕方は茜、夜は紺）。前は昼に砂色の帯が出ていた
-	var day_bg := Color("bfe4f4")
-	var eve_bg := Color("f2b99c")
-	env.background_color = day_bg.lerp(eve_bg, clampf(n * 2.0, 0.0, 1.0)).lerp(night_sky, clampf(n * 2.0 - 1.0, 0.0, 1.0))
+	# 空：水平線の上は空の色（昼は水色 → 夕焼け #F6B98F → 暮れ #C98FB8 → 夜は紺）
+	env.background_color = _ramp(n, [Color("bfe4f4"), Color("f6b98f"), Color("c98fb8"), night_sky])
 	if sea_mat:
 		var a := sea_mat.albedo_color.a
-		sea_mat.albedo_color = (Color(0.2, 0.62, 0.74) if a < 1.0 else Color("4fa8bd")).lerp(Color("1a2a52"), n)
+		var day_sea := Color(0.2, 0.62, 0.74) if a < 1.0 else Color("4fa8bd")
+		# 夕方の海は空を映して、少し藤色に。夜は紺
+		sea_mat.albedo_color = _ramp(n, [day_sea, Color("9b93d3"), Color("5a4f9a"), Color("1a2a52")])
 		sea_mat.albedo_color.a = a
 	# 昼 → 夕方 → 夜 の光（Look の island_day / island_evening / island_night を混ぜる）
 	if island_rig.is_empty():
@@ -1392,9 +1393,27 @@ func _apply_time(n: float) -> void:
 		fireflies.visible = n > 0.4
 	if sky_moon:
 		sky_moon.visible = n > 0.5 and GameState.today().weather == "晴"
-		sky_stars.visible = sky_moon.visible
+		sky_stars.visible = sky_moon.visible and n > 0.7 # 星は、暮れきってから
 	if items.has("shoji"):
 		(items.shoji.material_override as StandardMaterial3D).emission_energy_multiplier = lerpf(0.2, 1.6, n)
+
+
+## 0 昼 / 0.5 夕焼け / 0.75 暮れ / 1 夜 の 4 色を、n でなめらかにつなぐ
+func _ramp(n: float, cs: Array) -> Color:
+	var x := clampf(n, 0.0, 1.0) * 4.0
+	if x <= 2.0:
+		return (cs[0] as Color).lerp(cs[1], x / 2.0)
+	if x <= 3.0:
+		return (cs[1] as Color).lerp(cs[2], x - 2.0)
+	return (cs[2] as Color).lerp(cs[3], x - 3.0)
+
+
+## 夕方の島の明るさ：夕焼け（0.55）。すくい終えた夜・実際の時計で 19 時〜翌 5 時は、暗い夜（1）
+func _eve_n() -> float:
+	var hr: int = Time.get_datetime_dict_from_system().hour
+	if GameState.scooped_tonight or hr >= 19 or hr < 5:
+		return 1.0
+	return 0.55
 
 
 func _tween_night(to: float, dur := 1.4) -> void:
@@ -2455,7 +2474,7 @@ func _to_evening() -> void:
 	_refresh_hud()
 	Kit.play(self, "night", 1.3, -10)
 	card.modulate.a = 0.0
-	await _tween_night(1.0)
+	await _tween_night(_eve_n())
 	_show_card()
 
 

@@ -138,6 +138,7 @@ func _island_model(stage: int, exps: Array) -> Node3D:
 	var root := Node3D.new()
 	var m := Obake3D.skin(Color.WHITE, 0.0, null, 0.06, 0.0, false, 0.02).duplicate() as ShaderMaterial
 	m.set_shader_parameter("vertex_albedo", 1.0)
+	IslandProps.terrain_look(m)
 	m.set_shader_parameter("top_light", 0.0)
 	var t := MeshInstance3D.new()
 	t.mesh = IslandProps.glb("terrain_s%d" % stage)
