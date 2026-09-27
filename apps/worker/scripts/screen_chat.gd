@@ -31,9 +31,10 @@ var _poll := 0.0
 
 
 func _ready() -> void:
-	# 360x640 fixed coordinates (same as the other screens)
+	# 360-wide fixed coordinates (same as the other screens). As an overlay on the island the height follows the
+	# island (taller than 640 on tall phones): header at the top, the input at the bottom
 	position = Vector2.ZERO
-	size = Vector2(360, 640)
+	size = Vector2(360, _h())
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	if thread == "":
 		thread = OS.get_environment("OBAKE_CHAT") if OS.get_environment("OBAKE_CHAT") != "" else "me"
@@ -86,17 +87,22 @@ func _clear() -> void:
 	_rendered = {}
 
 
+func _h() -> float:
+	var p := get_parent() as Control
+	return maxf(640.0, p.size.y) if p else 640.0
+
+
 func _build() -> void:
 	_clear()
 	if thread != "me" and thread != "list" and not ChatShops.allowed(thread):
 		thread = "list"
 	var bg := ColorRect.new()
 	bg.color = Color("fbf4ec") if thread == "me" else Color("f2f5fb")
-	bg.size = Vector2(360, 640)
+	bg.size = Vector2(360, _h())
 	add_child(bg)
 	var v := VBoxContainer.new()
 	v.position = Vector2.ZERO
-	v.size = Vector2(360, 640)
+	v.size = Vector2(360, _h())
 	v.add_theme_constant_override("separation", 0)
 	add_child(v)
 	if thread == "list":
@@ -176,7 +182,7 @@ static func mode_text() -> String:
 func _consent_card() -> void:
 	var dim := ColorRect.new()
 	dim.color = Color(0.12, 0.1, 0.2, 0.55)
-	dim.size = Vector2(360, 640)
+	dim.size = Vector2(360, _h())
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(dim)
 	var p := PanelContainer.new()
@@ -205,7 +211,7 @@ func _consent_card() -> void:
 	v.add_child(more)
 	Kit.keep_fit(p, func():
 		p.size.y = 0
-		p.position.y = (640.0 - p.size.y) / 2.0)
+		p.position.y = (_h() - p.size.y) / 2.0)
 
 
 func _header(title: String, sub: String, private: bool) -> Control:
@@ -637,7 +643,7 @@ func _confirm_delete() -> void:
 	_toggle_menu()
 	var dim := ColorRect.new()
 	dim.color = Color(0.12, 0.1, 0.2, 0.55)
-	dim.size = Vector2(360, 640)
+	dim.size = Vector2(360, _h())
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(dim)
 	var p := PanelContainer.new()

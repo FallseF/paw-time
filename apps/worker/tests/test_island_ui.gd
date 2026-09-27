@@ -1,9 +1,10 @@
 extends Node
 ## 島の画面の重なり（ユーザーレビュー2）：本物の島（main.tscn）を開いて確かめる。
 ##   - 船着き場のカタログが 360 の画面からはみ出さない
-##   - 「＋ ひろげる」札は、しごとのシート・求人カードなどが開いている間は出ない
-##   - 島の段のくわしく（庭 Lv / ポイ）と、左右の札（キセカエ・マイスキル・しごと・話す）が重ならない
-##   - 「話す」札：いつも見えて、押すとカメラが相棒に寄ってからチャット。閉じたら眺めに戻る
+##   - 島の HUD（下のタブ・上の段・✎）は、しごとのシート・求人カード・カタログ・チャットが開いている間は引っこむ
+##   - 上の段（状態の札・丸いボタン）どうしが重ならず、くわしく（何週目・庭 Lv / ポイ）がそれらに重ならない
+##   - 「話す」の丸いボタン：いつも見えて、押すとカメラが相棒に寄ってからチャット。閉じたら眺めに戻る
+##   - 下のタブ：しごと → シフトのシート（マイスキル・仕事に行ってくるもここ）、図鑑 → 図鑑の画面。マイスキルから 5 つのおさらい
 ##   - いかだ（桟橋の乗り物）を押すと、行き先えらび（友だちの島・お店の島）。読めないコードでは出かけない
 ##   - 島の拡大・縮小（ホイール・二本の指でつまむ）。範囲の中に収まり、拡大してもおばけのタップが当たる
 ##   - 島をなぞって動かす（慣性・範囲の外はやわらかく押しもどす）。なぞりはタップにならない。「もどる」で家の前へ
@@ -39,14 +40,18 @@ func _desk(g: Node) -> JobDesk:
 	return null
 
 
-## 島の上の段の札（画面の上のほう、島の画面・重ね画面の直下に置いたボタン）
+## 島の上の段のボタン（状態の札・丸いボタン。画面の上のほうに出ているもの）
 func _hud_buttons(g: Node) -> Array:
 	var out: Array = []
-	for host in [g, _desk(g)] + g.get_children().filter(func(c): return c is ChatHub):
-		for c in host.get_children():
-			if c is Button and c.is_visible_in_tree() and c.get_global_rect().position.y < 140.0:
-				out.append(c)
+	for c in g.hud.top_row.find_children("*", "Button", true, false):
+		if c.is_visible_in_tree() and c.get_global_rect().position.y < 140.0:
+			out.append(c)
 	return out
+
+
+## HUD が出ているか（下のタブが画面の中にあって、上の段が見えている）
+func _hud_on(g) -> bool:
+	return g.hud.shown and g.hud.top_row.visible
 
 
 func _run() -> void:
@@ -55,19 +60,25 @@ func _run() -> void:
 	var desk := _desk(g)
 	_check(desk != null, "job desk on the island")
 
-	# 1. 「＋ ひろげる」札と、重ね画面
-	_check(g.expand_btn != null and g.expand_btn.visible, "expand pill shows on the plain island")
+	# 1. 島の HUD と、重ね画面（重ね画面の上に、下のタブや丸いボタンが明るく残らない）
+	_check(g.hud != null and _hud_on(g), "island HUD shows on the plain island")
+	_check(g.hud.fab.visible, "the ✎ button shows on the plain island")
+	var tabs_r: Rect2 = g.hud.tabs.book.get_global_rect()
+	_check(tabs_r.end.y <= 640.0 and tabs_r.end.x <= 360.0, "bottom tabs are on screen (%s)" % tabs_r)
+	_check(g.card.get_global_rect().end.y <= g.hud.nav_top() and not g.card.get_global_rect().intersects(g.hud.fab.get_global_rect()), "today card sits above the tabs, left of ✎")
+	_check(g.hud.get_index() < desk.get_index() and g.hud.get_index() < g.card.get_index(), "HUD draws under the today card and every overlay")
 	desk.open_work_menu()
-	await _frames()
-	_check(not g.expand_btn.visible, "expand pill hidden while the work menu sheet is open")
+	await _frames(20)
+	_check(not _hud_on(g), "HUD hides while the work menu sheet is open")
+	_check(desk.notes.all(func(n): return not is_instance_valid(n) or not n.visible), "job banners hide while the sheet is open")
 	desk._close_sheet()
-	await _frames()
-	_check(g.expand_btn.visible, "expand pill back after the sheet closes")
+	await _frames(20)
+	_check(_hud_on(g), "HUD back after the sheet closes")
 	desk._open_viewer()
-	await _frames()
-	_check(not g.expand_btn.visible, "expand pill hidden while the job cards are open")
+	await _frames(20)
+	_check(not _hud_on(g), "HUD hides while the job cards are open")
 	desk._close_viewer()
-	await _frames()
+	await _frames(20)
 
 	# 2. 船着き場のカタログが画面の幅に収まる（日本語の「見本のストア（本当の支払いはありません）」がいちばん長い）
 	TranslationServer.set_locale("ja")
@@ -79,39 +90,30 @@ func _run() -> void:
 			panel = c
 	var r: Rect2 = panel.get_global_rect()
 	_check(r.position.x >= 0.0 and r.end.x <= 360.0, "dock catalog fits 360 px (%s)" % r)
-	_check(not g.expand_btn.visible, "expand pill hidden while the catalog is open")
+	_check(not _hud_on(g), "HUD hides while the catalog is open")
 	g.catalog_ui.queue_free()
 	TranslationServer.set_locale("en")
 	await _frames()
 
-	# 3. 上の段：くわしく（庭 Lv / ポイ）を開いても、札と重ならない。札どうしも重ならない
+	# 3. 上の段：くわしく（何週目・庭 Lv / ポイ）を開いても、札と重ならない。札どうしも重ならない
 	var hud := _hud_buttons(g)
+	_check(hud.size() == 4, "status chip + 3 round buttons on the top row (%d)" % hud.size())
 	for i in hud.size():
 		for j in range(i + 1, hud.size()):
-			_check(not hud[i].get_global_rect().intersects(hud[j].get_global_rect()), "HUD pills overlap: %s / %s" % [hud[i].text, hud[j].text])
+			_check(not hud[i].get_global_rect().intersects(hud[j].get_global_rect()), "HUD buttons overlap: %s / %s" % [hud[i].tooltip_text, hud[j].tooltip_text])
 	g._toggle_meters()
 	await _frames(4)
 	var mr: Rect2 = g.meters.get_global_rect()
 	for b in _hud_buttons(g):
-		_check(not mr.intersects(b.get_global_rect()), "island details panel covers the '%s' pill" % b.text)
+		_check(not mr.intersects(b.get_global_rect()), "island details panel covers the '%s' button" % b.tooltip_text)
 	g._toggle_meters()
 	await _frames(3)
 
 	await _talk(g)
 	await _raft(g)
-	# おてつだいミニゲーム：5 つの仕事のおさらい
-	g._open_help_games()
-	await _frames(2)
-	var n := 0
-	for b in g.share_ui.find_children("*", "Button", true, false):
-		if String(b.text).ends_with("›"):
-			n += 1
-	_check(n == 5, "help-out lists the 5 practice games (%d)" % n)
-	_check(not g.expand_btn.visible, "expand pill hidden while the help-out list is open")
-	g.share_ui.queue_free()
-	await _frames(2)
 	await _zoom(g)
 	await _pan(g)
+	await _tabs(g)
 
 	print("ISLAND UI TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	get_tree().quit(0 if fails == 0 else 1)
@@ -207,11 +209,12 @@ func _talk(g) -> void:
 	for c in g.get_children():
 		if c is ChatHub:
 			hub = c
-	_check(hub != null and hub.talk_pill != null and hub.talk_pill.is_visible_in_tree(), "Talk pill is on the island HUD")
-	if hub == null or hub.talk_pill == null:
+	var talk: Button = g.hud.round_btns.talk
+	_check(hub != null and talk.is_visible_in_tree(), "Talk button is on the island HUD")
+	if hub == null:
 		return
 	var far: float = g.cam.global_position.distance_to(g.host_node.global_position)
-	hub.talk_pill.pressed.emit()
+	talk.pressed.emit()
 	await get_tree().create_timer(0.5).timeout
 	var near: float = g.cam.global_position.distance_to(g.host_node.global_position)
 	_check(near < far * 0.6, "camera zooms toward the cat (%.2f -> %.2f)" % [far, near])
@@ -221,12 +224,13 @@ func _talk(g) -> void:
 		if c is ScreenChat:
 			chat = c
 	_check(chat != null and chat.thread == "me", "the private chat opens after the zoom")
-	_check(not g.expand_btn.visible, "expand pill hidden during the chat")
+	_check(not _hud_on(g), "HUD hides during the chat")
 	if chat:
 		chat.queue_free()
 	await get_tree().create_timer(0.9).timeout
 	_check(not g.cam_hold and g.cam.global_position.distance_to(g._view_transform().origin) < 0.05, "camera back to the island view after the chat")
-	_check(g.expand_btn.visible, "expand pill back after the chat")
+	await _frames(20)
+	_check(_hud_on(g), "HUD back after the chat")
 
 
 func _raft(g) -> void:
@@ -235,20 +239,21 @@ func _raft(g) -> void:
 		return
 	var sp: Vector2 = g._raft_screen_pos()
 	_check(sp.x > 0 and sp.x < 360 and sp.y > 110 and sp.y < 640, "raft is on screen (%s)" % sp)
-	g._toggle_card() # 今日のカードをしまって、島をひろく見た状態（いかだはカードの下にあることが多い）
+	g.hide_card(true) # 今日のカードをしまって、島をひろく見た状態（いかだはカードの下にあることが多い）
 	await get_tree().create_timer(0.5).timeout
 	sp = g._raft_screen_pos()
 	_tap(sp)
 	await _frames(2)
 	_check(g.raft_ui != null and is_instance_valid(g.raft_ui), "tapping the raft opens the chooser (at %s)" % sp)
 	if g.raft_ui == null:
-		g._toggle_card()
+		g.hide_card(false)
 		return
-	_check(not g.expand_btn.visible or not g.expand_btn.is_visible_in_tree(), "expand pill hidden while the chooser is open")
+	await _frames(20)
+	_check(not _hud_on(g), "HUD hides while the chooser is open")
 	_check(not g._visit_code("not a code!"), "a bad code does not travel")
 	_check(g.main.current == g, "still on the island")
 	g.raft_ui.queue_free()
-	g._toggle_card()
+	g.hide_card(false)
 	await get_tree().create_timer(0.5).timeout
 
 
@@ -308,3 +313,37 @@ func _pan(g) -> void:
 		hit = ob.get_child_count() > n0
 		break
 	_check(hit, "tap on an obake still works after panning")
+
+
+## 下のタブ：しごと → シフトのシート（島にあった「マイスキル」「仕事に行ってくる」もここ）。マイスキル → 5 つのおさらい。図鑑 → 図鑑の画面
+func _tabs(g) -> void:
+	var desk := _desk(g)
+	g.hud.tabs.jobs.pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	_check(desk.sheet != null and is_instance_valid(desk.sheet), "Jobs tab opens the shifts sheet")
+	var names: Array = []
+	if desk.sheet:
+		for b in desk.sheet.find_children("*", "Button", true, false):
+			names.append(String(b.text))
+	_check(names.has(tr("SK_PILL")) and names.has(tr("I'm going to work")), "shifts sheet has My skills and I'm going to work (%s)" % [names])
+	var sk: Button = null
+	if desk.sheet:
+		for b in desk.sheet.find_children("*", "Button", true, false):
+			if b.text == tr("SK_PILL"):
+				sk = b
+	if sk == null:
+		return
+	sk.pressed.emit()
+	await get_tree().create_timer(1.2).timeout
+	_check(main.current_name == "skills", "My skills opens the skills screen (%s)" % main.current_name)
+	var n := 0
+	for b in main.current.find_children("*", "Button", true, false):
+		if b.text in [tr("SK_PRACTICE"), tr("SK_AGAIN")]:
+			n += 1
+	_check(n == 5, "the skills screen lists the 5 practice games (%d)" % n)
+	await main.go("garden")
+	await get_tree().create_timer(1.5).timeout
+	var g2 = main.current
+	g2.hud.tabs.book.pressed.emit()
+	await get_tree().create_timer(1.2).timeout
+	_check(main.current_name == "zukan", "Book tab opens the Book (%s)" % main.current_name)

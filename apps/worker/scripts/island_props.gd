@@ -114,6 +114,18 @@ static func glb(name: String) -> Mesh:
 
 
 ## 広げた陸・小島の地面（地形と同じ色づけ：芝・砂・ぬれた砂・深い海の底）。半径 r、上は y=0 で平ら。
+## 地形の材質の色合わせ（庭・お店の島・おでかけで同じ）。Blender で sRGB → 線形にしてから書き出した頂点色が、
+## 取りこみでもう一度線形として読まれ（二重の線形化）、芝が #79E438 の蛍光色になっていた。ガンマを 1 回もどし、
+## 島の光（約 2.2 倍）に合わせて明るさを下げる。昼の島で芝 ≈ #90C362・砂 ≈ #FFDC89（測った値）
+const TERRAIN_GAMMA := 1.0 / 2.2
+const TERRAIN_GAIN := 0.65
+
+
+static func terrain_look(m: ShaderMaterial) -> void:
+	m.set_shader_parameter("vertex_gamma", TERRAIN_GAMMA)
+	m.set_shader_parameter("base_color", Color(TERRAIN_GAIN, TERRAIN_GAIN, TERRAIN_GAIN))
+
+
 ## 頂点色は線形の色（肌のシェーダーの vertex_albedo で使う）。岸は少しゆらぐ
 static func land_lobe(r: float, seed_v := 0) -> ArrayMesh:
 	var key := "lobe/%s/%d" % [r, seed_v]

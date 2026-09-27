@@ -33,6 +33,7 @@ func _ready() -> void:
 	dim.color = Color(0.12, 0.09, 0.2, 0.82)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
+	Kit.center_tall(self, dim) # 縦に長い島では、上下のまんなかに（暗幕は画面いっぱい）
 	var box := SubViewportContainer.new()
 	box.stretch = true
 	box.position = Vector2(30, 90)

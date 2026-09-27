@@ -19,6 +19,10 @@ const GRADE := {
 }
 const _LUT_N := 17
 static var _lut: ImageTexture3D
+static var _lut_title: ImageTexture3D # タイトルの仕上げ（暗部の底上げなし。タイトルは見た目の基準なので変えない）
+## 暗いところの底（真っ黒の #0000xx につぶれないように）。これより暗い色は持ち上げ、暗いほど彩度を落とす
+const DARK_FLOOR := Color(0.07, 0.07, 0.12)
+const DARK_LUMA := 0.15
 static var _vignette: Shader
 
 const PRESETS := {
@@ -108,7 +112,7 @@ const PRESETS := {
 		"key": [Vector3(-30, 40, 0), Color("ffc98f"), 0.6],
 		"fill": [Vector3(-10, -140, 0), Color("9fb0ff"), 0.22],
 		"rim": [Vector3(-18, 172, 0), Color("ffd9b0"), 0.8],
-		"exposure": 1.0, "contrast": 1.06, "saturation": 1.05,
+		"exposure": 0.8, "contrast": 1.04, "saturation": 0.97,
 	},
 }
 
@@ -132,7 +136,7 @@ static func apply(world: Node, preset := "studio", bg := Color(0, 0, 0, 0), tran
 	env.adjustment_contrast = p.contrast
 	env.adjustment_saturation = p.saturation
 	if GRADE.on:
-		env.adjustment_color_correction = _grade_lut()
+		env.adjustment_color_correction = _grade_lut(not preset.begins_with("title"))
 	var we := WorldEnvironment.new()
 	we.name = "LookEnvironment"
 	we.environment = env
@@ -158,23 +162,29 @@ static func apply(world: Node, preset := "studio", bg := Color(0, 0, 0, 0), tran
 
 
 ## 色補正の表（3D の LUT）。色の値（sRGB）→ 仕上げた色
-static func _grade_lut() -> ImageTexture3D:
-	if _lut:
+static func _grade_lut(floor_darks := true) -> ImageTexture3D:
+	if floor_darks and _lut:
 		return _lut
+	if not floor_darks and _lut_title:
+		return _lut_title
 	var slices: Array[Image] = []
 	for bi in _LUT_N:
 		var img := Image.create(_LUT_N, _LUT_N, false, Image.FORMAT_RGB8)
 		for gi in _LUT_N:
 			for ri in _LUT_N:
 				var c := Color(ri, gi, bi) / (_LUT_N - 1.0)
-				img.set_pixel(ri, gi, _grade(Color(c, 1.0)))
+				img.set_pixel(ri, gi, _grade(Color(c, 1.0), floor_darks))
 		slices.append(img)
-	_lut = ImageTexture3D.new()
-	_lut.create(Image.FORMAT_RGB8, _LUT_N, _LUT_N, _LUT_N, false, slices)
-	return _lut
+	var lut := ImageTexture3D.new()
+	lut.create(Image.FORMAT_RGB8, _LUT_N, _LUT_N, _LUT_N, false, slices)
+	if floor_darks:
+		_lut = lut
+	else:
+		_lut_title = lut
+	return lut
 
 
-static func _grade(c: Color) -> Color:
+static func _grade(c: Color, floor_darks := true) -> Color:
 	var h := c.h * 360.0
 	var w := smoothstep(58.0, 80.0, h) * (1.0 - smoothstep(190.0, 215.0, h))
 	c = Color.from_hsv(c.h, c.s * (1.0 - GRADE.tame * w), c.v)
@@ -182,6 +192,12 @@ static func _grade(c: Color) -> Color:
 	c.r += GRADE.warm * l
 	c.g += GRADE.warm * 0.35 * l
 	c.b += GRADE.warm * (0.5 * (1.0 - l) - l)
+	if floor_darks:
+		# 暗部：ごく暗い色ほど彩度を落とし（紺や紫のにじみを抑える）、底を #12121F に
+		var l2 := c.get_luminance()
+		if l2 < DARK_LUMA:
+			c = Color.from_hsv(c.h, minf(c.s, lerpf(0.6, 0.85, l2 / DARK_LUMA)), c.v)
+		c = Color(maxf(c.r, DARK_FLOOR.r), maxf(c.g, DARK_FLOOR.g), maxf(c.b, DARK_FLOOR.b))
 	return c.clamp()
 
 

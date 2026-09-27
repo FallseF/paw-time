@@ -29,7 +29,7 @@ func _ready() -> void:
 	var chip := Button.new()
 	chip.text = tr("R3_DEMO_CHIP")
 	chip.focus_mode = Control.FOCUS_NONE
-	chip.position = Vector2(302, 612) # 右下（左下は島の「広げる」）
+	chip.position = Vector2(154, 58) # 上のまんなか（下は島のタブ、右上は丸いボタン、左上は状態の札）
 	chip.size = Vector2(52, 24)
 	chip.add_theme_font_override("font", Kit.bold())
 	chip.add_theme_font_size_override("font_size", 11)

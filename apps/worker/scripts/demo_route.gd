@@ -208,11 +208,11 @@ func _final_card() -> void:
 	dim.name = "Final"
 	dim.color = Color(0.05, 0.04, 0.1, 0.55)
 	dim.position = Vector2.ZERO
-	dim.size = Vector2(360, 640)
+	dim.size = Vector2(360, Kit.screen_h(self))
 	layer.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.98), 24, 0.25, Vector2(18, 16)))
-	p.position = Vector2(24, 150)
+	p.position = Vector2(24, 150 + maxf(0.0, (Kit.screen_h(self) - 640.0) / 2.0))
 	p.size = Vector2(312, 0)
 	dim.add_child(p)
 	var v := VBoxContainer.new()

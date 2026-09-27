@@ -396,7 +396,7 @@ func _end_mock(coins: int) -> void:
 		var sb := StyleBoxFlat.new()
 		sb.set_corner_radius_all(11)
 		sb.bg_color = GameState.TYPE_COLOR.dish
-		sb.border_color = Color(0, 0, 0, 0.2)
+		sb.border_color = Color(Tokens.SHADOW, 0.2)
 		sb.set_border_width_all(2)
 		dot.add_theme_stylebox_override("panel", sb)
 		row.add_child(dot)

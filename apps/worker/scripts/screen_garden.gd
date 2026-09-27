@@ -23,16 +23,14 @@ var sky_moon: MeshInstance3D
 var night_sky := Color("141a3a")
 var sky_stars: CPUParticles3D
 
-var top_day: Label
+var hud: IslandHud # 島の HUD（下のタブ・状態の札・丸いボタン・✎）。おでかけ中は無い
+var week_label: Label
 var garden_bar: ProgressBar
 var garden_label: Label
 var poi_row: HBoxContainer
 var card: PanelContainer
 var card_box: VBoxContainer
-var goals_btn: Button
-var rhythm_chip: Button
 var meters: PanelContainer
-var flow_label: RichTextLabel
 var goals_panel: PanelContainer
 var busy := false
 var _t := 0.0
@@ -49,7 +47,7 @@ func _ready() -> void:
 	# 仕事さがし・はじめての流れ（島の説明／見つけた仕事の知らせ／毎日の求人と評価）の重ね画面。入口はこの1行だけ
 	add_child(JobDesk.new())
 	add_child(ChatHub.new()) # チャット（相棒をタップ →「話す」）。入口はこの1行だけ
-	night = 1.0 if GameState.phase == "evening" else 0.0
+	night = _eve_n() if GameState.phase == "evening" else 0.0
 	if OS.get_environment("OBAKE_NIGHT") != "":
 		night = float(OS.get_environment("OBAKE_NIGHT")) # 確認用：0 昼 / 0.5 夕方 / 1 夜
 	_apply_time(night)
@@ -615,9 +613,11 @@ func _build_host(id: String) -> void:
 	l.position = Vector3(0, 1.9 if not Rares.is_rare(id) else 2.5, 0)
 	host_node.add_child(l)
 	host_tag = l
+	l.visible = editing or _vis() # 島の上の名札は、島づくりの間と、あるじをタップしたときだけ
 
 
-var host_tag: Label3D # あるじの札（話すときに寄ると大きすぎるので、そのあいだはしまう）
+var host_tag: Label3D # あるじの札（ふだんは隠す。島づくりの間と、あるじをタップしたときだけ）
+var world_labels: Array = [] # 島の上の名札（店の名前）。島づくりの間だけ出す
 
 
 ## 島の大きさ（段が上がるほど、岸がひろがる）
@@ -647,6 +647,7 @@ func _build_terrain(L: int) -> bool:
 		terrain.name = "terrain"
 		var m := Obake3D.skin(Color.WHITE, 0.0, null, 0.06, 0.0, false, 0.02).duplicate() as ShaderMaterial
 		m.set_shader_parameter("vertex_albedo", 1.0)
+		IslandProps.terrain_look(m) # 芝の蛍光色（二重の線形化）をもどす
 		m.set_shader_parameter("ground_mottle", 0.07)
 		m.set_shader_parameter("top_light", 0.0)
 		terrain.material_override = m
@@ -923,7 +924,7 @@ func _build_dressing(L: int) -> void:
 		roof.position = lh + Vector3(0, 2.0, 0)
 		g.add_child(roof)
 		var ll := OmniLight3D.new()
-		ll.light_color = Color("ffe08a")
+		ll.light_color = Color("ffc98a")
 		ll.omni_range = 3.5
 		ll.position = lh + Vector3(0, 1.8, 0.3)
 		ll.set_meta("dressing", true)
@@ -1058,7 +1059,7 @@ func _build_lantern(at: Vector3, lit: bool) -> void:
 	if lit:
 		lamp.material_override = Kit.glow(Color("ffcf7a"), 2.4)
 		var l := OmniLight3D.new()
-		l.light_color = Color("ffc070")
+		l.light_color = Color("ffc98a")
 		l.light_energy = 1.8
 		l.omni_range = 3.0
 		l.position = Vector3(0, 1.0, 0)
@@ -1200,7 +1201,9 @@ func _build_deco(role: String, lv: int) -> void:
 		tag.pixel_size = 0.007
 		tag.position = Vector3(0, 0.3, 0.6)
 		tag.no_depth_test = false
+		tag.visible = editing
 		items[key].add_child(tag)
+		world_labels.append(tag)
 
 
 func _build_deco_body(role: String, lv: int) -> void:
@@ -1371,13 +1374,13 @@ func _apply_time(n: float) -> void:
 		add_child(crickets)
 		crickets.play()
 	crickets.volume_db = lerpf(-60.0, -4.0, n) # 夜の環境音：BGM より約20dB 下（前は約30dB 下で静かすぎた）
-	# 空：水平線の上は空の色（昼は水色、夕方は茜、夜は紺）。前は昼に砂色の帯が出ていた
-	var day_bg := Color("bfe4f4")
-	var eve_bg := Color("f2b99c")
-	env.background_color = day_bg.lerp(eve_bg, clampf(n * 2.0, 0.0, 1.0)).lerp(night_sky, clampf(n * 2.0 - 1.0, 0.0, 1.0))
+	# 空：水平線の上は空の色（昼は水色 → 夕焼け #F6B98F → 暮れ #C98FB8 → 夜は紺）
+	env.background_color = _ramp(n, [Color("bfe4f4"), Color("f6b98f"), Color("c98fb8"), night_sky])
 	if sea_mat:
 		var a := sea_mat.albedo_color.a
-		sea_mat.albedo_color = (Color(0.2, 0.62, 0.74) if a < 1.0 else Color("4fa8bd")).lerp(Color("1a2a52"), n)
+		var day_sea := Color(0.2, 0.62, 0.74) if a < 1.0 else Color("4fa8bd")
+		# 夕方の海は空を映して、少し藤色に。夜は紺
+		sea_mat.albedo_color = _ramp(n, [day_sea, Color("9b93d3"), Color("5a4f9a"), Color("1a2a52")])
 		sea_mat.albedo_color.a = a
 	# 昼 → 夕方 → 夜 の光（Look の island_day / island_evening / island_night を混ぜる）
 	if island_rig.is_empty():
@@ -1390,9 +1393,27 @@ func _apply_time(n: float) -> void:
 		fireflies.visible = n > 0.4
 	if sky_moon:
 		sky_moon.visible = n > 0.5 and GameState.today().weather == "晴"
-		sky_stars.visible = sky_moon.visible
+		sky_stars.visible = sky_moon.visible and n > 0.7 # 星は、暮れきってから
 	if items.has("shoji"):
 		(items.shoji.material_override as StandardMaterial3D).emission_energy_multiplier = lerpf(0.2, 1.6, n)
+
+
+## 0 昼 / 0.5 夕焼け / 0.75 暮れ / 1 夜 の 4 色を、n でなめらかにつなぐ
+func _ramp(n: float, cs: Array) -> Color:
+	var x := clampf(n, 0.0, 1.0) * 4.0
+	if x <= 2.0:
+		return (cs[0] as Color).lerp(cs[1], x / 2.0)
+	if x <= 3.0:
+		return (cs[1] as Color).lerp(cs[2], x - 2.0)
+	return (cs[2] as Color).lerp(cs[3], x - 3.0)
+
+
+## 夕方の島の明るさ：夕焼け（0.55）。すくい終えた夜・実際の時計で 19 時〜翌 5 時は、暗い夜（1）
+func _eve_n() -> float:
+	var hr: int = Time.get_datetime_dict_from_system().hour
+	if GameState.scooped_tonight or hr >= 19 or hr < 5:
+		return 1.0
+	return 0.55
 
 
 func _tween_night(to: float, dur := 1.4) -> void:
@@ -1408,8 +1429,9 @@ var _clock_t := 0.0
 
 func _process(delta: float) -> void:
 	_t += delta
-	_sync_expand()
-	_sync_hud()
+	if hud:
+		hud.sync(delta)
+	_sync_card_pan(delta)
 	_sync_cam(delta)
 	_sync_recenter()
 	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
@@ -1716,11 +1738,12 @@ func _sync_recenter() -> void:
 	if recenter_btn == null:
 		if not want:
 			return
-		recenter_btn = Kit.button(tr("ISLAND_RECENTER"), Color(1, 1, 1, 0.94), recenter, Color("3f6d8a"), 32, 12)
+		recenter_btn = Kit.button(tr("ISLAND_RECENTER"), Color(Tokens.CREAM, 0.94), recenter, Color("3f6d8a"), 32, 12)
 		add_child(recenter_btn)
 	if want:
 		recenter_btn.size = Vector2(0, 32)
-		var y := 590.0 if card_hidden or not card.visible else card.position.y - 54.0
+		# 右下の ✎ の上（✎ が無い日は、カードの上）
+		var y := (hud.fab_rect().position.y - 40.0) if hud and hud.fab.visible else (_card_bottom() - 36.0 if card_hidden or not card.visible else card.position.y - 42.0)
 		recenter_btn.position = Vector2(346.0 - recenter_btn.size.x, y)
 	if recenter_btn.visible != want:
 		recenter_btn.visible = want
@@ -1839,6 +1862,13 @@ func _tap(pos: Vector2) -> void:
 	var l := Kit.label3d(_line_for(best.id), 34, Color("fff6e8"))
 	l.position = Vector3(0, 1.9, 0)
 	o.add_child(l)
+	# あるじなら、名札も少しのあいだ出す（ひとことの上に）
+	if o == host_node and host_tag and is_instance_valid(host_tag) and not host_tag.visible:
+		l.position.y = host_tag.position.y + 0.45
+		host_tag.visible = true
+		get_tree().create_timer(2.2).timeout.connect(func():
+			if is_instance_valid(host_tag) and not editing:
+				host_tag.visible = false)
 	var tw2 := create_tween()
 	tw2.tween_interval(1.6)
 	tw2.tween_property(l, "modulate:a", 0.0, 0.4)
@@ -1868,92 +1898,30 @@ func _line_for(id: String) -> String:
 
 # ---------- UI ----------
 
-## マイスキル（スキルの記録）への小さな札。左の列、キセカエの下（キセカエが無い日はその場所）
-func _skills_pill() -> void:
-	if _vis():
-		return
-	var y := 98 if (GameState.day >= 1 or not Wardrobe.fresh.is_empty()) else 58
-	var sk := Kit.button(tr("SK_PILL"), Color(1, 1, 1, 0.92), func(): main.go("skills"), Color("3f8a55"), 32, 13)
-	sk.position = Vector2(12, y)
-	sk.size = Vector2(0, 32)
-	add_child(sk)
-	hud_pill(sk)
-
-
-var hud_pills: Array = [] # 上の段の札（キセカエ・マイスキル・しごと・話す）。くわしく・めあてを開いたら、重なる札はしまう
-
-
-## 上の段の札として登録する（しごと・話すの札は、重ね画面の係から）
-func hud_pill(b: Control) -> void:
-	hud_pills.append(b)
-
-
-## 島の段のくわしく（庭 Lv / ポイ）・めあての欄を開いている間は、それに重なる札をしまう（閉じたら戻す）
-func _sync_hud() -> void:
-	var covers: Array = []
-	if meters and meters.visible:
-		covers.append(meters.get_global_rect())
-	if goals_panel and is_instance_valid(goals_panel):
-		covers.append(goals_panel.get_global_rect())
-	hud_pills = hud_pills.filter(func(b): return is_instance_valid(b) and not b.is_queued_for_deletion())
-	for b in hud_pills:
-		var r: Rect2 = b.get_global_rect()
-		var covered: bool = covers.any(func(c): return c.intersects(r))
-		if covered != b.get_meta("hud_covered", false):
-			b.set_meta("hud_covered", covered)
-			b.visible = not covered
-
-
 func _build_ui() -> void:
-	# いつも見えるのは3つだけ：曜日・リズム（ことば）・図鑑
-	var top := HBoxContainer.new()
-	top.position = Vector2(12, 12)
-	top.size = Vector2(336, 40)
-	top.add_theme_constant_override("separation", 6)
-	add_child(top)
-	var dp := PanelContainer.new()
-	dp.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.92), 20, 0.14, Vector2(12, 6)))
-	top_day = Kit.text(GameState.day_label(), 15, Color("2a2233"), true)
-	dp.add_child(top_day)
-	top.add_child(dp)
-	rhythm_chip = Button.new()
-	rhythm_chip.custom_minimum_size = Vector2(0, 38)
-	rhythm_chip.add_theme_font_override("font", Kit.black())
-	rhythm_chip.add_theme_font_size_override("font_size", 14)
-	rhythm_chip.pressed.connect(_toggle_meters)
-	top.add_child(rhythm_chip)
-	var sp := Control.new()
-	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(sp)
-	# キセカエ（2日目から、または新しい服が届いたら）。上の3つとは別に、左下の小さな札
-	if (GameState.day >= 1 or not Wardrobe.fresh.is_empty()) and not _vis():
-		var wd := Kit.button(tr("Wardrobe") + ("  " + tr("R3_NEW") if not Wardrobe.fresh.is_empty() else ""), Color(1, 1, 1, 0.92), func(): main.go("wardrobe"), Color("ff8a5b"), 32, 13)
-		wd.position = Vector2(12, 58)
-		wd.size = Vector2(0, 32)
-		add_child(wd)
-		hud_pill(wd)
-	_skills_pill()
-	var zk := Kit.button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"), 38, 15)
-	zk.custom_minimum_size.x = 64
-	top.add_child(zk)
-	flow_label = RichTextLabel.new() # 使わない（互換のため）
-	flow_label.visible = false
-	add_child(flow_label)
+	# 島の HUD（下のタブ・状態の札・丸いボタン・✎）。おでかけ中は、上の「〇〇の島／かえる」だけ（_start_visit）
+	# 重なりの順：島（3D）→ HUD → 今日のカード・くわしく → 仕事の知らせ・シート（JobDesk）→ チャット・カタログ…
+	# HUD はどの重ね画面よりも下。重ね画面が開いている間は、下へ引っこむ（hud_wanted）
+	if not _vis():
+		hud = IslandHud.new(self)
+		add_child(hud)
 
-	# くわしく（島の段の札をタップしたときだけ）
+	# くわしく（状態の札をタップしたときだけ）：何週目・庭の育ち・手もちのポイ
 	meters = PanelContainer.new()
-	meters.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.95), 18, 0.12, Vector2(12, 8)))
-	meters.position = Vector2(12, 58)
-	meters.size = Vector2(336, 0)
+	meters.add_theme_stylebox_override("panel", Kit.pill(Color(Tokens.CREAM, 0.97), Tokens.R_M, 0.14, Vector2(12, 8)))
+	meters.position = Vector2(12, 62)
+	meters.size = Vector2(230, 0)
 	meters.visible = false
 	add_child(meters)
 	var mv := VBoxContainer.new()
 	mv.add_theme_constant_override("separation", 4)
 	meters.add_child(mv)
+	week_label = Kit.text("", 13, Tokens.INK, true)
+	mv.add_child(week_label)
 	var r2 := HBoxContainer.new()
 	r2.add_theme_constant_override("separation", 8)
 	r2.add_child(Kit.text("庭　　", 12, Color("8a7a88")))
-	garden_bar = Kit.bar(0, Color("8fd18a"), 150, 10)
+	garden_bar = Kit.bar(0, Color("8fd18a"), 110, 10)
 	r2.add_child(garden_bar)
 	garden_label = Kit.text("", 12, Color("4a3f52"))
 	r2.add_child(garden_label)
@@ -1961,54 +1929,79 @@ func _build_ui() -> void:
 	poi_row = HBoxContainer.new()
 	poi_row.add_theme_constant_override("separation", 6)
 	mv.add_child(poi_row)
-
-	goals_btn = Button.new()
-	goals_btn.position = Vector2(236, 58)
-	goals_btn.visible = GameState.day >= 2 # めあては 2 日目から
-	goals_btn.size = Vector2(112, 30)
-	goals_btn.add_theme_font_override("font", Kit.black())
-	goals_btn.add_theme_font_size_override("font_size", 12)
-	for k in ["normal", "hover", "pressed", "focus"]:
-		goals_btn.add_theme_stylebox_override(k, Kit.pill(Color("fff6d8"), 15, 0.12, Vector2(8, 3)))
-	goals_btn.add_theme_color_override("font_color", Color("8a5a10"))
-	goals_btn.add_theme_color_override("font_hover_color", Color("8a5a10"))
-	goals_btn.pressed.connect(_toggle_goals)
-	add_child(goals_btn)
+	Kit.keep_fit(meters, func(): meters.size = Vector2(230, 0))
 	GameState.goal_completed.connect(func(_t, _a): _refresh_hud())
 
 	card = PanelContainer.new()
-	card.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.96), 24, 0.18, Vector2(16, 14)))
-	card.position = Vector2(14, 420)
-	card.size = Vector2(332, 200)
+	card.add_theme_stylebox_override("panel", Kit.pill(Color(Tokens.CREAM, 0.97), 20, 0.16, Vector2(14, 10)))
+	card.position = Vector2(12, 420)
+	card.size = Vector2(_card_w(), 120)
 	add_child(card)
 	card_box = VBoxContainer.new()
 	card_box.add_theme_constant_override("separation", 8)
 	card.add_child(card_box)
 	# 中身の高さが遅れて決まっても（Web）、そのつど縮めて下にそろえ直す
-	Kit.keep_fit(card, func():
-		card.size.y = 0
-		card.position.y = 626 - card.size.y
-		_place_handle())
+	Kit.keep_fit(card, _place_card)
+
+
+## カードの下端（下のタブの帯の上。HUD が無いおでかけ中は画面の下）
+func _card_bottom() -> float:
+	return hud.card_bottom() if hud else size.y - 14.0
+
+
+## カードの幅（右下に ✎ がある日は、その左まで）
+func _card_w() -> float:
+	return 284.0 if hud and hud._fab_wanted() else 336.0
+
+
+## 縦に長い画面で、640 の高さで組んだ箱（カタログ・いかだ・お知らせ）を上下のまんなかへ置くためのずれ
+func _off() -> float:
+	return maxf(0.0, (size.y - 640.0) / 2.0)
+
+
+func _place_card() -> void:
+	card.size = Vector2(_card_w(), 0)
+	card.position = Vector2(12, _card_bottom() - card.size.y)
+
+
+## HUD を出しておくか（重ね画面・島づくり・話す・はじめての流れの間は引っこめる）
+func hud_wanted() -> bool:
+	return Onboarding.at("done") and not editing and not cam_hold and not overlay_open()
+
+
+func desk() -> JobDesk:
+	for c in get_children():
+		if c is JobDesk:
+			return c
+	return null
+
+
+func hub() -> ChatHub:
+	for c in get_children():
+		if c is ChatHub:
+			return c
+	return null
+
+
+## すくうのタブ：夜は川べり（満月の夜は月見）へ。昼は「夕方 5 時から」、すくい終えた夜は「おしまい」と知らせる
+func go_scoop() -> void:
+	if GameState.phase != "evening":
+		_toast("川べりは、夕方 5 時から", "光る玉は、朝にかえる")
+		return
+	if GameState.scooped_tonight:
+		_toast("今夜のすくいは、おしまい", "玉は、朝になったらかえる")
+		return
+	if GameState.is_moon_night():
+		main.go("moon")
+		return
+	GameState.grant_rest_net()
+	main.go("catch")
 
 
 func _refresh_hud() -> void:
-	top_day.text = GameState.day_label()
-	# 島の段（タップで、庭の育ちと手もちのポイ）
-	rhythm_chip.text = tr("島 Lv%d") % (GameState.garden_level + 1)
-	for k in ["normal", "hover", "pressed", "focus"]:
-		rhythm_chip.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.92), 19, 0.14, Vector2(12, 4)))
-	rhythm_chip.add_theme_color_override("font_color", Color("3f7d4f"))
-	rhythm_chip.add_theme_color_override("font_hover_color", Color("3f7d4f"))
-	var cur: int = {"morning": 0, "day": 1, "evening": 2}.get(GameState.phase, 1)
-	var steps := ["朝", "昼", "夜"]
-	var out := []
-	for i in steps.size():
-		if i == cur:
-			out.append("[b][color=#ff8a5b]%s[/color][/b]" % steps[i])
-		else:
-			out.append("[color=#8a7a88]%s[/color]" % steps[i])
-	flow_label.text = "[color=#c9bfc6]・[/color]".join(out)
-	goals_btn.text = tr("めあて %d/3 ▼") % GameState.goals_done()
+	if hud:
+		hud.refresh()
+	week_label.text = tr("HUD_WEEK") % (GameState.week() + 1)
 	if goals_panel:
 		_toggle_goals()
 		_toggle_goals()
@@ -2035,7 +2028,7 @@ func _refresh_hud() -> void:
 		var s := StyleBoxFlat.new()
 		s.bg_color = GameState.TYPE_COLOR.get(t2, Color.WHITE)
 		s.set_corner_radius_all(6)
-		s.border_color = Color(0, 0, 0, 0.25)
+		s.border_color = Color(Tokens.SHADOW, 0.25)
 		s.set_border_width_all(1)
 		dot.add_theme_stylebox_override("panel", s)
 		dot.custom_minimum_size = Vector2(12, 12)
@@ -2047,7 +2040,6 @@ func _refresh_hud() -> void:
 func _toggle_meters() -> void:
 	Kit.play(self, "tap", 1.1)
 	meters.visible = not meters.visible
-	goals_btn.visible = GameState.day >= 2 and not meters.visible
 	if goals_panel:
 		_toggle_goals()
 
@@ -2057,9 +2049,10 @@ func _toggle_goals() -> void:
 		goals_panel.queue_free()
 		goals_panel = null
 		return
+	meters.visible = false
 	goals_panel = PanelContainer.new()
-	goals_panel.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.98, 0.9, 0.97), 16, 0.18, Vector2(12, 8)))
-	goals_panel.position = Vector2(118, 92)
+	goals_panel.add_theme_stylebox_override("panel", Kit.pill(Color(Tokens.CREAM, 0.97), Tokens.R_M, 0.16, Vector2(12, 8)))
+	goals_panel.position = Vector2(118, 62)
 	goals_panel.size = Vector2(230, 0)
 	add_child(goals_panel)
 	var v := VBoxContainer.new()
@@ -2069,7 +2062,7 @@ func _toggle_goals() -> void:
 	for g in GameState.goals:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
-		row.add_child(Kit.text("●" if g.done else "○", 12, Color("e0a030") if g.done else Color("b8aeb6")))
+		row.add_child(Kit.text("●" if g.done else "○", 12, Tokens.GOLD if g.done else Color("b8aeb6")))
 		row.add_child(Kit.wrap(Kit.text(g.text, 12, Color("4a3f52") if not g.done else Color("a89ea6"))))
 		v.add_child(row)
 
@@ -2077,6 +2070,7 @@ func _toggle_goals() -> void:
 func _clear_card() -> void:
 	for c in card_box.get_children():
 		c.queue_free()
+	card_more = null
 
 
 func _card_fit() -> void:
@@ -2084,8 +2078,7 @@ func _card_fit() -> void:
 	await get_tree().process_frame
 	card.size.y = 0
 	await get_tree().process_frame
-	card.position.y = 626 - card.size.y
-	_place_handle()
+	_place_card()
 	# カードが低いときは、庭を画面のまんなかへ
 	if not busy and not card_hidden:
 		var k := clampf((card.size.y - 140.0) / 150.0, 0.0, 1.0)
@@ -2093,80 +2086,60 @@ func _card_fit() -> void:
 		create_tween().tween_property(cam, "v_offset", cam_v, 0.4).set_trans(Tween.TRANS_SINE)
 
 
-var handle: Button
-var card_hidden := false
+var card_hidden := false # 今日のカードをしまって、島をひろく見ている（見本の撮影・いかだのテスト用）
+var card_pan_hidden := false # なぞっている間だけ、カードを隠した
+var pan_quiet := 0.0
 
 
-## カードをしまって、庭をひろく見る
-func _place_handle() -> void:
-	_place_expand()
-	if GameState.day < 2:
+## 今日のカードをしまう／出す（なぞっている間は、_sync_card_pan が自分で隠す）
+func hide_card(on: bool) -> void:
+	card_hidden = on
+	card.visible = not on
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "v_offset", -0.7 if on else cam_v, 0.4).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(cam, "fov", 42.0 if on else 52.0, 0.4).set_trans(Tween.TRANS_SINE)
+
+
+## 島をなぞっている（つまんでいる）間は、今日のカードをうすくして隠す。止まって少したったら戻す
+func _sync_card_pan(delta: float) -> void:
+	var panning := drag_on or touches.size() >= 2
+	if panning:
+		pan_quiet = 0.0
+		if card.visible and not card_hidden and not busy:
+			card.modulate.a = move_toward(card.modulate.a, 0.0, delta * 8.0)
+			if card.modulate.a <= 0.01:
+				card.visible = false
+				card_pan_hidden = true
 		return
-	if handle == null:
-		handle = Button.new()
-		handle.add_theme_font_override("font", Kit.black())
-		handle.add_theme_font_size_override("font_size", 12)
-		for k in ["normal", "hover", "pressed", "focus"]:
-			handle.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.95), 14, 0.15, Vector2(10, 3)))
-		handle.add_theme_color_override("font_color", Color("6a5f70"))
-		handle.add_theme_color_override("font_hover_color", Color("6a5f70"))
-		handle.pressed.connect(_toggle_card)
-		add_child(handle)
-	if card_hidden:
-		handle.text = "▲ カードを出す"
-		handle.position = Vector2(126, 598)
-	else:
-		handle.text = "▼ しまう"
-		handle.position = Vector2(card.position.x + card.size.x - 84, card.position.y - 14)
-	handle.size = Vector2(0, 0)
+	pan_quiet += delta
+	if card_pan_hidden and pan_quiet > 0.35 and not overlay_open() and not editing:
+		card_pan_hidden = false
+		card.visible = true
+	if card.visible and card.modulate.a < 1.0 and not busy and pan_quiet > 0.35:
+		card.modulate.a = move_toward(card.modulate.a, 1.0, delta * 6.0)
 
 
-var expand_btn: Button
-
-
-## 島を広げる札（いつも見える。カードの左上、カードをしまったら左下）。広げきったら出さない
-func _place_expand() -> void:
-	var show: bool = not _vis() and not editing and GameState.day >= 1 and IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS
-	if expand_btn == null:
-		if not show:
-			return
-		expand_btn = Kit.button(tr("EXPAND_PILL"), Color("e9f6e6"), _expand_from_pill, Color("3f7d4f"), 30, 12)
-		add_child(expand_btn)
-	expand_btn.visible = show and not overlay_open()
-	expand_btn.size = Vector2(0, 30)
-	expand_btn.position = Vector2(14, 598) if card_hidden or not card.visible else Vector2(card.position.x + 6, card.position.y - 14)
-
-
-## 島の上に、何かが重なって開いているか（しごとのシート・求人カード・シフトの入力・チャット・カタログ・お知らせの箱・届いた服）。
-## 開いている間は「＋ ひろげる」札を出さない（カードや見出しの上に札が乗ってしまうので）
+## 島の上に、何かが重なって開いているか（しごとのシート・求人カード・シフトの入力・チャット・カタログ・お知らせの箱・届いた服・マイページ）。
+## 開いている間は HUD を引っこめる（重ね画面の上に、下のタブや丸いボタンが明るく残らないように）
 func overlay_open() -> bool:
 	for n in [catalog_ui, share_ui, raft_ui]:
 		if n and is_instance_valid(n) and not n.is_queued_for_deletion():
 			return true
 	for c in get_children():
-		if c is ScreenChat or c is OutfitReveal:
+		if (c is ScreenChat or c is OutfitReveal or c is SettingsScreen) and not c.is_queued_for_deletion():
 			return true
 		if c is JobDesk and c.overlay_open():
 			return true
 	return false
 
 
-## 毎フレーム：重ね画面が開いたら札を隠し、閉じたら戻す
-func _sync_expand() -> void:
-	if expand_btn == null:
+## ✎ から：島づくりの中の「＋ ひろげる」。広げられる場所のカードを開く（足りるところがあれば、そこを先に）
+func open_expand() -> void:
+	if busy:
 		return
-	var want: bool = not _vis() and not editing and GameState.day >= 1 and IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS
-	var on := want and not overlay_open() and not cam_hold
-	if expand_btn.visible != on:
-		expand_btn.visible = on
-
-
-## 札から：島づくりに入って、広げられる場所のカードを開く（足りるところがあれば、そこを先に）
-func _expand_from_pill() -> void:
-	if busy or editing:
-		return
-	_enter_edit()
-	await get_tree().create_timer(0.7).timeout
+	if not editing:
+		_enter_edit()
+		await get_tree().create_timer(0.7).timeout
 	var pick := ""
 	for e in IslandKit.EXPANSIONS:
 		if IslandKit.can_expand(e.id):
@@ -2179,30 +2152,27 @@ func _expand_from_pill() -> void:
 		_expand_card(pick)
 
 
-## 材料がそろって広げられるようになったら、一度だけ知らせて札をゆらす（広げた数ごとに）
+## 材料がそろって、島を広げられるか（✎ に点を出す）
+func expand_ready() -> bool:
+	if _vis() or GameState.day < 1 or IslandKit.expansions().size() >= IslandKit.MAX_EXPANSIONS:
+		return false
+	for e in IslandKit.EXPANSIONS:
+		if IslandKit.can_expand(e.id) and IslandKit.expansion_missing(e.id).is_empty():
+			return true
+	return false
+
+
+## 材料がそろって広げられるようになったら、一度だけ知らせて ✎ をゆらす（広げた数ごとに）
 func _maybe_expand_nudge() -> void:
-	if _vis() or expand_btn == null or not expand_btn.visible:
+	if hud == null or not hud.fab.visible or not expand_ready():
 		return
 	var key := "expand_nudge_%d" % IslandKit.expansions().size()
 	if GameState.tut.has(key):
 		return
-	for e in IslandKit.EXPANSIONS:
-		if IslandKit.can_expand(e.id) and IslandKit.expansion_missing(e.id).is_empty():
-			GameState.tut[key] = true
-			GameState.save()
-			_toast(tr("KIT_UI_EXPAND"), tr("EXPAND_READY"))
-			Kit.nudge(expand_btn)
-			return
-
-
-func _toggle_card() -> void:
-	Kit.play(self, "tap", 1.1)
-	card_hidden = not card_hidden
-	card.visible = not card_hidden
-	_place_handle()
-	var tw := create_tween().set_parallel()
-	tw.tween_property(cam, "v_offset", -0.7 if card_hidden else cam_v, 0.4).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(cam, "fov", 42.0 if card_hidden else 52.0, 0.4).set_trans(Tween.TRANS_SINE)
+	GameState.tut[key] = true
+	GameState.save()
+	_toast(tr("KIT_UI_EXPAND"), tr("EXPAND_READY"))
+	Kit.nudge(hud.fab)
 
 
 func _pop_card() -> void:
@@ -2211,7 +2181,7 @@ func _pop_card() -> void:
 		card.visible = true
 		cam.v_offset = cam_v
 		cam.fov = 52.0
-	card.pivot_offset = Vector2(166, 200)
+	card.pivot_offset = Vector2(card.size.x / 2, card.size.y)
 	card.scale = Vector2(0.96, 0.96)
 	card.modulate.a = 0.0
 	var tw := create_tween().set_parallel()
@@ -2219,7 +2189,7 @@ func _pop_card() -> void:
 	tw.tween_property(card, "modulate:a", 1.0, 0.18)
 
 
-func _guide(t: String) -> void:
+func _guide(t: String, box: Container = null) -> void:
 	# おばけのひとこと（チュートリアル）
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
@@ -2230,7 +2200,7 @@ func _guide(t: String) -> void:
 	var l := Kit.wrap(Kit.text(t, 13, Color("6a5bd6")))
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(l)
-	card_box.add_child(row)
+	(box if box else card_box).add_child(row)
 
 
 ## 昼のカード（今日の予定）と、夜のカード
@@ -2249,6 +2219,58 @@ func _link(t: String, cb: Callable) -> Button:
 	return b
 
 
+var card_more: VBoxContainer # 今日のカードの「くわしく」（字の所をタップで出し入れ）
+var card_more_open := false
+
+
+## 今日のカード：1 行（見出しと、その下の短い一文）と、主なボタン 1 つ。
+## ほかの選択肢（地図・休む・灯す飾り・おすそわけ）は、字の所をタップしたときの「くわしく」に
+func _today(title: String, sub: String, btn := "", cb := Callable(), more: Array = []) -> Button:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	card_box.add_child(row)
+	var tv := VBoxContainer.new()
+	tv.add_theme_constant_override("separation", 0)
+	tv.alignment = BoxContainer.ALIGNMENT_CENTER
+	tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tv.custom_minimum_size.y = 40
+	row.add_child(tv)
+	var tl := Kit.text(tr(title), 15, Color("2a2233"), true)
+	tl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	tl.clip_text = true
+	tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tv.add_child(tl)
+	if sub != "":
+		var sl := Kit.text(tr(sub) + ("  ›" if not more.is_empty() else ""), 12, Color("6a5f70"))
+		sl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		sl.clip_text = true
+		sl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tv.add_child(sl)
+	var b: Button = null
+	if btn != "":
+		b = Kit.button(tr(btn), Color("ff8a5b"), cb, Color.WHITE, 40, 14)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(b)
+	if not more.is_empty():
+		card_more = VBoxContainer.new()
+		card_more.add_theme_constant_override("separation", 4)
+		card_more.visible = card_more_open
+		for c in more:
+			if c is Callable:
+				(c as Callable).call(card_more)
+			else:
+				card_more.add_child(c)
+		card_box.add_child(card_more)
+		tv.mouse_filter = Control.MOUSE_FILTER_STOP
+		tv.gui_input.connect(func(e: InputEvent):
+			if e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT:
+				Kit.play(self, "tap", 1.1)
+				card_more_open = not card_more_open
+				if card_more and is_instance_valid(card_more):
+					card_more.visible = card_more_open)
+	return b
+
+
 func _show_card() -> void:
 	_clear_card()
 	var s: Dictionary = GameState.today()
@@ -2258,77 +2280,52 @@ func _show_card() -> void:
 	elif GameState.phase == "day":
 		var reg := Reminders.morning() if GameState.skip_shift_day != GameState.day else {}
 		if not reg.is_empty():
-			# 今日の登録シフト（まだ始まっていない）：時刻と場所と地図。行ったら「仕事に行ってくる」
-			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.wrap(Kit.text(("%s–%s" + tr("R3_SEP") + "%s") % [Reminders.clock(reg.start), Reminders.clock(reg.end), String(reg.get("place", reg.get("store", "")))], 14, Color("6a5f70"), true)))
-			card_box.add_child(_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(reg))))
-			card_box.add_child(Kit.button(tr("I'm going to work"), Color("ff8a5b"), func(): main.go("work")))
-			card_box.add_child(_link("今日は休む", _rest))
+			# 今日の登録シフト（まだ始まっていない）：時刻と場所。行ったら「仕事に行く」。地図・休むは、くわしくに
+			var when := ("%s–%s" + tr("R3_SEP") + "%s") % [Reminders.clock(reg.start), Reminders.clock(reg.end), String(reg.get("place", reg.get("store", "")))]
+			_today("今日のシフト", when, "HUD_GO_WORK", func(): main.go("work"), [
+				_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(reg))),
+				_link(tr("今日は休む"), _rest)])
 		elif s.get("chore", false) and GameState.skip_shift_day != GameState.day and not GameState.shift_done_today:
-			card_box.add_child(Kit.text("今日のおてつだい", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text(GameState.CHORE_TEXT[s.role], 14, Color("6a5f70")))
-			card_box.add_child(Kit.button("おてつだいする", Color("ff8a5b"), _do_shift))
-			var row := HBoxContainer.new()
-			row.alignment = BoxContainer.ALIGNMENT_CENTER
-			row.add_child(_link("今日はのんびりする", _rest))
-			row.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
-			card_box.add_child(row)
-			card_box.add_child(_link(tr("R2_HELP_GAMES"), _open_help_games))
+			_today("今日のおてつだい", GameState.CHORE_TEXT[s.role], "おてつだいする", _do_shift, [_link(tr("今日はのんびりする"), _rest)])
 		elif s.role != "" and GameState.skip_shift_day != GameState.day and not GameState.shift_done_today:
-			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text(tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])], 14, Color("6a5f70")))
-			card_box.add_child(Kit.text(tr("%sのシフト・%d時間") % [tr(s.band), int(s.hours)], 13, Color("6a5f70")))
 			var sname: String = tr(s.store)
-			card_box.add_child(_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url({"store": sname}))))
+			var more: Array = [
+				Kit.text(tr("%sのシフト・%d時間") % [tr(s.band), int(s.hours)], 13, Color("6a5f70")),
+				_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url({"store": sname}))),
+				_link(tr("今日は休む"), _rest)]
 			if not GameState.tut.has("shift"):
-				_guide("働くと、庭に飾りが届く")
-			var b := Kit.button("シフトに行く", Color("ff8a5b"), _do_shift)
-			card_box.add_child(b)
-			card_box.add_child(_link("今日は休む", _rest))
+				card_more_open = true
+				more.push_front(func(box): _guide("働くと、庭に飾りが届く", box))
+			var b := _today("今日のシフト", tr("%s・%s") % [sname, tr(GameState.ROLE_LABEL[s.role])], "シフトに行く", _do_shift, more)
 			if not GameState.tut.has("shift"):
 				Kit.nudge.call_deferred(b)
 		else:
-			card_box.add_child(Kit.text("夜の庭へ、ようこそ" if first else ("今日の仕事は、おしまい" if GameState.shift_done_today else "今日は休み"), 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("毎日の暮らしで、庭が育つ" if first else "休みの日も、庭はちゃんと育つ", 14, Color("6a5f70")))
-			# 夜は実際の時計で来る（夕方 5 時から、川べりへ）
-			card_box.add_child(Kit.text("川べりは、夕方 5 時から", 14, Color("5b6fc2"), true))
-			card_box.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
-			card_box.add_child(_link(tr("R2_HELP_GAMES"), _open_help_games))
-			if GameState.day >= 2:
-				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
+			# 休みの日：1 行だけ（仕事に行く・島づくりは、下のタブと ✎ から）
+			_today("夜の庭へ、ようこそ" if first else ("今日の仕事は、おしまい" if GameState.shift_done_today else "今日は休み"), "川べりは、夕方 5 時から", "", Callable(), [
+				Kit.text(tr("毎日の暮らしで、庭が育つ") if first else tr("休みの日も、庭はちゃんと育つ"), 13, Color("6a5f70"))])
 			GameState.tut["first"] = true
 	elif GameState.phase == "evening":
 		if GameState.is_moon_night() and not GameState.scooped_tonight:
-			card_box.add_child(Kit.text("今夜は満月の夜", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("川べりへ行った夜の数だけ、灯りがつく", 14, Color("6a5f70")))
-			var b := Kit.button("月見をする", Color("5b4a9e"), func(): main.go("moon"))
-			card_box.add_child(b)
+			var b := _today("今夜は満月の夜", "川べりへ行った夜の数だけ、灯りがつく", "月見をする", func(): main.go("moon"))
 			Kit.nudge.call_deferred(b)
 		elif not GameState.scooped_tonight:
-			card_box.add_child(Kit.text("夜になった", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("光る玉は、朝にかえる", 14, Color("6a5f70")))
 			# 今夜のポイ：働いた日 2 本・休みの日 1 本（何時間でも同じ）
 			GameState.grant_rest_net()
 			var tn := GameState.tonight_nets()
-			card_box.add_child(Kit.text(tr("今夜：ポイ %d 本（働いた日）") % tn if GameState.worked_today() else tr("今夜：ポイ 1 本（休みの日）"), 14, Color("5b6fc2"), true))
+			var nets := tr("今夜：ポイ %d 本（働いた日）") % tn if GameState.worked_today() else tr("今夜：ポイ 1 本（休みの日）")
+			var more: Array = [Kit.text(tr("光る玉は、朝にかえる"), 13, Color("6a5f70"))]
 			if GameState.day >= 3:
-				_deco_chips()
-			var b := Kit.button("川べりで、おばけすくい", Color("5b6fc2"), func(): main.go("catch"))
-			card_box.add_child(b)
-			if not GameState.tut.has("scoop"):
-				Kit.nudge.call_deferred(b)
+				more.append(_deco_chips)
 			if GameState.can_gift() and GameState.day >= 4:
 				var c: String = GameState.today().coworkers[0]
-				card_box.add_child(_link(tr("%sにおすそわけ") % c, _gift))
-			if GameState.day >= 2:
-				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
+				more.append(_link(tr("%sにおすそわけ") % c, _gift))
+			var b := _today("夜になった", nets, "HUD_GO_SCOOP", func(): main.go("catch"), more)
+			if not GameState.tut.has("scoop"):
+				Kit.nudge.call_deferred(b)
 		else:
-			card_box.add_child(Kit.text("今夜のすくいは、おしまい", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text(tr("玉を %d 個持ち帰った") % GameState.orbs.size(), 14, Color("6a5f70")))
 			# 朝は実際の時計で来る（朝 5 時をすぎて開くと、玉がかえる）
-			card_box.add_child(Kit.text("玉は、朝になったらかえる", 14, Color("8b7bff"), true))
-			if GameState.day >= 2:
-				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
+			_today("今夜のすくいは、おしまい", tr("玉を %d 個持ち帰った") % GameState.orbs.size(), "", Callable(), [
+				Kit.text(tr("玉は、朝になったらかえる"), 13, Color("8b7bff"), true)])
 	_card_fit()
 	_pop_card()
 
@@ -2340,29 +2337,12 @@ func _work_card() -> bool:
 	if not WorkTogether.active():
 		return false
 	var st := WorkTogether.status()
-	card_box.add_child(Kit.text(tr("At work together"), 18, Color("2a2233"), true))
-	card_box.add_child(Kit.text(WorkTogether.line(st), 14, Color("6a5f70")))
-	card_box.add_child(Kit.button(tr("Peek at work"), Color("ff8a5b"), func(): main.go("work")))
-	card_box.add_child(_link(tr("Back home"), func():
-		var r := WorkTogether.stop()
-		_toast(tr("Shift's over!"), tr("+%d Paw Coins") % r.get("coins", 0))
-		_show_card()))
+	_today("At work together", WorkTogether.line(st), "Peek at work", func(): main.go("work"), [
+		_link(tr("Back home"), func():
+			var r := WorkTogether.stop()
+			_toast(tr("Shift's over!"), tr("+%d Paw Coins") % r.get("coins", 0))
+			_show_card())])
 	return true
-
-
-## おてつだいミニゲーム：マイスキルのおさらい（5 つの仕事）を、島のおてつだいとして遊べる（任意）
-func _open_help_games() -> void:
-	var v := _popup(tr("R2_HELP_TITLE"), tr("R2_HELP_BODY"), "")
-	for r in Skills.ROLES:
-		var role: String = r
-		var st := Skills.star_text(Skills.stars(role))
-		var b := Kit.button(Skills.role_name(role) + ("  " + st if st != "" else "") + "  ›", Color("fff1e0"), func():
-			share_ui.queue_free()
-			Skills.practice_role = role
-			main.go("practice"), Color("b0502a"), 40, 14)
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		v.add_child(b)
-	v.add_child(Kit.button(tr("KIT_UI_CLOSE"), Color(1, 1, 1, 0.95), func(): share_ui.queue_free(), Color("6a5f70"), 40, 14))
 
 
 func _gift() -> void:
@@ -2374,18 +2354,18 @@ func _gift() -> void:
 
 
 ## 今夜ともす飾りを選ぶ。その仕事の玉が川べりに出やすくなる
-func _deco_chips() -> void:
+func _deco_chips(box: Container) -> void:
 	var owned_roles: Array = []
 	for r in ["register", "hall", "dish", "kitchen", "stock"]:
 		if GameState.deco_level(r) > 0:
 			owned_roles.append(r)
 	if owned_roles.is_empty():
 		return
-	card_box.add_child(Kit.text("ともした飾りの玉が、出やすい", 11, Color("8a7a88")))
+	box.add_child(Kit.text("ともした飾りの玉が、出やすい", 11, Color("8a7a88")))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 6)
 	row.add_theme_constant_override("v_separation", 6)
-	card_box.add_child(row)
+	box.add_child(row)
 	for r in owned_roles:
 		var on: bool = GameState.lit_deco == r
 		var c: Color = GameState.TYPE_COLOR[GameState.SPECIES[GameState.TYPE_SPECIES[r]].type]
@@ -2494,7 +2474,7 @@ func _to_evening() -> void:
 	_refresh_hud()
 	Kit.play(self, "night", 1.3, -10)
 	card.modulate.a = 0.0
-	await _tween_night(1.0)
+	await _tween_night(_eve_n())
 	_show_card()
 
 
@@ -2747,7 +2727,7 @@ func _talk_ui(show: bool) -> void:
 				c.visible = true
 		talk_hidden.clear()
 		return
-	var list: Array = [card, handle, expand_btn, host_tag]
+	var list: Array = [card, host_tag]
 	for c in get_children():
 		if c is JobDesk:
 			list.append_array(c.notes)
@@ -2755,11 +2735,6 @@ func _talk_ui(show: bool) -> void:
 		if c and is_instance_valid(c) and c.visible:
 			c.visible = false
 			talk_hidden.append(c)
-
-
-## 確認用：おてつだいミニゲームの一覧
-func demo_help_games() -> void:
-	_open_help_games()
 
 
 ## 確認用：いかだを押したのと同じ
@@ -2817,11 +2792,12 @@ func _enter_edit() -> void:
 		return
 	editing = true
 	card.visible = false
-	if handle:
-		handle.visible = false
-	if expand_btn:
-		expand_btn.visible = false
-	goals_btn.visible = false
+	meters.visible = false
+	if goals_panel:
+		_toggle_goals()
+	for t in world_labels + [host_tag]:
+		if t and is_instance_valid(t):
+			t.visible = true
 	meters.visible = false
 	var to := cam_home
 	var fit := _land_fit()
@@ -2863,7 +2839,7 @@ func _build_edit_ui() -> void:
 	add_child(edit_ui)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.96), 22, 0.18, Vector2(14, 12)))
-	p.position = Vector2(14, 470)
+	p.position = Vector2(14, size.y - 170.0)
 	p.size = Vector2(332, 0)
 	edit_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -2906,6 +2882,13 @@ func _build_edit_ui() -> void:
 	var shop := Kit.button(tr("KIT_UI_SHOP"), Color("fff2c8"), _open_catalog, Color("9a6a1a"), 50, 16)
 	shop.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(shop)
+	# ＋ ひろげる（前は島の左下の札。いまは ✎ の中）
+	if IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS:
+		var ex := Kit.button(tr("EXPAND_PILL"), Color("e9f6e6"), open_expand, Color("3f7d4f"), 50, 15)
+		ex.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row2.add_child(ex)
+		if expand_ready():
+			Kit.nudge.call_deferred(ex)
 	var done := Kit.button(tr("KIT_UI_DONE"), Color("ff8a5b"), _exit_edit)
 	done.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(done)
@@ -2913,7 +2896,7 @@ func _build_edit_ui() -> void:
 	v.add_child(_link("島をシェアする", _share))
 	Kit.keep_fit(p, func():
 		p.size.y = 0
-		p.position.y = 628 - p.size.y)
+		p.position.y = size.y - 12.0 - p.size.y)
 
 
 func _edit_input(event: InputEvent) -> void:
@@ -2921,7 +2904,7 @@ func _edit_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		pos = event.position
 		if event.pressed:
-			if pos.y > 460 or pos.y < 60:
+			if pos.y > size.y - 180.0 or pos.y < 60:
 				return
 			# 岸の「＋」（島を広げる）
 			for mk in exp_markers:
@@ -3179,7 +3162,7 @@ func _open_raft() -> void:
 	raft_ui.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(16, 14)))
-	p.position = Vector2(18, 90)
+	p.position = Vector2(18, 90 + _off())
 	p.size = Vector2(324, 0)
 	raft_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -3319,7 +3302,7 @@ func _open_catalog(tab := "items") -> void:
 	catalog_ui.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(12, 12)))
-	p.position = Vector2(10, 40)
+	p.position = Vector2(10, 40 + _off())
 	p.size = Vector2(340, 590)
 	catalog_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -3552,7 +3535,7 @@ func _popup(title: String, body: String, code: String) -> VBoxContainer:
 	share_ui.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(18, 16)))
-	p.position = Vector2(24, 170)
+	p.position = Vector2(24, 170 + _off())
 	p.size = Vector2(312, 0)
 	share_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -3578,12 +3561,7 @@ var visit_card: PanelContainer
 
 
 func _start_visit() -> void:
-	# 上は「〇〇の島」と「かえる」だけ
-	for c in get_children():
-		if c is HBoxContainer:
-			for k in c.get_children():
-				k.visible = false
-	goals_btn.visible = false
+	# 上は「〇〇の島」と「かえる」だけ（島の HUD は作らない）
 	var top := HBoxContainer.new()
 	top.position = Vector2(12, 12)
 	top.size = Vector2(336, 40)

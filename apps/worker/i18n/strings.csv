@@ -1869,3 +1869,17 @@ R3_FOUND_TITLE_1,%s found a job!,%s が 1 件みつけた！
 R3_NOTE_DAILY_1,%s brought a job today,%s が今日の仕事を 1 件もってきた
 R3_JOB_LIST_TITLE_1,1 job — tap it to see more,1 件。タップでくわしく
 R3_SHIFT_LABEL,%s %s (%s),%s %s（%s）
+HUD_TAB_ISLAND,Island,島
+HUD_TAB_JOBS,Jobs,しごと
+HUD_TAB_SCOOP,Scoop,すくう
+HUD_TAB_CLOSET,Closet,キセカエ
+HUD_TAB_BOOK,Book,図鑑
+HUD_SCOOP_CHIP,5 PM,17時
+HUD_STATUS,%s · Lv %d,%s曜日・Lv%d
+HUD_WEEK,Week %d,%d週目
+HUD_COACH_GOALS,Goals,めあて
+HUD_COACH_TALK,Talk,話す
+HUD_COACH_ME,My page,マイページ
+HUD_COACH_EDIT,Edit island,島をつくる
+HUD_GO_WORK,Go to work,仕事に行く
+HUD_GO_SCOOP,Go scoop,すくいに行く

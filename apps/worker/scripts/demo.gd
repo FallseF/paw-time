@@ -151,7 +151,7 @@ func _promo() -> void:
 	main.fast_forward(26)
 	GameState.phase = "evening"
 	await _go("garden", true)
-	main.current.call("_toggle_card")
+	main.current.call("hide_card", true)
 	await _wait(1.8)
 	# 1) すくい（スロー）
 	_mark("1)")

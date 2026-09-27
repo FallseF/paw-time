@@ -37,6 +37,7 @@ func _ready() -> void:
 	dim.color = Color(0.12, 0.1, 0.2, 0.62)
 	dim.size = Vector2(360, 640)
 	add_child(dim)
+	Kit.center_tall(self, dim) # 縦に長い島では、上下のまんなかに（暗幕は画面いっぱい）
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.pill(PAPER, 24, 0.2, Vector2(18, 14)))
 	card.position = Vector2(16, 90)

@@ -1,14 +1,13 @@
 class_name ChatHub
 extends Control
 ## Where the chats open from.
-##   - On the island (screen_garden adds ChatHub.new() in one line): the "Talk" pill (always there, under "Work"),
+##   - On the island (screen_garden adds ChatHub.new() in one line): the round Talk button at the top right (IslandHud → talk()),
 ##     or tap your cat → a "Talk" bubble. Either way the camera zooms in on your cat, then the private chat opens.
 ##   - From anywhere: ChatHub.open(parent, "me" | "shop:<shift id>" | "list").
 ##   - During a shift the mainline locks play; only the current shift's shop chat stays open: allowed_during_shift().
 
 var garden: Control
 var talk_btn: Button
-var talk_pill: Button
 var talking := false
 
 
@@ -28,26 +27,9 @@ static func allowed_during_shift(thread_id: String, now := -1.0) -> bool:
 
 func _ready() -> void:
 	position = Vector2.ZERO
-	size = Vector2(360, 640)
+	size = get_parent().size if get_parent() is Control else Vector2(360, 640)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	garden = get_parent() as Control
-	_talk_pill.call_deferred()
-
-
-## 島の右上（しごとの下）に、いつもある「話す」札。はじめての流れの間とおでかけ中は出さない
-func _talk_pill() -> void:
-	# Onboarding は実行時に読む（GameState の autoload を使うので、画面なしのテスト -s tests/test_chat.gd が読めなくなる）
-	if garden == null or garden.get("V") == null or not (garden.get("V") as Dictionary).is_empty() or not load("res://scripts/onboarding.gd").at("done"):
-		return
-	talk_pill = Kit.button(tr("CHAT_TALK"), Color(1, 0.99, 0.97, 0.94), talk, Color("6a5bd6"), 32, 13)
-	talk_pill.custom_minimum_size.x = 56
-	talk_pill.size = Vector2(0, 32)
-	add_child(talk_pill)
-	await get_tree().process_frame
-	if is_instance_valid(talk_pill):
-		talk_pill.position = Vector2(348 - talk_pill.size.x, 98)
-		if garden.has_method("hud_pill"):
-			garden.hud_pill(talk_pill)
 
 
 ## 話す：カメラが相棒に寄って（相棒が大きくなって）から、ふたりのチャットを開く。閉じたら島の眺めに戻る
