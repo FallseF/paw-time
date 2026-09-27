@@ -2,6 +2,7 @@ extends SceneTree
 ## ユーザーレビュー2の、画面を持たない決まりごと：
 ##   OBAKE_NOSAVE=1 godot --headless --path . -s tests/test_review2.gd
 ## 1. 帰ったあとの「今日のお給料（目安）」＝ 登録したシフトの時間 × そのシフトの時給（時給の無いシフトは出さない）
+## 3. いかだの行き先えらびの「友だちの島」（新しい順・同じ島は 1 つ・お店の島は入れない・リンクからコードだけ）
 ## 2. 求人・自分のシフトの曜日のカード（日本時間の日ごと。1 週間は毎日カード、月〜日が一度ずつ、中は時刻の順）
 
 var fails := 0
@@ -25,6 +26,7 @@ func _run() -> void:
 		return
 	_pay()
 	_days()
+	_friends()
 	print("REVIEW2 TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -85,3 +87,23 @@ func _days() -> void:
 	_check(JD.clock_range(j.call("x", 0, 9.5)) == "09:30–13:30", "clock range %s" % JD.clock_range(j.call("x", 0, 9.5)))
 	var lbl: String = JD.day_label(d0)
 	_check(lbl.begins_with(TranslationServer.translate("JOB_WD_%d" % JobListings.weekday_mon(d0))) and lbl.contains("/"), "day label %s" % lbl)
+
+
+# ---------------------------------------------------------------- 3. 友だちの島
+
+func _friends() -> void:
+	FriendIslands.reset()
+	_check(FriendIslands.parse_code("  https://example.com/paw/#island=AbC-12_x  ") == "AbC-12_x", "code from a pasted link")
+	_check(FriendIslands.parse_code("AbC") == "AbC", "plain code stays")
+	FriendIslands.record({"code": "AAA", "name": "mika", "level": 3}, 100.0)
+	FriendIslands.record({"code": "BBB", "name": "ren", "level": 1}, 200.0)
+	FriendIslands.record({"code": "https://x/#island=AAA", "name": "mika", "level": 4}, 300.0)
+	FriendIslands.record({"shop": "cafe_komorebi", "code": "", "name": "Cafe"}, 400.0)
+	FriendIslands.record({"code": "", "name": "nobody"}, 500.0)
+	var l := FriendIslands.all()
+	_check(l.map(func(e): return e.code) == ["AAA", "BBB"], "newest first, one per island, no shops (%s)" % [l])
+	_check(int(l[0].level) == 4, "revisit updates the level")
+	for i in 20:
+		FriendIslands.record({"code": "C%d" % i, "name": "n", "level": 0}, 1000.0 + i)
+	_check(FriendIslands.all().size() == FriendIslands.MAX, "list is capped at %d" % FriendIslands.MAX)
+	FriendIslands.reset()

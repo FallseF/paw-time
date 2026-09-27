@@ -1765,6 +1765,15 @@ R2_SHIFT_NONE,No shift this day,この日のシフトはありません
 R2_WORK_MENU_JOBS,Job suggestions,求人を見る
 R2_DAY_JOBS_1,1 job,1 件
 R2_TALK_HI,What's up?,どうしたの？
+R2_RAFT_TITLE,Where to?,どこへ行く？
+R2_RAFT_FRIENDS,Visit a friend's island,友だちの島へ
+R2_RAFT_FRIENDS_NONE,No friends' islands yet. Ask a friend for their island code.,まだ友だちの島はありません。島のコードを教えてもらおう。
+R2_RAFT_ISLAND,%s's island · Lv%d,%sの島・Lv%d
+R2_RAFT_CODE,Enter a code,コードを入れる
+R2_RAFT_CODE_HINT,Paste an island code or link,島のコードかリンクを貼る
+R2_RAFT_GO,Go,行く
+R2_RAFT_BAD,That code didn't work. Check it and try again.,そのコードは読めませんでした。たしかめてもう一度。
+R2_RAFT_SHOPS,Visit a shop island,お店の島へ
 EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
 川べりは、夕方 5 時から,The river opens at 5 p.m.,川べりは、夕方 5 時から
 今日の仕事は、おしまい,Work's done for today,今日の仕事は、おしまい

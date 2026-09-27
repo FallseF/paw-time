@@ -4,6 +4,7 @@ extends Node
 ##   - 「＋ ひろげる」札は、しごとのシート・求人カードなどが開いている間は出ない
 ##   - 島の段のくわしく（庭 Lv / ポイ）と、左右の札（キセカエ・マイスキル・しごと・話す）が重ならない
 ##   - 「話す」札：いつも見えて、押すとカメラが相棒に寄ってからチャット。閉じたら眺めに戻る
+##   - いかだ（桟橋の乗り物）を押すと、行き先えらび（友だちの島・お店の島）。読めないコードでは出かけない
 ##   - 島の拡大・縮小（ホイール・二本の指でつまむ）。範囲の中に収まり、拡大してもおばけのタップが当たる
 ## OBAKE_NOSAVE=1 godot --headless --path . res://tests/test_island_ui.tscn
 
@@ -96,6 +97,7 @@ func _run() -> void:
 	await _frames(3)
 
 	await _talk(g)
+	await _raft(g)
 	await _zoom(g)
 
 	print("ISLAND UI TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
@@ -207,3 +209,26 @@ func _talk(g) -> void:
 	await get_tree().create_timer(0.9).timeout
 	_check(not g.cam_hold and g.cam.global_position.distance_to(g._view_transform().origin) < 0.05, "camera back to the island view after the chat")
 	_check(g.expand_btn.visible, "expand pill back after the chat")
+
+
+func _raft(g) -> void:
+	_check(g.parked != null, "a vehicle is parked at the pier")
+	if g.parked == null:
+		return
+	var sp: Vector2 = g._raft_screen_pos()
+	_check(sp.x > 0 and sp.x < 360 and sp.y > 110 and sp.y < 640, "raft is on screen (%s)" % sp)
+	g._toggle_card() # 今日のカードをしまって、島をひろく見た状態（いかだはカードの下にあることが多い）
+	await get_tree().create_timer(0.5).timeout
+	sp = g._raft_screen_pos()
+	_tap(sp)
+	await _frames(2)
+	_check(g.raft_ui != null and is_instance_valid(g.raft_ui), "tapping the raft opens the chooser (at %s)" % sp)
+	if g.raft_ui == null:
+		g._toggle_card()
+		return
+	_check(not g.expand_btn.visible or not g.expand_btn.is_visible_in_tree(), "expand pill hidden while the chooser is open")
+	_check(not g._visit_code("not a code!"), "a bad code does not travel")
+	_check(g.main.current == g, "still on the island")
+	g.raft_ui.queue_free()
+	g._toggle_card()
+	await get_tree().create_timer(0.5).timeout

@@ -1534,7 +1534,7 @@ func _gui_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var pos: Vector2 = event.position
-	if pos.y < 110 or (card and card.get_global_rect().has_point(pos)):
+	if pos.y < 110 or (card and card.is_visible_in_tree() and card.get_global_rect().has_point(pos)):
 		return
 	var best = null
 	var bd := 42.0
@@ -1545,6 +1545,12 @@ func _gui_input(event: InputEvent) -> void:
 		if d < bd:
 			bd = d
 			best = w
+	# 桟橋の乗り物（いかだ）：押すと行き先えらび（友だちの島・お店の島）。おばけの方が近ければ、おばけ
+	if not _vis() and parked and is_instance_valid(parked) and not busy:
+		var rd := _raft_screen_pos().distance_to(pos)
+		if rd < 46.0 and (best == null or rd < bd):
+			_open_raft()
+			return
 	if best == null:
 		return
 	var o: Obake3D = best.o
@@ -2439,6 +2445,19 @@ func _talk_ui(show: bool) -> void:
 			talk_hidden.append(c)
 
 
+## 確認用：いかだを押したのと同じ
+func demo_raft() -> void:
+	if FriendIslands.all().is_empty(): # 撮影用に、友だちの島を 2 つ（自分の島のコードを借りる）
+		var nick := GameState.nickname
+		for nm in ["Mika", "Ren"]:
+			GameState.nickname = nm
+			var d := GameState.decode_island(GameState.island_code(_movable_keys()))
+			d.code = GameState.island_code(_movable_keys())
+			FriendIslands.record(d)
+		GameState.nickname = nick
+	_open_raft()
+
+
 ## 確認用：島を寄せる（ホイールで 5 回ぶん）
 func demo_zoom() -> void:
 	_zoom_by(pow(0.9, 5))
@@ -2813,6 +2832,111 @@ func _park_vehicle() -> void:
 	world.add_child(parked)
 
 
+func _raft_screen_pos() -> Vector2:
+	return View3D.unproject(cam, parked.global_position + Vector3(0, 0.25, 0))
+
+
+## いかだの行き先えらび：友だちの島（前にコードで行った島＋コードを入れる）・お店の島（働いたお店）
+func _open_raft() -> void:
+	if raft_ui and is_instance_valid(raft_ui):
+		raft_ui.queue_free()
+	Kit.play(self, "pop", 1.1)
+	raft_ui = Control.new()
+	raft_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(raft_ui)
+	var dim := ColorRect.new()
+	dim.color = Color(0.08, 0.06, 0.14, 0.5)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	raft_ui.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(16, 14)))
+	p.position = Vector2(18, 90)
+	p.size = Vector2(324, 0)
+	raft_ui.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	v.custom_minimum_size = Vector2(292, 0)
+	p.add_child(v)
+	var head := HBoxContainer.new()
+	var ttl := Kit.text(tr("R2_RAFT_TITLE"), 19, Color("2a2233"), true)
+	ttl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(ttl)
+	var close := Kit.button("×", Color(1, 1, 1, 0.9), func(): raft_ui.queue_free(), Color("6a5f70"), 34, 16)
+	close.custom_minimum_size.x = 40
+	head.add_child(close)
+	v.add_child(head)
+	# 友だちの島
+	v.add_child(Kit.text(tr("R2_RAFT_FRIENDS"), 14, Color("8a5bd6"), true))
+	var friends := FriendIslands.all()
+	if friends.is_empty():
+		v.add_child(I18n.wrap(Kit.text(tr("R2_RAFT_FRIENDS_NONE"), 12, Color("6a5f70"))))
+	for f in friends.slice(0, 4):
+		var code: String = f.code
+		v.add_child(_raft_row(tr("R2_RAFT_ISLAND") % [f.name, int(f.level) + 1], Color("f3ecff"), Color("5a4ab0"), func(): _visit_code(code)))
+	var code_row := HBoxContainer.new()
+	code_row.add_theme_constant_override("separation", 6)
+	var le := LineEdit.new()
+	le.placeholder_text = tr("R2_RAFT_CODE_HINT")
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_edit(le)
+	le.add_theme_font_override("font", Kit.bold())
+	le.add_theme_font_size_override("font_size", 13)
+	code_row.add_child(le)
+	var bad := I18n.wrap(Kit.text("", 11, Color("c0473b")))
+	var go := Kit.button(tr("R2_RAFT_GO"), Color("8b7bff"), func():
+		if not _visit_code(le.text):
+			bad.text = tr("R2_RAFT_BAD"), Color.WHITE, 38, 14)
+	go.custom_minimum_size.x = 64
+	code_row.add_child(go)
+	v.add_child(Kit.text(tr("R2_RAFT_CODE"), 12, Color("6a5f70"), true))
+	v.add_child(code_row)
+	v.add_child(bad)
+	# お店の島（働いたお店。まだ無ければ見本）
+	v.add_child(Kit.text(tr("R2_RAFT_SHOPS"), 14, Color("3b8a7a"), true))
+	var ids := ShopCulture.worked_shops()
+	var sample := ids.is_empty()
+	if sample:
+		ids = [Invites.SAMPLE_LISTING, "cvs_machikado", "bk_komugi"]
+	for id in ids.slice(0, 4):
+		var lid: String = id
+		var nm := JobListings.store_name(lid) + ("  (%s)" % tr("SHOPS_SAMPLE") if sample else "")
+		v.add_child(_raft_row(nm, Color("e6f4f0"), Color("2f6e5f"), func(): _visit_shop_island(lid)))
+	p.pivot_offset = Vector2(162, 60)
+	p.scale = Vector2(0.92, 0.92)
+	create_tween().tween_property(p, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _raft_row(t: String, bg: Color, fg: Color, cb: Callable) -> Button:
+	var b := Kit.button(t + "  ›", bg, cb, fg, 40, 14)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	b.clip_text = true
+	return b
+
+
+## 友だちの島へ（自分の乗り物で海を渡ってから）。読めないコードなら false
+func _visit_code(text: String) -> bool:
+	var code := FriendIslands.parse_code(text)
+	# コードの字（base64url）でなければ、読む前に断る
+	var ok := RegEx.create_from_string("^[A-Za-z0-9+/=_-]+$").search(code) != null
+	var d := GameState.decode_island(code) if ok else {}
+	if d.is_empty():
+		return false
+	d.code = code
+	if GameState.has_save():
+		GameState.save()
+	GameState.visit = d
+	main.go("travel")
+	return true
+
+
+func _visit_shop_island(listing_id: String) -> void:
+	if GameState.has_save():
+		GameState.save()
+	GameState.visit = ShopCulture.visit_data(listing_id)
+	main.go("travel")
+
+
 ## しまってある物を島のまんなか近くに出して、選ぶ
 func _place_from_stock(id: String) -> void:
 	var at := _free_spot()
@@ -3147,6 +3271,7 @@ func _start_visit() -> void:
 	top.add_child(back)
 	night = 0.0
 	_apply_time(0.0)
+	FriendIslands.record(V) # いかだの行き先えらびの「友だちの島」に並ぶ
 	_clear_card()
 	card_box.add_child(Kit.text(tr("%sの島に、おでかけ") % V.name, 18, Color("2a2233"), true))
 	card_box.add_child(Kit.text(tr("おばけ %d 体・島 Lv%d") % [V.residents.size() + 1, int(V.level) + 1], 14, Color("6a5f70")))
