@@ -29,7 +29,6 @@ var garden_label: Label
 var poi_row: HBoxContainer
 var card: PanelContainer
 var card_box: VBoxContainer
-var toast: PanelContainer
 var goals_btn: Button
 var rhythm_chip: Button
 var meters: PanelContainer
@@ -75,6 +74,9 @@ func _reveal_outfits() -> void:
 		return
 	await get_tree().create_timer(1.2).timeout
 	for id in list:
+		# 朝の庭の見せ場・知らせ（めあて・庭が育った）が終わってから、ひとつずつ
+		while is_inside_tree() and (busy or Toasts.busy()):
+			await get_tree().create_timer(0.3).timeout
 		if not is_inside_tree():
 			return
 		var r := OutfitReveal.open(self, id, GameState.host())
@@ -2051,28 +2053,9 @@ func _focus(at: Vector3, mode: int) -> void:
 	await tw.finished
 
 
+## 小さな知らせ。ほかの知らせ（めあて達成など）と重ならないよう、順番に出す（Toasts）
 func _toast(title: String, body: String) -> void:
-	if toast:
-		toast.queue_free()
-	toast = PanelContainer.new()
-	toast.add_theme_stylebox_override("panel", Kit.pill(Color(0.16, 0.13, 0.26, 0.9), 20, 0.2, Vector2(16, 10)))
-	toast.position = Vector2(30, 360)
-	toast.size = Vector2(300, 0)
-	add_child(toast)
-	var v := VBoxContainer.new()
-	toast.add_child(v)
-	var t := Kit.text(title, 18, Color("ffe27a"), true, HORIZONTAL_ALIGNMENT_CENTER)
-	v.add_child(t)
-	var b := Kit.wrap(Kit.text(body, 13, Color("f3eeff"), false, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(b)
-	toast.pivot_offset = Vector2(150, 30)
-	toast.scale = Vector2(0.6, 0.6)
-	var tw := create_tween()
-	tw.tween_property(toast, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_interval(2.2)
-	tw.tween_property(toast, "modulate:a", 0.0, 0.4)
-	var tt := toast
-	tw.tween_callback(func(): if is_instance_valid(tt): tt.queue_free())
+	Toasts.push(tr(title), tr(body), "info")
 
 
 # ---------- 朝 ----------

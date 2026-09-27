@@ -90,7 +90,6 @@ func _ready() -> void:
 
 
 var music: AudioStreamPlayer
-var goal_toast: PanelContainer
 
 
 ## めあて達成の知らせ（どの画面でも上から降りてくる）
@@ -101,28 +100,9 @@ func _on_goal(text: String, all_done: bool) -> void:
 	if current and current.get_script().resource_path.get_file() in ["screen_night.gd", "screen_hatch.gd"]:
 		GameState.pending_toasts.append([text, all_done])
 		return
-	if goal_toast and is_instance_valid(goal_toast):
-		goal_toast.queue_free()
-	goal_toast = PanelContainer.new()
-	goal_toast.add_theme_stylebox_override("panel", Kit.pill(Color("fff6d8"), 18, 0.25, Vector2(14, 8)))
-	goal_toast.position = Vector2(30, -60)
-	goal_toast.size = Vector2(300, 0)
-	goal_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(goal_toast)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
-	goal_toast.add_child(v)
-	v.add_child(Kit.text("めあて達成　めぐみ +3", 12, Color("b07a1a"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.text(text, 14, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	if all_done:
-		v.add_child(Kit.text("3つそろった！ 肉球コイン +10", 12, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	# ほかの知らせと重ならないよう、順番に（Toasts）
+	Toasts.push(tr("めあて達成　めぐみ +3"), tr(text) + ("\n" + tr("3つそろった！ 肉球コイン +10") if all_done else ""), "goal")
 	Kit.play(self, "bell", 1.3, -6)
-	var tw := goal_toast.create_tween()
-	tw.tween_property(goal_toast, "position:y", 56.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_interval(2.0)
-	tw.tween_property(goal_toast, "position:y", -80.0, 0.3).set_trans(Tween.TRANS_SINE)
-	var gt := goal_toast
-	tw.tween_callback(func(): if is_instance_valid(gt): gt.queue_free())
 
 
 func _music() -> void:
@@ -259,10 +239,9 @@ func go(screen_name: String, instant := false) -> void:
 func _flush_goals() -> void:
 	var list := GameState.pending_toasts.duplicate()
 	GameState.pending_toasts.clear()
+	await get_tree().create_timer(0.6).timeout
 	for g in list:
-		await get_tree().create_timer(0.6).timeout
-		_on_goal(g[0], g[1])
-		await get_tree().create_timer(2.2).timeout
+		_on_goal(g[0], g[1]) # 知らせは Toasts が順番に出す
 
 
 ## 確認用：OBAKE_SHOT="画面名,waitN,call:メソッド" で進めて撮る
