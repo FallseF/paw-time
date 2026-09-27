@@ -769,7 +769,7 @@ func _small_link(t: String, cb: Callable, color: Color) -> Button:
 
 
 ## スキルの記録（feature/skills）：その仕事の自分のバッジ（例: Register ★2 · 3 shifts）。
-## その仕事がはじめてなら「2 分のおさらい、する？」（任意。受けるかどうかとは関係ない）
+## はじめての仕事の「おさらい、する？」は、ここではなく受けたあとのカードで聞く（求人を見ている間は分かりにくい、というレビュー）
 func _skill_row(j: Dictionary) -> void:
 	var role := String(j.role)
 	var txt := Skills.badge_text(role)
@@ -779,10 +779,6 @@ func _skill_row(j: Dictionary) -> void:
 		row.add_child(SkillBadge.make(role, Skills.stars(role), 24))
 		row.add_child(_text(tr("SK_CARD_YOURS") % txt, 12, Color("3b5ba5"), true))
 		card_box.add_child(row)
-	if Skills.suggest_practice(role):
-		card_box.add_child(_small_link(tr("SK_CARD_SUGGEST"), func():
-			Skills.practice_role = role
-			_go("practice"), Color("3b5ba5")))
 
 
 func _accept() -> void:
@@ -824,6 +820,12 @@ func _accept() -> void:
 		status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
 	card_box.add_child(status)
 	card_box.add_child(_link(tr("CHAT_ASK_SHOP"), func(): ChatHub.open(self, ChatShops.thread_id_for(s)), Color("6a5bd6"))) # お店の猫に聞く（feature/cat-chat）
+	# はじめての仕事なら、シフトの前のおさらい（任意。受けたあとにだけ聞く）
+	var role := String(j.role)
+	if Skills.suggest_practice(role):
+		card_box.add_child(_small_link(tr("R2_ACCEPT_PRACTICE"), func():
+			Skills.practice_role = role
+			_go("practice"), Color("3b5ba5")))
 	var more := jobs.any(func(x): return not done_ids.has(x.id))
 	card_box.add_child(Kit.button(tr("JOB_BACK_LIST") if more else tr("JOB_DONE"), ORANGE, _next))
 	_pop_card()

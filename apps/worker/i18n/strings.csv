@@ -1747,6 +1747,7 @@ R2_WT_PAY_HOW,%s × %s · your registered wage,%s × %s・登録した時給か�
 R2_WT_PAY_NOTE,The game never handles your pay.,お給料そのものは、ゲームでは扱いません
 R2_WT_PAY_NONE,No hourly wage on this shift,このシフトには時給の登録がありません
 R2_WT_H,%dh %02dm,%d時間%02d分
+R2_ACCEPT_PRACTICE,"Want a quick practice before your shift? (2 min, optional) ›",シフトの前に、ちょっとおさらいする？（2分・任意）›
 EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
 川べりは、夕方 5 時から,The river opens at 5 p.m.,川べりは、夕方 5 時から
 今日の仕事は、おしまい,Work's done for today,今日の仕事は、おしまい
