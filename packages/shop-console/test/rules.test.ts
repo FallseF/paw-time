@@ -4,6 +4,7 @@ import {
   buildImprovementReport,
   buildIsland,
   checkMinimumWage,
+  createSample,
   createStore,
   landmarkLevel,
   matchFaq,
@@ -36,12 +37,34 @@ test("minimum wage: San Francisco is $19.61 from 2026-07-01 and $19.18 before", 
   assert.equal(checkMinimumWage(19.2, "sf", ["2026-06-30", "2026-07-02"]).ok, false);
 });
 
+test("minimum wage: Tokyo is ¥1,280 from 2026-10-01 and ¥1,226 the day before", () => {
+  const before = checkMinimumWage(1226, "jp", ["2026-09-30"]);
+  assert.deepEqual([before.ok, before.minimum, before.from], [true, 1226, "2025-10-03"]);
+  const after = checkMinimumWage(1226, "jp", ["2026-10-01"]);
+  assert.deepEqual([after.ok, after.minimum, after.from, after.shortBy], [false, 1280, "2026-10-01", 54]);
+  assert.equal(checkMinimumWage(1280, "jp", ["2026-10-01"]).ok, true);
+  // A job that spans the change must pay the new rate.
+  assert.equal(checkMinimumWage(1250, "jp", ["2026-09-30", "2026-10-01"]).ok, false);
+});
+
 test("minimum wage: the job form refuses a wage below the local minimum", () => {
   assert.deepEqual(validateJob(job(21), "sf"), []);
   const errors = validateJob(job(19.5), "sf");
   assert.deepEqual(errors, [{ field: "wage", code: "below_minimum", minimum: 19.61 }]);
   assert.equal(validateJob(job(1200), "jp")[0]?.code, "below_minimum");
-  assert.deepEqual(validateJob(job(1250), "jp"), []);
+  assert.deepEqual(validateJob(job(1280), "jp"), []);
+  assert.deepEqual(validateJob(job(1250, "2026-09-30"), "jp"), []);
+});
+
+test("minimum wage: every seeded job clears the minimum on its slot dates, after the 2026 raise too", () => {
+  for (const region of ["sf", "jp"] as const) {
+    for (const realNow of [new Date("2026-09-27T03:00:00Z"), new Date("2026-10-15T03:00:00Z")]) {
+      for (const j of createSample(region, realNow).jobs) {
+        const check = checkMinimumWage(j.wage, region, j.slots.map((s) => s.date));
+        assert.equal(check.ok, true, `${region} ${j.id} pays ${j.wage} < ${check.minimum} on ${check.date}`);
+      }
+    }
+  }
 });
 
 test("minimum wage: the store will not save or publish an underpaid job", () => {

@@ -1,0 +1,66 @@
+{
+  "bare": {
+    "levels": {
+      "clock_tower": "0",
+      "fair_fountain": "0",
+      "guide_post": "0",
+      "lantern_path": "0",
+      "payday_bell": "0",
+      "rest_grove": "0",
+      "welcome_arch": "0"
+    },
+    "pins": {
+      "shop": [
+        0.532,
+        0.214
+      ]
+    },
+    "stage": 0
+  },
+  "sample": {
+    "levels": {
+      "clock_tower": "3",
+      "fair_fountain": "s",
+      "guide_post": "2",
+      "lantern_path": "3",
+      "payday_bell": "1",
+      "rest_grove": "1",
+      "welcome_arch": "2"
+    },
+    "pins": {
+      "clock_tower": [
+        0.304,
+        0.071
+      ],
+      "fair_fountain": [
+        0.255,
+        0.47
+      ],
+      "guide_post": [
+        0.318,
+        0.455
+      ],
+      "lantern_path": [
+        0.481,
+        0.416
+      ],
+      "payday_bell": [
+        0.594,
+        0.564
+      ],
+      "rest_grove": [
+        0.696,
+        0.332
+      ],
+      "shop": [
+        0.532,
+        0.214
+      ],
+      "welcome_arch": [
+        0.408,
+        0.59
+      ]
+    },
+    "stage": 2
+  }
+}
