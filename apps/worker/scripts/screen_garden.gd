@@ -1329,6 +1329,7 @@ var _clock_t := 0.0
 
 func _process(delta: float) -> void:
 	_t += delta
+	_sync_expand()
 	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
 	_clock_t += delta
 	if _clock_t > 30.0:
@@ -1752,9 +1753,33 @@ func _place_expand() -> void:
 			return
 		expand_btn = Kit.button(tr("EXPAND_PILL"), Color("e9f6e6"), _expand_from_pill, Color("3f7d4f"), 30, 12)
 		add_child(expand_btn)
-	expand_btn.visible = show
+	expand_btn.visible = show and not overlay_open()
 	expand_btn.size = Vector2(0, 30)
 	expand_btn.position = Vector2(14, 598) if card_hidden or not card.visible else Vector2(card.position.x + 6, card.position.y - 14)
+
+
+## 島の上に、何かが重なって開いているか（しごとのシート・求人カード・シフトの入力・チャット・カタログ・お知らせの箱・届いた服）。
+## 開いている間は「＋ ひろげる」札を出さない（カードや見出しの上に札が乗ってしまうので）
+func overlay_open() -> bool:
+	for n in [catalog_ui, share_ui, raft_ui]:
+		if n and is_instance_valid(n) and not n.is_queued_for_deletion():
+			return true
+	for c in get_children():
+		if c is ScreenChat or c is OutfitReveal:
+			return true
+		if c is JobDesk and c.overlay_open():
+			return true
+	return false
+
+
+## 毎フレーム：重ね画面が開いたら札を隠し、閉じたら戻す
+func _sync_expand() -> void:
+	if expand_btn == null:
+		return
+	var want: bool = not _vis() and not editing and GameState.day >= 1 and IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS
+	var on := want and not overlay_open()
+	if expand_btn.visible != on:
+		expand_btn.visible = on
 
 
 ## 札から：島づくりに入って、広げられる場所のカードを開く（足りるところがあれば、そこを先に）
@@ -2662,6 +2687,7 @@ func _free_spot() -> Vector3:
 
 
 var catalog_ui: Control
+var raft_ui: Control # いかだ（船着き場）から開く、行き先えらび
 
 
 ## カタログ：肉球コインと材料を見せ、買える物は「買う」、足りない分は赤で出す

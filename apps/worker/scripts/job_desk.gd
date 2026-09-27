@@ -52,6 +52,17 @@ func _start() -> void:
 			_daily()
 
 
+## 島の上に、この係の何かが開いているか（シート・吹き出し・求人カード／評価・シフトの入力・チャット）。島の札を隠すのに使う
+func overlay_open() -> bool:
+	for n in [sheet, speech, viewer]:
+		if n and is_instance_valid(n) and not n.is_queued_for_deletion():
+			return true
+	for c in get_children():
+		if (c is ShiftForm or c is ScreenChat) and not c.is_queued_for_deletion():
+			return true
+	return false
+
+
 func _go(screen: String) -> void:
 	var m = garden.get("main")
 	if m:
