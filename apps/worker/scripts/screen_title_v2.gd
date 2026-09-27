@@ -705,7 +705,7 @@ func _start() -> void:
 	if _leaving:
 		return
 	_leaving = true
-	Kit.play(self, "tap", 1.0, -8)
+	Kit.play(self, "confirm")
 	if GameState.has_save():
 		_continue()
 	else:

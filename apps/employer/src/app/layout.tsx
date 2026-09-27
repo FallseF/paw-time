@@ -1,36 +1,35 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Shell, ShellFallback } from "../components/Shell";
+import { ConsoleProvider } from "../lib/console";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Paw Time for Business",
-  description: "求人、応募者、勤怠と企業の家を管理します。",
+  title: "Paw Time for Shops",
+  description: "Shop console for Paw Time: shifts, applicants, attendance, chat, reviews and invites. Runs on sample data.",
 };
 
-const navigation = [
-  ["/", "ホーム"],
-  ["/jobs", "求人"],
-  ["/applications", "応募者"],
-  ["/attendance", "勤怠"],
-  ["/evaluations", "評価"],
-  ["/house", "みんなの家"],
-] as const;
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1115" },
+  ],
+};
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="ja">
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&display=swap" />
+      </head>
       <body>
-        <div className="shell">
-          <aside className="sidebar">
-            <div className="brand"><span>🐾</span><div><strong>Paw Time</strong><small>for Business</small></div></div>
-            <nav>
-              {navigation.map(([href, label]) => <Link href={href} key={href}>{label}</Link>)}
-            </nav>
-            <div className="organization"><small>現在の店舗</small><strong>カフェ こもれび</strong></div>
-          </aside>
-          <main>{children}</main>
-        </div>
+        <ConsoleProvider fallback={<ShellFallback />}>
+          <Shell>{children}</Shell>
+        </ConsoleProvider>
       </body>
     </html>
   );

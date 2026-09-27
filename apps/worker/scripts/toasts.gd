@@ -46,6 +46,8 @@ func _next() -> void:
 	_showing = true
 	var t: Array = _queue.pop_front()
 	var goal: bool = t[2] == "goal"
+	if not goal and not Sfx.recently(0.3): # めあては main.gd がごほうびの音を鳴らす。ボタンの音の直後にも重ねない
+		Kit.play(self, "toast")
 	var p := PanelContainer.new()
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if goal:

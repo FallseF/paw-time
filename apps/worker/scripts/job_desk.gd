@@ -962,7 +962,7 @@ func _day_tab(i: int) -> Button:
 		b.add_theme_color_override(k, fg)
 	b.pressed.connect(func():
 		if i != day_i:
-			Kit.play(self, "tap", 1.2)
+			Kit.play(self, "tab")
 			_set_day(i))
 	return b
 
@@ -971,7 +971,7 @@ func _go_day(d: int) -> void:
 	var n := clampi(day_i + d, 0, day_list.size() - 1)
 	if n == day_i:
 		return
-	Kit.play(self, "tap", 1.0 + 0.1 * d)
+	Kit.play(self, "tab", 1.0 + 0.06 * d)
 	_set_day(n)
 
 
@@ -1332,7 +1332,7 @@ func _open_review(s: Dictionary) -> void:
 	rv_support_btn.add_theme_font_override("font", Kit.black())
 	rv_support_btn.add_theme_font_size_override("font_size", 11)
 	rv_support_btn.pressed.connect(func():
-		Kit.play(self, "tap", 1.1)
+		Kit.play(self, "toggle")
 		rv_support = not rv_support
 		_review_refresh())
 	card_box.add_child(rv_support_btn)
@@ -1361,7 +1361,7 @@ func _review_chips(ids: Array, kind: String) -> HFlowContainer:
 		c.add_theme_font_size_override("font_size", 11)
 		c.set_meta("tag", id)
 		c.pressed.connect(func():
-			Kit.play(self, "tap", 1.1)
+			Kit.play(self, "toggle")
 			var d: Dictionary = rv_tags if kind == "tag" else rv_issues
 			d[id] = not d.get(id, false)
 			_review_refresh())
