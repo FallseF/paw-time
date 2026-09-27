@@ -2754,7 +2754,8 @@ func _dock_list(list: VBoxContainer) -> void:
 		h.add_child(info)
 		info.add_child(Kit.text(Vehicles.name_of(id), 14, Color("2a2233"), true))
 		if vd.get("premium", false):
-			info.add_child(Kit.text("¥%d · %s" % [int(vd.yen), tr("KIT_UI_MOCK")], 10, Color("8a5bd6")))
+			# 「見本のストア（本当の支払いはありません）」は長いので折り返す（折り返さないと、行が画面の右へはみ出して × と「買う」が隠れる）
+			info.add_child(Kit.wrap(Kit.text("¥%d · %s" % [int(vd.yen), tr("KIT_UI_MOCK")], 10, Color("8a5bd6"))))
 			h.add_child(Kit.button(tr("KIT_UI_BUY"), Color("e9e2ff"), func(): _toast(Vehicles.name_of(id), tr("KIT_UI_MOCK")), Color("6a5bd6"), 34, 13))
 		elif Vehicles.owned().has(id):
 			var riding := Vehicles.current() == id
