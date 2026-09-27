@@ -193,6 +193,7 @@ export const InsightsShopViewRowSchema = z.object({
 });
 
 export { INSIGHTS_AREAS, insightsAreaOf, type InsightsArea } from "./areas";
+export { INSIGHTS_LOCALES, INSIGHTS_SKINS, isInsightsLocale, type InsightsCurrency, type InsightsLocale, type InsightsSkin } from "./skins";
 
 const count = z.number().int().nonnegative();
 
@@ -263,6 +264,20 @@ export const InsightsSignalWeekSchema = z.object({
   no_shows: z.number().int().nullable(),
 });
 
+/** Pay on shop-side postings, in the skin's currency (simulated pilot only; live has no wages yet). */
+export const InsightsPaySchema = z.object({
+  currency: z.enum(["USD", "JPY"]),
+  shops: z.array(
+    z.object({
+      shop: z.string(),
+      hourly_wage: z.number(), // base (non-night) hourly wage
+      /** Share of accepted jobs per pay style; null when fewer than 5 workers used that style. */
+      pay_styles: z.array(z.object({ key: z.string(), share: cell })),
+    }),
+  ),
+  listings: z.array(z.object({ shop: z.string(), band: z.string(), hourly_wage: z.number() })),
+});
+
 export const InsightsRecruitSchema = z.object({
   weeks: z.array(z.string()),
   /** Last 4 weeks vs the 4 before. */
@@ -310,10 +325,13 @@ export const InsightsRecruitSchema = z.object({
     behavior: z.object({ pairs: cell, repeat_rate: cell }),
     shops: z.array(z.object({ shop: z.string(), pairs: count, repeat_rate: cell, strong_signal_share: cell, strong_repeat_rate: cell })),
   }),
+  /** Added with locale skins; optional so older payloads still parse. */
+  pay: InsightsPaySchema.optional(),
 });
 export type InsightsRecruit = z.infer<typeof InsightsRecruitSchema>;
 export type InsightsRiskRow = z.infer<typeof InsightsRiskRowSchema>;
 export type InsightsFillRow = z.infer<typeof InsightsFillRowSchema>;
+export type InsightsPay = z.infer<typeof InsightsPaySchema>;
 export type InsightsSignalWeek = z.infer<typeof InsightsSignalWeekSchema>;
 
 export const InsightsAggregateSchema = z.object({
@@ -380,6 +398,8 @@ export const InsightsMetricsResponseSchema = z.object({
   synthetic: z.boolean(),
   label: z.string(),
   storage: InsightsStorageStatusSchema,
+  /** Setting of the simulated pilot (lang=en: San Francisco / USD, lang=ja: Japan / JPY). Absent in live mode. */
+  skin: z.object({ locale: z.enum(["en", "ja"]), place: z.string(), currency: z.enum(["USD", "JPY"]), time_zone: z.string() }).optional(),
   data: InsightsAggregateSchema,
 });
 

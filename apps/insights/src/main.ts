@@ -4,10 +4,11 @@
 // policy, the detailed report charts and a live activity drawer for the demo.
 import type { InsightsAggregate, InsightsFeedResponse, InsightsMetricsResponse } from "@paw-time/api-contracts";
 import type { Chart } from "chart.js";
-import { CALC_DEFAULTS, pilotValue, type CalcInput } from "./calc";
-import { esc, feedText, fillTemplate } from "./format";
+import { CALC_DEFAULTS_BY_CURRENCY, pilotValue, type CalcInput } from "./calc";
+import { currencyOf, currencySymbol, esc, feedText, fillTemplate, fmtMoney, type Currency } from "./format";
 import { I18N, type Dict, type Lang } from "./i18n";
 import { UI, type UiDict } from "./i18n-ui";
+import { skinDict, skinUi } from "./skin";
 import {
   applyQuery, COLUMNS, DEFAULT_VISIBLE, listingRows, shopRows, signalRows, supplyRows, toCsv, VIEWS,
   type Column, type Filter, type Query, type Row, type SavedView, type TableId, type Value, type ViewId,
@@ -46,7 +47,8 @@ const state = {
   feedTimer: 0 as number | undefined,
   seenFeed: new Set<string>(),
   heatArea: "all",
-  calc: { ...CALC_DEFAULTS } as CalcInput,
+  // One set of calculator inputs per currency, so switching language keeps each set's edits.
+  calc: { USD: { ...CALC_DEFAULTS_BY_CURRENCY.USD }, JPY: { ...CALC_DEFAULTS_BY_CURRENCY.JPY } } as Record<Currency, CalcInput>,
   popover: null as null | "filter" | "columns",
 };
 
@@ -79,13 +81,20 @@ function persist() {
   }
 }
 
-const d = (): Dict => I18N[state.lang];
-const u = (): UiDict => UI[state.lang];
+// The simulated pilot wears a locale skin (en: San Francisco, ja: Japan); live keeps the game's names.
+const SKIN_D = { en: skinDict(I18N.en, "en"), ja: skinDict(I18N.ja, "ja") } as Record<Lang, Dict>;
+const SKIN_U = { en: skinUi(UI.en, "en"), ja: skinUi(UI.ja, "ja") } as Record<Lang, UiDict>;
 const isSim = () => state.mode === "simulated";
+const d = (): Dict => (isSim() ? SKIN_D : I18N)[state.lang];
+const u = (): UiDict => (isSim() ? SKIN_U : UI)[state.lang];
 const locale = () => (state.lang === "ja" ? "ja-JP" : "en-US");
 const n = (v: number | null | undefined, digits = 0) => (v == null ? "—" : new Intl.NumberFormat(locale(), { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(v));
 const pct = (v: number | null | undefined) => (v == null ? "—" : `${(v * 100).toFixed(Math.abs(v) < 0.1 && v !== 0 ? 1 : 0)}%`);
-const yen = (v: number) => `¥${new Intl.NumberFormat(locale(), { maximumFractionDigits: 0 }).format(Math.round(v))}`;
+/** Money follows the language (en: USD, ja: JPY) in both modes. */
+const currency = (): Currency => currencyOf(state.lang);
+const money = (v: number, cents = false) => fmtMoney(v, currency(), { cents });
+/** Wages carry the currency of the payload they came from. */
+const wage = (v: number) => fmtMoney(v, payload()?.data.recruit?.pay?.currency ?? currency(), { cents: true, perHour: u().perHour });
 const lbl = (group: string | undefined, key: string): string => {
   if (!group) return key;
   const t = u() as unknown as Record<string, Record<string, string>>;
@@ -120,7 +129,7 @@ function tableUi(key: string, view?: SavedView): TableUi {
 
 // ---- Data ----------------------------------------------------------------------------
 
-const metricsKey = () => (isSim() ? "simulated" : `live:${state.demoOnly}`);
+const metricsKey = () => (isSim() ? `simulated:${state.lang}` : `live:${state.demoOnly}`);
 function payload(): InsightsMetricsResponse | null {
   const m = state.metrics.get(metricsKey());
   return m && !("error" in m) ? m : null;
@@ -134,7 +143,7 @@ function rowsFor(table: TableId, a: InsightsAggregate): Row[] {
 
 async function refresh() {
   const key = metricsKey();
-  const url = isSim() ? `${API}/v1/insights/metrics?mode=simulated` : `${API}/v1/insights/metrics?mode=live${state.demoOnly ? "&demo=1" : ""}`;
+  const url = isSim() ? `${API}/v1/insights/metrics?mode=simulated&lang=${state.lang}` : `${API}/v1/insights/metrics?mode=live${state.demoOnly ? "&demo=1" : ""}`;
   try {
     const r = await fetch(url, { cache: "no-store" });
     if (!r.ok) throw new Error(String(r.status));
@@ -220,6 +229,8 @@ function cellHtml(c: Column, v: Value | undefined): string {
       return delta(v as number, c.better, `${signed((v as number) * 100, 1)} ${u().pts}`);
     case "stars":
       return `${(v as number).toFixed(2)}`;
+    case "wage":
+      return esc(wage(v as number));
     case "dstars":
       return delta(v as number, c.better, `${signed(v as number, 2)}★`);
     case "risk":
@@ -236,7 +247,7 @@ function cellText(c: Column, v: Value | undefined): string {
   if (c.group || c.fmt === "risk") return lbl(c.fmt === "risk" ? "risk" : c.group, String(v));
   return String(v);
 }
-const isNumeric = (c: Column) => ["int", "num1", "pct", "pp", "stars", "dstars"].includes(c.fmt);
+const isNumeric = (c: Column) => ["int", "num1", "pct", "pp", "stars", "dstars", "wage"].includes(c.fmt);
 const colLabel = (c: Column) => u().cols[c.key] ?? c.key;
 
 // ---- Shell -------------------------------------------------------------------------------
@@ -407,7 +418,7 @@ function tableShellHtml(table: TableId): string {
 
 function filterLabel(c: Column, f: Filter): string {
   const t = u();
-  const val = (x: string | number) => (typeof x === "number" ? (c.fmt === "pct" || c.fmt === "pp" ? pct(x) : n(x, c.fmt === "num1" ? 1 : 0)) : lbl(c.group ?? (c.fmt === "risk" ? "risk" : undefined), x));
+  const val = (x: string | number) => (typeof x === "number" ? (c.fmt === "pct" || c.fmt === "pp" ? pct(x) : c.fmt === "wage" ? wage(x) : n(x, c.fmt === "num1" ? 1 : 0)) : lbl(c.group ?? (c.fmt === "risk" ? "risk" : undefined), x));
   const v = Array.isArray(f.value) ? f.value.map(val).join(", ") : val(f.value);
   return `${colLabel(c)} ${t.ops[f.op]} ${v}`;
 }
@@ -505,7 +516,7 @@ function renderFilterValue() {
   if (!ct || !p || !sel || !box) return;
   const c = COLUMNS[ct.table].find((x) => x.key === sel.value)!;
   if (isNumeric(c)) {
-    const unit = c.fmt === "pct" || c.fmt === "pp" ? "%" : "";
+    const unit = c.fmt === "pct" || c.fmt === "pp" ? "%" : c.fmt === "wage" ? currencySymbol(p.data.recruit?.pay?.currency ?? currency()) : "";
     box.innerHTML = `<div class="op-row"><select name="op"><option value="gte">≥</option><option value="lte">≤</option></select><input name="num" type="number" step="any" required inputmode="decimal"/>${unit ? `<span class="unit">${unit}</span>` : ""}</div>`;
   } else {
     const values = [...new Set(rowsFor(ct.table, p.data).map((r) => r[c.key]).filter((v): v is string => typeof v === "string"))];
@@ -521,7 +532,9 @@ function csvExport() {
   const all = COLUMNS[ct.table];
   const cols = ui.columns.map((k) => all.find((c) => c.key === k)).filter((c): c is Column => !!c);
   const rows = applyQuery(rowsFor(ct.table, p.data), ui.query, (row) => cols.map((c) => cellText(c, row[c.key])).join(" "));
-  const csv = toCsv(rows, cols, colLabel, (c, v) => lbl(c.group ?? (c.fmt === "risk" ? "risk" : undefined), v));
+  const payCur = p.data.recruit?.pay?.currency;
+  const header = (c: Column) => (c.fmt === "wage" && payCur ? `${colLabel(c)} (${payCur}/h)` : colLabel(c));
+  const csv = toCsv(rows, cols, header, (c, v) => lbl(c.group ?? (c.fmt === "risk" ? "risk" : undefined), v));
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -744,8 +757,11 @@ function detailHtml(row: Row, a: InsightsAggregate): string {
     const issues = `<section class="dp-sec"><h3>${esc(t.detailIssues)}</h3>${risk?.issue_tags.length ? `<div class="reasons">${risk.issue_tags.map((x) => `<span class="tag">${esc(lbl("topics", x.key))} · ${esc(fillTemplate(d().workersN, { n: n(x.workers) }))}</span>`).join("")}</div>` : `<p class="muted small">${esc(t.detailNoIssues)}</p>`}</section>`;
     const listings = r.fill.rows.filter((x) => x.shop === shop);
     const lst = listings.length
-      ? `<section class="dp-sec"><h3>${esc(t.detailListings)}</h3><table class="mini-t"><thead><tr><th>${esc(t.cols.band!)}</th><th class="num">${esc(t.cols.predicted_fill!)}</th><th class="num">${esc(t.cols.no_show_risk!)}</th><th>${esc(t.cols.history!)}</th></tr></thead><tbody>${listings
-          .map((x) => `<tr><td>${esc(lbl("bands", x.band))}</td><td class="num">${pct(x.predicted_fill)}</td><td class="num">${pct(x.no_show_risk)}</td><td>${sparkline(x.history, { w: 80, h: 20 })}</td></tr>`)
+      ? `<section class="dp-sec"><h3>${esc(t.detailListings)}</h3><table class="mini-t"><thead><tr><th>${esc(t.cols.band!)}</th><th class="num">${esc(t.cols.predicted_fill!)}</th><th class="num">${esc(t.cols.no_show_risk!)}</th>${r.pay ? `<th class="num">${esc(t.cols.hourly_wage!)}</th>` : ""}<th>${esc(t.cols.history!)}</th></tr></thead><tbody>${listings
+          .map((x) => {
+            const w = r.pay?.listings.find((p) => p.shop === x.shop && p.band === x.band)?.hourly_wage;
+            return `<tr><td>${esc(lbl("bands", x.band))}</td><td class="num">${pct(x.predicted_fill)}</td><td class="num">${pct(x.no_show_risk)}</td>${r.pay ? `<td class="num">${w == null ? NA() : esc(wage(w))}</td>` : ""}<td>${sparkline(x.history, { w: 80, h: 20 })}</td></tr>`;
+          })
           .join("")}</tbody></table></section>`
       : "";
     return head(lbl("shops", shop), lbl("areas", String(row.area)), row.risk ? cellHtml(cols("shops", "risk"), row.risk) : "") +
@@ -756,6 +772,12 @@ function detailHtml(row: Row, a: InsightsAggregate): string {
         [colLabel(cols("shops", "fill_rate")), cellHtml(cols("shops", "fill_rate"), row.fill_rate)],
         [colLabel(cols("shops", "island_visitors")), cellHtml(cols("shops", "island_visitors"), row.island_visitors)],
         [colLabel(cols("shops", "top_landmark")), cellHtml(cols("shops", "top_landmark"), row.top_landmark)],
+        ...(row.hourly_wage != null
+          ? ([
+              [colLabel(cols("shops", "hourly_wage")), cellHtml(cols("shops", "hourly_wage"), row.hourly_wage)],
+              [colLabel(cols("shops", "pay_style")), cellHtml(cols("shops", "pay_style"), row.pay_style)],
+            ] as [string, string][])
+          : []),
       ]) + breakdown + signals + issues + lst + feeds(["air_work", "indeed", "townwork"]) + actions;
   }
   if (row.table === "listings") {
@@ -766,6 +788,7 @@ function detailHtml(row: Row, a: InsightsAggregate): string {
         [colLabel(c("predicted_fill")), cellHtml(c("predicted_fill"), row.predicted_fill)],
         [colLabel(c("no_show_risk")), cellHtml(c("no_show_risk"), row.no_show_risk)],
         [colLabel(c("openings_per_week")), cellHtml(c("openings_per_week"), row.openings_per_week)],
+        ...(row.hourly_wage != null ? ([[colLabel(c("hourly_wage")), cellHtml(c("hourly_wage"), row.hourly_wage)], [colLabel(c("no_show_rate")), cellHtml(c("no_show_rate"), row.no_show_rate)]] as [string, string][]) : []),
         [colLabel(c("fill_rate")), cellHtml(c("fill_rate"), row.fill_rate)],
         [colLabel(c("backtest_predicted")), cellHtml(c("backtest_predicted"), row.backtest_predicted)],
         [colLabel(c("backtest_actual")), cellHtml(c("backtest_actual"), row.backtest_actual)],
@@ -800,25 +823,28 @@ function pageHtml(id: "pilot" | "map" | "policy" | "reports", a: InsightsAggrega
   return policyHtml();
 }
 
-const CALC_FIELDS: { key: keyof CalcInput; kind: "int" | "pct" | "yen"; step: number }[] = [
+const CALC_FIELDS: { key: keyof CalcInput; kind: "int" | "pct" | "money"; step: number }[] = [
   { key: "shops", kind: "int", step: 1 },
   { key: "workers", kind: "int", step: 5 },
   { key: "shiftsPerWeek", kind: "int", step: 1 },
   { key: "currentFill", kind: "pct", step: 1 },
   { key: "noShowRate", kind: "pct", step: 0.5 },
-  { key: "fillFee", kind: "yen", step: 100 },
-  { key: "noShowCost", kind: "yen", step: 500 },
+  { key: "fillFee", kind: "money", step: 100 },
+  { key: "noShowCost", kind: "money", step: 500 },
   { key: "fillUplift", kind: "pct", step: 0.5 },
   { key: "noShowReduction", kind: "pct", step: 5 },
 ];
 
 function pilotHtml(): string {
   const t = u();
+  const cur = currency();
   const fields = CALC_FIELDS.map((f) => {
-    const v = state.calc[f.key];
+    const v = state.calc[cur][f.key];
     const shown = f.kind === "pct" ? Math.round(v * 1000) / 10 : v;
-    const unit = f.kind === "pct" ? (f.key === "fillUplift" ? t.pts : "%") : f.kind === "yen" ? "¥" : "";
-    return `<div class="field"><label for="calc-${f.key}">${esc(t.calc[f.key]!)}</label><div class="input-wrap">${f.kind === "yen" ? `<span class="pre">¥</span>` : ""}<input id="calc-${f.key}" type="number" min="0" step="${f.step}" value="${shown}" data-calc="${f.key}" data-kind="${f.kind}" inputmode="decimal"/>${unit && f.kind !== "yen" ? `<span class="post">${esc(unit)}</span>` : ""}</div><p class="help">${esc(t.calcNote[f.key]!)}</p></div>`;
+    const unit = f.kind === "pct" ? (f.key === "fillUplift" ? t.pts : "%") : "";
+    // Dollar inputs move in whole dollars ($1 / $5), yen in ¥100 / ¥500.
+    const step = f.kind === "money" && cur === "USD" ? f.step / 100 : f.step;
+    return `<div class="field"><label for="calc-${f.key}">${esc(t.calc[f.key]!)}</label><div class="input-wrap">${f.kind === "money" ? `<span class="pre">${currencySymbol(cur)}</span>` : ""}<input id="calc-${f.key}" type="number" min="0" step="${step}" value="${shown}" data-calc="${f.key}" data-kind="${f.kind}" inputmode="decimal"/>${unit ? `<span class="post">${esc(unit)}</span>` : ""}</div><p class="help">${esc(t.calcNote[f.key]!)}</p></div>`;
   }).join("");
   return `<div class="calc"><section class="panel calc-in"><div class="panel-h"><h2>${esc(t.assumptions)}</h2><span class="badge hyp">${esc(t.hypothesis)}</span><span class="spacer"></span><button type="button" class="btn ghost sm" data-act="calc-reset">${esc(t.resetDefaults)}</button></div><div class="fields">${fields}</div></section>
     <section class="panel calc-out" aria-live="polite"><div class="panel-h"><h2>${esc(t.results)}</h2><span class="badge hyp">${esc(t.hypothesis)}</span></div><div id="calc-out">${calcOutHtml()}</div><p class="help">${esc(t.calcFormula)}</p></section></div>`;
@@ -826,15 +852,15 @@ function pilotHtml(): string {
 
 function calcOutHtml(): string {
   const t = u();
-  const o = pilotValue(state.calc);
+  const o = pilotValue(state.calc[currency()]);
   const line = (k: string, v: string, cls = "") => `<div class="out-row ${cls}"><span>${esc(t.out[k]!)}</span><span class="num">${v}</span></div>`;
-  return `<div class="out-hero"><div class="kpi-k">${esc(t.out.total!)}</div><div class="out-total">${yen(o.total)}</div><div class="muted">${esc(t.out.annual!)} ${yen(o.annual)}</div></div>` +
+  return `<div class="out-hero"><div class="kpi-k">${esc(t.out.total!)}</div><div class="out-total">${money(o.total)}</div><div class="muted">${esc(t.out.annual!)} ${money(o.annual)}</div></div>` +
     line("postedPerMonth", n(o.postedPerMonth, 0)) +
     line("fillsGained", n(o.fillsGained, 1)) +
     line("noShowsAvoided", n(o.noShowsAvoided, 1)) +
-    line("valueFills", yen(o.valueFills)) +
-    line("valueNoShows", yen(o.valueNoShows)) +
-    line("perWorker", o.perWorker == null ? "—" : yen(o.perWorker), "sub");
+    line("valueFills", money(o.valueFills)) +
+    line("valueNoShows", money(o.valueNoShows)) +
+    line("perWorker", o.perWorker == null ? "—" : money(o.perWorker, currency() === "USD"), "sub");
 }
 
 function bindCalc() {
@@ -842,7 +868,7 @@ function bindCalc() {
     el.addEventListener("input", () => {
       const raw = Number(el.value);
       const key = el.dataset.calc as keyof CalcInput;
-      state.calc[key] = el.dataset.kind === "pct" ? raw / 100 : raw;
+      state.calc[currency()][key] = el.dataset.kind === "pct" ? raw / 100 : raw;
       document.getElementById("calc-out")!.innerHTML = calcOutHtml();
     });
   }
@@ -966,7 +992,10 @@ document.addEventListener("click", (e) => {
   if (l?.dataset.lang === "en" || l?.dataset.lang === "ja") {
     state.lang = l.dataset.lang;
     persist();
-    return render();
+    render();
+    // The simulated pilot is fetched per language (its setting and currency change).
+    if (isSim() && !state.metrics.has(metricsKey())) void refresh();
+    return;
   }
   if (target.closest(".nav-item")) {
     state.navOpen = false;
@@ -1042,7 +1071,7 @@ document.addEventListener("click", (e) => {
     return;
   }
   if (act === "calc-reset") {
-    state.calc = { ...CALC_DEFAULTS };
+    state.calc[currency()] = { ...CALC_DEFAULTS_BY_CURRENCY[currency()] };
     return render();
   }
 });

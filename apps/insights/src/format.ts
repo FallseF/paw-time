@@ -12,6 +12,29 @@ export const fmtPct = (v: number | null | undefined, digits = 0) => (v == null ?
 /** Difference of two rates as signed percentage points. */
 export const fmtPp = (v: number | null | undefined) => (v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : "±"}${Math.abs(v * 100).toFixed(1)} pt`);
 
+export type Currency = "USD" | "JPY";
+/** The currency each dashboard language is set in: en = San Francisco (USD), ja = Japan (JPY). */
+export const currencyOf = (lang: "en" | "ja"): Currency => (lang === "ja" ? "JPY" : "USD");
+export const currencySymbol = (c: Currency) => (c === "USD" ? "$" : "¥");
+
+/**
+ * Money in the given currency: "$24.50", "$1,240", "¥1,500". USD shows cents when asked
+ * (hourly pay, per-worker values) or when the amount has them; yen never has decimals.
+ * Always "¥" (Intl's ja-JP JPY would print the full-width "￥").
+ */
+export function fmtMoney(v: number | null | undefined, currency: Currency, opts: { cents?: boolean; perHour?: string } = {}): string {
+  if (v == null || !Number.isFinite(v)) return "—";
+  const neg = v < 0 ? "−" : "";
+  const abs = Math.abs(v);
+  let body: string;
+  if (currency === "JPY") body = new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 0 }).format(Math.round(abs));
+  else {
+    const cents = opts.cents ?? Math.round(abs * 100) % 100 !== 0;
+    body = new Intl.NumberFormat("en-US", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 }).format(cents ? abs : Math.round(abs));
+  }
+  return `${neg}${currencySymbol(currency)}${body}${opts.perHour ?? ""}`;
+}
+
 export const labelOf = (group: Record<string, string>, key: string) => group[key] ?? key;
 
 /** One anonymous feed line, e.g. "Job accepted · Register". */

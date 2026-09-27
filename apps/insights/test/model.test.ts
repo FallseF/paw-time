@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CALC_DEFAULTS, WEEKS_PER_MONTH, pilotValue } from "../src/calc";
-import { applyQuery, COLUMNS, listingStatus, riskLevel, supplyStatus, toCsv, VIEWS, type Row } from "../src/model";
+import { CALC_DEFAULTS, CALC_DEFAULTS_BY_CURRENCY, WEEKS_PER_MONTH, pilotValue } from "../src/calc";
+import type { InsightsAggregate } from "@paw-time/api-contracts";
+import { applyQuery, COLUMNS, listingRows, listingStatus, riskLevel, shopRows, supplyStatus, toCsv, VIEWS, type Row } from "../src/model";
 
 test("pilot calculator: monthly fills, no-shows avoided and yen value", () => {
   const out = pilotValue(CALC_DEFAULTS);
@@ -12,6 +13,22 @@ test("pilot calculator: monthly fills, no-shows avoided and yen value", () => {
   assert.ok(Math.abs(out.total - (posted * 0.03 * 1500 + posted * 0.75 * 0.05 * 0.2 * 5000)) < 1e-6);
   assert.ok(Math.abs(out.annual - out.total * 12) < 1e-6);
   assert.ok(Math.abs((out.perWorker ?? 0) - out.total / 60) < 1e-9);
+});
+
+test("pilot calculator in US dollars: same volumes, dollar values", () => {
+  const usd = CALC_DEFAULTS_BY_CURRENCY.USD;
+  assert.equal(CALC_DEFAULTS_BY_CURRENCY.JPY, CALC_DEFAULTS);
+  assert.equal(usd.fillFee, 12);
+  assert.equal(usd.noShowCost, 45);
+  const out = pilotValue(usd);
+  const yen = pilotValue(CALC_DEFAULTS);
+  assert.equal(out.fillsGained, yen.fillsGained, "only the money inputs differ");
+  assert.equal(out.noShowsAvoided, yen.noShowsAvoided);
+  const posted = 5 * 20 * WEEKS_PER_MONTH;
+  const expected = posted * 0.03 * 12 + posted * 0.75 * 0.05 * 0.2 * 45; // $156 + $146.25
+  assert.ok(Math.abs(out.total - expected) < 1e-6, String(out.total));
+  assert.ok(Math.abs(out.total - 302.25) < 1e-6);
+  assert.ok(Math.abs((out.perWorker ?? 0) - 302.25 / 60) < 1e-9);
 });
 
 test("pilot calculator: fill can't pass 100% and bad inputs count as zero", () => {
@@ -78,4 +95,26 @@ test("every saved view points at real columns", () => {
     for (const f of v.query.filters) assert.ok(keys.has(f.key), `${v.id}:filter ${f.key}`);
     if (v.query.sort) assert.ok(keys.has(v.query.sort.key), `${v.id}:sort`);
   }
+});
+
+test("shop and listing rows carry the payload's wages and the most common pay style", () => {
+  const recruit = {
+    at_risk: { rows: [], hidden_shops: 0 },
+    fit: { shops: [] },
+    interest: { rows: [] },
+    signals: [],
+    fill: { has_postings: true, rows: [{ shop: "bk_komugi", band: "morning", history: [], predicted_fill: 0.8, no_show_risk: 0.02 }] },
+    pay: {
+      currency: "USD",
+      shops: [{ shop: "bk_komugi", hourly_wage: 23, pay_styles: [{ key: "daily", share: 0.3 }, { key: "weekly", share: null }, { key: "monthly", share: 0.45 }] }],
+      listings: [{ shop: "bk_komugi", band: "morning", hourly_wage: 23 }],
+    },
+  };
+  const a = { recruit } as unknown as InsightsAggregate;
+  const [shop] = shopRows(a);
+  assert.equal(shop!.hourly_wage, 23);
+  assert.equal(shop!.pay_style, "monthly");
+  assert.equal(listingRows(a)[0]!.hourly_wage, 23);
+  const noPay = { recruit: { ...recruit, pay: undefined } } as unknown as InsightsAggregate;
+  assert.equal(shopRows(noPay)[0]!.hourly_wage, null, "live payloads have no wages");
 });

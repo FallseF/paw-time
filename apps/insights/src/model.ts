@@ -4,7 +4,7 @@ import type { InsightsAggregate } from "@paw-time/api-contracts";
 import { insightsAreaOf } from "@paw-time/api-contracts/areas";
 
 export type TableId = "shops" | "listings" | "supply" | "signals";
-export type Fmt = "text" | "enum" | "int" | "num1" | "pct" | "pp" | "stars" | "dstars" | "risk" | "status" | "spark" | "tags";
+export type Fmt = "text" | "enum" | "int" | "num1" | "pct" | "pp" | "stars" | "dstars" | "risk" | "status" | "spark" | "tags" | "wage";
 export interface Column {
   key: string;
   fmt: Fmt;
@@ -43,6 +43,8 @@ export const COLUMNS: Record<TableId, Column[]> = {
     { key: "no_show_rate", fmt: "pct", better: "down" },
     { key: "repeat_rate", fmt: "pct", better: "up" },
     { key: "strong_signal_share", fmt: "pct", better: "up" },
+    { key: "hourly_wage", fmt: "wage" },
+    { key: "pay_style", fmt: "enum", group: "payStyles" },
   ],
   listings: [
     { key: "shop", fmt: "enum", group: "shops" },
@@ -57,6 +59,7 @@ export const COLUMNS: Record<TableId, Column[]> = {
     { key: "backtest_actual", fmt: "pct" },
     { key: "fill_rate", fmt: "pct", better: "up" },
     { key: "no_show_rate", fmt: "pct", better: "down" },
+    { key: "hourly_wage", fmt: "wage" },
   ],
   supply: [
     { key: "area", fmt: "enum", group: "areas" },
@@ -88,8 +91,8 @@ export const COLUMNS: Record<TableId, Column[]> = {
 
 /** Columns shown by default (the rest are one click away in "Columns"). */
 export const DEFAULT_VISIBLE: Record<TableId, string[]> = {
-  shops: ["shop", "area", "risk", "risk_score", "workers", "return_delta", "trend", "repeat_pass", "issue_workers", "stars_change", "fill_rate", "repeat_rate"],
-  listings: ["shop", "band", "area", "status", "openings_per_week", "predicted_fill", "history", "no_show_risk", "backtest_actual"],
+  shops: ["shop", "area", "risk", "risk_score", "workers", "return_delta", "trend", "repeat_pass", "issue_workers", "stars_change", "fill_rate", "repeat_rate", "hourly_wage"],
+  listings: ["shop", "band", "area", "status", "openings_per_week", "hourly_wage", "predicted_fill", "history", "no_show_risk", "backtest_actual"],
   supply: ["area", "day", "band", "status", "available", "open_shifts", "cover"],
   signals: ["shop", "week", "workers", "next_day_return", "baseline", "return_delta", "invite_pass_share", "issue_workers", "stars_avg", "island_visitors", "fill_rate", "no_shows"],
 };
@@ -108,6 +111,8 @@ export function shopRows(a: InsightsAggregate): Row[] {
     const opened = weeks.reduce((s, x) => s + (x.openings ?? 0), 0);
     const filled = weeks.reduce((s, x) => s + (x.filled ?? 0), 0);
     const noShows = weeks.reduce((s, x) => s + (x.no_shows ?? 0), 0);
+    const pay = r.pay?.shops.find((x) => x.shop === shop);
+    const topPay = pay?.pay_styles.filter((x) => x.share != null).sort((x, y) => y.share! - x.share!)[0];
     return {
       id: `shop:${shop}`,
       table: "shops",
@@ -129,6 +134,8 @@ export function shopRows(a: InsightsAggregate): Row[] {
       no_show_rate: r.fill.has_postings && filled ? noShows / filled : null,
       repeat_rate: fit?.repeat_rate ?? null,
       strong_signal_share: fit?.strong_signal_share ?? null,
+      hourly_wage: pay?.hourly_wage ?? null,
+      pay_style: topPay?.key ?? null,
     };
   });
 }
@@ -157,6 +164,7 @@ export function listingRows(a: InsightsAggregate): Row[] {
     backtest_actual: x.backtest_actual,
     fill_rate: x.fill_rate,
     no_show_rate: x.no_show_rate,
+    hourly_wage: r.pay?.listings.find((p) => p.shop === x.shop && p.band === x.band)?.hourly_wage ?? null,
   }));
 }
 
@@ -315,14 +323,14 @@ export const VIEWS: SavedView[] = [
     id: "at-risk",
     table: "shops",
     query: { search: "", filters: [{ key: "risk_score", op: "gte", value: 30 }], sort: { key: "risk_score", dir: -1 } },
-    columns: ["shop", "area", "risk", "risk_score", "workers", "return_delta", "trend", "repeat_pass", "issue_tags", "stars_change"],
+    columns: ["shop", "area", "risk", "risk_score", "workers", "return_delta", "trend", "repeat_pass", "issue_tags", "stars_change", "hourly_wage"],
     feeds: ["air_work", "indeed"],
   },
   {
     id: "unfilled",
     table: "listings",
     query: { search: "", filters: [{ key: "status", op: "in", value: ["likely_unfilled", "no_show_risk"] }], sort: { key: "predicted_fill", dir: 1 } },
-    columns: ["shop", "band", "area", "status", "openings_per_week", "predicted_fill", "history", "no_show_risk", "backtest_predicted", "backtest_actual"],
+    columns: ["shop", "band", "area", "status", "openings_per_week", "hourly_wage", "predicted_fill", "history", "no_show_risk", "backtest_predicted", "backtest_actual"],
     feeds: ["townwork", "air_shift"],
   },
   {

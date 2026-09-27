@@ -1,14 +1,17 @@
 // Builds the Insights payloads: aggregate metrics (live or simulated) and the
 // anonymous "Live now" feed. Cached briefly per warm instance.
-import type {
-  InsightsFeedResponse,
-  InsightsMetricsResponse,
-  InsightsStorageStatus,
-  TelemetryPropValue,
+import {
+  INSIGHTS_SKINS,
+  type InsightsFeedResponse,
+  type InsightsLocale,
+  type InsightsMetricsResponse,
+  type InsightsStorageStatus,
+  type TelemetryPropValue,
 } from "@paw-time/api-contracts";
 import type { StoredBatch, TelemetryStore } from "../telemetry/store.js";
 import { aggregate, dayOf, type FlatEvent } from "./aggregate.js";
-import { SIM_NOW, SIM_START, generateSimulatedPilot } from "./synthetic.js";
+import { payAnswers } from "./pay.js";
+import { SIM_NOW, SIM_SHOP_PAY, SIM_START, generateSimulatedPilot, type SimulatedPilot } from "./synthetic.js";
 
 export function storageStatus(store: TelemetryStore, env: NodeJS.ProcessEnv = process.env): InsightsStorageStatus {
   if (store.kind !== "memory") return "connected";
@@ -19,20 +22,32 @@ export function storageStatus(store: TelemetryStore, env: NodeJS.ProcessEnv = pr
 const flatten = (batches: StoredBatch[]): FlatEvent[] =>
   batches.flatMap((b) => b.events.map((e) => ({ ...e, install_id: b.install_id })));
 
-let simCache: InsightsMetricsResponse | null = null;
+let simPilot: SimulatedPilot | null = null;
+const simCache = new Map<InsightsLocale, InsightsMetricsResponse>();
 
-export function simulatedMetrics(): InsightsMetricsResponse {
-  if (!simCache) {
-    const sim = generateSimulatedPilot();
-    simCache = {
+/**
+ * The simulated pilot in a locale skin: en = San Francisco / USD, ja = Japan / JPY.
+ * Both come from the same seeded model, so every metric and risk score is identical;
+ * only the setting (and the pay section's currency) changes.
+ */
+export function simulatedMetrics(locale: InsightsLocale = "en"): InsightsMetricsResponse {
+  let hit = simCache.get(locale);
+  if (!hit) {
+    const sim = (simPilot ??= generateSimulatedPilot());
+    const skin = INSIGHTS_SKINS[locale];
+    const data = aggregate(sim.events, { now: SIM_NOW, weekLabel: "index", startDay: dayOf(SIM_START), postings: sim.postings });
+    if (data.recruit) data.recruit.pay = payAnswers(sim.events, SIM_SHOP_PAY, skin);
+    hit = {
       mode: "simulated",
       synthetic: true,
       label: "Simulated 12-week pilot — synthetic data",
       storage: "connected",
-      data: aggregate(sim.events, { now: SIM_NOW, weekLabel: "index", startDay: dayOf(SIM_START), postings: sim.postings }),
+      skin: { locale, place: skin.place, currency: skin.currency, time_zone: skin.time_zone },
+      data,
     };
+    simCache.set(locale, hit);
   }
-  return simCache;
+  return hit;
 }
 
 type Cached<T> = { at: number; value: T };
