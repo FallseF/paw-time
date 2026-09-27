@@ -3,6 +3,7 @@ extends Node
 ##   - 船着き場のカタログが 360 の画面からはみ出さない
 ##   - 「＋ ひろげる」札は、しごとのシート・求人カードなどが開いている間は出ない
 ##   - 島の段のくわしく（庭 Lv / ポイ）と、左右の札（キセカエ・マイスキル・しごと・話す）が重ならない
+##   - 島の拡大・縮小（ホイール・二本の指でつまむ）。範囲の中に収まり、拡大してもおばけのタップが当たる
 ## OBAKE_NOSAVE=1 godot --headless --path . res://tests/test_island_ui.tscn
 
 var fails := 0
@@ -92,5 +93,87 @@ func _run() -> void:
 		_check(not mr.intersects(b.get_global_rect()), "island details panel covers the '%s' pill" % b.text)
 	g._toggle_meters()
 
+	await _zoom(g)
+
 	print("ISLAND UI TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	get_tree().quit(0 if fails == 0 else 1)
+
+
+func _wheel(g, up: bool) -> void:
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_WHEEL_UP if up else MOUSE_BUTTON_WHEEL_DOWN
+	e.pressed = true
+	e.factor = 1.0
+	e.position = Vector2(180, 330)
+	g._gui_input(e)
+
+
+func _touch(g, i: int, at: Vector2, pressed: bool) -> void:
+	var e := InputEventScreenTouch.new()
+	e.index = i
+	e.position = at
+	e.pressed = pressed
+	g._gui_input(e)
+
+
+func _drag(g, i: int, at: Vector2) -> void:
+	var e := InputEventScreenDrag.new()
+	e.index = i
+	e.position = at
+	g._gui_input(e)
+
+
+## 窓のピクセルに直して、本物の入力としてタップ（tests/tap_check.gd と同じ）
+func _tap(sp: Vector2) -> void:
+	for pressed in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = get_viewport().get_final_transform() * sp
+		ev.global_position = ev.position
+		get_viewport().push_input(ev)
+
+
+func _zoom(g) -> void:
+	var d0: float = g.cam.global_position.distance_to(g.cam_look)
+	for i in 3:
+		_wheel(g, true)
+	_check(g.zoom_to < 0.8, "wheel up zooms in (%.2f)" % g.zoom_to)
+	await get_tree().create_timer(0.6).timeout
+	var d1: float = g.cam.global_position.distance_to(g.cam_look)
+	_check(d1 < d0 * 0.8, "camera moved closer smoothly (%.2f -> %.2f)" % [d0, d1])
+	for i in 30:
+		_wheel(g, true)
+	_check(is_equal_approx(g.zoom_to, g.ZOOM_MIN), "zoom in is clamped (%.2f)" % g.zoom_to)
+	for i in 30:
+		_wheel(g, false)
+	_check(is_equal_approx(g.zoom_to, g.ZOOM_MAX), "zoom out is clamped (%.2f)" % g.zoom_to)
+	# 二本の指：ひろげると寄る（60 → 120 px で半分）
+	g.zoom_to = 1.0
+	_touch(g, 0, Vector2(150, 330), true)
+	_touch(g, 1, Vector2(210, 330), true)
+	_drag(g, 1, Vector2(270, 330))
+	_check(absf(g.zoom_to - 0.5) < 0.01, "pinch out halves the distance (%.2f)" % g.zoom_to)
+	var orbit0: float = g.orbit
+	var mm := InputEventMouseMotion.new()
+	mm.button_mask = MOUSE_BUTTON_MASK_LEFT
+	mm.relative = Vector2(-60, 0)
+	g._gui_input(mm)
+	_check(g.orbit == orbit0, "no orbit while pinching")
+	_touch(g, 1, Vector2(270, 330), false)
+	_touch(g, 0, Vector2(150, 330), false)
+	_check(g.touches.is_empty(), "fingers released")
+	await get_tree().create_timer(0.8).timeout
+	# 拡大したままでも、おばけのタップが当たる
+	var hit := false
+	for w in g.walkers:
+		var ob: Node3D = w.o
+		var sp := View3D.unproject(g.cam, ob.global_position + Vector3(0, 0.35, 0))
+		if sp.y < 140 or sp.y > 400 or sp.x < 20 or sp.x > 340:
+			continue
+		var n0 := ob.get_child_count()
+		_tap(sp)
+		await _frames(2)
+		hit = ob.get_child_count() > n0
+		break
+	_check(hit, "tap on an obake still works while zoomed in")

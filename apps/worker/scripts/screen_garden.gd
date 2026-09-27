@@ -115,6 +115,7 @@ func _build_world() -> void:
 	cam.position = cam.position * float(fit.scale) + fit.shift
 	cam.look_at(Vector3(0, 0.0, -0.4) + fit.shift)
 	cam_home = cam.transform
+	cam_look = Vector3(0, 0.0, -0.4) + fit.shift
 
 	var L: int = _L()
 	var t: int = _T()
@@ -1331,6 +1332,7 @@ func _process(delta: float) -> void:
 	_t += delta
 	_sync_expand()
 	_sync_hud()
+	_sync_zoom(delta)
 	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
 	_clock_t += delta
 	if _clock_t > 30.0:
@@ -1446,6 +1448,69 @@ func _center_count() -> int:
 ## 庭のおばけをタップすると、跳ねてひとこと
 var orbit := 0.0
 var cam_v := -1.6
+var cam_look := Vector3(0, 0, -0.4) # よこになぞる・拡大の中心
+## 島の拡大・縮小（つまむ・ホイール・トラックパッド）。1 = ふだん、小さいほど寄る
+const ZOOM_MIN := 0.5
+const ZOOM_MAX := 1.3
+var zoom := 1.0
+var zoom_to := 1.0
+var touches := {} # 指の番号 → 位置（2 本でつまむ）
+var pinch_d0 := 0.0
+var pinch_z0 := 1.0
+var cam_hold := false # 話すときの寄り（そのあいだは、拡大・なぞりでカメラを動かさない）
+
+
+## よこになぞった向きと拡大をあわせた、カメラの置き場所
+func _view_transform() -> Transform3D:
+	var t := cam_home
+	t.origin = cam_look + Basis(Vector3.UP, orbit) * (cam_home.origin - cam_look) * zoom
+	return t.looking_at(cam_look, Vector3.UP)
+
+
+func _zoom_by(k: float) -> void:
+	zoom_to = clampf(zoom_to * k, ZOOM_MIN, ZOOM_MAX)
+
+
+## 拡大をなめらかに（毎フレーム）。見せ場の寄り（_focus）・島づくり・話すときは動かさない
+func _sync_zoom(delta: float) -> void:
+	if is_equal_approx(zoom, zoom_to) or busy or editing or cam_hold:
+		return
+	zoom = lerpf(zoom, zoom_to, 1.0 - exp(-12.0 * delta))
+	if absf(zoom - zoom_to) < 0.002:
+		zoom = zoom_to
+	cam.transform = _view_transform()
+
+
+## ホイール・トラックパッド（つまむ・二本指のスクロール）・二本の指でつまむ。受けたら true
+func _zoom_input(event: InputEvent) -> bool:
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var f: float = event.factor if event.factor > 0.0 else 1.0
+		_zoom_by(pow(0.9, f) if event.button_index == MOUSE_BUTTON_WHEEL_UP else pow(1.0 / 0.9, f))
+		return true
+	if event is InputEventMagnifyGesture:
+		_zoom_by(1.0 / maxf(event.factor, 0.01))
+		return true
+	if event is InputEventPanGesture:
+		_zoom_by(1.0 + clampf(event.delta.y, -3.0, 3.0) * 0.04)
+		return true
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			touches[event.index] = event.position
+		else:
+			touches.erase(event.index)
+		if touches.size() == 2:
+			var p: Array = touches.values()
+			pinch_d0 = maxf((p[0] as Vector2).distance_to(p[1]), 1.0)
+			pinch_z0 = zoom_to
+		return touches.size() >= 2
+	if event is InputEventScreenDrag and touches.has(event.index):
+		touches[event.index] = event.position
+		if touches.size() >= 2:
+			var p: Array = touches.values()
+			var d := maxf((p[0] as Vector2).distance_to(p[1]), 1.0)
+			zoom_to = clampf(pinch_z0 * pinch_d0 / d, ZOOM_MIN, ZOOM_MAX)
+			return true
+	return false
 
 
 ## 庭をよこになぞると、ぐるっと少し回して見られる
@@ -1453,13 +1518,14 @@ func _gui_input(event: InputEvent) -> void:
 	if editing:
 		_edit_input(event)
 		return
+	if not busy and not cam_hold and _zoom_input(event):
+		accept_event()
+		return
 	if (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) or event is InputEventScreenDrag:
-		if busy:
+		if busy or cam_hold or touches.size() >= 2: # 二本の指でつまんでいる間は、回さない
 			return
 		orbit = clampf(orbit - event.relative.x * 0.006, -0.6, 0.6)
-		var t := cam_home
-		t.origin = Basis(Vector3.UP, orbit) * cam_home.origin
-		cam.transform = t.looking_at(Vector3(0, 0.0, -0.4), Vector3.UP)
+		cam.transform = _view_transform()
 		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
@@ -2156,6 +2222,8 @@ func _reveal_deco(role: String) -> void:
 ## カメラを寄せる（mode 1）/ 戻す（mode 0）
 func _focus(at: Vector3, mode: int) -> void:
 	orbit = 0.0
+	zoom = 1.0
+	zoom_to = 1.0
 	var to := cam_home
 	if mode == 1:
 		to.origin = at + Vector3(0, 2.4, 4.4)
@@ -2306,6 +2374,11 @@ func demo_orbit() -> void:
 	m.button_mask = MOUSE_BUTTON_MASK_LEFT
 	m.relative = Vector2(-80, 0)
 	_gui_input(m)
+
+
+## 確認用：島を寄せる（ホイールで 5 回ぶん）
+func demo_zoom() -> void:
+	_zoom_by(pow(0.9, 5))
 
 
 func demo_fps() -> void:
