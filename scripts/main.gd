@@ -210,6 +210,11 @@ func go(screen_name: String, instant := false) -> void:
 	if busy:
 		return
 	busy = true
+	# 自分の島へは、実際の時計に合わせてから（朝が来ていれば夜が明けて、玉がかえる）
+	if screen_name == "garden" and GameState.visit.is_empty() and Onboarding.at("done") and OS.get_environment("OBAKE_START") == "":
+		GameState.sync_clock()
+		if GameState.phase == "morning" and not GameState.hatched.is_empty():
+			screen_name = "hatch"
 	if not instant:
 		fade.mouse_filter = Control.MOUSE_FILTER_STOP
 		var tw := create_tween()

@@ -262,7 +262,7 @@ func _finish() -> void:
 	v.add_child(Kit.text(tr("今週：新しい子 %d ・ めぐみ %d") % [GameState.seen.size() - GameState.week_start_seen, GameState.growth - GameState.week_start_growth], 12, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER))
 	if res.won:
 		v.add_child(Kit.wrap(Kit.text("満月の朝には、めずらしいおばけが来るかもしれない", 12, Color("8a5bd6"), false, HORIZONTAL_ALIGNMENT_CENTER)))
-	v.add_child(Kit.button("朝へ", Color("8b7bff"), func(): main.go("night")))
+	v.add_child(Kit.button("島へもどる", Color("8b7bff"), func(): main.go("garden")))
 	p.pivot_offset = Vector2(150, 80)
 	p.scale = Vector2(0.7, 0.7)
 	create_tween().tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

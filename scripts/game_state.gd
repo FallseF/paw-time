@@ -154,6 +154,8 @@ var moon_won_saved := false
 var last_shift_ended := {} # 最後に終わった「一緒に働く」のまとめ（ふりかえり用の目印）
 var work_nets_day := -1 # 一緒に働いてポイをもらった日（1日1回）
 var rest_net_day := -1 # 休みの日のポイ 1 本をもらった日
+var clock_date := "" # 実際の日付（朝 5 時で区切る）。次の日付の朝が来たら、夜が明ける（sync_clock）
+var skip_shift_day := -1 # 見本の記録のシフトを「今日は休む」にした日
 
 
 func _ready() -> void:
@@ -172,6 +174,8 @@ func info(id: String) -> Dictionary:
 func reset(new_mode := "data") -> void:
 	work_nets_day = -1
 	rest_net_day = -1
+	clock_date = ""
+	skip_shift_day = -1
 	last_shift_ended = {}
 	mode = new_mode
 	seed_base = randi() % 100000
@@ -650,6 +654,54 @@ func goals_done() -> int:
 	return goals.filter(func(x): return x.done).size()
 
 
+# ---------- 実際の時計 ----------
+
+const DAY_START_H := 5 # この時刻で日付が変わる（深夜は前の日の夜）
+const EVENING_H := 17 # 川べりは夕方 5 時から
+
+
+## いまの時刻（確認用に OBAKE_NOW=unix 秒。デモの切りかえは set_clock_offset）
+static var clock_offset := 0.0
+
+
+static func now_real() -> float:
+	var e := OS.get_environment("OBAKE_NOW")
+	return (float(e) if e != "" else Time.get_unix_time_from_system()) + clock_offset
+
+
+static func _local(t: float) -> Dictionary:
+	return Time.get_datetime_dict_from_unix_time(int(t + Time.get_time_zone_from_system().get("bias", 0) * 60.0))
+
+
+## 朝 5 時で区切った、その日の日付 "YYYY-MM-DD"
+static func real_date(t := -1.0) -> String:
+	var d := _local((now_real() if t < 0.0 else t) - DAY_START_H * 3600.0)
+	return "%04d-%02d-%02d" % [d.year, d.month, d.day]
+
+
+## 実際の時刻の、昼か夜か（夕方 5 時〜朝 5 時は夜）
+static func real_phase(t := -1.0) -> String:
+	var h: int = _local(now_real() if t < 0.0 else t).hour
+	return "evening" if h >= EVENING_H or h < DAY_START_H else "day"
+
+
+## 実際の時計に合わせる：次の日付の朝が来ていたら夜を明け（true）、昼のうちに夕方になっていたら夜にする
+func sync_clock(t := -1.0) -> bool:
+	var today := real_date(t)
+	if clock_date == "":
+		clock_date = today
+		save()
+	if today > clock_date:
+		clock_date = today
+		end_night()
+		return true
+	if phase == "day" and real_phase(t) == "evening":
+		phase = "evening"
+		save()
+		changed.emit()
+	return false
+
+
 # ---------- 夜のおわり ----------
 
 ## 夜が明ける（入力は無い）。庭の育ち・レア・玉の孵化をまとめて決めて、次の朝へ。
@@ -808,7 +860,7 @@ func rare_context(s: Dictionary) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "river_hist", "friend_visits", "store_count", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "rest_net_day", "last_new_cat_day"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "river_hist", "friend_visits", "store_count", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "rest_net_day", "clock_date", "skip_shift_day", "last_new_cat_day"]
 
 
 func save() -> void:

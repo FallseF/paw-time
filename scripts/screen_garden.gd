@@ -1330,8 +1330,19 @@ func _tween_night(to: float, dur := 1.4) -> void:
 
 # ---------- おばけの暮らし ----------
 
+var _clock_t := 0.0
+
+
 func _process(delta: float) -> void:
 	_t += delta
+	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
+	_clock_t += delta
+	if _clock_t > 30.0:
+		_clock_t = 0.0
+		if not _vis() and not busy and not editing and Onboarding.at("done") and OS.get_environment("OBAKE_START") == "":
+			var ph: String = GameState.phase
+			if GameState.sync_clock() or GameState.phase != ph:
+				main.go("garden")
 	if weather == "雷":
 		thunder_t -= delta
 		if thunder_t <= 0:
@@ -1847,7 +1858,7 @@ func _show_card() -> void:
 	if GameState.phase == "day" and _work_card():
 		pass
 	elif GameState.phase == "day":
-		var reg := Reminders.morning()
+		var reg := Reminders.morning() if GameState.skip_shift_day != GameState.day else {}
 		if not reg.is_empty():
 			# 今日の登録シフト（まだ始まっていない）：時刻と場所と地図。行ったら「仕事に行ってくる」
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
@@ -1855,7 +1866,7 @@ func _show_card() -> void:
 			card_box.add_child(_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(reg))))
 			card_box.add_child(Kit.button(tr("I'm going to work"), Color("ff8a5b"), func(): main.go("work")))
 			card_box.add_child(_link("今日は休む", _rest))
-		elif s.get("chore", false):
+		elif s.get("chore", false) and GameState.skip_shift_day != GameState.day and not GameState.shift_done_today:
 			card_box.add_child(Kit.text("今日のおてつだい", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(GameState.CHORE_TEXT[s.role], 14, Color("6a5f70")))
 			card_box.add_child(Kit.button("おてつだいする", Color("ff8a5b"), _do_shift))
@@ -1864,7 +1875,7 @@ func _show_card() -> void:
 			row.add_child(_link("今日はのんびりする", _rest))
 			row.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
 			card_box.add_child(row)
-		elif s.role != "":
+		elif s.role != "" and GameState.skip_shift_day != GameState.day and not GameState.shift_done_today:
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])], 14, Color("6a5f70")))
 			card_box.add_child(Kit.text(tr("%sのシフト・%d時間") % [tr(s.band), int(s.hours)], 13, Color("6a5f70")))
@@ -1878,15 +1889,14 @@ func _show_card() -> void:
 			if not GameState.tut.has("shift"):
 				Kit.nudge.call_deferred(b)
 		else:
-			card_box.add_child(Kit.text("夜の庭へ、ようこそ" if first else "今日は休み", 18, Color("2a2233"), true))
+			card_box.add_child(Kit.text("夜の庭へ、ようこそ" if first else ("今日の仕事は、おしまい" if GameState.shift_done_today else "今日は休み"), 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text("毎日の暮らしで、庭が育つ" if first else "休みの日も、庭はちゃんと育つ", 14, Color("6a5f70")))
-			var b := Kit.button("夕方まで、のんびり", Color("ff8a5b"), _rest)
-			card_box.add_child(b)
+			# 夜は実際の時計で来る（夕方 5 時から、川べりへ）
+			card_box.add_child(Kit.text("川べりは、夕方 5 時から", 14, Color("5b6fc2"), true))
 			card_box.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
-			if first and not GameState.tut.has("first"):
-				Kit.nudge.call_deferred(b)
+			GameState.tut["first"] = true
 	elif GameState.phase == "evening":
 		if GameState.is_moon_night() and not GameState.scooped_tonight:
 			card_box.add_child(Kit.text("今夜は満月の夜", 18, Color("2a2233"), true))
@@ -1907,19 +1917,18 @@ func _show_card() -> void:
 			card_box.add_child(b)
 			if not GameState.tut.has("scoop"):
 				Kit.nudge.call_deferred(b)
-			var row := HBoxContainer.new()
-			row.alignment = BoxContainer.ALIGNMENT_CENTER
-			row.add_child(_link("すくわずに、朝へ", func(): main.go("night")))
 			if GameState.can_gift() and GameState.day >= 4:
 				var c: String = GameState.today().coworkers[0]
-				row.add_child(_link(tr("%sにおすそわけ") % c, _gift))
-			card_box.add_child(row)
+				card_box.add_child(_link(tr("%sにおすそわけ") % c, _gift))
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 		else:
 			card_box.add_child(Kit.text("今夜のすくいは、おしまい", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(tr("玉を %d 個持ち帰った") % GameState.orbs.size(), 14, Color("6a5f70")))
-			card_box.add_child(Kit.button("朝へ", Color("8b7bff"), func(): main.go("night")))
+			# 朝は実際の時計で来る（朝 5 時をすぎて開くと、玉がかえる）
+			card_box.add_child(Kit.text("玉は、朝になったらかえる", 14, Color("8b7bff"), true))
+			if GameState.day >= 2:
+				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 	_card_fit()
 	_pop_card()
 
@@ -2044,17 +2053,24 @@ func _do_shift() -> void:
 	_card_fit()
 	await get_tree().create_timer(0.6).timeout
 	GameState.new_decos.erase(GameState.today().role)
-	await _to_evening()
+	# 夕方になっていれば夜へ。まだ昼なら、働き終えた昼のカード
+	if GameState.real_phase() == "evening" or OS.get_environment("OBAKE_START") != "" or OS.get_environment("OBAKE_DEMO") != "":
+		await _to_evening()
+	else:
+		card.modulate.a = 0.0
+		_show_card()
 	busy = false
 
 
+## 今日のシフトを休む（夜は時計どおりに来る）
 func _rest() -> void:
 	if busy:
 		return
-	busy = true
 	GameState.tut["first"] = true
-	await _to_evening()
-	busy = false
+	GameState.skip_shift_day = GameState.day
+	GameState.save()
+	card.modulate.a = 0.0
+	_show_card()
 
 
 func _to_evening() -> void:

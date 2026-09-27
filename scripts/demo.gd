@@ -61,7 +61,9 @@ func _process(delta: float) -> void:
 				if GameState.today().role != "" and not GameState.shift_done_today:
 					c.call("_do_shift")
 				else:
-					c.call("_rest")
+					# 夜は時計で来るが、自動で遊ぶときはすぐ夜に
+					GameState.phase = "evening"
+					main.go("garden")
 				cool = 3.0
 			elif GameState.phase == "evening":
 				if GameState.is_moon_night() and not GameState.scooped_tonight:
