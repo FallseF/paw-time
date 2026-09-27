@@ -91,7 +91,7 @@ const TYPES := {
 	},
 }
 
-const SITE_URL := "https://obake-breakroom-launch.vercel.app"
+const SITE_URL := "https://paw-time-play.vercel.app" # 診断の結果のシェアは、ゲームそのものへ（友だちもそのまま診断できる）
 
 
 ## 答えの文字列から結果を出す。

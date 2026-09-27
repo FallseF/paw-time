@@ -86,7 +86,7 @@ func _initialize() -> void:
 	ok = ok and not d.items.has("pond") # しまった物はコードに入らない
 	ok = ok and d.items.has("lantern") and not d.layout.has("lantern") # 動かしていない物は元の場所
 	ok = ok and d.decos.get("hall", 0) >= 1
-	var d2: Dictionary = gs.decode_island("https://obake-breakroom-b-sleep.vercel.app/#island=" + code)
+	var d2: Dictionary = gs.decode_island("https://paw-time-play.vercel.app/#island=" + code)
 	ok = ok and d2.name == "みか"
 	ok = ok and gs.decode_island("こわれた").is_empty() and gs.decode_island("AAAA").is_empty()
 	print("code=", code, " len=", code.length())
