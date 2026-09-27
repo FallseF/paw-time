@@ -23,12 +23,17 @@ func _initialize() -> void:
 		var tally := {"cat_orb": 0, "cat_life_rare": 0, "material": 0, "cloth": 0, "vehicle": 0, "scooped_obake": 0, "scooped_material": 0, "scooped_cloth": 0, "scooped_vehicle": 0}
 		var gap := 0
 		var max_gap := 0
+		var check_nets: Array = []
 		for d in 42:
 			var s: Dictionary = gs.today()
 			# 川べりへ行く夜：毎晩、または週に 4 夜くらい
 			var goes: bool = strat.ends_with("daily") or d % 7 in [0, 2, 4, 6]
 			if s.role != "":
 				gs.finish_shift()
+			# 夜のポイ：働いた日 2 本・休みの日 1 本（何時間でも同じ）
+			gs.grant_rest_net()
+			if goes:
+				check_nets.append(gs.tonight_nets())
 			# すくい：ポイ 1 本で玉 0.9 個くらい、破れにくさで増える
 			var poi := 0
 			for k in gs.nets:
@@ -80,6 +85,9 @@ func _initialize() -> void:
 		print("%-12s %s | レア%d 通常%d | 段到達日 %s" % [strat, "  ".join(line), rares, gs.seen.size() - rares, levels])
 		var scooped: int = tally.scooped_obake + tally.scooped_material + tally.scooped_cloth + tally.scooped_vehicle
 		print("   30日ですくった玉 %d 個（中身 おばネコ %d・材料 %d・服 %d）→ かえった：おばネコ %d（玉とそのほか）・暮らしのレア %d | 島の材料 %d・服 %d・乗り物 %d | 新しい子が来ない夜の最長 %d" % [scooped, tally.scooped_obake, tally.scooped_material, tally.scooped_cloth, tally.cat_orb, tally.cat_life_rare, tally.material, tally.cloth, tally.vehicle, max_gap])
+		if check_nets.any(func(n): return n != 1 and n != 2):
+			fails += 1
+			print("FAIL: %s nets per night must be 1 or 2: %s" % [strat, check_nets])
 		# 眠りが無くても庭は育つ（毎晩すくえば 6 週で満開の手前まで、すくわない夜があっても半分より上）
 		var want := 8 if strat.ends_with("daily") else 6
 		if gs.garden_level < want:

@@ -153,6 +153,7 @@ var tonight_caught := 0
 var moon_won_saved := false
 var last_shift_ended := {} # 最後に終わった「一緒に働く」のまとめ（ふりかえり用の目印）
 var work_nets_day := -1 # 一緒に働いてポイをもらった日（1日1回）
+var rest_net_day := -1 # 休みの日のポイ 1 本をもらった日
 
 
 func _ready() -> void:
@@ -170,6 +171,7 @@ func info(id: String) -> Dictionary:
 
 func reset(new_mode := "data") -> void:
 	work_nets_day = -1
+	rest_net_day = -1
 	last_shift_ended = {}
 	mode = new_mode
 	seed_base = randi() % 100000
@@ -339,11 +341,10 @@ func finish_shift() -> Array:
 		coworker_count[c] = coworker_count.get(c, 0) + 1
 	var net_id: String = ROLE_NET[s.role]
 	if s.get("chore", false):
-		nets[net_id] = mini(nets[net_id] + 1, 4)
-		got.append({"kind": "poi", "id": net_id, "n": 1, "text": "%s ×1" % tr(NETS[net_id].name)})
-		if first_role_today:
-			nets["kira"] += 1
-			got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめてのおてつだい）"})
+		# おてつだいの日は、シフトの無い日と同じく 1 本（はじめてなら、それがきらきら）
+		var cid: String = "kira" if first_role_today else net_id
+		nets[cid] = mini(nets[cid] + 1, 4)
+		got.append({"kind": "poi", "id": cid, "n": 1, "text": "%s ×1" % tr(NETS[cid].name)})
 		# おてつだい 2 回で、その仕事の飾りが（手作りで）届く
 		chores[s.role] = chores.get(s.role, 0) + 1
 		if chores[s.role] == 2 and decos.get(s.role, 0) == 0:
@@ -357,9 +358,11 @@ func finish_shift() -> Array:
 	# スキルの記録：本物のシフトは 1 回＝経験 1（時間は見ない）。早送り（監査・宣伝）では数えない
 	if not quiet:
 		Skills.record_shift(s.role, "day:%d:%d" % [seed_base, day])
-	nets[net_id] = mini(nets[net_id] + 2, 4) # 種類つきのポイは4本まで（ためこみすぎない）
-	got.append({"kind": "poi", "id": net_id, "n": 2, "text": "%s ×2" % tr(NETS[net_id].name)})
-	if s.first or first_role_today:
+	# 働いた日は 2 本（何時間でも同じ）。はじめての経験なら、そのうち 1 本がきらきら
+	var n_typed := 1 if s.first or first_role_today else 2
+	nets[net_id] = mini(nets[net_id] + n_typed, 4) # 種類つきのポイは4本まで（ためこみすぎない）
+	got.append({"kind": "poi", "id": net_id, "n": n_typed, "text": "%s ×%d" % [tr(NETS[net_id].name), n_typed]})
+	if n_typed == 1:
 		nets["kira"] += 1
 		got.append({"kind": "poi", "id": "kira", "n": 1, "text": "きらきらポイ ×1（はじめての経験）"})
 	# 何度も一緒に入った同僚から、おばけをもらうことがある
@@ -400,6 +403,29 @@ func grant_work_nets(role: String, n: int) -> int:
 
 
 const CHORE_TEXT := {"register": "落ち葉のおかんじょう", "hall": "縁側へのおぜん運び", "dish": "たらいでお皿あらい", "kitchen": "おでんの下ごしらえ", "stock": "物置の箱の整理"}
+
+
+## 休みの日（シフトもおてつだいも無い日）の、夜のポイ 1 本。夜になったら 1 日 1 回
+func grant_rest_net() -> int:
+	if worked_today() or rest_net_day == day:
+		return 0
+	rest_net_day = day
+	nets["plain"] = mini(nets.get("plain", 0) + 1, 5)
+	save()
+	changed.emit()
+	return 1
+
+
+## 今日は働いた（シフト・一緒に働いた・おてつだい）
+func worked_today() -> bool:
+	return shift_done_today or work_nets_day == day
+
+
+## 今夜のポイの本数（働いた日 2・休みの日 1。何時間でも同じ）。島の夜のカードに出す
+func tonight_nets() -> int:
+	if shift_done_today and today().get("chore", false):
+		return 1
+	return 2 if worked_today() else 1
 
 
 ## 今日の同僚に、おばけをおすそわけする（オクリモノの条件）
@@ -603,7 +629,7 @@ func _recalc_level() -> void:
 		garden_level += 1
 
 
-## めあてを達成したら、めぐみ +3。3つそろうと、きらきらポイ +1
+## めあてを達成したら、めぐみ +3。3つそろうと、肉球コイン +10（ポイは増やさない：夜のポイは働いた日 2・休みの日 1 だけ）
 func goal(id: String) -> void:
 	for g in goals:
 		if g.id == id and not g.done:
@@ -613,7 +639,7 @@ func goal(id: String) -> void:
 			_recalc_level()
 			var all := goals.all(func(x): return x.done)
 			if all:
-				nets["kira"] += 1
+				Wallet.add(10, "goals_all")
 			if not quiet:
 				goal_completed.emit(g.text, all)
 			changed.emit()
@@ -665,8 +691,7 @@ func end_night() -> void:
 		stores_week = {}
 		bands_week = {}
 		weekend_shifts = {}
-	# 毎日のいつものポイ（使い残しは持ち越し、最大5本）
-	nets["plain"] = mini(5, nets["plain"] + 3)
+	# 夜のポイは、その日の暮らしで決まる：働いた日 2 本（finish_shift / grant_work_nets）、休みの日 1 本（grant_rest_net）
 	make_goals()
 	phase = "morning"
 	save()
@@ -783,7 +808,7 @@ func rare_context(s: Dictionary) -> Dictionary:
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "river_hist", "friend_visits", "store_count", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "last_new_cat_day"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "river_hist", "friend_visits", "store_count", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "rest_net_day", "last_new_cat_day"]
 
 
 func save() -> void:

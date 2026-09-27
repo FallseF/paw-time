@@ -107,7 +107,6 @@ keys,en,ja
 こだまくん,Kodama,こだまくん
 ろくろさん,Ms. Rokuro,ろくろさん
 満月,Full moon,満月
-きらきらポイ ×1（はじめてのおてつだい）,Sparkle scoop ×1 (first time helping),きらきらポイ ×1（はじめてのおてつだい）
 手作り,Handmade,手作り
 手作りの「%s」ができた,Your handmade %s is ready.,手作りの「%s」ができた
 きらきらポイ ×1（はじめての経験）,Sparkle scoop ×1 (a new experience),きらきらポイ ×1（はじめての経験）
@@ -154,7 +153,6 @@ keys,en,ja
 ねぶくろ,Bedroll,ねぶくろ
 ななし,No Name,ななし
 めあて達成　めぐみ +3,Goal met · bloom +3,めあて達成　めぐみ +3
-3つそろった！ きらきらポイ +1,All 3! Sparkle scoop +1,3つそろった！ きらきらポイ +1
 マイおばけ猫 診断,My Cat-Obake Quiz,マイおばけ猫 診断
 向いてる仕事  ,Best job  ,向いてる仕事  
 わたしのマイおばけ猫は,My cat-obake is,わたしのマイおばけ猫は
@@ -562,7 +560,6 @@ A curious glow...","すくった！
 ちょうちんを一つ買う,Buy a lantern,ちょうちんを一つ買う
 チョウチンがもう1体ついてくる,One more Chochin follows you home.,チョウチンがもう1体ついてくる
 真顔のお面を見る,Browse the blank masks,真顔のお面を見る
-庭にお面の屋台（1回目）／きらきらポイ,First: mask stall. Then: sparkle scoop.,庭にお面の屋台（1回目）／きらきらポイ
 わたあめを買う,Buy cotton candy,わたあめを買う
 ふしぎな玉が1つ（虹かもしれない）,One mystery orb. Maybe a rainbow.,ふしぎな玉が1つ（虹かもしれない）
 夜店の帰り道,Home from the market,夜店の帰り道
@@ -571,7 +568,6 @@ A curious glow...","すくった！
 ちょうちんを買ったら、中の子もついてきた,Bought a lantern. Its tenant came too.,ちょうちんを買ったら、中の子もついてきた
 夜店,Night market,夜店
 お面屋ごと、庭についてきた。全部、真顔,The mask stall moved in. All deadpan.,お面屋ごと、庭についてきた。全部、真顔
-お面をひとつもらった。きらきらポイ +1,Got a mask. Sparkle scoop +1,お面をひとつもらった。きらきらポイ +1
 わたあめの中に、光る玉が入っていた,A glowing orb inside the cotton candy,わたあめの中に、光る玉が入っていた
 。虹色だ,. Rainbow-colored.,。虹色だ
 ねこおばけと、夜の庭,Cat-obake in a night garden,ねこおばけと、夜の庭
@@ -1742,3 +1738,6 @@ JOB_LIST_LATER,Decide later,あとで決める
 JOB_BACK_LIST,All jobs,一覧へ
 JOB_MAP,Map,地図
 %sのシフト・%d時間,%s shift · %d hours,%sのシフト・%d時間
+今夜：ポイ %d 本（働いた日）,Tonight: %d nets (you worked today),今夜：ポイ %d 本（働いた日）
+今夜：ポイ 1 本（休みの日）,Tonight: 1 net (rest day),今夜：ポイ 1 本（休みの日）
+3つそろった！ 肉球コイン +10,All 3 done! +10 Paw Coins,3つそろった！ 肉球コイン +10

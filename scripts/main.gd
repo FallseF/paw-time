@@ -115,7 +115,7 @@ func _on_goal(text: String, all_done: bool) -> void:
 	v.add_child(Kit.text("めあて達成　めぐみ +3", 12, Color("b07a1a"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.text(text, 14, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	if all_done:
-		v.add_child(Kit.text("3つそろった！ きらきらポイ +1", 12, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
+		v.add_child(Kit.text("3つそろった！ 肉球コイン +10", 12, Color("6a5bd6"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	Kit.play(self, "bell", 1.3, -6)
 	var tw := goal_toast.create_tween()
 	tw.tween_property(goal_toast, "position:y", 56.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

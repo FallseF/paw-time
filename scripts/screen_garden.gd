@@ -1844,6 +1844,10 @@ func _show_card() -> void:
 		elif not GameState.scooped_tonight:
 			card_box.add_child(Kit.text("夜になった", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text("光る玉は、朝にかえる", 14, Color("6a5f70")))
+			# 今夜のポイ：働いた日 2 本・休みの日 1 本（何時間でも同じ）
+			GameState.grant_rest_net()
+			var tn := GameState.tonight_nets()
+			card_box.add_child(Kit.text(tr("今夜：ポイ %d 本（働いた日）") % tn if GameState.worked_today() else tr("今夜：ポイ 1 本（休みの日）"), 14, Color("5b6fc2"), true))
 			if GameState.day >= 3:
 				_deco_chips()
 			var b := Kit.button("川べりで、おばけすくい", Color("5b6fc2"), func(): main.go("catch"))
