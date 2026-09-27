@@ -1330,6 +1330,7 @@ var _clock_t := 0.0
 func _process(delta: float) -> void:
 	_t += delta
 	_sync_expand()
+	_sync_hud()
 	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
 	_clock_t += delta
 	if _clock_t > 30.0:
@@ -1524,6 +1525,31 @@ func _skills_pill() -> void:
 	sk.position = Vector2(12, y)
 	sk.size = Vector2(0, 32)
 	add_child(sk)
+	hud_pill(sk)
+
+
+var hud_pills: Array = [] # 上の段の札（キセカエ・マイスキル・しごと・話す）。くわしく・めあてを開いたら、重なる札はしまう
+
+
+## 上の段の札として登録する（しごと・話すの札は、重ね画面の係から）
+func hud_pill(b: Control) -> void:
+	hud_pills.append(b)
+
+
+## 島の段のくわしく（庭 Lv / ポイ）・めあての欄を開いている間は、それに重なる札をしまう（閉じたら戻す）
+func _sync_hud() -> void:
+	var covers: Array = []
+	if meters and meters.visible:
+		covers.append(meters.get_global_rect())
+	if goals_panel and is_instance_valid(goals_panel):
+		covers.append(goals_panel.get_global_rect())
+	hud_pills = hud_pills.filter(func(b): return is_instance_valid(b) and not b.is_queued_for_deletion())
+	for b in hud_pills:
+		var r: Rect2 = b.get_global_rect()
+		var covered: bool = covers.any(func(c): return c.intersects(r))
+		if covered != b.get_meta("hud_covered", false):
+			b.set_meta("hud_covered", covered)
+			b.visible = not covered
 
 
 func _build_ui() -> void:
@@ -1553,6 +1579,7 @@ func _build_ui() -> void:
 		wd.position = Vector2(12, 58)
 		wd.size = Vector2(0, 32)
 		add_child(wd)
+		hud_pill(wd)
 	_skills_pill()
 	var zk := Kit.button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"), 38, 15)
 	zk.custom_minimum_size.x = 64

@@ -459,6 +459,8 @@ func _work_pill() -> void:
 	work_btn = Kit.button(tr("WORK_PILL"), Color(1, 0.99, 0.97, 0.94), open_work_menu, Color("6a5bd6"), 32, 13)
 	work_btn.size = Vector2(0, 32)
 	add_child(work_btn)
+	if garden.has_method("hud_pill"):
+		garden.hud_pill(work_btn)
 	# 右上（図鑑の下）。左上はキセカエの札
 	await get_tree().process_frame
 	if is_instance_valid(work_btn):
