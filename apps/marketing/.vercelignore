@@ -1,0 +1,5 @@
+# Publish the static site without development notes or Godot import metadata.
+README.md
+verify.mjs
+**/*.import
+.env*
