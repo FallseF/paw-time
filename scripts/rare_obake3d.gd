@@ -158,6 +158,133 @@ func _stripes(cols: Array, rim := 0.2) -> ShaderMaterial:
 	return skin(Color.WHITE, 0.0, tex, 0.18 + rim * 0.6)
 
 
+## 上から下へ色が変わる肌（体の v は上 0・下 1、_wisp() の尻尾は付け根 0・先 1）。輪郭は下の色から作る。
+## from / to は色が変わり始める・変わり終わる位置（0..1）
+func _grad(top: Color, bottom: Color, from := 0.15, to := 0.85) -> ShaderMaterial:
+	var key := "grad/%s/%s/%s/%s" % [top.to_html(), bottom.to_html(), from, to]
+	if _shared.has(key):
+		return _shared[key]
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([from, to])
+	g.colors = PackedColorArray([top, bottom])
+	var tex := GradientTexture2D.new()
+	tex.gradient = g
+	tex.fill_from = Vector2(0, 0)
+	tex.fill_to = Vector2(0, 1)
+	tex.width = 8
+	tex.height = 128
+	var m := skin(Color.WHITE, 0.0, tex).duplicate() as ShaderMaterial
+	var o := m.next_pass.duplicate() as ShaderMaterial
+	o.set_shader_parameter("color", line_color(top.lerp(bottom, 0.5)))
+	m.next_pass = o
+	_shared[key] = m
+	return m
+
+
+# ---------------------------------------------------------------- 猫のしるし
+# レアは持ち物そのものがおばけになった子もいるが、どの子も「猫の耳ふたつ」と「おばけの尻尾」を持つ。
+
+## ふつうのおばけの右の耳の中心と傾き（tools/blender/build_cat_obake.py の Shape と同じ）
+const EAR_CENTER := Vector3(0.265, 0.9, -0.03)
+const EAR_TILT := Vector3(-0.12, 0.0, -0.36)
+## 耳を切り出す高さ（耳の軸に沿って、中心から）。これより下の、頭へなじむ裾は捨てる
+const EAR_CUT := -0.03
+
+
+static func _ear_basis(sx: float) -> Basis:
+	return Basis.from_euler(Vector3(EAR_TILT.x, 0.0, EAR_TILT.z * signf(sx)))
+
+
+## 耳の付け根（切り口の中心）
+static func ear_root(sx: float) -> Vector3:
+	return Vector3(EAR_CENTER.x * signf(sx), EAR_CENTER.y, EAR_CENTER.z) + _ear_basis(sx) * Vector3(0, EAR_CUT, 0)
+
+
+## 猫の耳ひとつ。ふつうのおばけの体（Blender の猫の体）から、頭の球より外の耳だけを切り出す。
+## 頂点の位置はそのままなので、肌のシェーダーが耳の内側をピンクに塗る（v_obj で計算）。
+static func ear_mesh(sx: float) -> ArrayMesh:
+	var key := "ear/%d" % int(signf(sx))
+	if _shared.has(key):
+		return _shared[key]
+	var src: Mesh = body_meshes("cat").body
+	var arr := src.surface_get_arrays(0)
+	var V: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+	var center := Vector3(EAR_CENTER.x * signf(sx), EAR_CENTER.y, EAR_CENTER.z)
+	var inv := _ear_basis(sx).inverse()
+	var remap := {}
+	var keep := PackedInt32Array()
+	for i in range(0, idx.size(), 3):
+		var ok := false
+		for k in 3:
+			var p := V[idx[i + k]]
+			# 頭の球の上（耳の内がわのふもと）も捨てる。残すと裏から中が見える
+			if p.x * sx > 0.04 and (inv * (p - center)).y > EAR_CUT and p.distance_to(Vector3(0, 0.5, 0)) > 0.525:
+				ok = true
+		if not ok:
+			continue
+		for k in 3:
+			var v := idx[i + k]
+			if not remap.has(v):
+				remap[v] = remap.size()
+			keep.append(remap[v])
+	# 使う頂点だけに詰める（大きさ＝耳だけになるように。影や撮影の枠が体の大きさにならない）
+	var order: Array = remap.keys()
+	var res := []
+	res.resize(Mesh.ARRAY_MAX)
+	for a in [Mesh.ARRAY_VERTEX, Mesh.ARRAY_NORMAL, Mesh.ARRAY_COLOR, Mesh.ARRAY_TEX_UV]:
+		if arr[a] == null:
+			continue
+		var s = arr[a]
+		var d = s.duplicate()
+		d.resize(order.size())
+		for j in order.size():
+			d[j] = s[order[j]]
+		res[a] = d
+	res[Mesh.ARRAY_INDEX] = keep
+	var m := ArrayMesh.new()
+	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, res)
+	_shared[key] = m
+	return m
+
+
+## 猫の耳ひとつを、付け根が pos に来るよう置く。rot で向きを足し、k で大きさを変える
+func _ear(mat: Material, sx: float, pos: Vector3, parent: Node3D = null, k := 1.0, rot := Vector3.ZERO) -> Node3D:
+	var n := _node(pos, parent, rot)
+	n.scale = Vector3.ONE * k
+	if CAT:
+		_add(ear_mesh(sx), mat, -ear_root(sx), n)
+		# 切り口をふさぐ、耳の付け根のふくらみ（持ち物に埋まりきらないときも中が見えない）
+		var plug := _add(_sphere(0.15), mat, Vector3.ZERO, n)
+		plug.basis = _ear_basis(sx) * Basis.from_scale(Vector3(1.0, 0.6, 0.72))
+	return n
+
+
+## 両耳。center は半径 0.5k の頭の中心とみなす点（ふつうのおばけと同じ位置に耳が付く）。
+## spread で耳を外へ開き、lift で持ち上げる（冠・帽子の上へ出すとき）
+func _cat_ears(mat: Material, center: Vector3, k := 1.0, parent: Node3D = null, spread := 0.0, lift := 0.0) -> Node3D:
+	var n := _node(center, parent)
+	n.scale = Vector3.ONE * k
+	for sx in [-1.0, 1.0]:
+		var r := ear_root(sx)
+		var root := Vector3(r.x * (1.0 + spread), r.y - 0.5 + lift, r.z)
+		_ear(mat, sx, root, n, 1.0, Vector3(0, 0, -sx * spread))
+	return n
+
+
+## おばけの尻尾：付け根（原点）から下へ垂れ、先がくるんと巻いて細くなる。sx=-1 で巻く向きが逆。
+## 付け根は持ち物の中に埋める。tube の v は付け根 0・先 1 なので _grad() の塗りがそのまま乗る
+func _wisp(mat: Material, pos: Vector3, parent: Node3D = null, rot := Vector3.ZERO, s := 1.0, sx := 1.0) -> Node3D:
+	var n := _node(pos, parent, rot)
+	n.scale = Vector3.ONE * s
+	var pts := PackedVector3Array()
+	for p in [Vector3(0, 0.1, 0), Vector3(0, -0.12, 0), Vector3(0.05, -0.36, 0), Vector3(0.17, -0.56, 0), Vector3(0.36, -0.66, 0), Vector3(0.52, -0.6, 0), Vector3(0.56, -0.46, 0)]:
+		pts.append(Vector3(p.x * sx, p.y, p.z))
+	var rad := PackedFloat32Array([0.2, 0.19, 0.16, 0.12, 0.085, 0.055, 0.03])
+	_add(tube("wisp/%d" % int(sx), pts, rad, 20), mat, Vector3.ZERO, n)
+	return n
+
+
 # ---------------------------------------------------------------- 睡眠
 
 ## ネムリン：ふとんで巻かれて、のり巻きのよう。顔だけ出して眠る
@@ -170,6 +297,9 @@ func _b_nemurin() -> void:
 	_add(_cyl(0.36, 0.36, 0.06, 24), _mat(Color("fbf8ff"), 0.4), Vector3(0, 0, 0.46), roll, rot)
 	_head(c1, 0.3, Vector3(0, -0.02, 0.5), roll)
 	roll.add_child(face(Vector3(0, -0.02, 0.5), 0.6, INK, true))
+	_cat_ears(_skin(c1), Vector3(0, -0.02, 0.5), 0.6, roll)
+	# ふとんの口の下から、おばけの尻尾がはみ出して、くるんと巻く
+	_wisp(_skin(c1), Vector3(0.18, -0.3, 0.36), roll, Vector3(-PI / 2 + 0.25, 0.5, 0), 0.62)
 	_p.bubble = _add(_sphere(0.055), _mat(Color("9fd8ff"), 0.2), Vector3(0.16, -0.08, 0.8), roll)
 
 
@@ -205,9 +335,11 @@ func _b_asayake() -> void:
 
 ## ヨミセ：提灯のおばけ。ぼんやり光って、ちょっと舌を出している
 func _b_yomise() -> void:
-	var lan := _node(Vector3(0, 1.2, 0))
+	var lan := _node(Vector3(0, 1.24, 0))
+	lan.scale = Vector3.ONE * 0.86
 	_p.lantern = lan
-	_add(_sphere(0.42), _skin(Color("ffe3b0"), 1.0, 0.35), Vector3(0, -0.62, 0), lan, Vector3.ZERO, Vector3(1, 1.2, 1))
+	var paper := _skin(Color("ffe3b0"), 1.0, 0.35)
+	_add(_sphere(0.42), paper, Vector3(0, -0.62, 0), lan, Vector3.ZERO, Vector3(1, 1.2, 1))
 	var rib := _mat(Color("d99a5c"), 0.2)
 	for h in [-0.36, -0.18, 0.0, 0.18, 0.36]:
 		var rr := 0.42 * sqrt(1.0 - pow(h / 0.504, 2))
@@ -217,6 +349,10 @@ func _b_yomise() -> void:
 	_add(_cyl(0.24, 0.2, 0.08), capm, Vector3(0, -1.12, 0), lan)
 	_add(_torus(0.04, 0.07), capm, Vector3(0, -0.01, 0), lan, Vector3(PI / 2, 0, 0))
 	lan.add_child(face(Vector3(0, -0.56, 0.0), 0.86))
+	# 提灯の肩から紙の耳、下のふたの下から紙の尻尾
+	for sx in [-1.0, 1.0]:
+		_ear(paper, sx, Vector3(sx * 0.23, -0.3, -0.02), lan, 0.95, Vector3(0, 0, -sx * 0.5))
+	_wisp(paper, Vector3(0, -1.12, 0), lan, Vector3(0, 0, 0), 0.5)
 	_add(_sphere(0.07), _mat(Color("ff7f96"), 0.3), Vector3(0, -0.74, 0.42), lan, Vector3(0.5, 0, 0), Vector3(0.8, 1.3, 0.5))
 	var light := OmniLight3D.new()
 	light.light_color = c2
@@ -232,7 +368,11 @@ func _b_yomise() -> void:
 func _b_hirunen() -> void:
 	_add(_box(Vector3(1.5, 0.04, 1.05)), _mat(c2), Vector3(0, 0.02, 0))
 	_add(_box(Vector3(0.42, 0.1, 0.3)), _mat(Color.WHITE, 0.3), Vector3(-0.5, 0.09, -0.2), null, Vector3(0, 0.2, 0))
-	var g := ghost(c1, 1.0, 0.0, INK, true, false)
+	var g := Node3D.new()
+	var parts := body_meshes("cat" if CAT else "plain")
+	for k in ["body", "tail"]:
+		if parts.has(k):
+			g.add_child(_mesh(parts[k], _skin(c1), Vector3.ZERO))
 	g.position.y = 0.04
 	g.scale = Vector3(1.2, 0.55, 1.1)
 	body.add_child(g)
@@ -264,6 +404,8 @@ func _b_totonou() -> void:
 ## キラリ：大きすぎる王冠をかぶって、うれしそう
 func _b_kirari() -> void:
 	_mini(c2, 0.8, Vector3(0, 0, 0))
+	# 王冠が大きすぎて耳がかくれるので、王冠のてっぺんから耳を出す
+	_cat_ears(_skin(c2), Vector3(0.0, 0.5, 0.0), 0.8, null, 0.15, 0.08)
 	var crown := _node(Vector3(0.02, 0.74, 0), null, Vector3(0, 0, 0.16))
 	_p.crown = crown
 	var gold := metal(c1)
@@ -288,6 +430,9 @@ func _b_hajimete() -> void:
 	_add(_cyl(0.56, 0.58, 0.04, 24), hm, Vector3.ZERO, hat)
 	_add(_hemi(0.4), hm, Vector3(0, 0.0, 0), hat, Vector3.ZERO, Vector3(1, 0.9, 1))
 	_add(_cyl(0.405, 0.405, 0.06, 24), _mat(Color.WHITE, 0.3), Vector3(0, 0.05, 0), hat)
+	# 帽子の穴から耳を出す
+	for sx in [-1.0, 1.0]:
+		_ear(_skin(c1), sx, Vector3(sx * 0.22, 0.22, -0.02), hat, 0.8, Vector3(0, 0, -sx * 0.45))
 	var mark := _node(Vector3(0, 0.17, 0.5), null, Vector3(-0.15, 0, 0))
 	_add(_box(Vector3(0.09, 0.2, 0.03)), _mat(Color("ffd93b"), 0.3), Vector3(-0.045, 0, 0), mark, Vector3(0, 0, 0.3))
 	_add(_box(Vector3(0.09, 0.2, 0.03)), _mat(Color("3cb371"), 0.3), Vector3(0.045, 0, 0), mark, Vector3(0, 0, -0.3))
@@ -438,6 +583,8 @@ func _b_shinya() -> void:
 	_add(_box(Vector3(0.22, 0.02, 0.58)), card, Vector3(-0.44, 0.2, 0), top, Vector3(0, 0, 1.0))
 	var g := _mini(c1.lightened(0.3), 0.68, Vector3(0, 0.02, 0.0), top)
 	_p.peek = g
+	# 箱のふちから、おばけの尻尾がたれる
+	_wisp(_skin(c1.lightened(0.3)), Vector3(0.36, 0.3, 0.12), g, Vector3(0, 0, PI / 2 + 0.2), 0.95, -1.0)
 
 
 ## アマガサ：紅白の唐傘が頭になったおばけ。一本足の下駄で、ぴょんぴょん
@@ -462,13 +609,12 @@ func _b_amagasa() -> void:
 	var fc := face(um.position + on_canopy - n * 0.4, 0.8)
 	fc.rotation.x = -tilt
 	body.add_child(fc)
-	var leg := _node(Vector3(0, 0.0, 0.05))
-	_add(_cyl(0.028, 0.028, 0.3, 8), _mat(WOOD_DARK), Vector3(0, 0.55, 0), leg)
-	_add(_cap(0.1, 0.34), _skin(c1), Vector3(0, 0.3, 0), leg)
-	_add(_box(Vector3(0.2, 0.05, 0.34)), _mat(WOOD), Vector3(0, 0.08, 0.02), leg)
-	for z in [-0.08, 0.12]:
-		_add(_box(Vector3(0.17, 0.06, 0.05)), _mat(WOOD_DARK), Vector3(0, 0.03, z), leg)
-	_add(_box(Vector3(0.22, 0.04, 0.05)), _mat(RED), Vector3(0, 0.14, 0.1), leg)
+	# 耳は傘の上。傘は回るが耳は回さない（顔と同じく体に付ける）
+	for sx in [-1.0, 1.0]:
+		_ear(_skin(PAPER), sx, um.position + Vector3(sx * 0.25, 0.35, -0.04), null, 0.95, Vector3(-0.1, 0, -sx * 0.55))
+	# 柄は、くるんと巻いたおばけの尻尾（付け根は木の柄の色から、先はおばけの色へ）
+	_add(_cyl(0.03, 0.03, 0.2, 8), _mat(WOOD_DARK), Vector3(0, 0.6, 0.0))
+	_wisp(_grad(WOOD_DARK, c1), Vector3(0, 0.52, 0.0), null, Vector3(0, -0.4, 0), 0.72)
 	for i in 4:
 		var d := _add(_sphere(0.03), _mat(c1.lightened(0.2), 0.6), Vector3(-0.75 + i * 0.5, 1.1 - (i % 2) * 0.3, 0.1 - i * 0.1), null, Vector3.ZERO, Vector3(0.7, 1.4, 0.7))
 		_p["rain%d" % i] = d
@@ -507,8 +653,9 @@ func _b_kaminari() -> void:
 	_add(_sphere(0.22), belly, Vector3(0.08, 0.36, 0.2), null, Vector3.ZERO, Vector3(1, 1, 0.6))
 	for p in [Vector3(0.1, 0.1, 0.18), Vector3(0.18, 0.1, -0.12), Vector3(-0.42, 0.1, -0.06), Vector3(-0.3, 0.1, -0.36)]:
 		_add(_cap(0.1, 0.24), skin, p)
-	for x in [-0.15, 0.15]:
-		_add(_cyl(0.0, 0.07, 0.2, 10), dark, Vector3(0.24 + x, 1.18, 0.05), null, Vector3(-0.2, 0, -x * 2.2))
+	_cat_ears(skin, Vector3(0.24, 0.78, 0.1), 0.8)
+	for x in [-0.06, 0.06]:
+		_add(_cyl(0.0, 0.05, 0.15, 10), dark, Vector3(0.24 + x, 1.16, -0.02), null, Vector3(-0.35, 0, -x * 3.0))
 	for i in 4:
 		_add(_cyl(0.0, 0.06, 0.13, 8), dark, Vector3(-0.08 - i * 0.14, 0.66 - i * 0.05, -0.2 - i * 0.07), null, Vector3(0, 0, 0.4))
 	var tail := _node(Vector3(-0.55, 0.26, -0.36))
@@ -538,14 +685,12 @@ func _b_kaminari() -> void:
 
 ## サクラ：おばけの頭が満開の桜の木。花びらがひらひら
 func _b_sakura() -> void:
-	var bark := _mat(Color("9a6a4a"))
-	_add(_cyl(0.11, 0.17, 0.5, 14), bark, Vector3(0, 0.25, 0))
-	for i in 3:
-		var a := TAU * i / 3.0 + 0.4
-		_add(_sphere(0.09), bark, Vector3(sin(a) * 0.15, 0.03, cos(a) * 0.15), null, Vector3.ZERO, Vector3(1.4, 0.6, 1.4))
+	# 根のかわりに、幹がそのままおばけの尻尾になって、くるんと巻く（幹の色から花の色へ）
+	_wisp(_grad(Color("9a6a4a"), c1, 0.5, 0.95), Vector3(0, 0.68, 0), null, Vector3(0, -0.5, 0), 0.9)
 	var crown := _node(Vector3(0, 0.84, 0))
 	_p.crown = crown
 	_head(c1, 0.44, Vector3.ZERO, crown)
+	_cat_ears(_skin(c1), Vector3(0, 0.07, 0.02), 1.0, crown, 0.1)
 	var puff := _skin(c1)
 	for d in [Vector3(-0.38, 0.1, -0.1), Vector3(0.38, 0.12, -0.1), Vector3(-0.22, 0.3, -0.2), Vector3(0.2, 0.32, -0.18), Vector3(0.0, 0.2, -0.36), Vector3(-0.36, -0.14, -0.2), Vector3(0.36, -0.14, -0.2)]:
 		_add(_sphere(0.24), puff, d, crown)
@@ -595,6 +740,9 @@ func _b_okurimono() -> void:
 	box.add_child(face(Vector3(0, 0.38, -0.03), 0.9))
 	var red := _mat(c2, 0.3)
 	_add(_box(Vector3(0.98, 0.16, 0.88)), red, Vector3(0, 0.8, 0), box)
+	for sx in [-1.0, 1.0]:
+		_ear(skin, sx, Vector3(sx * 0.3, 0.86, -0.04), box, 0.95, Vector3(0, 0, -sx * 0.25))
+	_wisp(skin, Vector3(0.36, 0.2, 0.18), box, Vector3(0, 0.3, 0.9), 0.62)
 	var bow := _node(Vector3(0, 0.9, 0), box)
 	_p.bow = bow
 	for side in [-1.0, 1.0]:
@@ -608,8 +756,8 @@ func _b_morattan() -> void:
 	_mini(c1, 0.72, Vector3(0, 0, 0.05))
 	var skin := _skin(c1)
 	for x in [-0.3, 0.3]:
-		_add(_sphere(0.09), skin, Vector3(x, 0.72, 0.12))
-	var box := _node(Vector3(0, 1.0, 0.02), null, Vector3(0, 0.35, 0.08))
+		_add(_sphere(0.09), skin, Vector3(x, 0.78, 0.12))
+	var box := _node(Vector3(0, 1.1, 0.02), null, Vector3(0, 0.35, 0.08))
 	_p.box = box
 	_add(_box(Vector3(0.62, 0.44, 0.52)), _mat(c2), Vector3.ZERO, box)
 	var rib := _mat(Color.WHITE, 0.3)
