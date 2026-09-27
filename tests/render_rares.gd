@@ -5,9 +5,10 @@ extends SceneTree
 ## 環境変数:
 ##   RARE_IDS=amagasa,yomise  … 一部だけ撮る（ふつうのおばけの id も可）
 ##   RARE_OUT=/tmp/dir        … 出力先（既定は res://assets/gen/rares3d）
+##   RARE_SIZE=1024           … 1 枚の大きさ（既定は 512）
 ## 出力: <id>.png と、全体を並べた _sheet.png（全員を撮ったときだけ）
 
-const SIZE := 512
+var SIZE := 512
 const SS := 2  # 大きく撮って縮め、縁をなめらかにする
 const YAW := 0.42  # 顔を少し右に向ける（3/4 正面）
 const PITCH := -12.0
@@ -22,6 +23,8 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	if OS.get_environment("RARE_SIZE").is_valid_int():
+		SIZE = OS.get_environment("RARE_SIZE").to_int()
 	var out := OS.get_environment("RARE_OUT")
 	if out == "":
 		out = ProjectSettings.globalize_path("res://assets/gen/rares3d")
