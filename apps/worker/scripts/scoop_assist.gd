@@ -91,3 +91,34 @@ static func tap_pick(at: Vector2, screen: Array, pick_px := TAP_PICK_PX) -> int:
 			bd = d
 			best = i
 	return best
+
+
+## 新しい玉の浮かぶ所：ポイの陰・指の下・手の見本の下をよける（画面の px）。
+## よける所は、カプセル [a: Vector2, b: Vector2, r: float]（線分 a〜b から r の内側）の並び
+## 点から、よける所のふちまでの、いちばん近い距離（px。負なら、どれかの内側。よける所が無ければ INF）
+static func clearance(p: Vector2, avoid: Array) -> float:
+	var best := INF
+	for c in avoid:
+		var q := Geometry2D.get_closest_point_to_segment(p, c[0], c[1])
+		best = minf(best, p.distance_to(q) - float(c[2]))
+	return best
+
+
+## 候補（画面の点の並び。ばらばらな順）から、浮かべる所の番号を選ぶ。avoid は必ずよける所（ポイの陰・指・手の見本）、
+## soft はできればよける所（ほかの玉）。両方から離れた候補があれば、はじめのそれ（いつもの気まぐれさのまま）。
+## 無ければ、avoid から離れたはじめの候補。それも無ければ、avoid からいちばん離れた候補。候補が無ければ -1
+static func pick_spawn(cands: Array, avoid: Array, soft: Array = []) -> int:
+	var free := -1
+	var best := -1
+	var bd := -INF
+	for i in cands.size():
+		var c := clearance(cands[i], avoid)
+		if c >= 0.0:
+			if clearance(cands[i], soft) >= 0.0:
+				return i
+			if free < 0:
+				free = i
+		if c > bd:
+			bd = c
+			best = i
+	return free if free >= 0 else best

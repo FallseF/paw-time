@@ -363,8 +363,19 @@ func _season_fx(sea: String, w: String) -> void:
 	world.add_child(p)
 
 
-func _mat(c: Color) -> StandardMaterial3D:
-	return Obake3D.toon(c, 0.08)
+## 庭の置き物の材質。輪郭は Obake3D.toon() の grow の殻の代わりに、輪郭のシェーダーで描く：
+## hull = 1 は箱、2 は円柱・円すい（面ごとに法線が割れていても殻がばらけない）。引いた島でも 1 画素を切らない。
+func _mat(c: Color, hull := 0) -> StandardMaterial3D:
+	var m := Obake3D.toon(c, 0.08)
+	var grow: float = (m.next_pass as StandardMaterial3D).grow_amount
+	var o := ShaderMaterial.new()
+	o.shader = Obake3D.OUTLINE_SHADER
+	o.set_shader_parameter("color", Obake3D.INK)
+	o.set_shader_parameter("width", grow)
+	o.set_shader_parameter("fixed_width", true)
+	o.set_shader_parameter("hull", hull)
+	m.next_pass = o
+	return m
 
 
 func _box(size: Vector3, pos: Vector3, c: Color, parent: Node3D = null) -> MeshInstance3D:
@@ -373,7 +384,7 @@ func _box(size: Vector3, pos: Vector3, c: Color, parent: Node3D = null) -> MeshI
 	b.size = size
 	m.mesh = b
 	m.position = pos
-	m.material_override = _mat(c)
+	m.material_override = _mat(c, 1)
 	(parent if parent else world).add_child(m)
 	return m
 
@@ -385,7 +396,7 @@ func _cyl(r: float, h: float, c: Color, top := -1.0) -> MeshInstance3D:
 	cm.bottom_radius = r
 	cm.height = h
 	m.mesh = cm
-	m.material_override = _mat(c)
+	m.material_override = _mat(c, 2)
 	return m
 
 
@@ -1023,9 +1034,13 @@ func _build_house() -> void:
 	shoji.material_override = Kit.glow(Color("fff3d6"), 0.3)
 	h.add_child(shoji)
 	items["shoji"] = shoji
+	# 障子の桟は細い（壁にぴったり）ので輪郭を付けない。殻が桟より太く、桟の横に浮いた線になる
+	var bars: Array = []
 	for i in 4:
-		_box(Vector3(0.04, 1.0, 0.02), Vector3(-1.8 + i * 0.8, 0.85, -0.02), Color("8a6a4e"), h)
-	_box(Vector3(2.4, 0.04, 0.02), Vector3(-0.6, 0.85, -0.02), Color("8a6a4e"), h)
+		bars.append(_box(Vector3(0.04, 1.0, 0.02), Vector3(-1.8 + i * 0.8, 0.85, -0.02), Color("8a6a4e"), h))
+	bars.append(_box(Vector3(2.4, 0.04, 0.02), Vector3(-0.6, 0.85, -0.02), Color("8a6a4e"), h))
+	for b in bars:
+		(b.material_override as StandardMaterial3D).next_pass = null
 	# 休憩室の看板
 	var sign := Kit.label3d("休憩室", 40, Color("fff6e8"))
 	sign.position = Vector3(1.6, 1.15, 0.0)
@@ -1349,7 +1364,7 @@ func _apply_time(n: float) -> void:
 	night = n
 	if crickets == null:
 		crickets = AudioStreamPlayer.new()
-		var loop: AudioStreamWAV = load("res://assets/sfx/crickets.wav")
+		var loop: AudioStreamWAV = load("res://assets/sfx/night_amb.wav")
 		loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		loop.loop_end = loop.data.size() / 2
 		crickets.stream = loop

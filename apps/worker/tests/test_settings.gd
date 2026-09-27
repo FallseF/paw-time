@@ -49,6 +49,12 @@ func _run() -> void:
 		_check(st.contains(tr(k)), "My page shows %s" % k)
 	_check(st.contains(tr("PRIVACY_CHAT")), "the privacy text (chat) is in My page")
 
+	# 2b 効果音のつまみ（音楽のつまみの下）
+	_check(s.sfx_slider != null and s.sfx_slider.is_inside_tree() and st.contains("Sound effects"), "My page has the sound effects slider")
+	s.set_sfx_volume(0.4)
+	_check(is_equal_approx(Sfx.volume, 0.4) and absf(Sfx.bus_db() - linear_to_db(0.16)) < 0.01, "sound effects volume set from My page")
+	s.set_sfx_volume(0.8)
+
 	# 3 名前
 	s.name_edit.text = "  Kuro  "
 	s.save_name()
