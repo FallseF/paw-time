@@ -6,10 +6,8 @@ extends "res://scripts/screen_title.gd"
 
 const SKY := preload("res://assets/title/sky.png")
 const LOGO := preload("res://assets/title/logo.png")
-const BTN_PRIMARY := preload("res://assets/title/btn_primary.png")
-const BTN_PRIMARY_PRESSED := preload("res://assets/title/btn_primary_pressed.png")
-const BTN_SECONDARY := preload("res://assets/title/btn_secondary.png")
-const PILL := preload("res://assets/title/pill_small.png")
+## 3D のロゴ（別の席が作る。あれば使い、なければ平らなロゴ）。logo_turntable_0..11 は出だしで回して見せる
+const LOGO3D := "res://assets/title/logo3d/"
 const SEA_SHADER := preload("res://shaders/title_sea.gdshader")
 const FRAME_FADE := preload("res://shaders/title_frame_fade.gdshader")
 
@@ -23,7 +21,6 @@ const TERRAIN_SEA := 0.8 # 岬（terrain_title.glb）の芝から海面までの
 const FAR_SWAY := 0.1 # 遠くの島は、カメラのゆれの 1 割だけ動かす（枠の 52〜92% から出ないように）
 const SIDE_LAYER := 1 << 9 # 横長の画面で、縦の枠の外にも描くもの（海・海の底・ヘリ）
 const CREAM := Color("fff6e6")
-const NAVY := Color("23285a")
 
 ## タイトルの間だけ、縦横比を「のばす」にする（ほかの画面は 360x640 の枠のまま）
 static var _open := 0
@@ -49,9 +46,23 @@ var props: Array[Node3D] = [] # 岬の上の小物（掲示板・物干し）
 var lamp: Node3D # 桟橋の根元の灯り
 var spinners: Array = []
 var logo: TextureRect
-var start_btn: Button
+var logo_glow: TextureRect # 3D のロゴのにじみ（加算）。無ければ null
+var logo_shadow: TextureRect
+var logo_main: Texture2D
+var logo_frames: Array[Texture2D] = []
+var tap_label: Label
+var row: HBoxContainer # 「島へおでかけ ・ English」の小さな行
 var visit_btn: Button
 var lang_btn: Button
+var veil: ColorRect # 出だしの暗幕
+var fx_back: TitleFx
+var fx_front: TitleFx
+var far_lights: Array[Node3D] = []
+## 出だしの演出の時間（読み込みの引っかかりで飛ばないよう、1 フレームの進みに上限）。2 回目以降（言語の切りかえ）は演出なし
+var _rv := 0.0
+static var _revealed := false
+var _leaving := false
+var cat_rect := Rect2() # 猫が映っている場所（キャンバスの座標）
 var frame := Rect2(0, 0, 360, 640)
 var pitch := 0.0
 var logo_y := 0.0
@@ -83,7 +94,6 @@ func _exit_tree() -> void:
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for i in 5:
 		var r := TextureRect.new()
 		r.texture = SKY
@@ -112,8 +122,22 @@ func _ready() -> void:
 	sky_warm.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	sky_warm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(sky_warm)
+	fx_back = TitleFx.new("back")
+	add_child(fx_back)
 	_build_world()
+	fx_front = TitleFx.new("front")
+	add_child(fx_front)
 	_build_ui()
+	veil = ColorRect.new()
+	veil.color = Color("0b1026")
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	veil.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(veil)
+	# どこをタップしても、はじめる（下の小さな行のボタンをのぞく）
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	if _revealed:
+		_rv = 10.0
+	_revealed = true
 	resized.connect(_layout)
 	_layout()
 
@@ -296,6 +320,7 @@ func _far_isle(sign_c: Color, accent: Color, tree_id: String, icon: String) -> N
 		g.material_override = Kit.glow(Color("ffd98a"), 1.6)
 		g.position = p
 		n.add_child(g)
+		far_lights.append(g)
 	far_root.add_child(n)
 	return n
 
@@ -430,6 +455,7 @@ func _fit_cat(fx: float, top_fy: float, bottom_fy: float) -> Vector3:
 		foot = _on_plane_px(_proj(foot) + Vector2(want_x - mid, want_bottom - bottom), GROUND_Y)
 	cat.position = foot
 	cat.scale = Vector3.ONE * s
+	cat_rect = Rect2(want_x - (want_bottom - want_top) * 0.62, want_top, (want_bottom - want_top) * 1.24, want_bottom - want_top)
 	return foot
 
 
@@ -573,77 +599,121 @@ func _place_heli(t: float) -> void:
 # ---------------------------------------------------------------- UI
 
 func _build_ui() -> void:
+	logo_main = LOGO
+	if ResourceLoader.exists(LOGO3D + "logo_main.png"):
+		logo_main = load(LOGO3D + "logo_main.png")
+		for i in 12:
+			var f := LOGO3D + "logo_turntable_%d.png" % i
+			if ResourceLoader.exists(f):
+				logo_frames.append(load(f))
+		logo_shadow = _logo_rect(LOGO3D + "logo_shadow.png")
+		logo_glow = _logo_rect(LOGO3D + "logo_main_glow.png")
+		if logo_glow:
+			var add := CanvasItemMaterial.new()
+			add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+			logo_glow.material = add
 	logo = TextureRect.new()
-	logo.texture = LOGO
+	logo.texture = logo_main
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(logo)
-	# つづきがあれば、つづきから。なければ前のタイトルの「はじめる」と同じ流れ
-	start_btn = _skin_button("はじめる", BTN_PRIMARY, BTN_PRIMARY_PRESSED, Vector4(160, 160, 149, 149), CREAM, 21, 3.0)
-	start_btn.pressed.connect(func():
-		if GameState.has_save():
-			_continue()
-		else:
-			_new("data"))
-	visit_btn = _skin_button("島へおでかけ", BTN_SECONDARY, null, Vector4(140, 140, 129, 129), NAVY, 17, 1.5)
+	# 「タップしてはじめる」：ゆっくり息をする一行
+	tap_label = Kit.text("タップしてはじめる", 18, CREAM, false, HORIZONTAL_ALIGNMENT_CENTER)
+	tap_label.add_theme_color_override("font_shadow_color", Color(0.1, 0.07, 0.16, 0.55))
+	tap_label.add_theme_constant_override("shadow_offset_y", 1)
+	tap_label.add_theme_constant_override("shadow_outline_size", 5)
+	tap_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(tap_label)
+	# 下の小さな行：島へおでかけ ・ 言語
+	row = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	add_child(row)
+	visit_btn = _text_button("島へおでかけ")
 	visit_btn.pressed.connect(func():
 		_ask_code()
 		_center_dialog())
-	lang_btn = _skin_button("日本語" if Kit.is_en() else "English", PILL, null, Vector4(80, 80, 69, 69), NAVY, 13, 0.8)
+	row.add_child(visit_btn)
+	var dot := Kit.text("・", 13, Color(CREAM, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(dot)
+	lang_btn = _text_button("日本語" if Kit.is_en() else "English")
 	lang_btn.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	lang_btn.pressed.connect(func():
 		Kit.save_lang("ja" if Kit.is_en() else "en")
 		main.go("title", true))
+	row.add_child(lang_btn)
 
 
-## 絵の皮（9 分割）を敷いたボタン。皮は元の画素の大きさで持ち、縮めて描く（角の丸みを保つ）
-func _skin_button(t: String, tex: Texture2D, pressed_tex: Texture2D, margins: Vector4, fg: Color, font_size: int, lip: float) -> Button:
+func _logo_rect(path: String) -> TextureRect:
+	if not ResourceLoader.exists(path):
+		return null
+	var r := TextureRect.new()
+	r.texture = load(path)
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(r)
+	return r
+
+
+## 文字だけの静かなボタン（大きな丸い板は使わない）
+func _text_button(t: String) -> Button:
 	var b := Button.new()
 	b.text = t
+	b.flat = true
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_override("font", Kit.bold())
-	b.add_theme_font_size_override("font_size", font_size)
-	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
-		b.add_theme_color_override(k, fg)
-	for k in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+	b.add_theme_font_size_override("font_size", 13)
+	b.add_theme_color_override("font_color", Color(CREAM, 0.82))
+	b.add_theme_color_override("font_hover_color", CREAM)
+	b.add_theme_color_override("font_pressed_color", Color(CREAM, 0.6))
+	b.add_theme_color_override("font_shadow_color", Color(0.1, 0.07, 0.16, 0.45))
+	b.add_theme_constant_override("shadow_outline_size", 4)
+	for k in ["normal", "hover", "pressed", "focus"]:
 		var e := StyleBoxEmpty.new()
-		# 下の縁（厚み）のぶん、文字を少し上へ。押すと縁が薄くなるので、文字も下がる
-		var down: bool = k in ["pressed", "hover_pressed"]
-		e.content_margin_bottom = 0.0 if down and pressed_tex else lip
-		e.content_margin_top = lip if down and pressed_tex else 0.0
+		e.content_margin_left = 8
+		e.content_margin_right = 8
+		e.content_margin_top = 6
+		e.content_margin_bottom = 6
 		b.add_theme_stylebox_override(k, e)
-	var skin := Control.new()
-	skin.show_behind_parent = true
-	skin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	skin.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	skin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	b.add_child(skin)
-	var sb := StyleBoxTexture.new()
-	sb.texture = tex
-	sb.texture_margin_left = margins.x
-	sb.texture_margin_right = margins.y
-	sb.texture_margin_top = margins.z
-	sb.texture_margin_bottom = margins.w
-	var sbp: StyleBoxTexture
-	if pressed_tex:
-		sbp = sb.duplicate()
-		sbp.texture = pressed_tex
-	skin.draw.connect(func():
-		var k := float(tex.get_height()) / maxf(b.size.y, 1.0)
-		var down := b.is_pressed() or (b.button_pressed and b.toggle_mode)
-		skin.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE / k)
-		skin.draw_style_box(sbp if down and sbp else sb, Rect2(Vector2.ZERO, b.size * k)))
-	b.button_down.connect(func():
-		if sbp == null:
-			skin.modulate = Color(0.93, 0.9, 0.86)
-		skin.queue_redraw())
-	b.button_up.connect(func():
-		skin.modulate = Color.WHITE
-		skin.queue_redraw())
-	add_child(b)
 	return b
+
+
+## はじめる：つづきがあれば、つづきから。なければ前のタイトルの「はじめる」と同じ流れ
+func _start() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	Kit.play(self, "tap", 1.0, -8)
+	if GameState.has_save():
+		_continue()
+	else:
+		_new("data")
+
+
+## 画面のどこかをタップ：出だしの途中なら演出を終わらせ、終わっていれば、はじめる
+func _tap() -> void:
+	if confirm != null:
+		return
+	if _rv < 2.6:
+		_rv = 2.6
+		return
+	_start()
+
+
+func _gui_input(e: InputEvent) -> void:
+	if (e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT) or (e is InputEventScreenTouch and e.pressed):
+		accept_event()
+		_tap()
+
+
+func _unhandled_input(e: InputEvent) -> void:
+	if e.is_action_pressed("ui_accept"):
+		_tap()
 
 
 ## 端末の切り欠き（上・下）。キャンバスの長さで
@@ -662,21 +732,26 @@ func _layout_ui() -> void:
 	var f := frame
 	var inset := _safe_insets()
 	var lw := f.size.x * 0.78
-	logo.size = Vector2(lw, lw * float(LOGO.get_height()) / LOGO.get_width())
+	logo.size = Vector2(lw, lw * float(logo_main.get_height()) / logo_main.get_width())
 	logo_y = maxf(f.size.y * 0.07, inset.x + 44.0)
 	logo.position = Vector2(f.position.x + (f.size.x - lw) * 0.5, logo_y)
-	var bw := f.size.x * 0.76
-	var bottom := minf(f.size.y * 0.94, f.size.y - inset.y - 10.0)
-	visit_btn.size = Vector2(bw, 46)
-	visit_btn.position = Vector2(f.position.x + (f.size.x - bw) * 0.5, bottom - 46)
-	start_btn.size = Vector2(bw, 54)
-	start_btn.position = Vector2(visit_btn.position.x, visit_btn.position.y - 14 - 54)
-	var font := Kit.bold()
-	var pw := font.get_string_size(lang_btn.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 34.0
-	lang_btn.size = Vector2(maxf(pw, 72.0), 30)
-	lang_btn.position = Vector2(f.end.x - 16.0 - lang_btn.size.x, 16.0 + inset.x)
-	for b in [start_btn, visit_btn, lang_btn]:
-		(b as Button).get_child(0).queue_redraw()
+	logo.pivot_offset = logo.size * 0.5
+	for r in [logo_glow, logo_shadow]:
+		if r:
+			(r as Control).size = logo.size * (1.12 if r == logo_glow else 1.0)
+			(r as Control).position = logo.position - ((r as Control).size - logo.size) * 0.5 + (Vector2(0, 6) if r == logo_shadow else Vector2.ZERO)
+			(r as Control).pivot_offset = (r as Control).size * 0.5
+	var bottom := minf(f.size.y * 0.95, f.size.y - inset.y - 8.0)
+	row.size = Vector2(f.size.x, 30)
+	row.position = Vector2(f.position.x, bottom - 30)
+	tap_label.size = Vector2(f.size.x, 28)
+	tap_label.position = Vector2(f.position.x, f.size.y * 0.88 - 14)
+	for fx in [fx_back, fx_front]:
+		(fx as TitleFx).position = Vector2.ZERO
+		(fx as TitleFx).size = size
+		(fx as TitleFx).frame = f
+		(fx as TitleFx).horizon = HORIZON
+		(fx as TitleFx).sun = f.position + Vector2(0.74, 0.365) * f.size
 
 
 ## 前のタイトルの入力の小窓は 360x640 の位置で組んである。縦の枠の真ん中へ寄せる
@@ -692,11 +767,16 @@ func _center_dialog() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	# カメラ：12 秒で ±1.5° ゆっくり左右に
-	cam.rotation = Vector3(pitch, deg_to_rad(1.5) * sin(_t * TAU / 12.0), 0)
+	_rv += minf(delta, 1.0 / 20.0)
+	# カメラ：出だしは 6 秒かけてゆっくり寄り（最後は静かに止まる）、そのあと 12 秒で ±1.5° ゆっくり左右に
+	var sway := smoothstep(4.5, 6.5, _rv)
+	cam.rotation = Vector3(pitch, deg_to_rad(1.5) * sin(_t * TAU / 12.0) * sway, 0)
+	var dolly := pow(1.0 - clampf(_rv / 6.0, 0.0, 1.0), 3.0)
+	cam.position = Vector3(0, CAM_H, 0) + Basis.from_euler(cam.rotation) * Vector3(0, 0.35, 1.0) * 2.6 * dolly
 	cam_wide.rotation = cam.rotation
+	cam_wide.position = cam.position
 	far_root.rotation.y = cam.rotation.y * (1.0 - FAR_SWAY)
-	logo.position.y = logo_y + sin(_t * TAU / 5.0) * 4.0
+	_animate_reveal()
 	raft.position.y = raft_y + sin(_t * 1.1) * 0.025 * cat.scale.x
 	raft.rotation.z = sin(_t * 0.8 + 0.6) * 0.03
 	raft.rotation.x = sin(_t * 0.95) * 0.025
@@ -708,6 +788,48 @@ func _process(delta: float) -> void:
 	for n in spinners:
 		(n as Node3D).rotate_object_local(n.get_meta("spin_axis"), float(n.get_meta("spin")) * delta)
 	_animate_cat(delta)
+
+
+## 出だし：暗幕が 0.6 秒で明け、1.2 秒でロゴが少し弾んで出る（3D のロゴなら回って止まる）。
+## そのあと「タップしてはじめる」が息をしはじめ、光の筋と粒がゆっくり満ちる。以降は静か
+func _animate_reveal() -> void:
+	veil.modulate.a = 1.0 - clampf(_rv / 0.6, 0.0, 1.0)
+	var p := clampf((_rv - 1.2) / 0.9, 0.0, 1.0)
+	var c1 := 1.70158 * 0.8
+	var back := 1.0 + (c1 + 1.0) * pow(p - 1.0, 3.0) + c1 * pow(p - 1.0, 2.0)
+	var idle := smoothstep(2.2, 3.5, _rv)
+	logo.modulate.a = clampf((_rv - 1.2) / 0.45, 0.0, 1.0)
+	logo.scale = Vector2.ONE * (0.72 + 0.28 * back)
+	logo.rotation = sin(_t * 0.9) * 0.01 * idle
+	logo.position.y = logo_y + sin(_t * TAU / 5.0) * 4.0 * idle
+	if not logo_frames.is_empty():
+		logo.texture = logo_main if p >= 1.0 else logo_frames[mini(int(p * logo_frames.size()), logo_frames.size() - 1)]
+	if logo_shadow:
+		logo_shadow.modulate.a = logo.modulate.a * 0.55
+		logo_shadow.scale = logo.scale
+		logo_shadow.position.y = logo.position.y + 6.0 - (logo_shadow.size.y - logo.size.y) * 0.5
+	if logo_glow:
+		var bloom := exp(-pow((_rv - 1.7) / 0.5, 2.0))
+		logo_glow.modulate.a = logo.modulate.a * (0.22 + 0.5 * bloom)
+		logo_glow.scale = logo.scale
+		logo_glow.rotation = logo.rotation
+		logo_glow.position.y = logo.position.y - (logo_glow.size.y - logo.size.y) * 0.5
+	var breathe := 0.5 + 0.5 * sin(_t * TAU / 2.6)
+	tap_label.modulate.a = smoothstep(2.4, 3.0, _rv) * (0.62 + 0.38 * breathe)
+	row.modulate.a = smoothstep(2.8, 3.4, _rv)
+	fx_back.t = _t
+	fx_front.t = _t
+	fx_back.shafts = smoothstep(0.6, 2.8, _rv)
+	fx_front.motes = smoothstep(2.0, 4.0, _rv)
+	var u := frame.size.x / 360.0
+	var hs: Array = []
+	for l in lamp.find_children("*", "MeshInstance3D", true, false):
+		if (l as MeshInstance3D).mesh is SphereMesh:
+			hs.append([_proj((l as Node3D).global_position), 16.0 * u, 0.32])
+	for l in far_lights:
+		hs.append([_proj(l.global_position), 5.0 * u, 0.3])
+	fx_front.halos = hs
+	fx_front.avoid = cat_rect
 
 
 ## 息（ゆっくりふくらむ）、まばたき、6 秒ほどごとに耳がぴくっ
