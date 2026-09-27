@@ -82,10 +82,9 @@ func _clear_shifts() -> void:
 ## 見本のシフトを 1 件（前の切りかえで入れた分は消す）。start / end は unix 秒
 func _put_shift(start: float, end: float) -> Dictionary:
 	_clear_shifts()
-	var job := {"id": PREFIX + str(int(start)), "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "shibuya", "start": start, "end": end, "line_n": 1}
+	var job := JobListings.demo_pay({"id": PREFIX + str(int(start)), "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "shibuya", "start": start, "end": end, "line_n": 1, "pay": "weekly"})
 	JobListings.localize(job)
-	var s := {"id": job.id, "title": job.title, "place": job.place, "store": job.store, "role": job.role, "start": start, "end": end,
-		"wage": 1200, "pay": "weekly", "listing": job.listing, "sample": true}
+	var s := JobListings.as_shift(job)
 	Shifts.add(s)
 	return s
 

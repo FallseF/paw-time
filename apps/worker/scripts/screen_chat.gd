@@ -57,10 +57,10 @@ static func seed_demo_shifts() -> void:
 	if not ChatShops.list().is_empty():
 		return
 	var now := ChatShops.now()
-	var day0 := floorf((now + JobListings.JST) / 86400.0) * 86400.0 - JobListings.JST
+	var day0 := JobListings.day0(now)
 	for d in [["demo_chat_next", "cafe_komorebi", "register", 1, 10], ["demo_chat_past", "izk_torimaru", "hall", -1, 17]]:
-		var st: float = day0 + int(d[3]) * 86400 + int(d[4]) * 3600
-		var j := {"id": d[0], "listing": d[1], "role": d[2], "area": "shibuya", "start": st, "end": st + 4 * 3600, "wage": 1250, "pay": "weekly", "sample": true}
+		var st: float = JobListings.at_hour(JobListings.next_day0(day0, int(d[3])), int(d[4]))
+		var j := JobListings.demo_pay({"id": d[0], "listing": d[1], "role": d[2], "area": "shibuya", "start": st, "end": st + 4 * 3600, "pay": "weekly", "sample": true})
 		JobListings.localize(j)
 		Shifts.add(j)
 

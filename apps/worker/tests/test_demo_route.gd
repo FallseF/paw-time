@@ -68,6 +68,8 @@ func _run() -> void:
 	_check(not ended.is_empty() and ended[-1].get("exhausted", false), "the cat stopped tired (%s)" % [ended[-1] if not ended.is_empty() else {}])
 	await get_tree().create_timer(1.0).timeout
 	_check(absf(WorkTogether.now() - Time.get_unix_time_from_system()) < 5.0, "time runs normally again")
+	var est := WorkTogether.pay_estimate({"shift_id": DemoRoute.node.shift_id}, Shifts.all())
+	_check(is_equal_approx(float(est.get("hours", 0)), DemoRoute.SHIFT_H) and float(est.get("amount", 0)) > 100.0 and Money.of(est) == Money.current(), "today's pay uses the fast-forwarded 7.5 h (%s)" % [est])
 	main.go("garden")
 	# 3 ひとこと評価
 	await _until(func(): return _screen() == "screen_garden.gd" and DemoRoute.node._desk(main.current) != null and DemoRoute.node._desk(main.current).rv_send != null and is_instance_valid(DemoRoute.node._desk(main.current).rv_send), 8.0, "the quick review opens")
@@ -99,6 +101,8 @@ func _run() -> void:
 	main.current._to_garden()
 	# 6 最後のカード
 	await _until(func(): return DemoRoute.node != null and DemoRoute.node.layer.get_node_or_null("Final") != null, 8.0, "the final card")
+	var url := DemoRoute.recruit_view_url()
+	_check(url.begins_with("https://paw-time-insights.vercel.app/?mode=sim&view=at-risk&drawer=live&demo=1&lang=") and url.ends_with("&lang=" + ("en" if Kit.is_en() else "ja")), "the Recruit view button opens the insights mock (%s)" % url)
 	print("demo route (automated) took %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
 	# テレメトリーを本当に送るとき（OBAKE_NOSAVE なし・TELEMETRY_LIVE=1）：デモの間のイベントが、API に受け付けられるか
 	if OS.get_environment("TELEMETRY_LIVE") != "":
