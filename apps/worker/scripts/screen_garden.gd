@@ -1370,7 +1370,7 @@ func _apply_time(n: float) -> void:
 		crickets.stream = loop
 		add_child(crickets)
 		crickets.play()
-	crickets.volume_db = lerpf(-60.0, -14.0, n)
+	crickets.volume_db = lerpf(-60.0, -4.0, n) # 夜の環境音：BGM より約20dB 下（前は約30dB 下で静かすぎた）
 	# 空：水平線の上は空の色（昼は水色、夕方は茜、夜は紺）。前は昼に砂色の帯が出ていた
 	var day_bg := Color("bfe4f4")
 	var eve_bg := Color("f2b99c")
