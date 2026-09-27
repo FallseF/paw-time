@@ -278,7 +278,7 @@ func _build_ui() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	card.add_child(v)
-	badge = _text("NEW", 13, Color("ffffff"), font_black)
+	badge = _text(tr("R3_NEW"), 13, Color("ffffff"), font_black)
 	badge.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var bp := PanelContainer.new()
 	bp.add_theme_stylebox_override("panel", _pill(Color("ff6b5b"), 10))

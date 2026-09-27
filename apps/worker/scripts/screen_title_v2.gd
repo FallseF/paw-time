@@ -47,11 +47,13 @@ var props: Array[Node3D] = [] # 岬の上の小物（掲示板・物干し）
 var lamp: Node3D # 桟橋の根元の灯り
 var spinners: Array = []
 var logo: TextureRect
+const TAGLINE_AT := 0.86 # ロゴの絵の高さのうち、ひとことを置く位置（字の下の影の余白に重ねる）
 var logo_glow: TextureRect # 3D のロゴのにじみ（加算）。無ければ null
 var logo_shadow: TextureRect
 var logo_main: Texture2D
 var logo_frames: Array[Texture2D] = []
 var tap_label: Label
+var tagline: Label # ロゴの下の小さなひとこと「いっしょにはたらこう」
 var row: HBoxContainer # 「島へおでかけ ・ English」の小さな行
 var visit_btn: Button
 var lang_btn: Button
@@ -620,6 +622,14 @@ func _build_ui() -> void:
 	logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(logo)
+	# ロゴの下の小さなひとこと（同じ字の系統で、控えめに）
+	tagline = Kit.text(tr("R3_TAGLINE"), 16, CREAM, true, HORIZONTAL_ALIGNMENT_CENTER)
+	tagline.add_theme_color_override("font_shadow_color", Color(0.1, 0.07, 0.16, 0.6))
+	tagline.add_theme_constant_override("shadow_offset_y", 1)
+	tagline.add_theme_constant_override("shadow_outline_size", 5)
+	tagline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tagline.modulate.a = 0.0
+	add_child(tagline)
 	# 「タップしてはじめる」：ゆっくり息をする一行
 	tap_label = Kit.text("タップしてはじめる", 18, CREAM, false, HORIZONTAL_ALIGNMENT_CENTER)
 	tap_label.add_theme_color_override("font_shadow_color", Color(0.1, 0.07, 0.16, 0.55))
@@ -639,7 +649,7 @@ func _build_ui() -> void:
 	row.add_child(visit_btn)
 	# 審査員用の3分デモ（前のタイトルにあった入口を、この行に残す）
 	for i in 2:
-		var dot := Kit.text("・", 13, Color(CREAM, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
+		var dot := Kit.text(tr("R3_SEP").strip_edges(), 13, Color(CREAM, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
 		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(dot)
 		if i == 0:
@@ -749,6 +759,8 @@ func _layout_ui() -> void:
 			(r as Control).size = logo.size
 			(r as Control).position = logo.position - ((r as Control).size - logo.size) * 0.5 + (Vector2(0, 6) if r == logo_shadow else Vector2.ZERO)
 			(r as Control).pivot_offset = (r as Control).size * 0.5
+	tagline.size = Vector2(f.size.x, 24)
+	tagline.position = Vector2(f.position.x, logo_y + logo.size.y * TAGLINE_AT)
 	var bottom := minf(f.size.y * 0.95, f.size.y - inset.y - 8.0)
 	row.size = Vector2(f.size.x, 30)
 	row.position = Vector2(f.position.x, bottom - 30)
@@ -822,6 +834,8 @@ func _animate_reveal() -> void:
 		logo_glow.scale = logo.scale
 		logo_glow.rotation = logo.rotation
 		logo_glow.position.y = logo.position.y - (logo_glow.size.y - logo.size.y) * 0.5
+	tagline.modulate.a = smoothstep(2.0, 2.8, _rv)
+	tagline.position.y = logo.position.y + logo.size.y * TAGLINE_AT
 	var breathe := 0.5 + 0.5 * sin(_t * TAU / 2.6)
 	tap_label.modulate.a = smoothstep(2.4, 3.0, _rv) * (0.62 + 0.38 * breathe)
 	row.modulate.a = smoothstep(2.8, 3.4, _rv)

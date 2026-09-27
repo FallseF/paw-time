@@ -40,6 +40,8 @@ var cat_target := Vector3.ZERO
 var cat_speed := 1.3
 var card: PanelContainer
 var card_box: VBoxContainer
+var openings: Array = [] # このお店のいまの募集
+var jobs_btn: Button
 var _t := 0.0
 
 
@@ -307,6 +309,13 @@ func _build_ui() -> void:
 	hint.add_theme_constant_override("outline_size", 4)
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(hint)
+	# いまの募集（このお店の、今の言語の町の見本の求人）。押すと一覧のカード
+	openings = open_jobs()
+	if not openings.is_empty():
+		jobs_btn = Kit.button(tr("SHOP_JOBS_BTN") % openings.size(), Color("ff8a5b"), open_jobs_card, Color.WHITE, 40, 14)
+		jobs_btn.position = Vector2(14, 546)
+		jobs_btn.size = Vector2(0, 40)
+		add_child(jobs_btn)
 	var note := Kit.text(tr("SHOP_SAMPLE_NOTE"), 10, Color(1, 1, 1, 0.8), false, HORIZONTAL_ALIGNMENT_CENTER)
 	note.position = Vector2(0, 616)
 	note.size = Vector2(360, 16)
@@ -314,10 +323,67 @@ func _build_ui() -> void:
 	add_child(note)
 
 
-## 目印のカード：「働いた人の声：時間どおりに帰れる ×23」
-func open_mark(mk: Dictionary) -> void:
+## このお店のいまの募集（今の言語の町の見本。今日の求人の知らせに出ているものが先。受けた・決めたものは出さない）
+func open_jobs() -> Array:
+	var out: Array = JobDesk.today_jobs().filter(func(j): return j.listing == shop_id)
+	for j in JobListings.shop_openings(shop_id, 3, hash(shop_id + JobDesk.today_key())):
+		if out.size() < 3 and not out.any(func(x): return x.start == j.start):
+			out.append(j)
+	var mine := Shifts.all().map(func(x): return x.id)
+	var dec: Dictionary = JobDesk._board.get("decided", {})
+	out = out.filter(func(j): return not mine.has(j.id) and not dec.has(j.id))
+	out.sort_custom(func(a, b): return a.start < b.start)
+	return out
+
+
+## いまの募集のカード：1 件ずつの行。押すと島へ戻って、その仕事のくわしいカード（受けるのはそこから）
+func open_jobs_card() -> void:
+	var box := _new_card()
+	var row := HBoxContainer.new()
+	var t := Kit.text(tr("SHOP_JOBS_TITLE"), 18, INK, true)
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(t)
+	row.add_child(_close_btn())
+	box.add_child(row)
+	for j in openings:
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(0, 56)
+		for k in ["normal", "hover", "pressed", "focus"]:
+			b.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k == "pressed" else Color.WHITE, 14, 0.1, Vector2(10, 6)))
+		var h := HBoxContainer.new()
+		h.set_anchors_preset(Control.PRESET_FULL_RECT)
+		h.offset_left = 12
+		h.offset_right = -10
+		h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(h)
+		var v := VBoxContainer.new()
+		v.alignment = BoxContainer.ALIGNMENT_CENTER
+		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		v.add_theme_constant_override("separation", 0)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(Kit.text(String(j.title), 14, INK, true))
+		v.add_child(Kit.text(JobListings.when_text(j), 12, SUB, true))
+		h.add_child(v)
+		var w := Kit.text(JobListings.wage_text(j), 18, Color("e0663a"), true)
+		w.add_theme_font_override("font", Kit.black())
+		w.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(w)
+		var job: Dictionary = j
+		b.pressed.connect(func(): see_job(job))
+		box.add_child(b)
+	box.add_child(I18n.wrap(Kit.text(tr("SHOP_JOBS_NOTE"), 11, SUB)))
+	_show_card()
+
+
+## 島へ戻って、その仕事のくわしいカードを開く
+func see_job(j: Dictionary) -> void:
+	Kit.play(self, "tap", 1.1)
+	JobDesk.focus_job = j
+	go_home()
+
+
+func _new_card() -> VBoxContainer:
 	close_card()
-	var lm: Dictionary = mk.data
 	Kit.play(self, "pop", 1.1, -4)
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.pill(PAPER, 22, 0.2, Vector2(16, 12)))
@@ -328,6 +394,26 @@ func open_mark(mk: Dictionary) -> void:
 	card_box.add_theme_constant_override("separation", 5)
 	card_box.custom_minimum_size = Vector2(300, 0)
 	card.add_child(card_box)
+	if jobs_btn:
+		jobs_btn.visible = false
+	return card_box
+
+
+func _close_btn() -> Button:
+	var close := Button.new()
+	close.text = tr("SHOP_CLOSE")
+	close.flat = true
+	close.add_theme_font_override("font", Kit.bold())
+	close.add_theme_font_size_override("font_size", 12)
+	close.add_theme_color_override("font_color", SUB)
+	close.pressed.connect(close_card)
+	return close
+
+
+## 目印のカード：「働いた人の声：時間どおりに帰れる ×23」
+func open_mark(mk: Dictionary) -> void:
+	var lm: Dictionary = mk.data
+	_new_card()
 	var row := HBoxContainer.new()
 	var lv := int(lm.level)
 	var chip_t := tr("SHOP_SPROUT") if lv == 0 else tr("SHOP_LEVEL") % [lv, ShopCulture.LEVELS.size()]
@@ -338,14 +424,7 @@ func open_mark(mk: Dictionary) -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(sp)
-	var close := Button.new()
-	close.text = tr("SHOP_CLOSE")
-	close.flat = true
-	close.add_theme_font_override("font", Kit.bold())
-	close.add_theme_font_size_override("font_size", 12)
-	close.add_theme_color_override("font_color", SUB)
-	close.pressed.connect(close_card)
-	row.add_child(close)
+	row.add_child(_close_btn())
 	card_box.add_child(row)
 	card_box.add_child(I18n.wrap(Kit.text(tr("SHOP_LM_" + String(lm.id).to_upper()), 19, INK, true)))
 	var said := PanelContainer.new()
@@ -353,6 +432,11 @@ func open_mark(mk: Dictionary) -> void:
 	said.add_child(I18n.wrap(Kit.text(tr("SHOP_WORKERS_SAID") % [tr("REVIEW_TAG_" + String(lm.tag).to_upper()), int(lm.votes)], 14, GREEN, true)))
 	card_box.add_child(said)
 	card_box.add_child(I18n.wrap(Kit.text(tr("SHOP_LM_" + String(lm.id).to_upper() + "_BODY") if lv > 0 else tr("SHOP_SPROUT_BODY"), 13, SUB)))
+	_show_card()
+
+
+## カードの高さが決まってから、下からすべり出す
+func _show_card() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	if not is_instance_valid(card):
@@ -369,6 +453,8 @@ func close_card() -> void:
 	if card and is_instance_valid(card):
 		card.queue_free()
 	card = null
+	if jobs_btn:
+		jobs_btn.visible = true
 
 
 func go_home() -> void:
@@ -391,6 +477,10 @@ func demo_tap() -> void:
 		open_mark(best)
 		cat.position = best.anchor * Vector3(1, 0, 1) + Vector3(0.95, 0, 0.9)
 		cat_target = cat.position
+
+
+func demo_jobs() -> void:
+	open_jobs_card()
 
 
 func demo_walk() -> void:

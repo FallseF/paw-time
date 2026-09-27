@@ -181,6 +181,7 @@ func _build_ui() -> void:
 	scroll.position = Vector2(8, 384)
 	scroll.size = Vector2(344, 168)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	TouchScroll.enable(scroll)
 	add_child(scroll)
 	grid = GridContainer.new()
 	grid.columns = 4
@@ -367,7 +368,7 @@ func _card(it: Dictionary) -> Control:
 	if Wardrobe.fresh.has(it.id):
 		var nb := PanelContainer.new()
 		nb.add_theme_stylebox_override("panel", Kit.pill(Color("ff6b5b"), 8, 0.0, Vector2(5, 1)))
-		nb.add_child(Kit.text("NEW", 9, Color.WHITE, true))
+		nb.add_child(Kit.text(tr("R3_NEW"), 9, Color.WHITE, true))
 		nb.position = Vector2(4, 4)
 		nb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(nb)

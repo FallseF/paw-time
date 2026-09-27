@@ -78,6 +78,7 @@ func _build() -> void:
 	scroll.position = Vector2(0, 66)
 	scroll.size = Vector2(360, 574)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	TouchScroll.enable(scroll)
 	add_child(scroll)
 	add_child(head)
 	var pad := MarginContainer.new()
@@ -239,7 +240,7 @@ func set_lang(lang: String) -> void:
 ## 音楽：鳴らす／消す と音量（scripts/music.gd）。その下に効果音の音量（scripts/sfx.gd）。どちらも settings.cfg の [audio] に残る
 func _music_section() -> void:
 	Music.load_prefs()
-	var v := _section("Music" if Kit.is_en() else "音楽")
+	var v := _section(tr("R3_MUSIC"))
 	v.add_child(_row([
 		_chip("music:true", tr("PREFS_SUGGEST_ON"), func(): set_music_on(true)),
 		_chip("music:false", tr("PREFS_SUGGEST_OFF"), func(): set_music_on(false)),

@@ -695,7 +695,7 @@ func _fill_card(t: Dictionary) -> void:
 		r_kicker.text = I18n.t("ONB_SPECIAL_KICKER")
 		r_special.add_theme_stylebox_override("panel", Kit.pill(SpecialObake.glow(sk).darkened(0.35), 12, 0.0, Vector2(12, 3)))
 		r_special_l.text = I18n.t("ONB_SPECIAL_RIBBON") % SpecialObake.name_of(sk)
-		r_pet.text = I18n.t("ONB_SPECIAL_PET") % SpecialObake.pet_name(result)
+		r_pet.text = I18n.t("ONB_SPECIAL_PET") # 名前は次の画面で決めるので、ここでは呼ばない
 	var id: String = result.type_id
 	r_name.text = QuizData.type_name(id)
 	r_name.add_theme_font_size_override("font_size", QuizData.fit_size(font_black, r_name.text, 296, 24, 17))

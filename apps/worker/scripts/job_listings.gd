@@ -314,9 +314,10 @@ static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1
 		var tmp = pool[i]
 		pool[i] = pool[j]
 		pool[j] = tmp
-	# SF：選んだ地区の店を先に（ほかの地区の店も出す）
-	if reg == "sf" and prefs.area in JobPrefs.AREAS_SF:
-		pool = pool.filter(func(e): return SF[e[0]][0] == prefs.area) + pool.filter(func(e): return SF[e[0]][0] != prefs.area)
+	# SF：選んだ地区（どれか）の店を先に（ほかの地区の店も出す）
+	var picked: Array = prefs.areas.filter(func(a): return a in JobPrefs.AREAS_SF)
+	if reg == "sf" and not picked.is_empty():
+		pool = pool.filter(func(e): return SF[e[0]][0] in picked) + pool.filter(func(e): return not SF[e[0]][0] in picked)
 	var dates := _open_dates(now, prefs.days, tz)
 	var out: Array = []
 	if dates.is_empty():
@@ -329,6 +330,27 @@ static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1
 		if ok_dates.is_empty():
 			continue
 		out.append(_make_job(e, prefs, ok_dates[rng.randi_range(0, ok_dates.size() - 1)], rng, reg))
+	out.sort_custom(func(a, b): return a.start < b.start)
+	return out
+
+
+## そのお店の、いまの募集（お店の島で見せる。翌日から 7 日のうちの n 日、その日に 1 件）。
+## 働く人の条件では絞らない（お店の事実）。地域は日本なら自分の地域、SF ならその店の地区。seed で毎日の顔ぶれを変える
+static func shop_openings(listing_id: String, n: int, seed_n: int, base := -1.0, r := "") -> Array:
+	var e := entry(listing_id)
+	if e.is_empty():
+		return []
+	var reg := _reg(r)
+	var tz := tz_of_region(reg)
+	var mine := JobPrefs.load_prefs()
+	var prefs := JobPrefs.normalize({"areas": mine.areas, "slots": JobPrefs.grid(range(7), JobPrefs.WINDOW_ORDER), "min_wage": JobPrefs.WAGE_MIN, "min_wage_usd": JobPrefs.WAGE_MIN_USD, "pay": "any"})
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_n
+	var dates := _open_dates(base if base >= 0 else Time.get_unix_time_from_system(), [], tz)
+	var out: Array = []
+	while out.size() < n and not dates.is_empty():
+		var d0: int = dates.pop_at(rng.randi_range(0, dates.size() - 1))
+		out.append(_make_job(e, prefs, d0, rng, reg))
 	out.sort_custom(func(a, b): return a.start < b.start)
 	return out
 
@@ -384,11 +406,15 @@ static func _make_job(e: Array, prefs: Dictionary, day0_t: int, rng: RandomNumbe
 	var pays: Array = pays_of(e, reg)
 	var pay: String = prefs.pay if prefs.pay != "any" else pays[rng.randi_range(0, pays.size() - 1)]
 	var start := at_hour(day0_t, start_h, tz)
+	# 日本：えらんだ地域のどれか（ひとつなら、今までどおり乱数を使わない）
+	var area := String(prefs.area)
+	if prefs.areas.size() > 1:
+		area = String(prefs.areas[rng.randi_range(0, prefs.areas.size() - 1)])
 	var job := {
 		"id": "%s_%d_%d" % [e[0], start, rng.randi() % 1000],
 		"listing": e[0],
 		"role": role,
-		"area": String(SF[e[0]][0]) if reg == "sf" and SF.has(e[0]) else prefs.area,
+		"area": String(SF[e[0]][0]) if reg == "sf" and SF.has(e[0]) else area,
 		"window": win,
 		"start": start,
 		"end": start + hours * 3600,
@@ -445,7 +471,7 @@ static func wage_text(job: Dictionary) -> String:
 
 ## 見本のシフトを Shifts の形に（通貨と町の時刻も持たせる）
 static func as_shift(j: Dictionary) -> Dictionary:
-	return {"id": j.id, "title": j.get("title", ""), "place": j.get("place", ""), "store": j.get("store", ""), "role": j.get("role", "hall"),
+	return {"id": j.id, "title": j.get("title", ""), "place": j.get("place", ""), "store": j.get("store", ""), "role": j.get("role", "hall"), "area": j.get("area", ""),
 		"start": j.start, "end": j.end, "wage": j.get("wage", 0), "pay": j.get("pay", "weekly"), "listing": j.get("listing", ""),
 		"sample": true, "currency": Money.of(j), "tz": tz_of(j)}
 
