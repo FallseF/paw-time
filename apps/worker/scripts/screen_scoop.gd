@@ -33,6 +33,19 @@ var tag_n := -1
 var rim_col := Color.WHITE
 var pressed := false
 var last_ground := Vector3.ZERO
+## ポイの動き：指（マウス）の点 aim を、ばねのように追いかける（ScoopAssist.follow）。水の中では近くの玉へ、そっと寄る
+var aim := Vector3(0, 0, 1.2)
+var poi_vel := Vector2.ZERO
+var press_ms := 0 # 押した時刻（タップの判定）
+var press_at := Vector2.ZERO
+var auto_orb: Orb3D = null # タップした玉（ポイがすべっていって、すくう）
+var auto_t := 0.0
+var guide: MeshInstance3D # 水面のポイの輪（すくえる広さ）
+var guide_mat: StandardMaterial3D
+var shade: MeshInstance3D # 持ち上げているときの、水面の影
+var target_ring: MeshInstance3D # すくえる玉の、光る輪
+var target_mat: StandardMaterial3D
+var now_label: Label3D # 「いま！」
 var busy := false
 var ripple_t := 10.0
 
@@ -72,6 +85,7 @@ func _ready() -> void:
 	_refresh_ui()
 	if Onboarding.at("scoop"):
 		_tutorial_coach()
+	_show_hand()
 	# 今夜の川の様子を、はじめに知らせる
 	var kind := GameState.night_kind()
 	if kind != "" and GameState.day >= 1:
@@ -292,7 +306,52 @@ func _build_world() -> void:
 
 	poi = _make_poi()
 	world.add_child(poi)
-	poi.position = Vector3(0, 0.5, 1.2)
+	poi.position = Vector3(0, 0.45, 1.2)
+	_build_guides()
+
+
+## 水面の目じるし：ポイの輪（すくえる広さ）・持ち上げているときの影・すくえる玉の光る輪・「いま！」
+func _build_guides() -> void:
+	guide = MeshInstance3D.new()
+	var t := TorusMesh.new()
+	t.inner_radius = 0.9
+	t.outer_radius = 1.0
+	t.rings = 48
+	guide.mesh = t
+	guide_mat = StandardMaterial3D.new()
+	guide_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	guide_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	guide_mat.albedo_color = Color(1, 1, 1, 0.35)
+	guide.material_override = guide_mat
+	guide.scale = Vector3(1, 0.02, 1) * _hit_r()
+	world.add_child(guide)
+	shade = MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = POI_R * 0.95
+	c.bottom_radius = POI_R * 0.95
+	c.height = 0.002
+	shade.mesh = c
+	var sm := StandardMaterial3D.new()
+	sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	sm.albedo_color = Color(0.02, 0.04, 0.12, 0.35)
+	shade.material_override = sm
+	world.add_child(shade)
+	target_ring = MeshInstance3D.new()
+	var tt := TorusMesh.new()
+	tt.inner_radius = 0.2
+	tt.outer_radius = 0.25
+	target_ring.mesh = tt
+	target_mat = _glow_mat(Color.WHITE, 1.6)
+	target_ring.material_override = target_mat
+	target_ring.visible = false
+	world.add_child(target_ring)
+	now_label = Kit.label3d(tr("SCOOP_NOW"), 44, Color("ffe27a"))
+	now_label.pixel_size = 0.004
+	now_label.no_depth_test = true
+	now_label.render_priority = 10
+	now_label.visible = false
+	world.add_child(now_label)
 
 
 func _glow_mat(c: Color, e: float) -> StandardMaterial3D:
@@ -623,6 +682,16 @@ func _refresh_ui() -> void:
 	poi_film_mat.albedo_color = Color(1, 1, 1, 0.15 + 0.4 * durability)
 
 
+## 破れ具合のバーと膜だけ（毎フレーム呼んでも軽い）
+func _refresh_dura() -> void:
+	dura_bar.value = durability if poi_type != "" else 0.0
+	var c := Color("7bdc6b") if durability > 0.5 else (Color("ffd23f") if durability > 0.25 else Color("ff6b5b"))
+	var fill := dura_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if fill and fill.bg_color != c:
+		fill.bg_color = c
+	poi_film_mat.albedo_color = Color(1, 1, 1, 0.15 + 0.4 * durability)
+
+
 func _pick_poi() -> void:
 	poi_type = ""
 	# 種類つきのポイを先に使う（今夜の仕事の玉に合う）
@@ -693,25 +762,27 @@ func _ground(p: Vector2) -> Vector3:
 	return g
 
 
+## 押す → 水に入る（押した所へ）。押したまま動かす → ポイが、なめらかについてくる。離す → すくい上げる。
+## さっと押して離した（タップ）のが玉のそばなら、ポイが玉まですべって、すくう。
+## 一本の指は、マウスとして届く（emulate_mouse_from_touch）ので、指の知らせ（ScreenTouch/Drag）は使わない（二重に動かさない）
 func _gui_input(event: InputEvent) -> void:
-	if busy:
+	if busy or auto_orb != null:
 		return
 	var pos := Vector2.ZERO
 	var down := false
 	var up := false
-	var motion := false
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		pos = event.position
 		down = event.pressed
 		up = not event.pressed
-	elif event is InputEventScreenTouch:
+	elif event is InputEventMouseMotion:
 		pos = event.position
-		down = event.pressed
-		up = not event.pressed
-	elif event is InputEventMouseMotion or event is InputEventScreenDrag:
-		pos = event.position
-		motion = true
 	else:
+		return
+	if up:
+		if pressed:
+			pressed = false
+			_release(pos)
 		return
 	if pos.y < 120:
 		return
@@ -721,30 +792,57 @@ func _gui_input(event: InputEvent) -> void:
 			_banner("ポイがない。今夜はおしまい", Color("ffb3a8"))
 			return
 		pressed = true
+		press_ms = Time.get_ticks_msec()
+		press_at = pos
 		_hide_coach() # はじめての夜の説明は、水に入れたら消す（読みながら待たせない）
+		_hide_hand()
 		last_ground = g
+		aim = g
+		# 押した所へ、そのまま入れる（そこから先は、なめらかに追いかける）
 		poi.position = Vector3(g.x, -0.04, g.z)
+		poi_vel = Vector2.ZERO
 		_ripple(g)
 		_play("splash", randf_range(0.9, 1.1))
 		hint.text = "玉の下まで、そっと"
-	elif motion:
-		if pressed:
-			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
-			durability -= (0.008 + speed * 0.012) * get_process_delta_time() / GameState.poi_strength()
-			last_ground = g
-			poi.position = Vector3(g.x, -0.04, g.z)
-			if durability <= 0:
-				if not GameState.tut.has("scoop") and GameState.total_scooped == 0:
-					durability = 0.3
-				else:
-					_tear(null)
-					return
-			_refresh_ui()
-		else:
-			poi.position = Vector3(g.x, 0.45, g.z)
-	elif up and pressed:
-		pressed = false
-		_lift()
+	else:
+		aim = g
+		last_ground = g
+
+
+## 離した：タップで、近くに玉があり、まだ輪の中に入っていなければ、玉まですべらせる。それ以外は、すくい上げる
+func _release(pos: Vector2) -> void:
+	var held := (Time.get_ticks_msec() - press_ms) / 1000.0
+	if ScoopAssist.is_tap(held, pos.distance_to(press_at)) and _in_range() == null:
+		var scr: Array = []
+		for o in orbs:
+			scr.append(View3D.unproject(cam, o.position))
+		var k := ScoopAssist.tap_pick(pos, scr)
+		if k >= 0:
+			auto_orb = orbs[k]
+			auto_t = 0.0
+			pressed = true # 水の中を、玉まですべる
+			return
+	_lift()
+
+
+## すくえる輪（見えない当たり）の中の、いちばん近い玉（無ければ null）
+func _in_range() -> Orb3D:
+	var best: Orb3D = null
+	var bd := _hit_r()
+	for o in orbs:
+		var d := Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length()
+		if d < bd:
+			bd = d
+			best = o
+	return best
+
+
+func _hit_r() -> float:
+	return ScoopAssist.hit_radius(GameState.total_scooped, GameState.day)
+
+
+func _wear() -> float:
+	return ScoopAssist.wear_scale(GameState.total_scooped, GameState.day)
 
 
 func _ripple(g: Vector3) -> void:
@@ -756,8 +854,11 @@ func _ripple(g: Vector3) -> void:
 
 func _lift() -> void:
 	busy = true
+	auto_orb = null
+	target_ring.visible = false
+	now_label.visible = false
 	var target: Orb3D = null
-	var best := POI_R
+	var best := _hit_r()
 	for o in orbs:
 		var d := Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length()
 		if d < best:
@@ -773,7 +874,7 @@ func _lift() -> void:
 		await tw.finished
 		perfect_streak = 0
 		if GameState.tut.has("scoop") or GameState.total_scooped > 0:
-			durability -= 0.03 / GameState.poi_strength()
+			durability -= 0.03 / GameState.poi_strength() * _wear()
 		if durability <= 0:
 			_tear(null)
 			return
@@ -788,7 +889,7 @@ func _lift() -> void:
 		match_mult = 0.55 # 仕事の種類が合うポイは、その玉に強い
 	elif pt != "any":
 		match_mult = 0.85
-	var cost: float = target.data.weight * match_mult / GameState.poi_strength()
+	var cost: float = target.data.weight * match_mult / GameState.poi_strength() * _wear()
 	# 玉の真下で離すと「ぴったり」：破れにくく、3回続くとめぐみ
 	var perfect := best < POI_R * 0.4
 	if perfect:
@@ -839,6 +940,7 @@ func _lift() -> void:
 	caught_count += 1
 	if coach:
 		coach.visible = false # はじめての夜の説明は、すくえたら消す（まん中の「ぴったり」と重ならないように）
+	_first_catch_cheer()
 	if perfect:
 		perfect_streak += 1
 		var msg := "ぴったり！"
@@ -901,11 +1003,15 @@ func _tear(target: Orb3D) -> void:
 
 # ---------- 毎フレーム ----------
 
-## ポイのまわりの、ゆっくり息をする輪（じっとしているほど満ちる）
+## ポイの動き・目じるし・玉の動き（毎フレーム）
 func _process(delta: float) -> void:
 	ripple_t += delta
+	if not busy:
+		_move_poi(delta)
+	_sync_guides(delta)
+	_sync_hand(delta)
 	# ポイの下に玉があると、縁が光る（真ん中なら金色）
-	if pressed and poi_rim and poi_rim.material_override:
+	if pressed and not busy and poi_rim and poi_rim.material_override:
 		var near := 99.0
 		for o in orbs:
 			near = minf(near, Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length())
@@ -916,7 +1022,7 @@ func _process(delta: float) -> void:
 			m.emission_energy_multiplier = 2.2
 			hint.text = "ぴったり。いま離す！"
 			hint.add_theme_color_override("font_color", Color("ffe27a"))
-		elif near < POI_R:
+		elif near < _hit_r():
 			m.emission_enabled = true
 			m.emission = Color("ffffff")
 			m.emission_energy_multiplier = 0.9
@@ -954,8 +1060,10 @@ func _process(delta: float) -> void:
 		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta * noise
 		if t == "rare":
 			steer += Vector3(-o.position.z, 0, o.position.x).normalized() * 0.4 * delta
-		# 水中でポイが近くにあると、少し逃げる
-		if pressed:
+		# 水中でポイが近くにあると、少し逃げる（はじめのうちは、あまり逃げない。タップで向かっている玉は逃げない）
+		if ScoopAssist.beginner(GameState.total_scooped, GameState.day):
+			flee *= 0.5
+		if pressed and o != auto_orb:
 			var away: Vector3 = o.position - poi.position
 			away.y = 0
 			var d: float = away.length()
@@ -981,6 +1089,76 @@ func _process(delta: float) -> void:
 			o.vel -= Vector3(e.x, 0, e.y).normalized() * 0.6 * delta * 10.0
 		o.position.y = 0.0
 		_keep_visible(o)
+
+
+## ポイを動かす：指の点（水の中なら、近くの玉へ少し寄せた点）を、ばねで追いかける。速く動かすほど破れやすい
+func _move_poi(delta: float) -> void:
+	var tgt := Vector2(aim.x, aim.z)
+	var smooth := 0.06
+	if auto_orb != null:
+		# タップした玉へ、すべっていく。真下に来たら（または少ししたら）すくい上げる
+		if not is_instance_valid(auto_orb) or not orbs.has(auto_orb):
+			auto_orb = null
+			pressed = false
+			return
+		auto_t += delta
+		tgt = Vector2(auto_orb.position.x, auto_orb.position.z)
+		smooth = 0.12
+		if Vector2(poi.position.x, poi.position.z).distance_to(tgt) < POI_R * 0.3 or auto_t > 0.9:
+			pressed = false
+			_lift()
+			return
+	elif pressed:
+		var ops: Array = []
+		for o in orbs:
+			ops.append(Vector2(o.position.x, o.position.z))
+		tgt = ScoopAssist.magnet(tgt, ops, ScoopAssist.MAGNET_R, ScoopAssist.magnet_strength(GameState.total_scooped, GameState.day))
+	var r := ScoopAssist.follow(Vector2(poi.position.x, poi.position.z), tgt, poi_vel, smooth, delta)
+	var p: Vector2 = r[0]
+	poi_vel = r[1]
+	var y := -0.04 if pressed else 0.45
+	poi.position = Vector3(p.x, lerpf(poi.position.y, y, 1.0 - exp(-18.0 * delta)), p.y)
+	if not pressed or auto_orb != null:
+		return
+	# 水の中で動かすと、少しずつ破れる（はじめのうちは、ほとんど破れない）
+	durability -= (0.008 + poi_vel.length() * 0.012) * delta / GameState.poi_strength() * _wear()
+	if durability <= 0:
+		if not GameState.tut.has("scoop") and GameState.total_scooped == 0:
+			durability = 0.3
+		else:
+			_tear(null)
+			return
+	_refresh_dura()
+
+
+## 水面の目じるし：ポイの輪（押している間は明るく、玉が入ったら金色）・影・すくえる玉の輪・「いま！」
+func _sync_guides(delta: float) -> void:
+	if guide == null:
+		return
+	var hr := _hit_r()
+	guide.position = Vector3(poi.position.x, 0.012, poi.position.z)
+	guide.scale = Vector3(hr, 0.02, hr)
+	shade.position = Vector3(poi.position.x, 0.008, poi.position.z)
+	shade.visible = poi.position.y > 0.1 and poi_type != ""
+	guide.visible = poi_type != ""
+	var inr: Orb3D = _in_range() if pressed and not busy else null
+	var col := Color(1, 1, 1, 0.22)
+	if pressed:
+		col = Color(1, 1, 1, 0.5)
+	if inr != null:
+		col = Color(1.0, 0.88, 0.4, 0.8)
+	guide_mat.albedo_color = guide_mat.albedo_color.lerp(col, 1.0 - exp(-14.0 * delta))
+	target_ring.visible = inr != null
+	now_label.visible = inr != null and pressed and auto_orb == null
+	if inr != null:
+		var pulse := 1.0 + 0.12 * sin(ripple_t * 10.0)
+		target_ring.position = Vector3(inr.position.x, 0.03, inr.position.z)
+		target_ring.scale = Vector3.ONE * pulse
+		var perfect := Vector2(inr.position.x - poi.position.x, inr.position.z - poi.position.z).length() < POI_R * 0.4
+		target_mat.albedo_color = Color("ffd23f") if perfect else Color.WHITE
+		target_mat.emission = target_mat.albedo_color
+		now_label.position = Vector3(poi.position.x, 0.75, poi.position.z)
+		now_label.scale = Vector3.ONE * (1.0 + 0.08 * sin(ripple_t * 12.0))
 
 
 ## 玉は画面の中の水面から出さない（出かけたら、池のまん中へ押しもどす）
@@ -1106,6 +1284,181 @@ func _hide_coach() -> void:
 	tw.tween_callback(func(): coach.visible = false)
 
 
+## はじめてのすくい：指の動かし方を、半透明の手が 3 拍で見せる（おさえて → すべりこませて → はなす！）。
+## 押すまでくり返し、押したらすぐ消える。はじめて玉をすくえたら「いいね！」、そのあと「玉をタップするだけでもOK」を一度だけ。
+## 入力はじゃましない（mouse_filter = IGNORE）。玉の中身の説明（相棒の吹き出し）は上に、手は水面に出る
+const HAND_BEATS := [1.0, 2.3, 3.2] # 拍の終わり（秒）
+const HAND_CYCLE := 3.45
+const HAND_CAPS := ["SCOOP_HAND_HOLD", "SCOOP_HAND_SLIDE", "SCOOP_HAND_RELEASE"]
+var hand: Control
+var hand_art: HandGhost
+var hand_cap: Label
+var hand_t := 0.0
+var hand_idle := 0.0
+var hand_orb: Orb3D
+
+
+func _want_hand() -> bool:
+	return poi_type != "" and not GameState.tut.has("scoop_hand") and GameState.total_scooped == 0 and not orbs.is_empty()
+
+
+func _show_hand() -> void:
+	if not _want_hand() or hand != null:
+		return
+	hand = Control.new()
+	hand.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hand)
+	hand_art = HandGhost.new()
+	hand_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hand.add_child(hand_art)
+	hand_cap = _text("", 26, Color.WHITE, font_black)
+	hand_cap.add_theme_color_override("font_outline_color", Color("0b1026"))
+	hand_cap.add_theme_constant_override("outline_size", 10)
+	hand_cap.position = Vector2(0, 232)
+	hand_cap.size = Vector2(360, 40)
+	hand_cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hand.add_child(hand_cap)
+	hand_t = 0.0
+	_sync_hand(0.0)
+
+
+func _hide_hand() -> void:
+	hand_idle = 0.0
+	if hand and is_instance_valid(hand):
+		hand.queue_free()
+	hand = null
+
+
+## 手の拍（毎フレーム）。はじめの玉の画面の位置へ向かう。すくう前に手を離して何もしないでいたら、また見せる
+func _sync_hand(delta: float) -> void:
+	if hand == null:
+		if not pressed and not busy and auto_orb == null and _want_hand():
+			hand_idle += delta
+			if hand_idle > 3.0:
+				_show_hand()
+		return
+	if orbs.is_empty() or busy:
+		hand.visible = false
+		return
+	hand.visible = true
+	hand_t = fmod(hand_t + delta, HAND_CYCLE)
+	# 見本にする玉：宙のポイの陰にならない玉（ポイからいちばん遠い玉）
+	if hand_orb == null or not is_instance_valid(hand_orb) or not orbs.has(hand_orb):
+		var ps := View3D.unproject(cam, poi.position)
+		var bd := -1.0
+		for ob in orbs:
+			var d := View3D.unproject(cam, ob.position).distance_to(ps)
+			if d > bd:
+				bd = d
+				hand_orb = ob
+	var o: Orb3D = hand_orb
+	var b := View3D.unproject(cam, o.position) + Vector2(0, 10)
+	var a := (b + Vector2(90, 56)).clamp(Vector2(60, 330), Vector2(300, 460))
+	if a.distance_to(b) < 60.0:
+		a = (b + Vector2(-90, 56)).clamp(Vector2(60, 330), Vector2(300, 460))
+	var t := hand_t
+	var beat := 0 if t < HAND_BEATS[0] else (1 if t < HAND_BEATS[1] else (2 if t < HAND_BEATS[2] else 3))
+	var at := a
+	var press := 0.0
+	var ring := -1.0
+	var alpha := 1.0
+	var lift := 0.0
+	match beat:
+		0: # おさえて：水を押す（指がしずみ、波紋がひろがる）
+			press = clampf(t / 0.3, 0.0, 1.0)
+			ring = clampf((t - 0.25) / 0.75, 0.0, 1.0) if t > 0.25 else -1.0
+			alpha = clampf(t / 0.15, 0.0, 1.0)
+		1: # すべりこませて：押したまま、玉の下へ
+			var k := (t - HAND_BEATS[0]) / (HAND_BEATS[1] - HAND_BEATS[0])
+			at = a.lerp(b, k * k * (3.0 - 2.0 * k))
+			press = 1.0
+		2: # はなす！：指が上がる
+			var k := (t - HAND_BEATS[1]) / (HAND_BEATS[2] - HAND_BEATS[1])
+			at = b
+			press = 1.0 - clampf(k * 3.0, 0.0, 1.0)
+			lift = 26.0 * clampf(k * 2.0, 0.0, 1.0)
+			alpha = 1.0 - clampf((k - 0.6) / 0.4, 0.0, 1.0)
+			ring = clampf(k, 0.0, 1.0)
+		3:
+			alpha = 0.0
+	hand_art.position = at - Vector2(0, lift)
+	hand_art.press = press
+	hand_art.ring = ring
+	hand_art.lifting = beat == 2
+	hand_art.modulate.a = alpha
+	hand_art.queue_redraw()
+	# ことばは、水面の上の暗い所（まんなか）に大きく。ポイや玉と重ならないように
+	hand_cap.text = tr(HAND_CAPS[mini(beat, 2)])
+	hand_cap.modulate.a = alpha
+
+
+## はじめて玉をすくえた：「いいね！」、つづけて「玉をタップするだけでもOK」（一度だけ）
+func _first_catch_cheer() -> void:
+	if GameState.tut.has("scoop_hand"):
+		return
+	GameState.tut["scoop_hand"] = true
+	_hide_hand()
+	var chip := _chip(tr("SCOOP_NICE"), Color("ffe27a"))
+	var tw := chip.create_tween()
+	tw.tween_interval(1.1)
+	tw.tween_property(chip, "modulate:a", 0.0, 0.25)
+	tw.tween_callback(chip.queue_free)
+	tw.tween_callback(func():
+		if not is_inside_tree() or GameState.scooped_tonight:
+			return
+		var c2 := _chip(tr("SCOOP_TAP_HINT"), Color("e8ecff"))
+		var t2 := c2.create_tween()
+		t2.tween_interval(2.6)
+		t2.tween_property(c2, "modulate:a", 0.0, 0.3)
+		t2.tween_callback(c2.queue_free))
+
+
+## 小さな知らせ（画面の上のほう、まんなか）。入力はじゃましない
+func _chip(t: String, col: Color) -> PanelContainer:
+	var pn := PanelContainer.new()
+	pn.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.82), 16))
+	pn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := _text(t, 16, col, font_black)
+	pn.add_child(l)
+	add_child(pn)
+	pn.reset_size()
+	pn.position = Vector2(180 - pn.size.x * 0.5, 150)
+	pn.pivot_offset = pn.size * 0.5
+	pn.scale = Vector2(0.7, 0.7)
+	pn.create_tween().tween_property(pn, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return pn
+
+
+## 半透明の手（指さし）。先の点（0, 0）が、水を押す所
+class HandGhost extends Control:
+	var press := 0.0 # 0〜1：押しこみ
+	var ring := -1.0 # 0〜1：押した所の波紋（無ければ < 0）
+	var lifting := false # はなす拍（上向きの矢じるし）
+
+	func _draw() -> void:
+		if ring >= 0.0:
+			draw_arc(Vector2.ZERO, 8.0 + ring * 26.0, 0.0, TAU, 40, Color(1, 1, 1, (1.0 - ring) * 0.85), 3.0, true)
+		if lifting:
+			var c := Color(1, 0.93, 0.6, 0.9)
+			draw_line(Vector2(-30, 8), Vector2(-30, -18), c, 4.0, true)
+			draw_colored_polygon(PackedVector2Array([Vector2(-38, -14), Vector2(-22, -14), Vector2(-30, -26)]), c)
+		var sc := 1.0 - press * 0.12
+		draw_set_transform(Vector2(0, press * 3.0), -0.32, Vector2(sc, sc))
+		var ink := Color(0.06, 0.08, 0.2, 0.6)
+		var skin := Color(1, 0.98, 0.95, 0.94)
+		for pass_i in 2:
+			var c: Color = ink if pass_i == 0 else skin
+			var g := 2.5 if pass_i == 0 else 0.0
+			draw_circle(Vector2(0, 9), 9.5 + g, c) # 指先
+			draw_rect(Rect2(-9.5 - g, 9, 19 + g * 2.0, 34), c) # 指
+			draw_circle(Vector2(7, 56), 21 + g, c) # 手のひら
+			draw_circle(Vector2(-15, 47), 8 + g, c) # 親指
+			draw_circle(Vector2(20, 38), 8.5 + g, c) # にぎった指
+		draw_circle(Vector2(0, 5), 4.0, Color(1, 0.8, 0.85, 0.7)) # 爪
+		draw_set_transform(Vector2.ZERO)
+
+
 # ---------- 確認用 ----------
 
 func demo_hold() -> void:
@@ -1117,6 +1470,7 @@ func demo_hold() -> void:
 	o.set_process(false)
 	pressed = true
 	poi.position = Vector3(o.position.x, -0.04, o.position.z)
+	aim = Vector3(o.position.x, 0, o.position.z)
 	_ripple(o.position)
 
 
@@ -1158,3 +1512,17 @@ func demo_real() -> void:
 func demo_still() -> void:
 	pressed = true
 	poi.position = Vector3(0.0, -0.04, 0.2)
+	aim = Vector3(0.0, 0, 0.2)
+
+
+## 確認用：本物の入力と同じ道筋で、1つ目の玉をタップする（ポイがすべっていって、すくう）
+func demo_tap() -> void:
+	if orbs.is_empty():
+		return
+	var sp := View3D.unproject(cam, orbs[0].position)
+	for down in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = down
+		ev.position = sp + Vector2(48, 50) # 玉の少し横（ポイの輪の外）をタップ
+		_gui_input(ev)

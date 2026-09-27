@@ -43,6 +43,7 @@ func _run() -> void:
 			sp = View3D.unproject(cam, ob.global_position + Vector3(0, 0.35, 0))
 			var n0: int = ob.get_child_count()
 			_tap(sp)
+			_tap(sp, false) # 島のタップは、離したときに決まる（なぞりと見分けるため）
 			await get_tree().process_frame
 			ok = ob.get_child_count() > n0 # 吹き出し（Label3D）が付いた
 		"shop_island":
