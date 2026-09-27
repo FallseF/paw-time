@@ -98,3 +98,8 @@ export function fmtWhen(date: string, start: string, today: string, locale: Loca
 export function fmtCount(n: AggregateCount, t: Dict): string {
   return n === null ? t.common.fewerThan5 : new Intl.NumberFormat("en-US").format(n);
 }
+
+/** "September 2026" / "2026年9月" for a "YYYY-MM" month. */
+export function fmtMonth(month: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), { timeZone: "UTC", year: "numeric", month: "long" }).format(new Date(`${month}-15T12:00:00Z`));
+}

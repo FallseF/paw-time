@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, weekStart } from "@paw-time/shop-console";
+import { addDays, monthOf, weekStart } from "@paw-time/shop-console";
 import type { AttendanceLogEntry, ShiftView } from "@paw-time/shop-console";
 import Link from "next/link";
 import { useState } from "react";
@@ -8,11 +8,12 @@ import { Cat } from "../../components/Cat";
 import { Icon } from "../../components/Icon";
 import { Empty, Field, PageHead, Panel, Segmented, Sheet } from "../../components/ui";
 import { useConsole } from "../../lib/console";
-import { fmtDate, fmtInstant, fmtRange, fmtWeekday, instantTime } from "../../lib/format";
+import { fmtDate, fmtInstant, fmtMonth, fmtRange, fmtWeekday, instantTime } from "../../lib/format";
 import { ArrivalPill, arrivalText, arrivalTone } from "./arrival";
+import { attendanceCsv, downloadCsv } from "./exportCsv";
 
 export function ShiftsPage() {
-  const { store, t, locale, timeZone, version } = useConsole();
+  const { store, t, locale, timeZone, version, toast } = useConsole();
   void version;
   const today = store.today();
   const [offset, setOffset] = useState(0);
@@ -34,6 +35,12 @@ export function ShiftsPage() {
     }
   }
   const log = store.attendanceLog().filter((e) => (e.kind === "correction" || e.kind === "no_show") && e.date >= start && e.date <= end);
+  // The month of the week on screen: this month for this week, otherwise the month the week starts in.
+  const month = monthOf(offset === 0 ? today : start);
+  const exportCsv = () => {
+    downloadCsv(attendanceCsv(store, month, t), t.shifts.csv.filename(month));
+    toast(t.shifts.exported);
+  };
   const rangeLabel = `${fmtDate(start, locale, { weekday: false })} – ${fmtDate(end, locale, { weekday: false })}`;
 
   return (
@@ -46,6 +53,7 @@ export function ShiftsPage() {
             <button type="button" className="icon-btn" aria-label={t.shifts.prevWeek} onClick={() => setOffset((o) => o - 1)}><Icon name="chevronLeft" /></button>
             <button type="button" className="btn" onClick={() => setOffset(0)} aria-pressed={offset === 0}>{t.shifts.thisWeek}</button>
             <button type="button" className="icon-btn" aria-label={t.shifts.nextWeek} onClick={() => setOffset((o) => o + 1)}><Icon name="chevronRight" /></button>
+            <button type="button" className="btn" onClick={exportCsv}><Icon name="download" />{t.shifts.exportCsv(fmtMonth(month, locale))}</button>
           </div>
         }
       />
