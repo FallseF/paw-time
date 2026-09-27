@@ -2,7 +2,7 @@ class_name ShiftForm
 extends Control
 ## 「自分でシフトを入れる」小さな入力（決まったバイトがある人も、同じ流れで遊べるように）。
 ## 仕事の名前・場所・日・はじまり・おわりだけ。時給やお金の情報は聞かない。
-## 入れたら Shifts.add()（一緒に働く係・働いたあとの評価と同じ置き場）。時刻は見本の求人と同じく日本時間（JST）。
+## 入れたら Shifts.add()（一緒に働く係・働いたあとの評価と同じ置き場）。時刻は見本の求人と同じ町の時刻（日本語＝日本時間、英語＝サンフランシスコ）。
 ## 使い方: var f := ShiftForm.new(); f.added.connect(...); add_child(f)（画面は 360x640 の固定座標）
 
 signal added(shift: Dictionary)
@@ -148,22 +148,21 @@ func _step_time(which: String, d: int) -> void:
 	_refresh()
 
 
-## 日本時間の、今日から day_off 日後の 0 時（unix 秒）
+## 見本の町（今の言語）の、今日から day_off 日後の 0 時（unix 秒）
 func _day_start() -> int:
-	var now := int(Time.get_unix_time_from_system()) + JobListings.JST
-	return now - posmod(now, 86400) + day_off * 86400 - JobListings.JST
+	return JobListings.next_day0(JobListings.day0(Time.get_unix_time_from_system()), day_off)
 
 
 ## 入力から Shifts の 1 件を作る。おわりがはじまり以前なら、日をまたぐ（夜勤）
 func build_shift() -> Dictionary:
-	var start := _day_start() + start_min * 60
+	var start := JobListings.at_hour(_day_start(), start_min / 60.0)
 	var mins := end_min - start_min
 	if mins <= 0:
 		mins += 24 * 60
 	var title := title_edit.text.strip_edges()
 	var place := place_edit.text.strip_edges()
 	return {"title": title, "place": place, "store": place if place != "" else title, "role": _role(),
-		"start": start, "end": start + mins * 60, "manual": true}
+		"start": start, "end": start + mins * 60, "manual": true, "tz": JobListings.tz_of_region()}
 
 
 ## 仕事の種類は聞かない（入力を増やさない）。一緒に働く職場とポイの種類は、相棒の向いてる仕事で
@@ -176,7 +175,7 @@ func _role() -> String:
 func _refresh() -> void:
 	var s := build_shift()
 	var wd := JobListings.weekday_mon(s.start)
-	var d := Time.get_datetime_dict_from_unix_time(int(s.start) + JobListings.JST)
+	var d := JobListings.local(s.start)
 	day_l.text = tr("SHIFT_FORM_DATE") % [tr("JOB_WD_%d" % wd), d.month, d.day]
 	start_l.text = "%02d:%02d" % [start_min / 60, start_min % 60]
 	var over := end_min <= start_min

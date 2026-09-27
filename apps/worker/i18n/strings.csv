@@ -656,7 +656,13 @@ ONB_TOGETHER_TITLE,We did it together!,いっしょにがんばったね！
 ONB_SHIFT_EARNED,+2 poi,ポイ +2
 ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
 ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
-ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Hold on the water, slide under the orb, and let go.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 水を押したまま玉の下へ、そして離す。
+ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Watch the hand below.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 下の手のまねをしてみて。
+SCOOP_HAND_HOLD,Hold,おさえて
+SCOOP_HAND_SLIDE,Slide under,すべりこませて
+SCOOP_HAND_RELEASE,Release!,はなす！
+SCOOP_NICE,Nice!,いいね！
+SCOOP_TAP_HINT,Or just tap an orb,玉をタップするだけでもOK
+SCOOP_NOW,Now!,いま！
 ONB_NIGHT_SLEEP,Until morning,朝まで待つ
 TOUR_1_TITLE,This is your island!,ここが、きみの島！
 TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。
@@ -671,7 +677,7 @@ TOUR_TO_PREFS,Tell %s how you like to work,%s に、働き方を教える
 PREFS_TITLE,How do you like to work?,どんなふうに働きたい？
 PREFS_SUB,%s will look for jobs that fit.,%s が、合う仕事をさがすよ。
 PREFS_AREA,Area,場所
-PREFS_AREA_PH,Area or station (e.g. Shibuya),地域や駅（例：渋谷）
+PREFS_AREA_PH,Neighborhood (e.g. Mission),地域や駅（例：渋谷）
 PREFS_WIN_MORNING,Morning 6–12,朝 6〜12時
 PREFS_WIN_DAY,Daytime 11–17,昼 11〜17時
 PREFS_WIN_EVENING,Evening 17–22,夕方 17〜22時
@@ -687,21 +693,35 @@ JOB_AREA_IKEBUKURO,Ikebukuro,池袋
 JOB_AREA_KICHIJOJI,Kichijoji,吉祥寺
 JOB_AREA_YOKOHAMA,Yokohama,横浜
 JOB_AREA_UMEDA,Osaka Umeda,大阪・梅田
+JOB_AREA_MISSION,Mission,ミッション
+JOB_AREA_SOMA,SoMa,ソーマ
+JOB_AREA_NORTH_BEACH,North Beach,ノースビーチ
+JOB_AREA_SUNSET,Sunset,サンセット
+JOB_AREA_RICHMOND,Richmond,リッチモンド
+JOB_AREA_HAYES_VALLEY,Hayes Valley,ヘイズバレー
+JOB_AREA_CASTRO,Castro,カストロ
+JOB_AREA_CHINATOWN,Chinatown,チャイナタウン
+JOB_AREA_DOGPATCH,Dogpatch,ドッグパッチ
+JOB_AREA_BAYVIEW,Bayview,ベイビュー
+JOB_AREA_NOE_VALLEY,Noe Valley,ノエバレー
+JOB_AREA_HAIGHT,Haight-Ashbury,ヘイト・アシュベリー
+JOB_AREA_MARINA,Marina,マリーナ
+JOB_AREA_JAPANTOWN,Japantown,ジャパンタウン
 JOB_AREA_NEARBY,near you,近く
-JOB_PAY_DAILY,Daily pay,日払い
+JOB_PAY_DAILY,Instant pay,日払い
 JOB_PAY_WEEKLY,Weekly pay,週払い
-JOB_PAY_MONTHLY,Monthly pay,月払い
+JOB_PAY_MONTHLY,Biweekly pay,月払い
 JOB_PAY_ANY,Any,どれでも
 JOB_ROLE_REGISTER,Register,レジ
-JOB_TITLE_REGISTER,Register staff,レジスタッフ
+JOB_TITLE_REGISTER,Cashier,レジスタッフ
 JOB_ROLE_DISH,Dishwashing,皿洗い
-JOB_TITLE_DISH,Dishwashing staff,洗い場スタッフ
+JOB_TITLE_DISH,Dishwasher,洗い場スタッフ
 JOB_ROLE_HALL,Hall,ホール
-JOB_TITLE_HALL,Hall staff,ホールスタッフ
+JOB_TITLE_HALL,Server / barista,ホールスタッフ
 JOB_ROLE_KITCHEN,Kitchen,キッチン
-JOB_TITLE_KITCHEN,Kitchen staff,キッチンスタッフ
+JOB_TITLE_KITCHEN,Line cook,キッチンスタッフ
 JOB_ROLE_STOCK,Stock,品出し
-JOB_TITLE_STOCK,Stock staff,品出しスタッフ
+JOB_TITLE_STOCK,Stocker,品出しスタッフ
 JOB_LINE_REGISTER_1,"Beep, beep! I love the register sound.",ピッ、ピッ。レジの音、好き！
 JOB_LINE_REGISTER_2,A chance to say “thank you” a lot!,ありがとうを、たくさん言えるよ！
 JOB_LINE_REGISTER_3,I'll count the change with you.,おつり、いっしょに数えるね。
@@ -773,6 +793,17 @@ REVIEW_SKIP,Skip,とばす
 REVIEW_THANKS,Thank you! Here's %d poi.,ありがとう！ ポイ %d 本どうぞ。
 REVIEW_DONE,Review sent!,送ったよ！
 REVIEW_DONE_BODY,Your voice now shows on this workplace's job cards.,この職場の求人カードに、きみの声が入ったよ。
+REVIEW_GOOD,What went well?,よかったこと
+REVIEW_BAD,Anything hard? (optional),大変だったこと（あれば）
+REVIEW_BAD_NOTE,Shops only see this anonymously when 5+ people say the same.,お店に届くのは、5人以上が同じことを言ったときだけ（名前は出ません）。
+REVIEW_ISSUE_NO_BREAK,Couldn't take a break,休憩がとれなかった
+REVIEW_ISSUE_LEFT_LATE,Left later than planned,予定より遅く帰った
+REVIEW_ISSUE_UNCLEAR,Instructions were unclear,説明がわかりにくかった
+REVIEW_ISSUE_TOO_BUSY,Too busy / understaffed,忙しすぎ・人が足りない
+REVIEW_ISSUE_RUDE,Treated rudely,失礼な扱いを受けた
+REVIEW_ISSUE_LATE_PAY,Pay was late,給料が遅れた
+REVIEW_SUPPORT,Report to Paw Time support (anonymous),Paw Time の窓口にも知らせる（匿名）
+REVIEW_SUPPORT_SENT,"Paw Time support was told, without your name.",名前を伏せて、Paw Time の窓口にも知らせたよ。
 QUIZ_Q1,Day off. You're…,休みの日は？
 QUIZ_Q1_A,Out and about,外へおでかけ
 QUIZ_Q1_B,Cozy at home,家でまったり
@@ -890,70 +921,70 @@ QUIZ_SHARE_TEXT,"My obake cat is ""%s""!
 %s
 #PawTime #マイおばけ猫
 %s"
-JOB_STORE_CAFE_KOMOREBI,Café Komorebi,カフェ こもれび
-JOB_STORE_CAFE_SUNNYSIDE,Sunny Side Coffee,サニーサイド珈琲
-JOB_STORE_CAFE_MORI,Mori no Kissa,森の喫茶
-JOB_STORE_CAFE_TSUKI,Tsuki Café,月カフェ
-JOB_STORE_CAFE_NEKOMIMI,Nekomimi Cat Café,ねこみみカフェ
-JOB_STORE_CAFE_HARBOR,Harbor Coffee,港珈琲
-JOB_STORE_CAFE_HOSHIZORA,Kissa Hoshizora,喫茶 ほしぞら
-JOB_STORE_CAFE_MATCHA,Matcha Stand Midori,抹茶スタンド みどり
+JOB_STORE_CAFE_KOMOREBI,Sunlit Pages Bookstore Café,カフェ こもれび
+JOB_STORE_CAFE_SUNNYSIDE,Sunnyside Boba,サニーサイド珈琲
+JOB_STORE_CAFE_MORI,Fogline Coffee,森の喫茶
+JOB_STORE_CAFE_TSUKI,Half Moon Espresso Bar,月カフェ
+JOB_STORE_CAFE_NEKOMIMI,Whiskers Cat Café,ねこみみカフェ
+JOB_STORE_CAFE_HARBOR,Pier Seven Coffee,港珈琲
+JOB_STORE_CAFE_HOSHIZORA,Night Owl Café,喫茶 ほしぞら
+JOB_STORE_CAFE_MATCHA,Green Leaf Matcha Bar,抹茶スタンド みどり
 JOB_STORE_CAFE_BEANBAG,Bean Bag Roasters,ビーンバッグ焙煎所
-JOB_STORE_CAFE_FUWARI,Pancake House Fuwari,パンケーキハウス ふわり
-JOB_STORE_IZK_TORIMARU,Izakaya Torimaru,居酒屋 とりまる
-JOB_STORE_IZK_CHOCHIN,Izakaya Chochin,居酒屋 ちょうちん
-JOB_STORE_IZK_KEMURI,Yakitori Kemuri,焼き鳥 けむり
-JOB_STORE_IZK_HANABI,Oden Stall Hanabi,おでん屋台 はなび
-JOB_STORE_IZK_DARUMA,Kushikatsu Daruma,串カツ だるま
-JOB_STORE_IZK_MINATO,Sakaba Minato,酒場 みなと
-JOB_STORE_IZK_HINOKI,Robata Hinoki,炉端 ひのき
-JOB_STORE_IZK_TANUKI,Izakaya Tanuki,居酒屋 たぬき
-JOB_STORE_CVS_HOSHI,Hoshi Mart,ほしマート
-JOB_STORE_CVS_MACHIKADO,Machikado Mart,まちかどマート
-JOB_STORE_CVS_KURUMI,Kurumi Store,くるみストア
-JOB_STORE_CVS_TSUKI24,Tsuki 24 Mart,24ツキマート
-JOB_STORE_CVS_ASAHI,Asahi Mini,あさひミニ
-JOB_STORE_CVS_POCKET,Konbini Pocket,コンビニポケット
-JOB_STORE_CVS_SAKURA,Sakura Mart,さくらマート
-JOB_STORE_WH_KITA,Kita Warehouse,北倉庫
-JOB_STORE_WH_MINATO,Minato Logistics Center,みなと物流センター
-JOB_STORE_WH_SHIORI,Book Warehouse Shiori,本の倉庫 しおり
-JOB_STORE_WH_HAYATE,Fresh Food Depot Hayate,生鮮センター はやて
-JOB_STORE_WH_TSUBAME,Parcel Hub Tsubame,宅配ハブ つばめ
-JOB_STORE_WH_NUNO,Apparel Stock Center Nuno,衣料倉庫 ぬの
-JOB_STORE_WH_OMOCHA,Toy Warehouse Omocha,おもちゃ倉庫
-JOB_STORE_BK_KOMUGI,Bakery Komugi,ベーカリー こむぎ
-JOB_STORE_BK_MORI,Pan no Mori,パンの森
-JOB_STORE_BK_MELON,Melon-Pan Workshop,メロンパン工房
-JOB_STORE_BK_TSUKIAKARI,Croissant Tsukiakari,クロワッサン 月あかり
-JOB_STORE_BK_KOGUMA,Bagel Koguma,ベーグル こぐま
-JOB_STORE_BK_TOMATO,Sandwich Tomato,サンドイッチ とまと
-JOB_STORE_SM_MARUYA,Supermarket Maruya,スーパー まるや
-JOB_STORE_SM_MIDORI,Greengrocer Midori,八百屋 みどり
-JOB_STORE_SM_KAEDE,Fresh Market Kaede,フレッシュマーケット かえで
-JOB_STORE_SM_TANE,Organic Market Tane,オーガニック市場 たね
-JOB_STORE_SM_HAKKA,Drugstore Hakka,ドラッグストア はっか
-JOB_STORE_RS_NIKONIKO,Family Diner Nikoniko,ファミレス にこにこ
-JOB_STORE_RS_YUGE,Ramen Yuge,ラーメン 湯気
-JOB_STORE_RS_TSURUTSURU,Udon Tsurutsuru,うどん つるつる
-JOB_STORE_RS_UMI,Conveyor Sushi Umi,回転寿司 うみ
-JOB_STORE_RS_HOSHI,Curry House Hoshi,カレーの店 星
-JOB_STORE_RS_HANAMARU,Gyoza Hanamaru,餃子 はなまる
-JOB_STORE_RS_TEPPAN,Okonomiyaki Teppan,お好み焼き 鉄板
-JOB_STORE_RS_KIRI,Soba Kiri,そば処 きり
-JOB_STORE_RS_TAMAGO,Omurice Tamago,オムライス たまご
-JOB_STORE_OT_SHIORIDOU,Bookstore Shiori-do,書店 しおり堂
-JOB_STORE_OT_TSUKIKAGE,Cinema Tsukikage,映画館 つきかげ
-JOB_STORE_OT_UTAYA,Karaoke Utaya,カラオケ うたや
-JOB_STORE_OT_HOTEL,Hotel Minato Breakfast Hall,ホテルみなと 朝食会場
-JOB_STORE_OT_OHISAMA,Bento Shop Ohisama,弁当屋 おひさま
-JOB_STORE_OT_YUKI,Ice Cream Yuki,アイスクリーム ゆき
-JOB_STORE_OT_HANAHANA,Flower Shop Hana-Hana,花屋 はなはな
-JOB_STORE_OT_MIMI,Crêpe Stand Mimi,クレープスタンド みみ
-JOB_STORE_OT_PON,Tapioca Tea Pon,タピオカ茶 ぽん
-JOB_STORE_OT_WA,Donut Wa,ドーナツ わ
-JOB_STORE_OT_ENPITSU,Stationery Enpitsu,文具店 えんぴつ
-JOB_STORE_OT_AWA,Laundry Café Awa,ランドリーカフェ あわ
+JOB_STORE_CAFE_FUWARI,Fluffy Stack Pancakes,パンケーキハウス ふわり
+JOB_STORE_IZK_TORIMARU,La Brasita Taqueria,居酒屋 とりまる
+JOB_STORE_IZK_CHOCHIN,Paper Lantern Izakaya Bar,居酒屋 ちょうちん
+JOB_STORE_IZK_KEMURI,Ember Izakaya,焼き鳥 けむり
+JOB_STORE_IZK_HANABI,Late Night Pho,おでん屋台 はなび
+JOB_STORE_IZK_DARUMA,Lucky Daruma Skewer Bar,串カツ だるま
+JOB_STORE_IZK_MINATO,Dockside Tavern,酒場 みなと
+JOB_STORE_IZK_HINOKI,Cedar Grill & Robata,炉端 ひのき
+JOB_STORE_IZK_TANUKI,The Tipsy Raccoon Pub,居酒屋 たぬき
+JOB_STORE_CVS_HOSHI,Starlight Corner Market,ほしマート
+JOB_STORE_CVS_MACHIKADO,24th Street Market,まちかどマート
+JOB_STORE_CVS_KURUMI,Walnut Corner Store,くるみストア
+JOB_STORE_CVS_TSUKI24,Moonlight 24h Market,24ツキマート
+JOB_STORE_CVS_ASAHI,Sunrise Deli & Market,あさひミニ
+JOB_STORE_CVS_POCKET,Pocket Market,コンビニポケット
+JOB_STORE_CVS_SAKURA,Cherry Blossom Market,さくらマート
+JOB_STORE_WH_KITA,Bayview Fulfillment Center,北倉庫
+JOB_STORE_WH_MINATO,Pier 80 Logistics,みなと物流センター
+JOB_STORE_WH_SHIORI,Bookmark Book Distributors,本の倉庫 しおり
+JOB_STORE_WH_HAYATE,Fresh Tide Produce Depot,生鮮センター はやて
+JOB_STORE_WH_TSUBAME,Swallow Parcel Hub,宅配ハブ つばめ
+JOB_STORE_WH_NUNO,Threadline Apparel Stockroom,衣料倉庫 ぬの
+JOB_STORE_WH_OMOCHA,Toybox Warehouse,おもちゃ倉庫
+JOB_STORE_BK_KOMUGI,Wheatfield Bakery,ベーカリー こむぎ
+JOB_STORE_BK_MORI,Forest Loaf Bakery,パンの森
+JOB_STORE_BK_MELON,Sweet Melon Buns,メロンパン工房
+JOB_STORE_BK_TSUKIAKARI,Moonbeam Croissanterie,クロワッサン 月あかり
+JOB_STORE_BK_KOGUMA,Little Bear Bagels,ベーグル こぐま
+JOB_STORE_BK_TOMATO,Tomato Sandwich Co.,サンドイッチ とまと
+JOB_STORE_SM_MARUYA,Columbus Avenue Grocery,スーパー まるや
+JOB_STORE_SM_MIDORI,Green Valley Produce,八百屋 みどり
+JOB_STORE_SM_KAEDE,Maple Fresh Market,フレッシュマーケット かえで
+JOB_STORE_SM_TANE,Seedling Organic Market,オーガニック市場 たね
+JOB_STORE_SM_HAKKA,Mint Pharmacy & Goods,ドラッグストア はっか
+JOB_STORE_RS_NIKONIKO,Smiley's Diner,ファミレス にこにこ
+JOB_STORE_RS_YUGE,Steam Bowl Ramen,ラーメン 湯気
+JOB_STORE_RS_TSURUTSURU,Slurp Noodle House,うどん つるつる
+JOB_STORE_RS_UMI,Ocean Roll Sushi,回転寿司 うみ
+JOB_STORE_RS_HOSHI,Star Curry House,カレーの店 星
+JOB_STORE_RS_HANAMARU,Golden Dumpling,餃子 はなまる
+JOB_STORE_RS_TEPPAN,Hot Griddle Burgers,お好み焼き 鉄板
+JOB_STORE_RS_KIRI,Fog City Soup Co.,そば処 きり
+JOB_STORE_RS_TAMAGO,Sunny Egg Brunch,オムライス たまご
+JOB_STORE_OT_SHIORIDOU,Dog-Ear Books,書店 しおり堂
+JOB_STORE_OT_TSUKIKAGE,Moonshadow Cinema,映画館 つきかげ
+JOB_STORE_OT_UTAYA,Encore Karaoke,カラオケ うたや
+JOB_STORE_OT_HOTEL,Bayside Hotel Breakfast Room,ホテルみなと 朝食会場
+JOB_STORE_OT_OHISAMA,Sunshine Bento,弁当屋 おひさま
+JOB_STORE_OT_YUKI,Snowcap Creamery,アイスクリーム ゆき
+JOB_STORE_OT_HANAHANA,Petal & Stem Florist,花屋 はなはな
+JOB_STORE_OT_MIMI,Crêpe Corner,クレープスタンド みみ
+JOB_STORE_OT_PON,Pop Pearl Boba,タピオカ茶 ぽん
+JOB_STORE_OT_WA,Ring Donuts,ドーナツ わ
+JOB_STORE_OT_ENPITSU,Pencil Box Stationery,文具店 えんぴつ
+JOB_STORE_OT_AWA,Bubbles Laundry Café,ランドリーカフェ あわ
 JOB_PLACE,%s (%s),%s（%s）
 PREFS_SUGGEST,Job suggestions,求人の知らせ
 PREFS_SUGGEST_ON,On,オン
@@ -1731,6 +1762,7 @@ JOB_MAP,Map,地図
 ぜんぶひらく,Open all,ぜんぶひらく
 スキップ ›,Skip ›,スキップ ›
 EXPAND_PILL,+ Expand,＋ ひろげる
+ISLAND_RECENTER,◎ Home,◎ もどる
 R2_WT_HOURS,%dh %02dm together,%d時間%02d分、いっしょに
 R2_WT_COINS,+%d Paw Coins,肉球コイン +%d
 R2_WT_POI,+%d poi,ポイ +%d
@@ -1780,7 +1812,7 @@ Whoa… a rare one!,Whoa… a rare one!,わっ…レアな子だ！
 DEMO3_BUTTON,3-minute demo,3分デモ
 DEMO3_CHIP,3-min demo · %d/%d · %ds,3分デモ · %d/%d · %d秒
 DEMO3_FINAL_TITLE,That's a day with Paw Time,これが Paw Time の一日
-DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.","仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。"
+DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.",仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。
 DEMO3_RECRUIT,See the Recruit view,Recruit の見え方を見る
 DEMO3_KEEP,Keep playing,このまま遊ぶ
 TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in My page.",Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。マイページでいつでもオフにできます。

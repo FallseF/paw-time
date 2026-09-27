@@ -47,11 +47,11 @@ static func make(listing_id: String, now := -1.0) -> Dictionary:
 	if e.is_empty():
 		return {}
 	var t := now if now >= 0 else Time.get_unix_time_from_system()
-	var today0 := int(floor((t + JobListings.JST) / 86400.0)) * 86400 - JobListings.JST
-	var day0 := today0 + 86400
+	var today0 := JobListings.day0(t)
+	var day0 := JobListings.next_day0(today0, 1)
 	for i in range(1, 8):
-		if JobListings.weekday_mon(today0 + i * 86400) == 5:
-			day0 = today0 + i * 86400
+		if JobListings.weekday_mon(JobListings.next_day0(today0, i)) == 5:
+			day0 = JobListings.next_day0(today0, i)
 			break
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash("%s/%d" % [listing_id, day0])
@@ -60,6 +60,7 @@ static func make(listing_id: String, now := -1.0) -> Dictionary:
 	prefs.days = []
 	prefs.pay = "any"
 	prefs.min_wage = int(e[3])
+	prefs.min_wage_usd = JobPrefs.WAGE_MIN_USD
 	var job: Dictionary = JobListings._make_job(e, JobPrefs.normalize(prefs), day0, rng)
 	job.id = "inv_%s_%d" % [listing_id, day0]
 	job["invited"] = true
@@ -114,8 +115,8 @@ static func is_invite(job: Dictionary) -> bool:
 ## 受ける：ふつうの求人カードと同じ形で Shifts に入れる（一緒に働く係と共有する約束）
 static func accept(inv: Dictionary) -> Dictionary:
 	_ensure()
-	var s := {"id": inv.id, "title": inv.title, "place": inv.place, "store": inv.store, "role": inv.role, "start": inv.start, "end": inv.end,
-		"wage": inv.wage, "pay": inv.pay, "listing": inv.listing, "sample": true, "invited": true}
+	var s := JobListings.as_shift(inv)
+	s["invited"] = true
 	Shifts.add(s)
 	_decided[inv.id] = "accept"
 	_save()

@@ -6,6 +6,7 @@ extends SceneTree
 ## 3. 同じ seed なら同じ顔ぶれ、条件が厳しすぎれば空（嘘の仕事を出さない）
 ## 4. Google カレンダーの URL の形（dates=YYYYMMDDTHHMMSSZ/…、UTC）と .ics の中身
 ## 5. 評価の集計（見本の値＋自分の評価）と、終わったシフトの未評価の拾い出し
+## 4b. 英語＝サンフランシスコの見本（同じ店の id・US ドル・PT の時刻・カレンダー）。お金の表示（Money）
 ## 6. 画面に出す文字（strings.csv の英語・日本語）が Zen Maru Gothic に全部ある
 
 var fails := 0
@@ -19,6 +20,101 @@ func _check(ok: bool, msg: String) -> void:
 	if not ok:
 		fails += 1
 		print("FAIL ", msg)
+
+
+## 4b. 英語＝サンフランシスコ
+func _sf(base: float) -> void:
+	TranslationServer.set_locale("en")
+	# Recruit の見え方（insights）と同じ店名・地区
+	var same := {"cafe_komorebi": ["Sunlit Pages Bookstore Café", "soma"], "izk_kemuri": ["Ember Izakaya", "soma"], "cvs_hoshi": ["Starlight Corner Market", "soma"],
+		"cafe_sunnyside": ["Sunnyside Boba", "mission"], "izk_torimaru": ["La Brasita Taqueria", "mission"], "cvs_machikado": ["24th Street Market", "mission"],
+		"rs_nikoniko": ["Smiley's Diner", "mission"], "izk_chochin": ["Paper Lantern Izakaya Bar", "north_beach"], "bk_komugi": ["Wheatfield Bakery", "north_beach"],
+		"sm_maruya": ["Columbus Avenue Grocery", "north_beach"]}
+	for id in same:
+		_check(JobListings.store_name(id) == same[id][0] and JobListings.SF[id][0] == same[id][1], "%s is %s in %s" % [id, same[id][0], same[id][1]])
+	var names := {}
+	var pay_n := {"daily": 0, "weekly": 0, "monthly": 0}
+	for e in JobListings.LIST:
+		_check(JobListings.SF.has(e[0]), "%s has an SF entry" % e[0])
+		var sf: Array = JobListings.SF[e[0]]
+		_check(sf[0] in JobPrefs.AREAS_SF, "%s SF area %s" % [e[0], sf[0]])
+		_check(float(sf[1]) >= JobListings.SF_MIN_WAGE and float(sf[1]) <= float(sf[2]) and float(sf[2]) <= 24.5, "%s SF wage %s" % [e[0], sf])
+		names[JobListings.store_name(e[0])] = true
+		for p in JobListings.pays_of(e, "sf"):
+			pay_n[p] += 1
+	_check(names.size() == JobListings.count() and JobListings.SF.size() == JobListings.count(), "64 distinct SF shops")
+	for p in pay_n:
+		_check(pay_n[p] >= 15, "few SF %s listings (%d)" % [p, pay_n[p]])
+	_check(TranslationServer.translate("JOB_PAY_DAILY") == "Instant pay" and TranslationServer.translate("JOB_PAY_MONTHLY") == "Biweekly pay", "US pay styles")
+	# 条件を守るか（SF：US ドル・PT の時刻・地区は店ごと）
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var total := 0
+	for n in 300:
+		var days: Array = []
+		for d in 7:
+			if rng.randf() < 0.5:
+				days.append(d)
+		var wins: Array = JobPrefs.WINDOW_ORDER.filter(func(_w): return rng.randf() < 0.5)
+		if wins.is_empty():
+			wins = ["day"]
+		var prefs := {"area": ["mission", "", "soma", "Outer Sunset"][n % 4], "days": days, "windows": wins,
+			"min_wage_usd": rng.randf_range(20.0, 24.0), "pay": ["any", "daily", "weekly", "monthly"][n % 4]}
+		var np := JobPrefs.normalize(prefs)
+		var jobs := JobListings.generate(prefs, 4, n, base)
+		total += jobs.size()
+		for j in jobs:
+			_check(j.currency == "USD" and j.tz == JobListings.TZ_SF, "SF job currency/tz %s" % [j])
+			var w := float(j.wage)
+			_check(w >= float(np.min_wage_usd) and w >= JobListings.SF_MIN_WAGE, "SF wage %.2f < %.2f" % [w, np.min_wage_usd])
+			_check(w <= float(JobListings.SF[j.listing][2]) + JobListings.SF_EVENING_PLUS, "SF wage too high %.2f" % w)
+			_check(is_equal_approx(fmod(w * 4.0, 1.0), 0.0), "SF wage in quarters %.2f" % w)
+			_check(j.area == JobListings.SF[j.listing][0] and String(j.place).contains(JobPrefs.area_label(j.area)), "SF area %s / %s" % [j.area, j.place])
+			_check(np.pay == "any" or j.pay == np.pay, "SF pay")
+			var loc := JobListings.local(j.start, JobListings.TZ_SF)
+			var span: Array = JobPrefs.WINDOWS[j.window]
+			var sh: float = loc.hour + loc.minute / 60.0
+			_check(sh >= span[0] and sh + float(j.end - j.start) / 3600.0 <= span[1], "SF time %.1f outside %s" % [sh, span])
+			_check(np.slots.is_empty() or ("%d:%s" % [JobListings.weekday_mon(j.start, JobListings.TZ_SF), j.window]) in np.slots, "SF slot not chosen")
+			_check(JobListings.wage_text(j).begins_with("$") and JobListings.wage_text(j).ends_with("/h"), "SF wage text %s" % JobListings.wage_text(j))
+			_check(JobListings.when_text(j).contains("%02d:%02d" % [loc.hour, loc.minute]), "SF when text in PT %s" % JobListings.when_text(j))
+	_check(total > 300, "too few SF matches (%d)" % total)
+	var first := JobListings.generate({"area": "mission", "days": [], "windows": [], "min_wage_usd": 20.0, "pay": "any"}, 4, 5, base)
+	_check(first.size() == 4 and first[0].area == "mission", "chosen SF neighborhood comes first")
+	# お金の表示
+	_check(Money.fmt(24.5, "USD") == "$24.50" and Money.fmt_wage(24.5, "USD") == "$24.50/h", "USD format %s" % Money.fmt_wage(24.5, "USD"))
+	_check(Money.fmt(1234567.891, "USD") == "$1,234,567.89" and Money.fmt(1280, "JPY") == "¥1,280", "big numbers")
+	_check(Money.of({}) == "JPY" and JobListings.wage_text({"wage": 1200}) == "¥1,200/h", "old saves stay in yen %s" % JobListings.wage_text({"wage": 1200}))
+	TranslationServer.set_locale("ja")
+	_check(Money.fmt_wage(1280, "JPY") == "¥1,280/時" and Money.current() == "JPY", "JPY wage %s" % Money.fmt_wage(1280, "JPY"))
+	TranslationServer.set_locale("en")
+	_check(Money.current() == "USD", "en = USD")
+	# PT のカレンダー：夏（PDT, UTC-7）と冬（PST, UTC-8）。Google は UTC、.ics は TZID
+	var sep30 := int(Time.get_unix_time_from_datetime_dict({"year": 2026, "month": 9, "day": 30, "hour": 12, "minute": 0, "second": 0}))
+	var d0 := JobListings.day0(sep30, JobListings.TZ_SF)
+	var st := JobListings.at_hour(d0, 10, JobListings.TZ_SF)
+	_check(CalendarLink.utc_stamp(st) == "20260930T170000Z", "10:00 PDT = 17:00Z (%s)" % CalendarLink.utc_stamp(st))
+	var dec2 := int(Time.get_unix_time_from_datetime_dict({"year": 2026, "month": 12, "day": 2, "hour": 20, "minute": 0, "second": 0}))
+	_check(CalendarLink.utc_stamp(JobListings.at_hour(JobListings.day0(dec2, JobListings.TZ_SF), 10, JobListings.TZ_SF)) == "20261202T180000Z", "10:00 PST = 18:00Z")
+	var sfs := JobListings.as_shift(JobListings.localize({"id": "sf1", "listing": "cafe_komorebi", "role": "hall", "area": "soma", "start": st, "end": st + 4 * 3600,
+		"wage": 22.75, "pay": "weekly", "line_n": 1, "currency": "USD", "tz": JobListings.TZ_SF}))
+	var gu := CalendarLink.google_url(sfs)
+	_check(gu.contains("&dates=20260930T170000Z/20260930T210000Z") and gu.ends_with("&ctz=America%2FLos_Angeles"), "PT google url %s" % gu)
+	_check(gu.contains("%2422.75%2Fh") or gu.contains("$22.75"), "calendar details in dollars %s" % gu)
+	var ic := CalendarLink.ics(sfs)
+	for k in ["BEGIN:VTIMEZONE", "TZID:America/Los_Angeles", "DTSTART;TZID=America/Los_Angeles:20260930T100000", "DTEND;TZID=America/Los_Angeles:20260930T140000"]:
+		_check(ic.contains(k), "PT ics missing %s" % k)
+	_check(JobListings.maps_url(sfs).contains("San%20Francisco"), "maps in SF")
+	_check(JobListings.when_text(sfs).contains("9/30") and JobListings.when_text(sfs).contains("10:00–14:00"), "when in PT %s" % JobListings.when_text(sfs))
+	# 夏時間の切りかわる日も、暦の 0 時（3/8 と 11/1、2026 年）
+	for md in [[3, 6], [10, 30]]:
+		var t := int(Time.get_unix_time_from_datetime_dict({"year": 2026, "month": md[0], "day": md[1], "hour": 20, "minute": 0, "second": 0}))
+		var dd := JobListings.day0(t, JobListings.TZ_SF)
+		for i in 5:
+			var nd := JobListings.next_day0(dd, i, JobListings.TZ_SF)
+			var l := JobListings.local(nd, JobListings.TZ_SF)
+			_check(l.hour == 0 and l.minute == 0, "midnight across DST %d/%d +%d: %s" % [md[0], md[1], i, l])
+			_check(JobListings.local(JobListings.at_hour(nd, 10, JobListings.TZ_SF), JobListings.TZ_SF).hour == 10, "10:00 across DST")
 
 
 func _run() -> void:
@@ -53,7 +149,8 @@ func _run() -> void:
 	for p in pay_n:
 		_check(pay_n[p] >= 15, "few %s listings (%d)" % [p, pay_n[p]])
 
-	# 2. 条件を守るか
+	# 2. 条件を守るか（日本語＝日本の見本。日本時間）
+	TranslationServer.set_locale("ja")
 	var base := 1790000000.0 # 固定の「いま」
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
@@ -122,6 +219,12 @@ func _run() -> void:
 	var raw := JSON.stringify(lp).to_lower()
 	for bad in ["bank", "card", "1234567"]:
 		_check(not raw.contains(bad), "prefs must not hold %s" % bad)
+	for j in a:
+		_check(j.currency == "JPY" and j.tz == JobListings.TZ_JP and typeof(j.wage) == TYPE_INT, "ja job in yen / Japan time %s" % [j])
+		_check(JobListings.wage_text(j).begins_with("¥") and JobListings.wage_text(j).ends_with("/時"), "ja wage text %s" % JobListings.wage_text(j))
+	TranslationServer.set_locale("en")
+
+	_sf(base)
 
 	# 4. カレンダー
 	var s := {"id": "t1", "title": "Register staff", "store": "Café Komorebi", "place": "Café Komorebi (Shibuya)", "role": "register",

@@ -6,6 +6,11 @@ class_name Reviews
 
 const PATH := "user://reviews.json"
 const TAGS := ["breaks", "instructions", "on_time", "paid", "friendly", "fair", "again"] # 文言は REVIEW_TAG_<大文字>
+## 大変だったこと（文言は REVIEW_ISSUE_<大文字>）。お店の島には一切出ない・島の目印も減らさない（totals は TAGS だけを数える）。
+## お店に届くのは ChatOutbox の匿名の集計だけ（同じことを 5 人以上が言ったときだけ見える）
+const ISSUES := ["no_break", "left_late", "unclear", "too_busy", "rude", "late_pay"]
+## 大変だったこと → 匿名の箱（ChatOutbox.TAGS）。left_late は API の anon_issue_sent に合うタグが無いので、この端末に残すだけ
+const ISSUE_OUTBOX := {"no_break": "no_break", "unclear": "unclear", "too_busy": "too_busy", "rude": "harassment", "late_pay": "late_pay"}
 const BONUS_POI := 1
 
 static var path := PATH
@@ -58,11 +63,27 @@ static func target_for_ended(ended: Array) -> Dictionary:
 	return {}
 
 
-static func add(shift: Dictionary, stars: int, tags: Array) -> void:
+static func add(shift: Dictionary, stars: int, tags: Array, issues: Array = []) -> void:
 	_ensure()
 	var clean: Array = tags.filter(func(x): return x in TAGS)
-	_reviews[String(shift.id)] = {"listing": shift.get("listing", ""), "stars": clampi(stars, 1, 5), "tags": clean, "t": int(Time.get_unix_time_from_system())}
+	var bad: Array = issues.filter(func(x): return x in ISSUES)
+	_reviews[String(shift.id)] = {"listing": shift.get("listing", ""), "stars": clampi(stars, 1, 5), "tags": clean, "issues": bad, "t": int(Time.get_unix_time_from_system())}
 	_save()
+
+
+## 大変だったことを、そのお店の匿名の箱に入れる（見本の店だけ。left_late は入れない）。support=true なら Paw Time の窓口にも（失礼な扱い）
+## 戻り値：箱に入れた ChatOutbox のタグ
+static func send_issues(shift: Dictionary, issues: Array, support := false) -> Array:
+	var shop := String(shift.get("listing", ""))
+	var sent: Array = []
+	if JobListings.entry(shop).is_empty():
+		return sent
+	for i in issues:
+		if ISSUE_OUTBOX.has(i) and ChatOutbox.tell_shop(shop, ISSUE_OUTBOX[i]):
+			sent.append(ISSUE_OUTBOX[i])
+	if support and "rude" in issues:
+		ChatOutbox.report_support(shop, "harassment")
+	return sent
 
 
 static func skip(shift: Dictionary) -> void:

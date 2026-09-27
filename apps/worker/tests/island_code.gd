@@ -37,6 +37,17 @@ func _initialize() -> void:
 	IslandKit.grant_material("shell", 5)
 	ok_kit = ok_kit and IslandKit.expand("plot_front_right") and IslandKit.expand("islet_front")
 	ok_kit = ok_kit and not IslandKit.expand("plot_front_right") # 同じ所は 2 回広げない
+	# 外の輪：つながる内側を広げてから（plot_far_left は plot_left が先）。外の輪（番号 7 以上）もコードに入る
+	ok_kit = ok_kit and IslandKit.MAX_EXPANSIONS == IslandKit.EXPANSIONS.size() and IslandKit.MAX_EXPANSIONS >= 20
+	ok_kit = ok_kit and not IslandKit.can_expand("plot_far_left") and IslandKit.can_expand("plot_far_right")
+	ok_kit = ok_kit and IslandKit.expand("plot_far_right")
+	var sh_far: Dictionary = IslandKit.expansion_shape("islet_far_right", 5.0)
+	ok_kit = ok_kit and sh_far.has("bridge_from") and (sh_far.bridge_from as Vector3).distance_to(IslandKit.expansion_shape("plot_far_right", 5.0).center) < 1.5
+	# 値段：7 回目までは今までどおり、その先はゆるやかに上がる
+	ok_kit = ok_kit and int(IslandKit.expansion_cost("plot_left", 0).coins) == 30 and int(IslandKit.expansion_cost("plot_left", 6).coins) == 180
+	var c19: Dictionary = IslandKit.expansion_cost("plot_left", 19)
+	ok_kit = ok_kit and int(c19.coins) > 180 and int(c19.coins) < 500 and int(c19.mats.wood) <= 16
+	print("far ring ok=", ok_kit, " cost19=", c19)
 	Vehicles.reset(["raft", "seaplane"], "seaplane")
 	ok_kit = ok_kit and not Vehicles.grant("giant_koi") # 見本の有料は渡せない
 	ok_kit = ok_kit and Vehicles.grant("rowboat") and Vehicles.owned().has("rowboat")
@@ -55,7 +66,7 @@ func _initialize() -> void:
 	ok = ok and d.level == gs.garden_level
 	ok = ok and d.kit.size() == 2 and d.kit[0].id == "bench" and absf(d.kit[0].x - 1.25) < 0.05 and absf(d.kit[0].z + 0.5) < 0.05 and d.kit[0].r == 2
 	ok = ok and d.kit[1].id == "flower_pot" and absf(d.kit[1].x + 2.0) < 0.05
-	ok = ok and d.expansions == ["plot_front_right", "islet_front"] and d.vehicle == "seaplane"
+	ok = ok and d.expansions == ["plot_front_right", "islet_front", "plot_far_right"] and d.vehicle == "seaplane"
 	ok = ok and d.outfits.get(gs.host(), {}).get("head", "") == "beret"
 	# 古い版を、今のコードの後ろの部分を組みかえて作る（あと＝服 9・置き物 2+4×2・広げた場所 3・乗り物 1）
 	var raw := Marshalls.base64_to_raw(_pad(code.replace("-", "+").replace("_", "/")))
@@ -77,7 +88,10 @@ func _initialize() -> void:
 	ok = ok and dk3.kit.size() == 2 and dk3.outfits.is_empty() and dk3.expansions.is_empty()
 	# 島キットの版4（置き物・広げた場所・乗り物）
 	var dk4: Dictionary = gs.decode_island(_code(4, base + kit_b + exp_b + veh_b))
-	ok = ok and dk4.kit.size() == 2 and dk4.expansions == ["plot_front_right", "islet_front"] and dk4.vehicle == "seaplane" and dk4.outfits.is_empty()
+	ok = ok and dk4.kit.size() == 2 and dk4.expansions == ["plot_front_right", "islet_front", "plot_far_right"] and dk4.vehicle == "seaplane" and dk4.outfits.is_empty()
+	# 前の版（場所が 7 つだった頃）の読み手と同じく、知らない番号は読み飛ばす
+	var old_b := PackedByteArray([3, 0, 5, 200])
+	ok = ok and IslandKit.decode_expansions(old_b, 0).list == ["plot_front_right", "islet_front"]
 	print("versions: v2 %s / wardrobe v3 %s / kit v3 %s / kit v4 %s" % [not dv2.is_empty(), dw3.outfits.size(), dk3.kit.size(), dk4.vehicle])
 	ok = ok and d.name == "みか"
 	ok = ok and d.host == gs.host()
