@@ -2,7 +2,7 @@ class_name SpecialReveal
 extends Control
 ## 特別なレア 6 匹の「はじめまして」の動画（コマ送り）。はじめてその子が生まれたときだけ、玉が割れたあとに流す。
 ## コマは assets/reveal/<id>/f_001..062.jpg（12 fps、そのまま書き出す）。1 コマずつ読んで同じテクスチャに上書きし、終わったら手放す。
-## 右上の「スキップ」と、1 秒たってからの画面タップで飛ばせる。音は無い。
+## 右上の「スキップ」と、1 秒たってからの画面タップで飛ばせる。音はファンファーレ（Music.fanfare、BGM は下げる）。
 ## はじめての夜の玉は、この 6 匹のどれか 1 匹（インストールごとに決まって、読み直しても変わらない）。
 ## 確認用：OBAKE_REVEAL=<id> で、その子の孵化の画面から
 
@@ -131,6 +131,7 @@ func _ready() -> void:
 	modulate.a = 0.0
 	create_tween().tween_property(self, "modulate:a", 1.0, 0.25)
 	_show_frame(0)
+	Music.fanfare()
 
 
 func _process(delta: float) -> void:
@@ -174,6 +175,7 @@ func _finish() -> void:
 	_finished = true
 	skip_btn.disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Music.fanfare_end()
 	done.emit()
 
 
