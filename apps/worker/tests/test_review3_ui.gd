@@ -111,6 +111,21 @@ func _run() -> void:
 	desk._close_sheet()
 	Shifts.reset()
 
+	# 4. 島の説明のカード：4 枚、どれも本文は 2 行まで（英語・日本語）
+	for lang in ["en", "ja"]:
+		TranslationServer.set_locale(lang)
+		desk.tour_i = 0
+		for i in 4:
+			desk._tour_step()
+			await _frames(4)
+			var body: Label = null
+			for l in desk.sheet.find_children("*", "Label", true, false):
+				if l.text == tr("R2_TOUR_%d_BODY" % (i + 1)):
+					body = l
+			_check(body != null and body.get_line_count() <= 2, "%s tour card %d body fits in 2 lines (%s)" % [lang, i + 1, body.get_line_count() if body else -1])
+		desk._close_sheet()
+	TranslationServer.set_locale("en")
+
 	await _finish()
 
 

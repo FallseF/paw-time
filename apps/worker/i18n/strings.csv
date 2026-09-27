@@ -1774,14 +1774,14 @@ R2_WT_PAY_NOTE,The game never handles your pay.,お給料そのものは、ゲ�
 R2_WT_PAY_NONE,No hourly wage on this shift,このシフトには時給の登録がありません
 R2_WT_H,%dh %02dm,%d時間%02d分
 R2_ACCEPT_PRACTICE,"Want a quick practice before your shift? (2 min, optional) ›",シフトの前に、ちょっとおさらいする？（2分・任意）›
-R2_TOUR_1_TITLE,%s brings you jobs,%s が、仕事を持ってくる
-R2_TOUR_1_BODY,"This is your island. %s looks for jobs that fit how you like to work, and brings them here.",ここがきみの島。%s が、きみの働き方に合う仕事を見つけて、ここへ持ってくるよ。
-R2_TOUR_2_TITLE,Working gives poi,働くと、ポイがもらえる
-R2_TOUR_2_BODY,"Each shift gives poi, the same for any length. While you work, %s works too and earns Paw Coins (you have %d).",シフトごとにポイ（時間の長さは関係なし）。きみが働く間、%s も働いて肉球コインをためる（いま %d）。
-R2_TOUR_3_TITLE,Poi gets materials & clothes,ポイで、材料と服を
-R2_TOUR_3_BODY,"At night, scoop glowing orbs with your poi. Out come new obake, materials and clothes. Paw Coins buy decorations.",夜、ポイで光る玉をすくう。おばけ・材料・服が出てくる。肉球コインでは飾りが買える。
+R2_TOUR_1_TITLE,%s finds you jobs,%s が仕事を見つけてくる
+R2_TOUR_1_BODY,Jobs that fit you show up here.,きみに合う仕事が、ここに届くよ。
+R2_TOUR_2_TITLE,"Work a shift, get poi",働くと、ポイがもらえる
+R2_TOUR_2_BODY,"Short or long, it's the same poi.",短くても長くても、もらえる数は同じ。
+R2_TOUR_3_TITLE,Scoop orbs with poi,ポイで玉をすくう
+R2_TOUR_3_BODY,"At night, orbs hold materials and clothes.",夜の玉から、材料や服が出てくる。
 R2_TOUR_4_TITLE,Grow your island,島を育てよう
-R2_TOUR_4_BODY,Use materials and coins to widen the shore and decorate it. Work days and rest days both help it grow.,材料とコインで、岸をひろげて飾る。働いた日も休んだ日も、島は育つよ。
+R2_TOUR_4_BODY,Materials and Paw Coins make it grow.,材料と肉球コインで、広げて飾ろう。
 R2_DAY,%s %d/%d,%s %d/%d
 R2_TODAY,Today,今日
 R2_DAY_JOBS,%d jobs,%d 件
