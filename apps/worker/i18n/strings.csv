@@ -1008,7 +1008,7 @@ SHIFT_FORM_CANCEL,Cancel,やめる
 SHIFT_FORM_DEMO_TITLE,Café shift,カフェのシフト
 SHIFT_FORM_DEMO_PLACE,Station-front café,駅前のカフェ
 WORK_PILL,Work,しごと
-WORK_MENU_TITLE,Your shifts,あなたのシフト
+WORK_MENU_TITLE,My shifts,マイシフト
 WORK_MENU_BODY,"Coming up: %d. After each shift, a 10-second review gives you 1 poi.",これからのシフト：%d 件。働いたあとの10秒のひとこと評価で、ポイが1本。
 WORK_MENU_PREFS,Work conditions,働く条件
 WORK_MENU_CLOSE,Close,とじる
@@ -1842,3 +1842,8 @@ SETTINGS_RESET_YES,Erase and start over,消してやり直す
 SETTINGS_CANCEL,Cancel,やめる
 DEMO3_CONFIRM_TITLE,Start the 3-minute demo?,3分デモをはじめる？
 DEMO3_CONFIRM_BODY,Your garden and Book will be replaced by the demo's.,いまの庭と図鑑は、デモのものに置きかわります
+R3_OVERLAP_TITLE,Time clash,時間がかぶってるよ
+R3_OVERLAP_BODY,This overlaps with %s — you can't take both.,%s と時間が重なるから、両方は受けられないよ。
+R3_OVERLAP_SAY,You already have a shift then!,その時間は、もうシフトがあるよ！
+R3_SEE_MY_SHIFTS,See it in My shifts ›,マイシフトで見る ›
+R3_IN_MY_SHIFTS,It's in My shifts now (the calendar in the app).,アプリの中のカレンダー「マイシフト」に入ったよ。

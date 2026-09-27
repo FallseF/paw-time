@@ -482,7 +482,8 @@ func _work_pill() -> void:
 
 ## しごと：まず今日からの自分のシフトを曜日のカードで。下に、ほかの選択肢
 ## （自分でシフトを入れる・働く条件・お店の島・シフトのチャット・求人を見る）
-func open_work_menu() -> void:
+## at：はじめに見せる日（その時刻の日。-1 なら今日から）
+func open_work_menu(at := -1.0) -> void:
 	if viewer:
 		return
 	_garden_card(false)
@@ -491,7 +492,9 @@ func open_work_menu() -> void:
 	var mine: Array = Shifts.all().filter(func(x): return float(x.end) > now)
 	var days := VBoxContainer.new()
 	days.add_theme_constant_override("separation", 6)
-	_days(days, day_groups(mine, day0_of(now), 7), "shifts", 0)
+	var groups := day_groups(mine, day0_of(now), 7)
+	var d_at := day0_of(at) if at >= 0 else -1
+	_days(days, groups, "shifts", maxi(0, groups.find_custom(func(g): return g.d0 == d_at)))
 	var opts := HFlowContainer.new()
 	opts.alignment = FlowContainer.ALIGNMENT_CENTER
 	opts.add_theme_constant_override("h_separation", 6)
@@ -1015,6 +1018,12 @@ func _accept() -> void:
 	var j: Dictionary = jobs[index]
 	# 一緒に働く係と共有する約束：Shifts の 1 件の形
 	var s := JobListings.as_shift(j)
+	# もう入っているシフトと時間が重なる仕事は受けない（両方は働けない）
+	var clash := Shifts.overlapping(s)
+	if not clash.is_empty():
+		_show_overlap(clash)
+		busy = false
+		return
 	var invited := Invites.is_invite(j)
 	if invited:
 		s = Invites.accept(j)
@@ -1056,6 +1065,39 @@ func _accept() -> void:
 	card_box.add_child(Kit.button(tr("JOB_BACK_LIST") if more else tr("JOB_DONE"), ORANGE, _next))
 	_pop_card()
 	busy = false
+
+
+## 重なるシフトがあって受けられないとき：どのシフトと重なるか、と、マイシフトへのリンク
+func _show_overlap(clash: Dictionary) -> void:
+	Telemetry.track("job_overlap_blocked", JobListings.telemetry_shop(jobs[index].get("listing")))
+	stage.shrug()
+	Kit.play(self, "tap", 0.8)
+	_say(tr("R3_OVERLAP_SAY"))
+	_clear_card()
+	card_box.add_child(_text(tr("R3_OVERLAP_TITLE"), 18, Color("b0502a"), true))
+	card_box.add_child(I18n.wrap(_text(tr("R3_OVERLAP_BODY") % shift_label(clash), 14, INK)))
+	card_box.add_child(_small_link(tr("R3_SEE_MY_SHIFTS"), func(): _to_my_shifts(float(clash.start)), Color("3b5ba5")))
+	card_box.add_child(Kit.button("‹ " + tr("JOB_BACK_LIST"), ORANGE, _show_list))
+	_pop_card()
+
+
+## 「火 9/29 12:00–17:00（カフェ こもれび）」：重なりの知らせなどに使う、シフトの短い名前
+static func shift_label(sh: Dictionary) -> String:
+	var nm := String(sh.get("store", ""))
+	if nm == "":
+		nm = String(sh.get("title", sh.get("place", "")))
+	return "%s %s (%s)" % [day_label(day0_of(float(sh.start))), clock_range(sh), nm] if nm != "" else "%s %s" % [day_label(day0_of(float(sh.start))), clock_range(sh)]
+
+
+## 求人のカードを閉じて、マイシフト（しごとのシート）のその日へ
+func _to_my_shifts(at: float) -> void:
+	if viewer:
+		viewer.queue_free()
+		viewer = null
+	if onboard_end: # はじめての流れの終わり：しごとボタンだけ先に出す（知らせは次に島を開いたとき）
+		onboard_end = false
+		_work_pill()
+	open_work_menu(at)
 
 
 func _pass() -> void:

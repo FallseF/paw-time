@@ -52,6 +52,19 @@ static func remove(id: String) -> void:
 	_save()
 
 
+## s と時間の重なる、入っているシフト（無ければ空）。同じ町の時刻（tz）のシフトだけを比べる。
+## 前のシフトの終わりちょうどに始まるのは重ならない。tz の無い古い保存は日本時間
+static func overlapping(s: Dictionary) -> Dictionary:
+	_ensure()
+	var tz := JobListings.tz_of(s)
+	for x in _list:
+		if String(x.get("id", "")) == String(s.get("id", "")) or JobListings.tz_of(x) != tz:
+			continue
+		if float(x.start) < float(s.end) and float(s.start) < float(x.end):
+			return x.duplicate()
+	return {}
+
+
 ## now 以降に始まるシフト（近い順）
 static func upcoming(now := -1.0) -> Array:
 	_ensure()

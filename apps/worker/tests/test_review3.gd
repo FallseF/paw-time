@@ -100,7 +100,22 @@ func _scroll() -> void:
 # ---------------------------------------------------------------- 2. 重なるシフト
 
 func _overlap() -> void:
-	pass
+	Shifts.reset()
+	var t0 := 1790000000.0
+	var a := {"id": "a", "title": "Hall", "store": "Cafe", "start": t0, "end": t0 + 4 * 3600, "tz": JobListings.TZ_JP}
+	Shifts.add(a)
+	var inside := {"id": "b", "start": t0 + 3600, "end": t0 + 2 * 3600, "tz": JobListings.TZ_JP}
+	var tail := {"id": "c", "start": t0 + 3 * 3600, "end": t0 + 6 * 3600, "tz": JobListings.TZ_JP}
+	var after := {"id": "d", "start": t0 + 4 * 3600, "end": t0 + 6 * 3600, "tz": JobListings.TZ_JP}
+	var other_town := {"id": "e", "start": t0 + 3600, "end": t0 + 2 * 3600, "tz": JobListings.TZ_SF}
+	var old_save := {"id": "f", "start": t0 - 3600, "end": t0 + 60} # tz の無い古い保存＝日本時間
+	_check(Shifts.overlapping(inside).get("id", "") == "a", "a shift inside another overlaps")
+	_check(Shifts.overlapping(tail).get("id", "") == "a", "a shift that starts before the other ends overlaps")
+	_check(Shifts.overlapping(after).is_empty(), "back-to-back shifts do not overlap")
+	_check(Shifts.overlapping(other_town).is_empty(), "only shifts in the same town (tz) are compared")
+	_check(Shifts.overlapping(old_save).get("id", "") == "a", "old saves without tz count as Japan time")
+	_check(Shifts.overlapping(a).is_empty(), "a shift does not overlap itself")
+	Shifts.reset()
 
 
 # ---------------------------------------------------------------- 3. 地域をいくつも
