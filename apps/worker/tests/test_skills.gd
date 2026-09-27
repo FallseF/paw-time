@@ -120,14 +120,17 @@ func _initialize() -> void:
 	# 5. おさらいの問題
 	for lv in [1, 2, 3]:
 		for seed in 30:
-			for o in PracticeData.register_orders(lv, seed):
-				var ch := PracticeData.change_for(o)
-				check(ch > 0 and ch < 1000 and ch % 10 == 0, "おつり %d (lv%d)" % [ch, lv])
-				check(PracticeData.change_ok(o, [ch]) and not PracticeData.change_ok(o, [ch + 10]), "おつりの判定")
-				var sum := 0
-				for it in o.items:
-					sum += PracticeData.price_of(it.id) * int(it.qty)
-				check(sum == o.total, "合計")
+			for cur in [Money.JPY, Money.USD]:
+				for o in PracticeData.register_orders(lv, seed, cur):
+					var ch := PracticeData.change_for(o)
+					# 円は 10 円単位、ドルは 25¢ 単位（おつりの皿の小銭で作れる）
+					check(ch > 0 and ch < 1000 and ch % (25 if cur == Money.USD else 10) == 0, "おつり %d (lv%d %s)" % [ch, lv, cur])
+					check(PracticeData.change_ok(o, [ch]) and not PracticeData.change_ok(o, [ch + 10]), "おつりの判定")
+					check(o.currency == cur, "注文の通貨")
+					var sum := 0
+					for it in o.items:
+						sum += PracticeData.price_of(it.id, cur) * int(it.qty)
+					check(sum == o.total, "合計")
 			var dishes := PracticeData.dish_items(lv, seed)
 			check(dishes[0] != "glass" and dishes.count("glass") >= 1 and dishes.count("pan") >= 1, "洗い物がまざっている")
 			check(PracticeData.dish_next(dishes) == "glass", "グラスから")
@@ -149,6 +152,10 @@ func _initialize() -> void:
 	check(PracticeData.seat_ok(3, [1, 2, 3]) == [2], "3 人は 4 席へ")
 	check(PracticeData.seat_ok(2, [2]) == [2], "あいていなければ大きい席でも")
 	check(PracticeData.register_orders(2, 5) == PracticeData.register_orders(2, 5), "同じ seed は同じ問題")
+	# レジのお金：英語＝ドル、日本語＝円（英語の画面に ¥ を出さない）
+	check(PracticeData.register_orders(1, 3)[0].currency == Money.USD, "英語のレジはドル")
+	check(PracticeData.money_text(1075, Money.USD) == "$10.75" and PracticeData.money_text(1080, Money.JPY) == "¥1,080", "レジのお金の字")
+	check(PracticeData.price_of("coffee", Money.USD) == 450 and PracticeData.price_of("coffee") == 300, "品の値段（ドル・円）")
 
 	# 6. 文字（おさらい・スキル）
 	for loc in ["en", "ja"]:

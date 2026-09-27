@@ -4,9 +4,12 @@ extends Control
 ## 仕事の名前・場所・日・はじまり・おわりだけ。時給やお金の情報は聞かない。
 ## 入れたら Shifts.add()（一緒に働く係・働いたあとの評価と同じ置き場）。時刻は見本の求人と同じ町の時刻（日本語＝日本時間、英語＝サンフランシスコ）。
 ## 使い方: var f := ShiftForm.new(); f.added.connect(...); add_child(f)（画面は 360x640 の固定座標）
+## 求人を受けるときと同じく、もう入っているシフトと時間が重なるなら入れない（重なりの知らせと「マイシフトで見る ›」を出す）
 
 signal added(shift: Dictionary)
 signal closed
+## 重なりの知らせの「マイシフトで見る ›」：at はその重なったシフトのはじまり（開く側がマイシフトのその日へ）
+signal see_shifts(at: float)
 
 const INK := Color("2a2233")
 const SUB := Color("6a5f70")
@@ -23,6 +26,7 @@ var start_l: Label
 var end_l: Label
 var add_btn: Button
 var card: PanelContainer
+var clash_box: VBoxContainer # 重なりの知らせ（重なったときだけ出す）
 
 var day_off := 0 # 今日から何日後
 var start_min := 17 * 60
@@ -60,6 +64,10 @@ func _ready() -> void:
 	v.add_child(_stepper(tr("SHIFT_FORM_START"), start_l, func(d): _step_time("start", d)))
 	end_l = _value_label()
 	v.add_child(_stepper(tr("SHIFT_FORM_END"), end_l, func(d): _step_time("end", d)))
+	clash_box = VBoxContainer.new()
+	clash_box.add_theme_constant_override("separation", 2)
+	clash_box.visible = false
+	v.add_child(clash_box)
 	add_btn = Kit.button(tr("SHIFT_FORM_ADD"), ORANGE, _add)
 	v.add_child(add_btn)
 	var cancel := Button.new()
@@ -182,12 +190,18 @@ func _refresh() -> void:
 	var over := end_min <= start_min
 	end_l.text = ("%02d:%02d" % [end_min / 60, end_min % 60]) + (tr("SHIFT_FORM_NEXT_DAY") if over else "")
 	add_btn.disabled = title_edit.text.strip_edges() == ""
+	_hide_clash() # 日や時刻を変えたら、前の重なりの知らせは消す
 
 
 func _add() -> void:
 	if add_btn.disabled:
 		return
 	var s := build_shift()
+	# もう入っているシフトと時間が重なるなら入れない（求人を受けるときと同じ決まり・同じ知らせ）
+	var clash := Shifts.overlapping(s)
+	if not clash.is_empty():
+		_show_clash(clash)
+		return
 	Shifts.add(s)
 	Kit.play(self, "sparkle")
 	added.emit(s)
@@ -197,6 +211,43 @@ func _add() -> void:
 func close() -> void:
 	closed.emit()
 	queue_free()
+
+
+## 重なりの知らせ：求人を受けるときと同じ文（時間がかぶってるよ／〜と時間が重なるから…）と、マイシフトへのリンク
+func _show_clash(clash: Dictionary) -> void:
+	_hide_clash()
+	Kit.play(self, "tap", 0.8)
+	clash_box.add_child(I18n.wrap(_text(tr("R3_OVERLAP_TITLE"), 15, Color("b0502a"), true)))
+	# JobDesk は GameState（autoload）を使うので、名前で参照せず実行時に読む（-s のテストでも ShiftForm を読めるように）
+	var jd: GDScript = load("res://scripts/job_desk.gd")
+	clash_box.add_child(I18n.wrap(_text(tr("R3_OVERLAP_BODY") % jd.shift_label(clash), 13, INK)))
+	var link := Button.new()
+	link.text = tr("R3_SEE_MY_SHIFTS")
+	link.flat = true
+	link.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	link.custom_minimum_size = Vector2(0, 26)
+	link.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	link.add_theme_font_override("font", Kit.bold())
+	link.add_theme_font_size_override("font_size", 12)
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		link.add_theme_color_override(k, Color("3b5ba5"))
+	link.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	var at := float(clash.start)
+	link.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		see_shifts.emit(at)
+		close())
+	clash_box.add_child(link)
+	clash_box.visible = true
+
+
+func _hide_clash() -> void:
+	if clash_box == null:
+		return
+	for c in clash_box.get_children():
+		clash_box.remove_child(c)
+		c.queue_free()
+	clash_box.visible = false
 
 
 # ---------------------------------------------------------------- 確認用（OBAKE_SHOT の call:）
