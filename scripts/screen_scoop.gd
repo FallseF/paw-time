@@ -1,7 +1,7 @@
 extends Control
 ## おばけすくい。夜の川べりで、水面をただよう光る玉をポイですくう。
 ## 押している間だけポイが水に入り、離すとすくい上げる。
-## ポイの枚数＝その日に働いた分、破れにくさ＝昨夜の睡眠。速く動かすほど、重い玉ほど破れやすい。
+## ポイの枚数＝その日に働いた分。速く動かすほど、重い玉ほど破れやすい。
 
 var main
 
@@ -24,17 +24,8 @@ var caught_count := 0
 var poi_type := ""
 var durability := 1.0
 var dura_by := {} # ポイの種類ごとの残り（切りかえても回復しない）
-var extra := false
 var perfect_streak := 0
 var tag_n := -1
-# 寝息のリズム：ポイを水に入れたまま、じっとしていると「ゆめの泡」が浮いてくる
-const STILL_NEED := 1.8
-var still_t := 0.0
-var still_prev := Vector3.ZERO
-var dream_left := 1
-var breath: MeshInstance3D
-var breath_mat: StandardMaterial3D
-var _bt := 0.0
 var rim_col := Color.WHITE
 var pressed := false
 var last_ground := Vector3.ZERO
@@ -63,23 +54,18 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	_build_audio()
-	extra = GameState.night_plan == "extra"
 	# はじめての夜（Onboarding）は、ゆっくりで逃げない玉がひとつだけ
 	var list := Onboarding.tutorial_orbs() if Onboarding.at("scoop") else GameState.tonight_orbs()
-	if extra:
-		list = list.slice(0, 3)
 	total_tonight = list.size()
 	for d in list:
 		_spawn_orb(d)
 	_pick_poi()
 	_refresh_ui()
-	dream_left = 1 + GameState.tier() / 2
-	_make_breath()
 	if Onboarding.at("scoop"):
 		_tutorial_coach()
 	# 今夜の川の様子を、はじめに知らせる
 	var kind := GameState.night_kind()
-	if kind != "" and not extra and GameState.day >= 1:
+	if kind != "" and GameState.day >= 1:
 		var kt: Array = GameState.NIGHT_KIND_TEXT[kind]
 		await get_tree().create_timer(0.5).timeout
 		var pn := PanelContainer.new()
@@ -521,20 +507,12 @@ func _build_ui() -> void:
 	top.add_child(pp)
 
 	hint = _text("押して、玉の下へ → 離す", 14, Color(1, 1, 1, 0.85))
-	var tip := _text("じっと待つと、ゆめの泡が浮かぶ", 12, Color("c9bdf5"))
+	var tip := _text("縁が金色で離すと、ぴったり", 12, Color("c9bdf5"))
 	tip.position = Vector2(0, 116)
 	tip.size = Vector2(360, 20)
 	add_child(tip)
 	# はじめての夜は、下のヒントひとつだけ
 	tip.visible = GameState.day >= 1
-	var tips := ["じっと待つと、ゆめの泡が浮かぶ", "縁が金色で離すと、ぴったり"]
-	var tt := create_tween().set_loops()
-	for i in tips.size():
-		var txt: String = tips[(i + 1) % tips.size()]
-		tt.tween_interval(6.0)
-		tt.tween_property(tip, "modulate:a", 0.0, 0.3)
-		tt.tween_callback(func(): tip.text = txt)
-		tt.tween_property(tip, "modulate:a", 1.0, 0.3)
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
@@ -816,10 +794,7 @@ func _lift() -> void:
 	caught_count += 1
 	if coach:
 		coach.visible = false # はじめての夜の説明は、すくえたら消す（まん中の「ぴったり」と重ならないように）
-	if target.data.get("dream", false):
-		_banner("ゆめの泡を\nすくった", Color("d8ccff"))
-		_play("sparkle")
-	elif perfect:
+	if perfect:
 		perfect_streak += 1
 		var msg := "ぴったり！"
 		if perfect_streak >= 3:
@@ -881,66 +856,8 @@ func _tear(target: Orb3D) -> void:
 # ---------- 毎フレーム ----------
 
 ## ポイのまわりの、ゆっくり息をする輪（じっとしているほど満ちる）
-func _make_breath() -> void:
-	breath = MeshInstance3D.new()
-	var t := TorusMesh.new()
-	t.inner_radius = POI_R + 0.05
-	t.outer_radius = POI_R + 0.09
-	breath.mesh = t
-	breath_mat = StandardMaterial3D.new()
-	breath_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	breath_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	breath_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	breath_mat.albedo_color = Color(0.79, 0.74, 0.96, 0.0)
-	breath.material_override = breath_mat
-	world.add_child(breath)
-
-
-func _update_breath(delta: float) -> void:
-	_bt += delta
-	if breath == null:
-		return
-	var moved := poi.position.distance_to(still_prev)
-	still_prev = poi.position
-	if pressed and not busy and dream_left > 0:
-		if moved < 0.004:
-			still_t += delta
-		else:
-			still_t = maxf(0.0, still_t - delta * 3.0)
-	else:
-		still_t = 0.0
-	var k := clampf(still_t / STILL_NEED, 0.0, 1.0)
-	# 4 秒でひと呼吸（吸って、吐いて）
-	var br := 0.5 + 0.5 * sin(_bt * TAU / 4.0)
-	breath.position = Vector3(poi.position.x, 0.02, poi.position.z)
-	breath.scale = Vector3.ONE * (1.0 + (1.0 - k) * 0.6 + br * 0.08)
-	breath_mat.albedo_color.a = k * 0.8
-	if k >= 1.0:
-		still_t = 0.0
-		_dream_bubble()
-
-
-func _dream_bubble() -> void:
-	dream_left -= 1
-	var o := Orb3D.new().setup({"type": "sleep", "rare": false, "weight": 0.18, "dream": true})
-	o.position = Vector3(poi.position.x + 0.03, -0.35, poi.position.z)
-	o.scale = Vector3.ONE * 0.2
-	world.add_child(o)
-	orbs.append(o)
-	total_tonight += 1
-	o.vel = Vector3.ZERO
-	var tw := create_tween().set_parallel()
-	tw.tween_property(o, "position:y", 0.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tw.tween_property(o, "scale", Vector3.ONE, 0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_ripple(o.position)
-	Kit.play(self, "dream", 1.2, -8)
-	hint.text = "ゆめの泡だ。そのまま離す"
-	_refresh_ui()
-
-
 func _process(delta: float) -> void:
 	ripple_t += delta
-	_update_breath(delta)
 	# ポイの下に玉があると、縁が光る（真ん中なら金色）
 	if pressed and poi_rim and poi_rim.material_override:
 		var near := 99.0
@@ -992,13 +909,13 @@ func _process(delta: float) -> void:
 		if t == "rare":
 			steer += Vector3(-o.position.z, 0, o.position.x).normalized() * 0.4 * delta
 		# 水中でポイが近くにあると、少し逃げる
-		if pressed and not o.data.get("dream", false):
+		if pressed:
 			var away: Vector3 = o.position - poi.position
 			away.y = 0
 			var d: float = away.length()
 			if d < 0.7 and d > 0.001:
 				steer += away.normalized() * (0.7 - d) * flee * delta
-		var cap: float = [0.32, 0.26, 0.21, 0.17][GameState.tier()] * vmax # よく眠ると、水面がしずか
+		var cap: float = 0.23 * vmax
 		if o.data.get("easy", false):
 			cap *= 0.3 # はじめての夜の玉
 		if t == "register":
@@ -1012,7 +929,7 @@ func _process(delta: float) -> void:
 		o.vel = (o.vel + steer).limit_length(cap)
 		o.position += o.vel * delta
 		if t == "kitchen":
-			o.hop = absf(sin(_bt * 7.0 + o.position.x * 5.0)) * 0.07
+			o.hop = absf(sin(ripple_t * 7.0 + o.position.x * 5.0)) * 0.07
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
 		if e.length() > 0.8:
 			o.vel -= Vector3(e.x, 0, e.y).normalized() * 0.6 * delta * 10.0
@@ -1071,8 +988,8 @@ func _finish() -> void:
 		dot.add_theme_stylebox_override("panel", sb)
 		row.add_child(dot)
 	v.add_child(row)
-	v.add_child(_text("玉は、眠っている間にかえる" if caught_count > 0 else "今夜は、水の音だけ", 13, Color(1, 1, 1, 0.7)))
-	var b := Kit.button("帰って、おやすみの支度", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "sleep")), Color.WHITE, 46, 16)
+	v.add_child(_text("玉は、朝になったらかえる" if caught_count > 0 else "今夜は、水の音だけ", 13, Color(1, 1, 1, 0.7)))
+	var b := Kit.button("島へもどる", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "garden")), Color.WHITE, 46, 16)
 	v.add_child(b)
 	p.pivot_offset = Vector2(140, 100)
 	p.scale = Vector2(0.8, 0.8)
@@ -1150,8 +1067,7 @@ func demo_real() -> void:
 	print("[demo_real] caught=", caught_count, " dura=", durability)
 
 
-## 確認用：水の中でじっと待つ
+## 確認用：水の中で、ポイを玉のそばに入れておく
 func demo_still() -> void:
 	pressed = true
 	poi.position = Vector3(0.0, -0.04, 0.2)
-	still_prev = poi.position

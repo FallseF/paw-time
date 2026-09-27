@@ -2,7 +2,7 @@ extends PracticeGame
 ## ホールのおさらい：お客さんを席へ案内する（座れる中でいちばん小さい席）→ 伝票の番号の席へ、料理を運ぶ。
 
 const TABLE_POS := {1: Vector3(-0.75, 0, -0.55), 2: Vector3(0.35, 0, -0.75), 3: Vector3(1.35, 0, -0.35)}
-const GUESTS := ["bubble", "tray", "receipt", "box", "pan", "nemuri"]
+const GUESTS := ["bubble", "tray", "receipt", "box", "pan", "lantern"]
 
 var phase := "" # seat / carry
 var cur := 0

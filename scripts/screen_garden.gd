@@ -1,7 +1,7 @@
 extends Control
 ## 夜の庭（1日の起点）。休憩室の縁側の前に、小さな庭がある。
-## 庭はリズム（眠りの整い）で育ち、仕事の日は店にちなんだ飾りが届く。おばけたちは庭で思い思いに過ごす。
-## 朝：昨夜の眠りのまとめ → 庭の変化。昼：シフト（ブースト）か休み。夜：川べりへ（満月の夜は月見）。
+## 庭は毎日の暮らし（働いた日・休んだ日・夜のすくい・めあて）で育ち、仕事の日は店にちなんだ飾りが届く。おばけたちは庭で思い思いに過ごす。
+## 朝：きのうのまとめ → 庭の変化。昼：シフト（ブースト）か休み。夜：川べりへ（満月の夜は月見）→ 朝へ。
 
 var main
 
@@ -24,8 +24,6 @@ var night_sky := Color("141a3a")
 var sky_stars: CPUParticles3D
 
 var top_day: Label
-var rhythm_bar: ProgressBar
-var rhythm_label: Label
 var garden_bar: ProgressBar
 var garden_label: Label
 var poi_row: HBoxContainer
@@ -66,7 +64,7 @@ func _ready() -> void:
 	_reveal_outfits()
 
 
-## 届いた服（仕事・眠り・図鑑の条件、光る玉の中身）を、ひとつずつ見せる
+## 届いた服（仕事・休み・おでかけ・図鑑の条件、光る玉の中身）を、ひとつずつ見せる
 func _reveal_outfits() -> void:
 	if OS.get_environment("OBAKE_NO_REVEAL") != "": # 確認用の撮影で、島だけを撮るとき
 		return
@@ -154,7 +152,7 @@ func _build_world() -> void:
 		_build_moon_deck(Vector3(2.9, 0, 1.9))
 	if L >= 10:
 		_build_tree(Vector3(3.2, 0, -2.6), Color("b9a7ff"), "dream")
-	# 庭が満開になったあとも、めぐみ 80 ごとに夢見草が一輪ふえる
+	# 庭が満開になったあとも、めぐみ 80 ごとに星見草が一輪ふえる
 	var extra_f: int = maxi(0, (GameState.growth - GameState.GARDEN[-1].need) / 80) if L >= GameState.GARDEN.size() - 1 else 0
 	for i in (0 if _vis() else mini(GameState.dream_flowers + extra_f, 40)):
 		var f := _dream_flower(Vector3(-3.3 + (i % 8) * 0.35, 0, 2.6 + (i / 8) * 0.25))
@@ -436,8 +434,9 @@ func _L() -> int:
 	return int(V.level) if _vis() else GameState.garden_seen_level
 
 
+## 庭の見た目の段（おでかけ先はコードの値。自分の島は、いつも元気な庭）
 func _T() -> int:
-	return int(V.tier) if _vis() else GameState.tier()
+	return int(V.tier) if _vis() else 2
 
 
 func _decos() -> Dictionary:
@@ -859,7 +858,7 @@ func _build_dressing(L: int) -> void:
 		ll.set_meta("dressing", true)
 		g.add_child(ll)
 		lamp_lights.append(ll)
-	# 夜空の色：段が上がるほど、深い紫に（満開で、ほんのり夢の色）
+	# 夜空の色：段が上がるほど、深い紫に（満開で、ほんのり星の色）
 	night_sky = Color("141a3a").lerp(Color("2a1f4f"), L / 10.0)
 
 
@@ -937,7 +936,7 @@ func _build_next_stake(L: int) -> void:
 	var post := _box(Vector3(0.06, 0.7, 0.06), Vector3(0, 0.35, 0), Color("a87250"), g)
 	post.name = "post"
 	_box(Vector3(1.0, 0.62, 0.04), Vector3(0, 0.85, 0), Color("f4e6cc"), g)
-	var names := {1: "芝", 2: "花壇", 3: "灯り", 4: "花", 5: "池", 6: "縁台", 7: "桜", 8: "ほたる", 9: "月見台", 10: "夢見の木"}
+	var names := {1: "芝", 2: "花壇", 3: "灯り", 4: "花", 5: "池", 6: "縁台", 7: "桜", 8: "ほたる", 9: "月見台", 10: "星見の木"}
 	var l := Kit.label3d(tr("%s\n予定地") % tr(names.get(nx, "")), 44, Color("4a3f52"))
 	l.outline_size = 0
 	l.pixel_size = 0.0055
@@ -1484,33 +1483,26 @@ func _gui_input(event: InputEvent) -> void:
 	tw2.tween_callback(l.queue_free)
 
 
-const LINES_TIER := [
-	["…ねむい", "きのう、何時にねた？", "庭が、しょんぼりしてる", "花が下を見ている。こっちも見ている"],
-	["まあまあの夜だった", "今夜は、早めに", "…ふわぁ", "いつもの時刻、覚えてる？"],
-	["いい夜だった", "花がのびた", "朝の空気がすき", "リズム、悪くない"],
-	["ぐっすり", "庭がきらきらしてる", "夢で羊をかぞえた。四ひきめで寝た", "今日は、なにもしなくていい気がする"],
-]
+const LINES_DAY := ["花がのびた", "朝の空気がすき", "庭がきらきらしてる", "今日は、なにもしなくていい気がする", "花が下を見ている。こっちも見ている", "お茶にしよう"]
 const LINES_OWN := {
 	"receipt": ["レシート、のびた", "合計は、言えない", "…ピッ"],
 	"bubble": ["ぷく", "割れた。平気", "洗ったら、減った"],
 	"tray": ["お盆は落とさない", "中身は知らない", "…（バランス中）"],
 	"pan": ["じゅう", "さわらないで。あつくはない", "油の音がすき"],
 	"box": ["箱から出ない", "住所はここ", "中は広い（ことにしている）"],
-	"nemuri": ["zzz…", "…（寝ている）", "羊が一ぴき…"],
-	"lantern": ["夜はこれから", "明るいけど、眠い", "…消さないで"],
+	"lantern": ["夜はこれから", "明るいでしょ", "…消さないで"],
 }
-const LINES_NIGHT := ["もう寝る？", "川べり、行く？", "虫の声", "今夜は何時に寝るの"]
+const LINES_NIGHT := ["川べり、行く？", "虫の声", "月がきれい", "今夜は、なにがすくえるかな"]
 
 
 func _line_for(id: String) -> String:
-	var t := GameState.tier()
 	if Rares.is_rare(id):
 		return ["……", "…", "（じっとこっちを見ている）", "……（うなずく）"].pick_random()
 	if LINES_OWN.has(id) and randf() < 0.45:
 		return LINES_OWN[id].pick_random()
 	if night > 0.5 and randf() < 0.4:
 		return LINES_NIGHT.pick_random()
-	return LINES_TIER[t].pick_random()
+	return LINES_DAY.pick_random()
 
 
 # ---------- UI ----------
@@ -1561,7 +1553,7 @@ func _build_ui() -> void:
 	flow_label.visible = false
 	add_child(flow_label)
 
-	# くわしく（リズムのことばをタップしたときだけ）
+	# くわしく（島の段の札をタップしたときだけ）
 	meters = PanelContainer.new()
 	meters.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.95), 18, 0.12, Vector2(12, 8)))
 	meters.position = Vector2(12, 58)
@@ -1571,14 +1563,6 @@ func _build_ui() -> void:
 	var mv := VBoxContainer.new()
 	mv.add_theme_constant_override("separation", 4)
 	meters.add_child(mv)
-	var r1 := HBoxContainer.new()
-	r1.add_theme_constant_override("separation", 8)
-	r1.add_child(Kit.text("リズム", 12, Color("8a7a88")))
-	rhythm_bar = Kit.bar(0, Color("9fb4ff"), 150, 10)
-	r1.add_child(rhythm_bar)
-	rhythm_label = Kit.text("", 13, Color("2a2233"), true)
-	r1.add_child(rhythm_label)
-	mv.add_child(r1)
 	var r2 := HBoxContainer.new()
 	r2.add_theme_constant_override("separation", 8)
 	r2.add_child(Kit.text("庭　　", 12, Color("8a7a88")))
@@ -1590,9 +1574,6 @@ func _build_ui() -> void:
 	poi_row = HBoxContainer.new()
 	poi_row.add_theme_constant_override("separation", 6)
 	mv.add_child(poi_row)
-	if GameState.day >= 3:
-		var db := Kit.button("ねむり日記を見る", Color("f3ecff"), _toggle_diary, Color("6a5bd6"), 32, 13)
-		mv.add_child(db)
 
 	goals_btn = Button.new()
 	goals_btn.position = Vector2(236, 58)
@@ -1625,13 +1606,14 @@ func _build_ui() -> void:
 
 func _refresh_hud() -> void:
 	top_day.text = GameState.day_label()
-	rhythm_chip.text = tr("眠り：%s") % tr(GameState.tier_name())
+	# 島の段（タップで、庭の育ちと手もちのポイ）
+	rhythm_chip.text = tr("島 Lv%d") % (GameState.garden_level + 1)
 	for k in ["normal", "hover", "pressed", "focus"]:
 		rhythm_chip.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.92), 19, 0.14, Vector2(12, 4)))
-	rhythm_chip.add_theme_color_override("font_color", GameState.TIER_COLOR[GameState.tier()].darkened(0.35))
-	rhythm_chip.add_theme_color_override("font_hover_color", GameState.TIER_COLOR[GameState.tier()].darkened(0.35))
+	rhythm_chip.add_theme_color_override("font_color", Color("3f7d4f"))
+	rhythm_chip.add_theme_color_override("font_hover_color", Color("3f7d4f"))
 	var cur: int = {"morning": 0, "day": 1, "evening": 2}.get(GameState.phase, 1)
-	var steps := ["朝", "昼", "夜", "眠"]
+	var steps := ["朝", "昼", "夜"]
 	var out := []
 	for i in steps.size():
 		if i == cur:
@@ -1643,10 +1625,6 @@ func _refresh_hud() -> void:
 	if goals_panel:
 		_toggle_goals()
 		_toggle_goals()
-	var t := GameState.tier()
-	rhythm_bar.value = GameState.rhythm / 100.0
-	(rhythm_bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = GameState.TIER_COLOR[t]
-	rhythm_label.text = GameState.tier_name()
 	var L: int = GameState.garden_level
 	if L + 1 < GameState.GARDEN.size():
 		var a: int = GameState.GARDEN[L].need
@@ -1677,84 +1655,6 @@ func _refresh_hud() -> void:
 		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		poi_row.add_child(dot)
 		poi_row.add_child(Kit.text("×%d" % n, 12))
-	var stp := Kit.text(tr("破れにくさ ×%.2f") % GameState.poi_strength(), 12, Color("8b7bff"))
-	poi_row.add_child(stp)
-
-
-var diary: Control
-
-
-## ねむり日記：直近 7 夜の寝た時刻と起きた時刻（リズムのメーターをタップ）
-func _toggle_diary() -> void:
-	if diary:
-		diary.queue_free()
-		diary = null
-		return
-	Kit.play(self, "tap", 1.1)
-	diary = Control.new()
-	diary.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(diary)
-	var dim := ColorRect.new()
-	dim.color = Color(0.08, 0.06, 0.14, 0.55)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.gui_input.connect(func(e):
-		if e is InputEventMouseButton and e.pressed:
-			_toggle_diary())
-	diary.add_child(dim)
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(16, 14)))
-	p.position = Vector2(16, 120)
-	p.size = Vector2(328, 0)
-	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	diary.add_child(p)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
-	p.add_child(v)
-	v.add_child(Kit.text("ねむり日記", 20, Color("2a2233"), true))
-	v.add_child(Kit.text(tr("リズム %d（%s）・ いつもの時刻 %s") % [int(GameState.rhythm), tr(GameState.tier_name()), GameState.clock(GameState.usual_bed())], 13, Color("6a5f70")))
-	var chart := Control.new()
-	chart.custom_minimum_size = Vector2(296, 190)
-	chart.draw.connect(func(): _draw_diary(chart))
-	v.add_child(chart)
-	v.add_child(Kit.wrap(Kit.text("緑の帯が「いつもの時刻」。帯の中で寝て、7〜9時間眠る夜が続くと、リズムが満ちる", 12, Color("6a5f70"))))
-	var n := GameState.sleep_hist.size()
-	var avg := 0.0
-	for h in GameState.sleep_hist.slice(-7):
-		avg += h
-	if n > 0:
-		v.add_child(Kit.text(tr("この7夜の平均 %.1f 時間 ・ これまで %d 夜") % [avg / min(7, n), n], 13, Color("4a3f52"), true))
-
-
-func _draw_diary(c: Control) -> void:
-	var w := c.size.x
-	var left := 36.0
-	var span := 14.0 * 60.0
-	var to_x := func(m: float) -> float: return left + clampf(m / span, 0, 1) * (w - left)
-	var f := Kit.bold()
-	var u := GameState.usual_bed() - 180
-	var ux: float = to_x.call(u - 20)
-	c.draw_rect(Rect2(ux, 0, float(to_x.call(u + 20)) - ux, 170), Color("8fe0a0", 0.3))
-	for m in [0, 180, 360, 540, 720]:
-		var x: float = to_x.call(m)
-		c.draw_line(Vector2(x, 0), Vector2(x, 170), Color(0, 0, 0, 0.06))
-		c.draw_string(f, Vector2(x - 12, 186), GameState.clock(m + 180), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8a7a88"))
-	var beds: Array = GameState.bed_hist.slice(-7)
-	var hrs: Array = GameState.sleep_hist.slice(-7)
-	var goods: Array = GameState.good_hist.slice(-7)
-	var start_day := GameState.day - beds.size()
-	for i in beds.size():
-		var y := 6.0 + i * 23.0
-		var bx: float = to_x.call(beds[i] - 180)
-		var ex: float = to_x.call(beds[i] - 180 + hrs[i] * 60.0)
-		var col := Color("9fb4ff") if goods[i] else (Color("ff9a4d") if beds[i] > GameState.LATE_LINE else Color("d8cfe0"))
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = col
-		sb.set_corner_radius_all(6)
-		c.draw_style_box(sb, Rect2(bx, y, ex - bx, 14))
-		c.draw_string(f, Vector2(0, y + 12), tr(GameState.WEEKDAYS[(start_day + i) % 7]), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("4a3f52"))
-		c.draw_string(f, Vector2(ex + 4, y + 12), "%.1f" % hrs[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("8a7a88"))
-	if beds.is_empty():
-		c.draw_string(f, Vector2(left, 90), "まだ記録がない。今夜から", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("8a7a88"))
 
 
 func _toggle_meters() -> void:
@@ -1915,7 +1815,7 @@ func _show_card() -> void:
 				Kit.nudge.call_deferred(b)
 		else:
 			card_box.add_child(Kit.text("夜の庭へ、ようこそ" if first else "今日は休み", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("よく眠ると、庭が育つ" if first else "よく眠ると、おまけがつく", 14, Color("6a5f70")))
+			card_box.add_child(Kit.text("毎日の暮らしで、庭が育つ" if first else "休みの日も、庭はちゃんと育つ", 14, Color("6a5f70")))
 			var b := Kit.button("夕方まで、のんびり", Color("ff8a5b"), _rest)
 			card_box.add_child(b)
 			card_box.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
@@ -1926,7 +1826,7 @@ func _show_card() -> void:
 	elif GameState.phase == "evening":
 		if GameState.is_moon_night() and not GameState.scooped_tonight:
 			card_box.add_child(Kit.text("今夜は満月の夜", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.text("よく眠れた夜の数だけ、灯りがつく", 14, Color("6a5f70")))
+			card_box.add_child(Kit.text("川べりへ行った夜の数だけ、灯りがつく", 14, Color("6a5f70")))
 			var b := Kit.button("月見をする", Color("5b4a9e"), func(): main.go("moon"))
 			card_box.add_child(b)
 			Kit.nudge.call_deferred(b)
@@ -1941,7 +1841,7 @@ func _show_card() -> void:
 				Kit.nudge.call_deferred(b)
 			var row := HBoxContainer.new()
 			row.alignment = BoxContainer.ALIGNMENT_CENTER
-			row.add_child(_link("すくわずに寝る", func(): main.go("sleep")))
+			row.add_child(_link("すくわずに、朝へ", func(): main.go("night")))
 			if GameState.can_gift() and GameState.day >= 4:
 				var c: String = GameState.today().coworkers[0]
 				row.add_child(_link(tr("%sにおすそわけ") % c, _gift))
@@ -1949,9 +1849,9 @@ func _show_card() -> void:
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 		else:
-			card_box.add_child(Kit.text("おやすみの時間", 18, Color("2a2233"), true))
+			card_box.add_child(Kit.text("今夜のすくいは、おしまい", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(tr("玉を %d 個持ち帰った") % GameState.orbs.size(), 14, Color("6a5f70")))
-			card_box.add_child(Kit.button("寝る", Color("8b7bff"), func(): main.go("sleep")))
+			card_box.add_child(Kit.button("朝へ", Color("8b7bff"), func(): main.go("night")))
 	_card_fit()
 	_pop_card()
 
@@ -2179,30 +2079,20 @@ func _show_morning() -> void:
 	GameState.save()
 	_refresh_hud()
 	busy = false
-	# それから、ゆうべの眠りを短く
+	# それから、きのうのまとめを短く（めぐみの数と、そのわけ）
 	_clear_card()
-	card_box.add_child(Kit.text(tr("おはよう。%s ねむった") % GameState.hm(ln.hours), 19, Color("2a2233"), true))
-	# ひとことだけ：良ければ一言、足りなければいちばん大きい理由
-	var worst = null
-	for p in ln.parts:
-		if p[1] < 0 and (worst == null or p[1] < worst[1]):
-			worst = p
-	if worst == null:
-		var good_line: String = ["いい夜だった", "いつもどおり、ぐっすり", "庭もよく眠れたらしい"].pick_random() if ln.score >= 18 else "まあまあの夜だった"
-		card_box.add_child(Kit.text(good_line, 14, Color("3f7d4f"), true))
-	else:
-		card_box.add_child(Kit.text(tr("すこし残念：%s") % tr(worst[0]), 14, Color("c0473b"), true))
-	var r := HBoxContainer.new()
-	r.add_theme_constant_override("separation", 8)
-	r.add_child(Kit.text("リズム", 14, Color("8a7a88")))
-	var bar := Kit.bar(ln.rhythm_before / 100.0, GameState.TIER_COLOR[GameState.tier()], 130, 14)
-	r.add_child(bar)
-	var diff: float = ln.rhythm - ln.rhythm_before
-	r.add_child(Kit.text("↑" if diff > 0 else ("↓" if diff < 0 else "→"), 16, Color("3f7d4f") if diff >= 0 else Color("c0473b"), true))
-	r.add_child(Kit.text(GameState.tier_name(), 14, Color("4a3f52"), true))
-	card_box.add_child(r)
-	if ln.get("visitor", "") != "":
-		card_box.add_child(Kit.text("チョウチンがついてきた", 13, Color("b0643a")))
+	card_box.add_child(Kit.text("おはよう", 19, Color("2a2233"), true))
+	var why: Array = []
+	if ln.get("worked", false):
+		why.append(tr("働いた日"))
+	if ln.get("river", false):
+		why.append(tr("川べりの夜"))
+	var gl := tr("庭のめぐみ +%d") % int(ln.get("growth_gain", 0))
+	if not why.is_empty():
+		gl += "（%s）" % "・".join(why)
+	card_box.add_child(Kit.text(gl, 14, Color("3f7d4f"), true))
+	if WorkTogether.still_tired():
+		card_box.add_child(Kit.text("きのうの残業で、猫はまだ少し疲れている", 13, Color("b0643a")))
 	elif GameState.day >= 4:
 		var om := GameState.omen()
 		if om != "" and om.length() <= 24:
@@ -2210,21 +2100,16 @@ func _show_morning() -> void:
 	var btn := Kit.button("今日をはじめる", Color("ff8a5b"), _after_morning)
 	card_box.add_child(btn)
 	if GameState.day == 1:
-		_guide("同じころに寝ると、リズムが上がる")
+		_guide("働いた日も休んだ日も、庭は育つ")
 	elif GameState.day == 2:
 		_guide("右上に「めあて」ができた")
 	elif GameState.day == 3:
-		_guide("リズムのことばをタップで、くわしく")
+		_guide("島の段の札をタップで、くわしく")
 	elif GameState.day == 5:
 		_guide("庭をよこになぞると、見回せる")
 	_card_fit()
 	_pop_card()
-	await get_tree().create_timer(0.4).timeout
-	if not is_instance_valid(bar) or bar.is_queued_for_deletion():
-		return
 	Kit.play(self, "chime", 0.9)
-	var tw := create_tween()
-	tw.tween_property(bar, "value", ln.rhythm / 100.0, 0.9).set_trans(Tween.TRANS_SINE)
 
 
 func _after_morning() -> void:
@@ -2252,7 +2137,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 			if items.has("flowerbed"):
 				items.flowerbed.queue_free()
 				flowers.clear()
-			_build_flowerbed(Vector3(-2.1, 0, 0.6), level, GameState.tier())
+			_build_flowerbed(Vector3(-2.1, 0, 0.6), level, _T())
 		3:
 			items.lantern.queue_free()
 			_build_lantern(Vector3(2.4, 0, -1.6), true)
@@ -3044,6 +2929,10 @@ func _pick_present() -> void:
 
 
 func _start_visit_card() -> void:
+	# 友だちの島へのおでかけを数える（レアのネムリン・キセカエのパジャマ）
+	GameState.friend_visits += 1
+	if GameState.has_save():
+		GameState.save()
 	_clear_card()
 	card_box.add_child(Kit.text(tr("%sの島に、おでかけ") % V.name, 18, Color("2a2233"), true))
 	card_box.add_child(Kit.button("おばけを1体、おいていく", Color("ff8a5b"), _pick_present))

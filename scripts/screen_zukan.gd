@@ -4,8 +4,8 @@ extends Control
 
 var main
 
-const GROUPS := ["睡眠", "はじめて", "時間帯", "天気", "つながり", "リズム"]
-const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "nemuri", "lantern"]
+const GROUPS := ["休み", "はじめて", "時間帯", "天気", "つながり", "リズム"]
+const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "lantern"]
 
 var font_bold: FontFile
 var font_black: FontFile
@@ -58,7 +58,7 @@ func _ready() -> void:
 
 	col.add_child(_section("ふつうのおばけ"))
 	col.add_child(_shelf())
-	var hint_n := _text("スヤリは羊かぞえの夢から、チョウチンは夜ふかしの夜に来る", 11, Color("9a8e98"))
+	var hint_n := _text("チョウチンは満月の夜に来る", 11, Color("9a8e98"))
 	hint_n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(hint_n)
 	col.add_child(_section("庭の育ち"))
@@ -197,7 +197,7 @@ func _garden_list() -> Control:
 		var name_l := _text(tr(st.name) if done else (tr("？？？（めぐみ %d）") % st.need if i == L + 1 else "？？？"), 13, Color("2a2233") if done else Color("9a8e98"), font_black if done else null)
 		row.add_child(name_l)
 		v.add_child(row)
-	v.add_child(_text(tr("めぐみ %d ・ 満月の夜 %d 回 ・ 夢見草 %d 輪") % [GameState.growth, GameState.moon_nights, GameState.dream_flowers], 12, Color("6a5f70")))
+	v.add_child(_text(tr("めぐみ %d ・ 満月の夜 %d 回 ・ 星見草 %d 輪") % [GameState.growth, GameState.moon_nights, GameState.dream_flowers], 12, Color("6a5f70")))
 	v.add_child(_text("仕事の飾り", 13, Color("8a7a88")))
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", 6)

@@ -1,5 +1,6 @@
 extends SceneTree
-## "Work together" balance: coins by shift length and sleep, overtime, daily cap, split shifts.
+## "Work together" balance: coins by shift length, overtime ("still tired" the next day), daily cap, split shifts.
+## There is no sleep factor: only the cat getting tired limits a day.
 ## Also checks the rules: longer hours never pay more after exhaustion, the cap holds,
 ## overtime costs tomorrow's mood, and nets are the same for any length.
 ## godot --headless --path . -s tests/sim_work.gd   (OBAKE_NOSAVE is set by the test itself)
@@ -22,35 +23,33 @@ func _initialize() -> void:
 	WorkTogether.reset()
 	Shifts.reset()
 
-	print("== coins by shift length and sleep tier (one shift, fresh day)")
-	print("hours   restless  so-so   settled  deep")
+	print("== coins by shift length (one shift, fresh day / the day after overtime)")
+	print("hours   fresh  still tired")
 	var hours_list := [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 7.5, 8.0, 9.0, 10.0, 12.0]
 	var prev := {}
 	for h in hours_list:
 		var row := "%5.1f  " % h
-		for tier in 4:
-			var mult: float = WorkTogether.REST_MULT[tier]
+		for k in 2:
+			var mult: float = 1.0 if k == 0 else WorkTogether.OVERTIME_MOOD
 			var c: int = mini(int(floor(WorkTogether.coins_between(0.0, h, mult))), WorkTogether.DAILY_CAP)
 			row += "  %6d" % c
-			if prev.has(tier):
-				check(c >= prev[tier], "coins go down with more hours? tier %d h %.1f" % [tier, h])
+			if prev.has(k):
+				check(c >= prev[k], "coins go down with more hours? %d h %.1f" % [k, h])
 				if h > WorkTogether.EXHAUST_HOURS:
-					check(c == prev[tier], "more than %.1fh must not pay more (tier %d, %.1fh)" % [WorkTogether.EXHAUST_HOURS, tier, h])
-			prev[tier] = c
+					check(c == prev[k], "more than %.1fh must not pay more (%d, %.1fh)" % [WorkTogether.EXHAUST_HOURS, k, h])
+			prev[k] = c
 		print(row)
+	check(WorkTogether.day_mult(1790000000.0) == 1.0, "a normal day has no multiplier (no sleep factor)")
 
-	print("== coins per hour by hour of the shift (settled sleep)")
+	print("== coins per hour by hour of the shift")
 	for i in 9:
-		var c := WorkTogether.coins_between(i, i + 1, 1.1)
+		var c := WorkTogether.coins_between(i, i + 1, 1.0)
 		print("  hour %d→%d: %5.1f coins  (energy %.0f%%)" % [i, i + 1, c, WorkTogether.energy(i + 0.5) * 100])
 
 	# ---- real sessions with the session API (time given explicitly)
 	var t0 := 1790000000.0 # a fixed day
 	var day := 86400.0
-	gs.rhythm = 60.0
-	var tier: int = gs.tier()
-
-	print("== 6h shift (manual start/stop), tier %d" % tier)
+	print("== 6h shift (manual start/stop)")
 	WorkTogether.start("kitchen", "Cafe", t0 + 9 * 3600)
 	var mid := WorkTogether.status(t0 + 12 * 3600)
 	print("  after 3h: coins %d, stage %s, energy %.0f%%" % [mid.coins, mid.stage, mid.energy * 100])
@@ -63,13 +62,11 @@ func _initialize() -> void:
 	WorkTogether.reset()
 	Wallet.reset()
 	gs.reset("solo")
-	gs.rhythm = 60.0
 	WorkTogether.start("hall", "Izakaya", t0 + day + 8 * 3600)
 	var r11 := WorkTogether.stop(t0 + day + 19 * 3600)
 	print("  11h: %d coins, overtime %d min, nets +%d, tomorrow's mood penalty %s" % [r11.coins, r11.overtime_min, r11.nets, r11.mood_penalty_tomorrow])
 	WorkTogether.reset()
 	gs.reset("solo")
-	gs.rhythm = 60.0
 	WorkTogether.start("hall", "Izakaya", t0 + day + 8 * 3600)
 	var r75 := WorkTogether.stop(t0 + day + 15.5 * 3600)
 	check(r11.coins == r75.coins, "11h pays the same as 7.5h (%d vs %d)" % [r11.coins, r75.coins])
@@ -78,30 +75,27 @@ func _initialize() -> void:
 	# the day after the 11h shift
 	WorkTogether.reset()
 	gs.reset("solo")
-	gs.rhythm = 60.0
 	WorkTogether.start("hall", "", t0 + day + 8 * 3600)
 	WorkTogether.stop(t0 + day + 19 * 3600)
 	WorkTogether.start("hall", "", t0 + 2 * day + 9 * 3600)
 	var after_ot := WorkTogether.stop(t0 + 2 * day + 15 * 3600)
 	WorkTogether.reset()
 	gs.reset("solo")
-	gs.rhythm = 60.0
 	WorkTogether.start("hall", "", t0 + 2 * day + 9 * 3600)
 	var normal := WorkTogether.stop(t0 + 2 * day + 15 * 3600)
 	print("  6h the day after overtime: %d coins (normal day %d)" % [after_ot.coins, normal.coins])
 	check(after_ot.coins < normal.coins, "overtime makes the next day earn less")
+	check(absf(float(after_ot.coins) / float(normal.coins) - WorkTogether.OVERTIME_MOOD) < 0.02, "the day after overtime is ×%.2f (%d / %d)" % [WorkTogether.OVERTIME_MOOD, after_ot.coins, normal.coins])
 
 	print("== split shifts share the day's tiredness (4h + 4h vs 8h)")
 	WorkTogether.reset()
 	gs.reset("solo")
-	gs.rhythm = 60.0
 	WorkTogether.start("dish", "", t0 + 3 * day + 8 * 3600)
 	var a := WorkTogether.stop(t0 + 3 * day + 12 * 3600)
 	WorkTogether.start("dish", "", t0 + 3 * day + 13 * 3600)
 	var b := WorkTogether.stop(t0 + 3 * day + 17 * 3600)
 	WorkTogether.reset()
 	gs.reset("solo")
-	gs.rhythm = 60.0
 	WorkTogether.start("dish", "", t0 + 3 * day + 8 * 3600)
 	var one := WorkTogether.stop(t0 + 3 * day + 16 * 3600)
 	print("  4h+4h = %d + %d = %d, one 8h = %d" % [a.coins, b.coins, a.coins + b.coins, one.coins])
@@ -124,12 +118,11 @@ func _initialize() -> void:
 	check(gs.last_shift_ended.get("shift_id", "") == "s1", "shift_ended hook is set for the quick review")
 	check(WorkTogether.pop_ended().size() >= 1 and WorkTogether.pop_ended().is_empty(), "pop_ended hands each ended shift over once")
 
-	print("== a week of 5 shifts (settled sleep)")
+	print("== a week of 5 shifts")
 	for hrs in [5.0, 7.5, 10.0]:
 		WorkTogether.reset()
 		Wallet.reset()
 		gs.reset("solo")
-		gs.rhythm = 60.0
 		for d in 5:
 			WorkTogether.start("register", "", t0 + (10 + d) * day + 9 * 3600)
 			WorkTogether.stop(t0 + (10 + d) * day + (9 + hrs) * 3600)

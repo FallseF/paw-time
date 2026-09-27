@@ -2,7 +2,7 @@ extends Control
 ## はじめての流れの、専用の2場面。
 ##   "onboard"       … 体験バイト（見本）：30 秒で 17:00→21:00 を早送り。カフェで相棒が応援し、お客さんに「出す」を押す。
 ##                     終わるとポイ（すくいの網）がもらえて、はじめての夜のすくいへ。
-##   "onboard_night" … すくいのあと、寝る前のひと場面。「朝まで眠る」で玉がかえる朝へ（孵化の画面）。
+##   "onboard_night" … すくいのあと、夜のひと場面。「朝まで待つ」で玉がかえる朝へ（孵化の画面）。
 ## ひとつの画面に、主ボタンはひとつ。説明はひとつずつ。
 
 var main
@@ -69,7 +69,7 @@ func _build_world() -> void:
 	box.add_child(vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	# 光と空気は他の画面と同じ Look（体験バイトは休憩室の夕方、寝る前はタイトルと同じ夜）
+	# 光と空気は他の画面と同じ Look（体験バイトは休憩室の夕方、夜はタイトルと同じ夜）
 	var night := screen_name == "onboard_night"
 	rig = Look.apply(world, "title" if night else "room", Color("141a3a") if night else Color("f6d9b8"), false, false)
 	env = rig.env
@@ -210,7 +210,7 @@ func _build_shift() -> void:
 
 func _on_main() -> void:
 	if screen_name == "onboard_night":
-		_sleep()
+		_to_morning()
 		return
 	if sheet:
 		return
@@ -352,7 +352,7 @@ func _to_river() -> void:
 	main.go("catch")
 
 
-# ---------------------------------------------------------------- 寝る前
+# ---------------------------------------------------------------- 夜
 
 func _build_night() -> void:
 	var ground := MeshInstance3D.new()
@@ -377,7 +377,7 @@ func _build_night() -> void:
 	partner.position = Vector3(0, 0, 0.3)
 	partner.scale = Vector3.ONE * 0.8
 	world.add_child(partner)
-	# 眠っている間にかえる玉（今夜すくった分）
+	# 朝にかえる玉（今夜すくった分）
 	for i in GameState.orbs.size():
 		var o := Orb3D.new().setup(GameState.orbs[i])
 		o.caught = true
@@ -405,7 +405,7 @@ func _build_night() -> void:
 	Kit.nudge.call_deferred(main_btn)
 
 
-func _sleep() -> void:
+func _to_morning() -> void:
 	if busy:
 		return
 	busy = true
@@ -417,8 +417,8 @@ func _sleep() -> void:
 	tw.tween_property(env, "ambient_light_color", Color("fff0e0"), 1.4)
 	tw.tween_property(moon, "position:y", -1.0, 1.4)
 	await tw.finished
-	# 23:30 に寝て 7:00 に起きた夜にする（はじめての夜は、よく眠れた夜）。玉は GameState.sleep() の中でかえる
-	GameState.sleep(330, 780)
+	# 夜が明ける。玉は GameState.end_night() の中でかえる
+	GameState.end_night()
 	# はじめての朝は「すくった玉から、新しい子」だけを見せる。条件を満たしたレアは、次の夜まで待ってもらう
 	for h in GameState.hatched.duplicate():
 		if h.get("rare", false):
@@ -426,7 +426,7 @@ func _sleep() -> void:
 			GameState.seen.erase(h.id)
 			GameState.owned = GameState.owned.filter(func(o): return o.id != h.id)
 			GameState.rare_pending.push_front(h.id)
-	# 朝の庭の演出（ねむりのまとめ）は2日目から。今朝は孵化 → 島の説明へ
+	# 朝の庭の演出（きのうのまとめ）は2日目から。今朝は孵化 → 島の説明へ
 	GameState.phase = "day"
 	GameState.garden_seen_level = GameState.garden_level
 	GameState.save()

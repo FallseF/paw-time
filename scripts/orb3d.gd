@@ -29,7 +29,7 @@ func setup(d: Dictionary) -> Orb3D:
 	# 中身のヒント：材料・服なら、眠る子猫の影の代わりに小さな影
 	var c: Dictionary = d.get("content", {})
 	# おばネコの玉（中身の決まった玉だけ。夢の泡・夜の玉は別の見た目）は、強く・ちがう色で光る
-	cat = c.get("kind", "") == "obake" and not d.type in ["sleep", "night"]
+	cat = c.get("kind", "") == "obake" and d.type != "night"
 	if cat:
 		model.mark_cat()
 	if c.get("kind", "obake") != "obake" and model.sleeper:

@@ -2,8 +2,6 @@ keys,en,ja
 ちょうちん屋,Lantern stall,ちょうちん屋
 お面屋,Mask stall,お面屋
 わたあめ屋,Cotton candy stall,わたあめ屋
-たっぷり眠る,"A long, good sleep",たっぷり眠る
-いつもの時刻,Usual bedtime,いつもの時刻
 休みの日の休息,Rest on a day off,休みの日の休息
 レシートン,Receipton,レシートン
 レジの音に寄ってくる。尻尾のレシートは、捨てないでほしいらしい,Drawn to register beeps. Please keep the receipt. It's a tail.,レジの音に寄ってくる。尻尾のレシートは、捨てないでほしいらしい
@@ -16,9 +14,7 @@ keys,en,ja
 ダンボ,Danbo,ダンボ
 住居です。資源ごみに出さないでください,This is a home. Please don't recycle it.,住居です。資源ごみに出さないでください
 スヤリ,Suyari,スヤリ
-夢の羊を数えていたら、ついてきた。起きているところを見た者はいない,Followed you from counting dream sheep. No one has seen it awake.,夢の羊を数えていたら、ついてきた。起きているところを見た者はいない
 チョウチン,Chochin,チョウチン
-夜ふかしの灯りに寄ってくる。本人もかなり眠い,Late-night lights lure it. Still sleepy.,夜ふかしの灯りに寄ってくる。本人もかなり眠い
 いつものポイ,Usual scoop,いつものポイ
 いつもの,Usual,いつもの
 レシートのポイ,Receipt scoop,レシートのポイ
@@ -77,11 +73,7 @@ keys,en,ja
 桜の木が育った,A cherry tree grew,桜の木が育った
 いつ見ても、少しだけ咲いている,Always a few blossoms. Always.,いつ見ても、少しだけ咲いている
 ほたるが住みついた,Fireflies moved in,ほたるが住みついた
-ぐっすりの夜は、数が増える,More appear after sound sleep.,ぐっすりの夜は、数が増える
 月見台ができた,A moon deck appeared,月見台ができた
-満月の特等席。ねぶくろが先に寝ていた,Best seat for the full moon. Sleeping Bag got here first. Asleep.,満月の特等席。ねぶくろが先に寝ていた
-夢見の木が光った,The dream tree glows,夢見の木が光った
-眠りを大切にした庭にだけ育つ木,Grows only where sleep is cherished.,眠りを大切にした庭にだけ育つ木
 カフェ こもれび,Cafe Komorebi,カフェ こもれび
 朝,Morning,朝
 晴,Clear,晴
@@ -133,12 +125,8 @@ keys,en,ja
 ぐっすり,Sound,ぐっすり
 %d時間,%dh,%d時間
 %d時間%d分,%dh %dm,%d時間%d分
-寝すぎ,Too much sleep,寝すぎ
 少し短い,A little short,少し短い
-睡眠不足,Too little sleep,睡眠不足
 はじめての夜,First night,はじめての夜
-いつもの時刻に近い,Near your usual bedtime,いつもの時刻に近い
-時刻がずれた,Bedtime shifted,時刻がずれた
 夜ふかし,Up late,夜ふかし
 雨の夜,A rainy night,雨の夜
 玉が重い。でも、ひとつ多い,"Heavier orbs. One extra, though.",玉が重い。でも、ひとつ多い
@@ -146,20 +134,12 @@ keys,en,ja
 虹の玉が出やすい,More chance of rainbow orbs.,虹の玉が出やすい
 にぎやかな夜,A lively night,にぎやかな夜
 玉がいつもより多い,More orbs than usual.,玉がいつもより多い
-満月まで：よい夜 %d / 4,Full moon: %d / 4 good nights,満月まで：よい夜 %d / 4
 日曜は、満月になりそう,Sunday looks like a full moon.,日曜は、満月になりそう
-よく眠る夜が %d つ続いている,%d good nights in a row.,よく眠る夜が %d つ続いている
-同じ時刻の夜が続いている,A string of steady bedtimes.,同じ時刻の夜が続いている
-休みの日は、たっぷり眠ろう,Sleep a little longer on days off.,休みの日は、たっぷり眠ろう
-ひと月の眠り：%d / 28 夜,This month's sleep: %d / 28 nights,ひと月の眠り：%d / 28 夜
 玉を3個すくう,Scoop 3 orbs,玉を3個すくう
 庭のおばけに話しかける,Chat with a garden obake,庭のおばけに話しかける
-いつもの時刻（±20分）に寝る,Sleep at your usual time (±20 min),いつもの時刻（±20分）に寝る
-7時間以上眠る,Sleep at least 7 hours,7時間以上眠る
 飾りをひとつともす,Light a decoration,飾りをひとつともす
 仕事のポイで、同じ色の玉をすくう,Match an orb's color to your work scoop,仕事のポイで、同じ色の玉をすくう
 図鑑でヒントを見る,Check a hint in the Book,図鑑でヒントを見る
-0時までに寝る,Sleep by midnight,0時までに寝る
 満月の夜に、灯りを4つともす,Light 4 lights on full-moon night,満月の夜に、灯りを4つともす
 花壇,Flowerbed,花壇
 灯籠,Stone lantern,灯籠
@@ -167,12 +147,11 @@ keys,en,ja
 縁台,Bench,縁台
 桜,Cherry tree,桜
 月見台,Moon deck,月見台
-夢見の木,Dream tree,夢見の木
 パラソル席,Parasol seating,パラソル席
 おでん鍋,Oden pot,おでん鍋
 かかし,Scarecrow,かかし
 おじぞう,Jizo,おじぞう
-ねぶくろ,Sleeping Bag,ねぶくろ
+ねぶくろ,Bedroll,ねぶくろ
 ななし,No Name,ななし
 めあて達成　めぐみ +3,Goal met · bloom +3,めあて達成　めぐみ +3
 3つそろった！ きらきらポイ +1,All 3! Sparkle scoop +1,3つそろった！ きらきらポイ +1
@@ -199,8 +178,6 @@ keys,en,ja
 シフトで得意なのは？,Your shift superpower?,シフトで得意なのは？
 人と話す,Talking to people,人と話す
 黙々と作業,"Quiet, steady work",黙々と作業
-寝る前は？,Before bed?,寝る前は？
-すぐ寝る,Straight to sleep,すぐ寝る
 ついスマホ,One more scroll,ついスマホ
 バイト終わりに誘われた,An invite after work!,バイト終わりに誘われた
 行く行く！,Count me in!,行く行く！
@@ -256,7 +233,6 @@ keys,en,ja
 となりにいるだけで、落ちつく。,Just being nearby makes it better.,となりにいるだけで、落ちつく。
 こだわりの仕込み番,The Prep Perfectionist,こだわりの仕込み番
 玉ねぎの薄さに、命をかける。,Slices onions with total devotion.,玉ねぎの薄さに、命をかける。
-おやすみ上手,Master of the Power Nap,おやすみ上手
 休憩15分で、しっかり回復。,Fully recharged in a 15-minute break.,休憩15分で、しっかり回復。
 "わたしのマイおばけ猫は「%s」！
 %s
@@ -271,24 +247,12 @@ keys,en,ja
 QuizResult: 保存できない %s (%s),QuizResult: Cannot save %s (%s),QuizResult: 保存できない %s (%s)
 QuizResult: 読めない結果を無視した %s,QuizResult: Ignored unreadable result %s,QuizResult: 読めない結果を無視した %s
 ネムリン,Nemurin,ネムリン
-睡眠,Sleep,睡眠
-よく眠った朝、枕元でまるくなっている,Curled by your pillow after sound sleep.,よく眠った朝、枕元でまるくなっている
-7時間以上ねむった朝に生まれる。寝息がやさしい,Born the morning after 7+ hours of sleep. Breathes softly.,7時間以上ねむった朝に生まれる。寝息がやさしい
 ユメミ,Yumemi,ユメミ
-もっと長い夢の、その先にいる,Beyond a longer dream.,もっと長い夢の、その先にいる
-8時間以上ねむった朝に。見た夢の色をしている,After 8+ hours of sleep. The color of last night's dream.,8時間以上ねむった朝に。見た夢の色をしている
 アサヤケ,Asayake,アサヤケ
-よく眠る夜が、三つ続くと,When three good nights meet.,よく眠る夜が、三つ続くと
-3日続けて7時間以上ねむると生まれる。朝焼けの色,Three good nights in a row. Sunrise-colored.,3日続けて7時間以上ねむると生まれる。朝焼けの色
 ヨミセ,Yomise,ヨミセ
 夜ふかしの灯りに、寄ってくる,Drawn to the light of late nights.,夜ふかしの灯りに、寄ってくる
-1時すぎまで起きていた夜か、5時間以下の睡眠の朝に。提灯をさげて夜を歩く,"Born after a night up past 1 a.m., or a morning with 5 hours of sleep or less. Walks the night with a lantern.",1時すぎまで起きていた夜か、5時間以下の睡眠の朝に。提灯をさげて夜を歩く
 ヒルネン,Hirunen,ヒルネン
-休みの日に、たっぷり眠ると,A long sleep on a day off.,休みの日に、たっぷり眠ると
-休みの日に9時間ねむると生まれる。日だまりの匂い,Sleep 9 hours on a day off. Smells like sunshine.,休みの日に9時間ねむると生まれる。日だまりの匂い
 トトノウ,Totonou,トトノウ
-同じ時刻に眠る夜が、続くと,When nights share a bedtime.,同じ時刻に眠る夜が、続くと
-3日続けて同じ時刻（±20分）に眠ると生まれる。いつも落ち着いている,Born after 3 nights at the same bedtime (±20 min). Always calm.,3日続けて同じ時刻（±20分）に眠ると生まれる。いつも落ち着いている
 キラリ,Kirari,キラリ
 はじめて,Firsts,はじめて
 はじめての場所で、光る,A light in a new place.,はじめての場所で、光る
@@ -307,7 +271,6 @@ QuizResult: 読めない結果を無視した %s,QuizResult: Ignored unreadable 
 はじめての同僚とシフトに入った日に。あいさつが上手,Your first shift with a new coworker. Great at greetings.,はじめての同僚とシフトに入った日に。あいさつが上手
 ヨナキ,Yonaki,ヨナキ
 時間帯,Time of day,時間帯
-街が眠っているあいだに,While the town is asleep.,街が眠っているあいだに
 深夜のシフトの日に生まれる。静かな場所が好き,A late-night shift. Likes quiet places.,深夜のシフトの日に生まれる。静かな場所が好き
 アサツユ,Asatsuyu,アサツユ
 朝の光に、三度会うと,Greet the morning light three times.,朝の光に、三度会うと
@@ -364,11 +327,7 @@ QuizResult: 読めない結果を無視した %s,QuizResult: Ignored unreadable 
 図鑑が、十をこえたら,When the Book goes past ten.,図鑑が、十をこえたら
 図鑑が10種類をこえると生まれる。数を歌う,Your collection passes ten. Sings the numbers.,図鑑が10種類をこえると生まれる。数を歌う
 マンゲツ,Mangetsu,マンゲツ
-ひと月、眠りを大切にした,A month of treasured sleep.,ひと月、眠りを大切にした
-ひと月の平均睡眠が7時間をこえると生まれる,Average 7+ hours of sleep for a month.,ひと月の平均睡眠が7時間をこえると生まれる
-夢の中,In a dream,夢の中
 0 ひき,0 counted,0 ひき
-羊をかぞえる夢,A dream of sheep,羊をかぞえる夢
 柵の真上に来たら、タップ,Tap when it's over the fence,柵の真上に来たら、タップ
 目をさます,Wake up,目をさます
 それは羊じゃない,That's not a sheep.,それは羊じゃない
@@ -381,8 +340,6 @@ QuizResult: 読めない結果を無視した %s,QuizResult: Ignored unreadable 
 %d こ ひろった,Caught %d,%d こ ひろった
 スヤリの玉 ×%d,Suyari orbs ×%d,スヤリの玉 ×%d
 庭のめぐみ +%d,Garden bloom +%d,庭のめぐみ +%d
-ぜんぶそろった。庭に夢見草が一輪咲く,All done. A dream flower blooms at home.,ぜんぶそろった。庭に夢見草が一輪咲く
-星をひろう夢,A dream of stars,星をひろう夢
 0 こ,0 caught,0 こ
 左右になぞって、星を受けとめる,Swipe left and right to catch stars,左右になぞって、星を受けとめる
 …ぬれた,...Wet.,…ぬれた
@@ -400,20 +357,16 @@ Coming here","%s
 予定地"
 休憩室,Break room,休憩室
 ほふ,Munch,ほふ
-…ねむい,...Sleepy.,…ねむい
 きのう、何時にねた？,When did you go to bed?,きのう、何時にねた？
 庭が、しょんぼりしてる,The garden looks a little sad.,庭が、しょんぼりしてる
 花が下を見ている。こっちも見ている,Flowers look down. Then at you.,花が下を見ている。こっちも見ている
 まあまあの夜だった,An okay sort of night.,まあまあの夜だった
 今夜は、早めに,An early night tonight.,今夜は、早めに
 …ふわぁ,...Yaaawn.,…ふわぁ
-いつもの時刻、覚えてる？,Remember your usual bedtime?,いつもの時刻、覚えてる？
-いい夜だった,That was a good night.,いい夜だった
 花がのびた,The flowers grew.,花がのびた
 朝の空気がすき,I like the morning air.,朝の空気がすき
 リズム、悪くない,Not a bad rhythm.,リズム、悪くない
 庭がきらきらしてる,The garden is sparkling.,庭がきらきらしてる
-夢で羊をかぞえた。四ひきめで寝た,Counted dream sheep. Asleep by four.,夢で羊をかぞえた。四ひきめで寝た
 今日は、なにもしなくていい気がする,Feels like a day for doing nothing.,今日は、なにもしなくていい気がする
 レシート、のびた,The receipt got longer.,レシート、のびた
 合計は、言えない,Can't tell you the total.,合計は、言えない
@@ -430,30 +383,20 @@ Coming here","%s
 箱から出ない,Not leaving this box.,箱から出ない
 住所はここ,This is my address.,住所はここ
 中は広い（ことにしている）,Roomy inside. Let's say it is.,中は広い（ことにしている）
-…（寝ている）,...(Asleep.),…（寝ている）
 羊が一ぴき…,One sheep...,羊が一ぴき…
 夜はこれから,The night is young.,夜はこれから
-明るいけど、眠い,Bright. Still sleepy.,明るいけど、眠い
 …消さないで,...Don't turn me off.,…消さないで
-もう寝る？,Bedtime already?,もう寝る？
 川べり、行く？,Off to the river?,川べり、行く？
 虫の声,Crickets singing.,虫の声
-今夜は何時に寝るの,When's bedtime tonight?,今夜は何時に寝るの
 （じっとこっちを見ている）,(Stares right at you.),（じっとこっちを見ている）
 ……（うなずく）,...(Nods.),……（うなずく）
 図鑑,Book,図鑑
 庭　　,Garden    ,庭　　
-ねむり日記を見る,View sleep diary,ねむり日記を見る
-眠り：%s,Sleep: %s,眠り：%s
-眠,Sleep,眠
 [color=#c9bfc6]・[/color],[color=#c9bfc6]·[/color],[color=#c9bfc6]・[/color]
 めあて %d/3 ▼,Goals %d/3 ▼,めあて %d/3 ▼
 満開,Full bloom,満開
 ポイ,Scoop,ポイ
 破れにくさ ×%.2f,Tear resistance ×%.2f,破れにくさ ×%.2f
-ねむり日記,Sleep diary,ねむり日記
-リズム %d（%s）・ いつもの時刻 %s,Rhythm %d (%s) · Usual bedtime %s,リズム %d（%s）・ いつもの時刻 %s
-緑の帯が「いつもの時刻」。帯の中で寝て、7〜9時間眠る夜が続くと、リズムが満ちる,Green marks your usual bedtime. Turn in within the band and sleep 7–9 hours regularly to build rhythm.,緑の帯が「いつもの時刻」。帯の中で寝て、7〜9時間眠る夜が続くと、リズムが満ちる
 この7夜の平均 %.1f 時間 ・ これまで %d 夜,7-night average: %.1fh · %d nights total,この7夜の平均 %.1f 時間 ・ これまで %d 夜
 まだ記録がない。今夜から,No entries yet. Start tonight.,まだ記録がない。今夜から
 今日のめあて（1つ めぐみ+3）,Today's goals (+3 bloom each),今日のめあて（1つ めぐみ+3）
@@ -469,32 +412,22 @@ Coming here","%s
 今日は休む,Rest today,今日は休む
 夜の庭へ、ようこそ,Welcome to the night garden,夜の庭へ、ようこそ
 今日は休み,A day off,今日は休み
-よく眠ると、庭が育つ,Sleep well. Watch the garden grow.,よく眠ると、庭が育つ
-よく眠ると、おまけがつく,Sleep well for a little extra.,よく眠ると、おまけがつく
 夕方まで、のんびり,Relax until evening,夕方まで、のんびり
 島をつくる・シェアする,Edit & share island,島をつくる・シェアする
 今夜は満月の夜,A full moon tonight,今夜は満月の夜
-よく眠れた夜の数だけ、灯りがつく,One light for each well-rested night.,よく眠れた夜の数だけ、灯りがつく
 月見をする,Watch the moon,月見をする
 夜になった,Night has fallen,夜になった
 光る玉は、朝にかえる,Glowing orbs hatch in the morning.,光る玉は、朝にかえる
 川べりで、おばけすくい,Scoop obake by the river,川べりで、おばけすくい
-すくわずに寝る,Skip scooping. Sleep.,すくわずに寝る
 %sにおすそわけ,A gift for %s,%sにおすそわけ
-おやすみの時間,Time for bed,おやすみの時間
 玉を %d 個持ち帰った,Brought home %d orbs,玉を %d 個持ち帰った
-寝る,Sleep,寝る
 おすそわけ,Give a gift,おすそわけ
 %sに、%sを1体わたした（写しなので、庭の子はそのまま）,For %s: a copy of %s. Yours stays.,%sに、%sを1体わたした（写しなので、庭の子はそのまま）
 ともした飾りの玉が、出やすい,Lit decorations attract matching orbs.,ともした飾りの玉が、出やすい
 おつかれさま！,Nice work today!,おつかれさま！
-おはよう。%s ねむった,Morning. You slept %s.,おはよう。%s ねむった
-いつもどおり、ぐっすり,"Sound sleep, right on time.",いつもどおり、ぐっすり
-庭もよく眠れたらしい,"The garden slept well too, it seems.",庭もよく眠れたらしい
 すこし残念：%s,A little off: %s,すこし残念：%s
 チョウチンがついてきた,Chochin followed you home.,チョウチンがついてきた
 今日をはじめる,Start the day,今日をはじめる
-同じころに寝ると、リズムが上がる,Steady bedtimes build your rhythm.,同じころに寝ると、リズムが上がる
 右上に「めあて」ができた,Goals are now in the top right.,右上に「めあて」ができた
 リズムのことばをタップで、くわしく,Tap your rhythm tier for more.,リズムのことばをタップで、くわしく
 庭をよこになぞると、見回せる,Swipe sideways to look around.,庭をよこになぞると、見回せる
@@ -541,13 +474,9 @@ Lv%d ・ %s,Lv%d · %s,Lv%d ・ %s
 キッチンの経験,Kitchen experience,キッチンの経験
 品出しの経験,Restocking experience,品出しの経験
 はじめての経験,A new experience,はじめての経験
-よく眠った朝,A well-rested morning,よく眠った朝
 満月の夜,Full-moon night,満月の夜
-よく眠れた夜の灯りを、タップしてともそう,Tap to light each well-rested night.,よく眠れた夜の灯りを、タップしてともそう
-今週は、よく眠れた夜がなかった…,No well-rested nights this week...,今週は、よく眠れた夜がなかった…
 満月！,Full moon!,満月！
 月は、まだ半分,Still a half moon,月は、まだ半分
-よく眠れた夜が4つあれば、満月になる,Four good nights make a full moon.,よく眠れた夜が4つあれば、満月になる
 灯り %d / 6,Lights %d / 6,灯り %d / 6
 月の玉 ×%d%s,Moon orbs ×%d%s,月の玉 ×%d%s
 （虹の玉つき）, (with a rainbow orb),（虹の玉つき）
@@ -583,17 +512,12 @@ Easy questions about work and days off.","12の質問で、相棒の猫おばけ
 今夜のすくい,Tonight's scooping,今夜のすくい
 帰る,Go home,帰る
 押して、玉の下へ → 離す,"Hold, slide under an orb → release",押して、玉の下へ → 離す
-じっと待つと、ゆめの泡が浮かぶ,Wait quietly. Dream bubbles rise.,じっと待つと、ゆめの泡が浮かぶ
 縁が金色で離すと、ぴったり,Gold rim: release for a perfect scoop.,縁が金色で離すと、ぴったり
 ポイ ×%d,Scoops ×%d,ポイ ×%d
 なし,None,なし
 ポイがない。今夜はおしまい,No scoops left. Done for tonight.,ポイがない。今夜はおしまい
 玉の下まで、そっと,"Gently, under the orb",玉の下まで、そっと
 縁が光ったら、離す,Release when the rim glows,縁が光ったら、離す
-"ゆめの泡を
-すくった","Caught a
-dream bubble","ゆめの泡を
-すくった"
 ぴったり！,Perfect!,ぴったり！
 "ぴったり ×%d
 めぐみ +3","Perfect ×%d
@@ -611,34 +535,23 @@ A curious glow...","すくった！
 やぶれた…,It tore...,やぶれた…
 ポイを使い切った,All scoops used up,ポイを使い切った
 新しいポイ。こんどはそっと,A fresh scoop. Gently this time.,新しいポイ。こんどはそっと
-ゆめの泡だ。そのまま離す,A dream bubble. Just let go.,ゆめの泡だ。そのまま離す
 ぴったり。いま離す！,Perfect. Release now!,ぴったり。いま離す！
 いま離せば、すくえる,Release now to scoop it,いま離せば、すくえる
 押したまま、玉の下へ,Hold and slide under an orb,押したまま、玉の下へ
 %d 個,%d orbs,%d 個
-玉は、眠っている間にかえる,Orbs hatch while you sleep.,玉は、眠っている間にかえる
 今夜は、水の音だけ,Just the sound of water tonight.,今夜は、水の音だけ
-帰って、おやすみの支度,"Home, then ready for bed",帰って、おやすみの支度
 とじる ▲,Close ▲,とじる ▲
 ほかの過ごし方 ▼,Other plans ▼,ほかの過ごし方 ▼
 スマホの記録どおり,As your phone recorded,スマホの記録どおり
-少し早めに寝る,Sleep a little earlier,少し早めに寝る
-いつもの時刻に寝る,Sleep at the usual time,いつもの時刻に寝る
 もうひと回り、すくう,One more scooping round,もうひと回り、すくう
 夜店をのぞく,Browse the night market,夜店をのぞく
 今夜：%s,Tonight: %s,今夜：%s
 もうひと回り、すくいに行く,Go scooping once more,もうひと回り、すくいに行く
 夜店へ,To the night market,夜店へ
-おやすみ,Good night,おやすみ
 いつもより30分早く,30 minutes earlier,いつもより30分早く
 リズムがととのう,Steadies your rhythm,リズムがととのう
 玉が増える・1時間おそく,More orbs · 1 hour later,玉が増える・1時間おそく
 夜のおばけ・夜ふかし,Night obake · A late night,夜のおばけ・夜ふかし
-%s に寝て %s に起きた,"Slept at %s, woke at %s",%s に寝て %s に起きた
-おやすみの前に,Before bed,おやすみの前に
-いつもの時刻は %s ごろ,Usual bedtime: around %s,いつもの時刻は %s ごろ
-スマホの記録（見本）がとどいた,Sample phone sleep log received.,スマホの記録（見本）がとどいた
-よく眠ると、明日の庭が育つ,Sleep well. Tomorrow's garden grows.,よく眠ると、明日の庭が育つ
 いつも,Usual,いつも
 朝に、玉が %d 個かえる,%d orbs hatch in the morning,朝に、玉が %d 個かえる
 明日の庭が、すこし育つ,Tomorrow's garden grows a little.,明日の庭が、すこし育つ
@@ -646,7 +559,6 @@ A curious glow...","すくった！
 内訳 ▼,Details ▼,内訳 ▼
 内訳 ▲,Details ▲,内訳 ▲
 夜ふかし：庭が少ししおれる,Up late: the garden wilts a little.,夜ふかし：庭が少ししおれる
-今夜は夢を見そう,Feels like a night for dreams.,今夜は夢を見そう
 ちょうちんを一つ買う,Buy a lantern,ちょうちんを一つ買う
 チョウチンがもう1体ついてくる,One more Chochin follows you home.,チョウチンがもう1体ついてくる
 真顔のお面を見る,Browse the blank masks,真顔のお面を見る
@@ -654,10 +566,8 @@ A curious glow...","すくった！
 わたあめを買う,Buy cotton candy,わたあめを買う
 ふしぎな玉が1つ（虹かもしれない）,One mystery orb. Maybe a rainbow.,ふしぎな玉が1つ（虹かもしれない）
 夜店の帰り道,Home from the market,夜店の帰り道
-帰って寝る,Go home and sleep,帰って寝る
 夜店の灯り,Night market lights,夜店の灯り
 たこ焼きの湯気の向こうで、ぼんやり光るおばけが並んでいる。屋台をひとつ、のぞいていく,"Past the takoyaki steam, dimly glowing obake line up. Peek at one stall.",たこ焼きの湯気の向こうで、ぼんやり光るおばけが並んでいる。屋台をひとつ、のぞいていく
-%s に寝る（リズムは下がる）,Bed at %s (rhythm drops),%s に寝る（リズムは下がる）
 ちょうちんを買ったら、中の子もついてきた,Bought a lantern. Its tenant came too.,ちょうちんを買ったら、中の子もついてきた
 夜店,Night market,夜店
 お面屋ごと、庭についてきた。全部、真顔,The mask stall moved in. All deadpan.,お面屋ごと、庭についてきた。全部、真顔
@@ -681,12 +591,10 @@ A curious glow...","すくった！
 レア %d / %d,Rare %d / %d,レア %d / %d
 もどる,Back,もどる
 ふつうのおばけ,Common obake,ふつうのおばけ
-スヤリは羊かぞえの夢から、チョウチンは夜ふかしの夜に来る,Suyari: sheep dreams. Chochin: up late.,スヤリは羊かぞえの夢から、チョウチンは夜ふかしの夜に来る
 庭の育ち,Garden growth,庭の育ち
 レア ・ ,Rare · ,レア ・ 
 タイトルへ（保存ずみ）,Title screen (saved),タイトルへ（保存ずみ）
 ？？？（めぐみ %d）,??? (%d bloom),？？？（めぐみ %d）
-めぐみ %d ・ 満月の夜 %d 回 ・ 夢見草 %d 輪,%d bloom · %d full moons · %d dream flowers,めぐみ %d ・ 満月の夜 %d 回 ・ 夢見草 %d 輪
 仕事の飾り,Work decorations,仕事の飾り
 夜店のお面屋,Night market mask stall,夜店のお面屋
 ヒント：,Hint: ,ヒント：
@@ -758,13 +666,13 @@ ONB_SHIFT_EARNED,+2 poi,ポイ +2
 ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
 ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
 ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Hold on the water, slide under the orb, and let go.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 水を押したまま玉の下へ、そして離す。
-ONB_NIGHT_TITLE,Good night,おやすみ
-ONB_NIGHT_BODY,Orbs hatch while you sleep. %s will keep watch.,玉は、眠っている間にかえる。%s が見てるね。
-ONB_NIGHT_SLEEP,Sleep until morning,朝まで眠る
+ONB_NIGHT_TITLE,Night by the river,川べりの夜
+ONB_NIGHT_BODY,Orbs hatch in the morning. %s will keep watch.,玉は、朝になったらかえる。%s が見てるね。
+ONB_NIGHT_SLEEP,Until morning,朝まで待つ
 TOUR_1_TITLE,This is your island!,ここが、きみの島！
 TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。
 TOUR_2_TITLE,Rest grows the island,休むと、島が育つ
-TOUR_2_BODY,"Sleep at a steady time and the shore grows — flowers, a pond, a pier, even a lighthouse.",いつも同じころに眠ると、岸がひろがる。花・池・桟橋、灯台まで。
+TOUR_2_BODY,"Work days and rest days both grow the shore — flowers, a pond, a pier, even a lighthouse.",働いた日も休んだ日も、岸がひろがる。花・池・桟橋、灯台まで。
 TOUR_3_TITLE,Work brings poi,働くと、ポイがもらえる
 TOUR_3_BODY,"Each shift gives poi (not tied to hours). Scoop orbs at night for obake, materials and clothes.",シフトごとにポイ（時間の長さは関係なし）。夜にすくって、おばけ・材料・服を。
 TOUR_4_TITLE,Paw Coins: %d,肉球コイン：%d
@@ -888,8 +796,8 @@ QUIZ_Q2_B,Wing it on site,現場で考える
 QUIZ_Q3,Your shift superpower?,シフトで得意なのは？
 QUIZ_Q3_A,Talking to people,人と話す
 QUIZ_Q3_B,Heads-down work,黙々と作業
-QUIZ_Q4,Right before bed?,寝る前は？
-QUIZ_Q4_A,Out like a light,すぐ寝る
+QUIZ_Q4,After a long day?,長い一日のあとは？
+QUIZ_Q4_A,Straight home to rest,まっすぐ帰って休む
 QUIZ_Q4_B,One more scroll…,ついスマホ
 QUIZ_Q5,Invited out after work?,バイト終わりに誘われた
 QUIZ_Q5_A,I'm in!,行く行く！
@@ -958,7 +866,7 @@ QUIZ_T_IFHY_NAME,The Calm Companion,そばにいる癒やし係
 QUIZ_T_IFHY_LINE,Just being nearby makes it better.,となりにいるだけで、落ちつく。
 QUIZ_T_IFMK_NAME,The Prep Perfectionist,こだわりの仕込み番
 QUIZ_T_IFMK_LINE,Slices onions with total devotion.,玉ねぎの薄さに、命をかける。
-QUIZ_T_IFMY_NAME,Master of the Power Nap,おやすみ上手
+QUIZ_T_IFMY_NAME,Master of the Break,休み上手
 QUIZ_T_IFMY_LINE,Fully recharged in a 15-minute break.,休憩15分で、しっかり回復。
 QUIZ_UI_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
 QUIZ_UI_TITLE,"Find your
@@ -1117,7 +1025,7 @@ Work together,Work together,いっしょに働く
 Earned today: %d Paw Coins,Earned today: %d Paw Coins,今日の肉球コイン：%d
 Your cat-obake earns Paw Coins while you work.,Your cat-obake earns Paw Coins while you work.,あなたが働くあいだ、おばネコも肉球コインをかせぐ
 I'm going to work,I'm going to work,仕事に行ってくる
-Resting until tomorrow,Resting until tomorrow,明日まで、おやすみ
+Resting until tomorrow,Resting until tomorrow,明日まで、ひと休み
 Good work today! Let's go home.,Good work today! Let's go home.,今日もおつかれさま！帰ろう
 Shift's over!,Shift's over!,おつかれさま！
 %dh %02dm together,%dh %02dm together,いっしょに %d時間%02d分
@@ -1173,7 +1081,6 @@ Found inside a glowing orb,Found inside a glowing orb,光る玉の中に入っ�
 Later,Later,あとで
 Wear it,Wear it,着てみる
 Do a %s shift once,Do a %s shift once,%sの仕事を1回する
-Sleep well %s nights in a row,Sleep well %s nights in a row,%s晩つづけて、よく眠る
 Meet %s rare obake,Meet %s rare obake,レアに%s体会う
 Meet every common obake,Meet every common obake,ふつうのおばけを全部集める
 Hidden in glowing orbs,Hidden in glowing orbs,光る玉の中に
@@ -1191,7 +1098,6 @@ Stock cap,Stock cap,品出しのキャップ
 Work gloves,Work gloves,軍手
 Nightcap,Nightcap,ナイトキャップ
 Star pajamas,Star pajamas,星のパジャマ
-Sleep mask,Sleep mask,アイマスク
 Pillow pack,Pillow pack,まくらのリュック
 Star glasses,Star glasses,星のめがね
 Little crown,Little crown,小さな王冠
@@ -1409,7 +1315,7 @@ INVITE_CHIP,Invited,おさそい
 INVITE_NOTE,%s would love you back,%s が、また来てほしいって
 INVITE_SAY,%s would love you back!,%s から、また来てほしいって！
 REMIND_EVE_TITLE,Tomorrow %s · %s,あした %s・%s
-REMIND_EVE_SUB,Let's sleep early!,早めに寝よう！
+REMIND_EVE_SUB,See you there!,また向こうでね！
 REMIND_AM_TITLE,Leaving at %s?,%s に出る？
 REMIND_AM_SUB,%s · %s–%s,%s・%s–%s
 REMIND_EVE_BODY,"Pack your things tonight. If plans change, that's okay too.",持ち物は今夜のうちに。予定が変わっても、だいじょうぶ。
@@ -1715,7 +1621,7 @@ CC_TODAY_GOOD,It went well!,うまくいった！
 CC_TODAY_MEH,Meh. Just okay.,まあまあ
 CC_NERVOUS_PLAN,Give me a tiny plan,小さな作戦ちょうだい
 CC_NERVOUS_OK,I'll manage,なんとかなるかも
-CC_TIRED_SLEEPY,Just sleepy,ただ眠いだけ
+CC_TIRED_SLEEPY,Just a bit worn out,ちょっとくたびれただけ
 CC_TIRED_MORE,It's more than tired,疲れた、だけじゃない
 CC_TIRED_OK,I'll be okay,たぶん大丈夫
 CC_ISLAND_FAV,Who's your favourite?,いちばん好きな子は？
@@ -1736,7 +1642,7 @@ CM_NERVOUS,New places are scary. That's normal. Want to make it smaller?,知ら�
 CM_NERVOUS_PLAN,Pack tonight. Leave 10 minutes early. Ask one question when you arrive. That's all. I'll be in your pocket.,今夜のうちに準備。10分早く出る。着いたら1つだけ質問する。それだけ。ポケットにいるからね。
 CM_NERVOUS_OK,You will. And I'll be cheering.,きっと大丈夫。応援してるよ。
 CM_TIRED,"You worked hard. Water, a snack, and early bed?",よくがんばったね。お水、おやつ、早めのおふとん？
-CM_TIRED_SLEEPY,Then let's sleep early tonight. The island will wait.,じゃあ今夜は早く寝よう。島は待っててくれるよ。
+CM_TIRED_SLEEPY,Then let's take it easy tonight. The island will wait.,じゃあ今夜はのんびりしよう。島は待っててくれるよ。
 CM_TIRED_MORE,Thank you for telling me. Is it heavy in a different way?,話してくれてありがとう。別の重さがある感じ？
 CM_TIRED_OK,Okay. I'm right here if that changes.,わかった。変わったら、いつでもここにいるよ。
 CM_SHOP,"Your next shift is at %s, %s. Want me to ask their cat anything?",次のシフトは %s、%s。お店の猫に何か聞いてこようか？
@@ -1765,3 +1671,65 @@ CHAT_CONSENT_OK,OK,OK
 CHAT_CONSENT_PRIVATE,Just between us,ふたりだけのひみつにする
 CHAT_MENU_PRIVATE_OFF,Just between us: Off,ふたりだけのひみつ：オフ
 CHAT_MENU_PRIVATE_ON,Just between us: On,ふたりだけのひみつ：オン
+シフトの日は、猫もいっしょに働いた,Worked a shift? Your cat worked too.,シフトの日は、猫もいっしょに働いた
+猫が疲れるから、がんばりすぎなくていい,"Your cat gets tired, so you don't have to push.",猫が疲れるから、がんばりすぎなくていい
+夜がふけていく,The night deepens,夜がふけていく
+今夜の玉 %d 個。朝になったら、かえる,%d orbs tonight. They hatch in the morning.,今夜の玉 %d 個。朝になったら、かえる
+今夜はすくわなかった。朝はすぐ来る,No scooping tonight. Morning comes soon.,今夜はすくわなかった。朝はすぐ来る
+朝へ,To morning,朝へ
+すくわずに、朝へ,"Skip scooping, to morning",すくわずに、朝へ
+今夜のすくいは、おしまい,That's it for scooping tonight,今夜のすくいは、おしまい
+島へもどる,Back to the island,島へもどる
+玉は、朝になったらかえる,Orbs hatch in the morning.,玉は、朝になったらかえる
+島 Lv%d,Island Lv%d,島 Lv%d
+働いた日,worked today,働いた日
+川べりの夜,a night at the river,川べりの夜
+おはよう,Good morning,おはよう
+きのうの残業で、猫はまだ少し疲れている,"After yesterday's overtime, your cat is still a little tired.",きのうの残業で、猫はまだ少し疲れている
+働いた日も休んだ日も、庭は育つ,Work days and rest days both grow the garden.,働いた日も休んだ日も、庭は育つ
+島の段の札をタップで、くわしく,Tap the island level tag for details.,島の段の札をタップで、くわしく
+毎日の暮らしで、庭が育つ,Everyday life grows the garden.,毎日の暮らしで、庭が育つ
+休みの日も、庭はちゃんと育つ,The garden grows on rest days too.,休みの日も、庭はちゃんと育つ
+川べりへ行った夜の数だけ、灯りがつく,One lantern for each night at the river.,川べりへ行った夜の数だけ、灯りがつく
+川べりへ行った夜の灯りを、タップしてともそう,Tap the lanterns for your nights at the river.,川べりへ行った夜の灯りを、タップしてともそう
+今週は、川べりへ行った夜がなかった…,No nights at the river this week…,今週は、川べりへ行った夜がなかった…
+川べりの夜が4つあれば、満月になる,Four nights at the river make a full moon.,川べりの夜が4つあれば、満月になる
+今週：新しい子 %d ・ めぐみ %d,This week: %d new · %d bloom,今週：新しい子 %d ・ めぐみ %d
+満月まで：川べりの夜 %d / 4,Full moon: %d / 4 nights at the river,満月まで：川べりの夜 %d / 4
+週末の休みに、だれかが来そう,Someone may visit on a weekend day off.,週末の休みに、だれかが来そう
+友だちの島に、行ってみよう,Try visiting a friend's island.,友だちの島に、行ってみよう
+めぐみ %d ・ 満月の夜 %d 回 ・ 星見草 %d 輪,%d bloom · %d full moons · %d star flowers,めぐみ %d ・ 満月の夜 %d 回 ・ 星見草 %d 輪
+キセカエで服を着せる,Dress someone up in the Wardrobe,キセカエで服を着せる
+明るいでしょ,"Bright, right?",明るいでしょ
+月がきれい,Pretty moon.,月がきれい
+今夜は、なにがすくえるかな,What will we scoop tonight?,今夜は、なにがすくえるかな
+お茶にしよう,Tea time.,お茶にしよう
+毎日の暮らしで、花がひらく,Everyday life opens the flowers.,毎日の暮らしで、花がひらく
+にぎやかな夜は、数が増える,More appear on lively nights.,にぎやかな夜は、数が増える
+満月の特等席。ねぶくろが先に来ていた,Best seat for the full moon. Bedroll got here first.,満月の特等席。ねぶくろが先に来ていた
+星見の木が光った,The stargazer tree glows,星見の木が光った
+毎日を大切にした庭にだけ育つ木,Grows only where every day is cherished.,毎日を大切にした庭にだけ育つ木
+星見の木,Stargazer tree,星見の木
+満月の夜の灯りに寄ってくる。提灯の中は、ほんのりあたたかい,Drawn to full-moon lights. It's warm inside the lantern.,満月の夜の灯りに寄ってくる。提灯の中は、ほんのりあたたかい
+休み,Rest,休み
+友だちの島に、はじめて遊びに行くと,Visit a friend's island for the first time.,友だちの島に、はじめて遊びに行くと
+友だちの島におでかけすると生まれる。旅の荷物はまくらひとつ,Born when you visit a friend's island. Travels with one pillow.,友だちの島におでかけすると生まれる。旅の荷物はまくらひとつ
+だれかの島に、おばけを置いてくると,Leave an obake on someone's island.,だれかの島に、おばけを置いてくると
+友だちの島におばけを置いてくると生まれる。会ったことのない色をしている,Born when you leave an obake on a friend's island. A color you've never seen.,友だちの島におばけを置いてくると生まれる。会ったことのない色をしている
+満月の夜が明けた、次の朝に,The morning after a full moon.,満月の夜が明けた、次の朝に
+満月の夜のあとの朝に生まれる。朝焼けの色,Born the morning after a full moon. Sunrise-colored.,満月の夜のあとの朝に生まれる。朝焼けの色
+また同じ店に、働きに行った日に,Work at the same shop again.,また同じ店に、働きに行った日に
+前に働いた店に、もう一度入った日に生まれる。常連さんの顔をしている,Born the day you work at a shop you've worked at before. Looks like a regular.,前に働いた店に、もう一度入った日に生まれる。常連さんの顔をしている
+週末に、ちゃんと休むと,Take a real day off on a weekend.,週末に、ちゃんと休むと
+シフトの無い土曜か日曜に生まれる。日だまりの匂い,Born on a Saturday or Sunday with no shift. Smells like sunshine.,シフトの無い土曜か日曜に生まれる。日だまりの匂い
+雨の日を、家でのんびり過ごすと,Spend a rainy day off at home.,雨の日を、家でのんびり過ごすと
+雨の日の休みに生まれる。いつも落ち着いている,Born on a rainy day off. Always calm.,雨の日の休みに生まれる。いつも落ち着いている
+街が静かなあいだに,While the town is quiet.,街が静かなあいだに
+満月の夜を、四つ見届けると,See four full moons.,満月の夜を、四つ見届けると
+満月の夜を4回むかえると生まれる。月の満ち欠けにくわしい,Born after four full-moon nights. Knows every phase of the moon.,満月の夜を4回むかえると生まれる。月の満ち欠けにくわしい
+チョウチンは満月の夜に来る,Chochin comes on full-moon nights.,チョウチンは満月の夜に来る
+Eye mask,Eye mask,アイマスク
+Take a rest day after %s shifts,Take a rest day after %s shifts,シフト %s 回のあとに、休みの日をとる
+Visit a friend's island,Visit a friend's island,友だちの島におでかけする
+Meet %s kinds of obake,Meet %s kinds of obake,おばけに %s 種類会う
+I'm still a little tired from yesterday. Let's go easy today.,I'm still a little tired from yesterday. Let's go easy today.,きのうの疲れが、まだ少し残ってる。今日はゆっくりね。

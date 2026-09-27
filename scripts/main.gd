@@ -9,8 +9,7 @@ const SCREENS := {
 	"evening": preload("res://scripts/screen_garden.gd"),
 	"catch": preload("res://scripts/screen_scoop.gd"),
 	"hatch": preload("res://scripts/screen_hatch.gd"),
-	"sleep": preload("res://scripts/screen_sleep.gd"),
-	"dream": preload("res://scripts/screen_dream.gd"),
+	"night": preload("res://scripts/screen_night.gd"), # 夜のおわり（朝へ）
 	"moon": preload("res://scripts/screen_moon.gd"),
 	"zukan": preload("res://scripts/screen_zukan.gd"),
 	"quiz": preload("res://scripts/screen_quiz.gd"),
@@ -98,8 +97,8 @@ var goal_toast: PanelContainer
 
 
 func _on_goal(text: String, all_done: bool) -> void:
-	# 寝ている間・夢の中で達成したものは、朝の庭で知らせる
-	if current and current.get_script().resource_path.get_file() in ["screen_sleep.gd", "screen_dream.gd", "screen_hatch.gd"]:
+	# 夜のおわり・孵化の間に達成したものは、朝の庭で知らせる
+	if current and current.get_script().resource_path.get_file() in ["screen_night.gd", "screen_hatch.gd"]:
 		GameState.pending_toasts.append([text, all_done])
 		return
 	if goal_toast and is_instance_valid(goal_toast):
@@ -141,7 +140,7 @@ func _music() -> void:
 func _music_for(screen_name: String) -> void:
 	if music == null:
 		return
-	var db: float = {"catch": -30.0, "dream": -22.0, "moon": -16.0}.get(screen_name, -13.0)
+	var db: float = {"catch": -30.0, "night": -20.0, "moon": -16.0}.get(screen_name, -13.0)
 	create_tween().tween_property(music, "volume_db", db, 0.6)
 
 
@@ -191,19 +190,19 @@ func _seed_for(start: String) -> void:
 		GameState.orbs = [{"type": "dish", "rare": false}, {"type": "rare", "rare": true}]
 		if OS.get_environment("OBAKE_ITEMS") != "":
 			GameState.orbs = [{"type": "dish", "rare": false, "content": {"kind": "obake"}}, {"type": "hall", "rare": false, "content": {"kind": "material", "id": "shell"}}, {"type": "stock", "rare": false, "content": {"kind": "material", "id": "driftwood"}}, {"type": "kitchen", "rare": false, "content": {"kind": "cloth", "id": "scarf"}}]
-		GameState.sleep(330, 420)
+		GameState.end_night()
 		var force := OS.get_environment("OBAKE_RARE")
 		if force != "":
 			GameState.add_obake(force)
 			GameState.hatched.push_front({"id": force, "is_new": true, "level": 1, "rare": true})
 	elif start == "morning":
 		GameState.orbs = [{"type": "hall", "rare": false}]
-		GameState.sleep(330, 450)
+		GameState.end_night()
 	elif start == "evening":
 		GameState.phase = "evening"
 
 
-## 何日か自動で進める（よく眠る日が多め）。監査・宣伝用
+## 何日か自動で進める（毎晩すくう）。監査・宣伝用
 func fast_forward(days: int) -> void:
 	GameState.quiet = true
 	for i in days:
@@ -218,10 +217,8 @@ func fast_forward(days: int) -> void:
 				if g:
 					lit += 1
 			GameState.finish_moon(lit, 3)
-		var bed: int = 330 + [0, 0, 10, -10, 20, 0, 90][i % 7]
-		GameState.sleep(bed, 420 + (30 if i % 3 == 0 else 0))
-		if GameState.dream_pending:
-			GameState.finish_dream(8)
+		GameState.scooped_tonight = true
+		GameState.end_night()
 	GameState.garden_seen_level = GameState.garden_level
 	GameState.phase = "day"
 	GameState.hatched = []

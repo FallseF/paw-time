@@ -137,18 +137,21 @@ static func seen_all() -> void:
 	save()
 
 
-## 条件で届く物。GameState を読むだけで、長く働いたり寝たりしても多くはもらえない
+## 条件で届く物。GameState を読むだけで、長く働いても多くはもらえない（続けた日数も数えない）
 static func check_unlocks() -> Array:
 	_ensure()
 	var got: Array = []
 	var gs = Engine.get_main_loop().root.get_node_or_null("GameState") if Engine.get_main_loop() else null
 	if gs == null:
 		return got
-	var streak := 0
-	for i in range(gs.good_hist.size() - 1, -1, -1):
-		if not gs.good_hist[i]:
-			break
-		streak += 1
+	# シフトを n 回したあとに、休みの日があったか（いちばん多い「休みの前のシフトの数」）
+	var rest_after := 0
+	var worked_n := 0
+	for w in gs.work_hist:
+		if w:
+			worked_n += 1
+		else:
+			rest_after = maxi(rest_after, worked_n)
 	var rare_n := 0
 	var normal_all := true
 	for id in gs.seen:
@@ -165,8 +168,12 @@ static func check_unlocks() -> Array:
 		match p[0]:
 			"job":
 				ok = gs.roles_seen.has(p[1]) or gs.decos.get(p[1], 0) > 0 or gs.chores.get(p[1], 0) > 0
-			"sleep":
-				ok = streak >= int(p[1])
+			"restday":
+				ok = rest_after >= int(p[1])
+			"visits":
+				ok = gs.friend_visits >= int(p[1])
+			"zukan":
+				ok = gs.seen.size() >= int(p[1])
 			"rares":
 				ok = rare_n >= int(p[1])
 			"normal_all":
@@ -213,7 +220,6 @@ static func _demo() -> void:
 		"bubble": {"body": "dish_apron", "hand": "dish_gloves"},
 		"pan": {"head": "chef_hat", "neck": "chef_scarf"},
 		"box": {"head": "stock_cap", "back": "backpack"},
-		"nemuri": {"head": "nightcap", "body": "pajamas"},
 		"lantern": {"back": "bat_wings"},
 		"kirari": {"head": "crown"},
 	}

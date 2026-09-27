@@ -18,7 +18,7 @@ func _initialize() -> void:
 		if gs.today().role != "":
 			gs.finish_shift()
 		gs.orbs = [{"type": "hall", "rare": false}]
-		gs.sleep(330, 420)
+		gs.end_night()
 	gs.nickname = "みか"
 	gs.layout = {"flowerbed": {"x": 1.5, "z": -0.75, "r": 3}, "deco_hall": {"x": -1.0, "z": 0.5, "r": 0}, "pond": {"h": true}}
 	var present := ["flowerbed", "lantern", "pond", "deco_hall", "deco_register"]

@@ -32,7 +32,7 @@ func _process(delta: float) -> void:
 	if sc != last_screen:
 		last_screen = sc
 		stuck = 0.0
-		print("[play] day %d %s phase=%s rhythm=%d garden=%d zukan=%d" % [GameState.day, sc, GameState.phase, int(GameState.rhythm), GameState.garden_level, GameState.seen.size()])
+		print("[play] day %d %s phase=%s garden=%d zukan=%d" % [GameState.day, sc, GameState.phase, GameState.garden_level, GameState.seen.size()])
 		_snap(sc)
 	stuck += delta
 	if stuck > 60.0:
@@ -49,7 +49,7 @@ func _process(delta: float) -> void:
 			main.go("garden")
 		"garden":
 			if GameState.day >= days_target:
-				print("[play] done. zukan=%d rares=%d garden=%d rhythm=%d" % [GameState.seen.size(), _rares(), GameState.garden_level, int(GameState.rhythm)])
+				print("[play] done. zukan=%d rares=%d garden=%d" % [GameState.seen.size(), _rares(), GameState.garden_level])
 				get_tree().quit()
 				return
 			if c.busy:
@@ -69,10 +69,10 @@ func _process(delta: float) -> void:
 				elif not GameState.scooped_tonight:
 					main.go("catch")
 				else:
-					main.go("sleep")
+					main.go("night")
 		"scoop":
 			if GameState.scooped_tonight:
-				main.go("sleep")
+				main.go("night")
 				return
 			if c.busy:
 				return
@@ -84,31 +84,17 @@ func _process(delta: float) -> void:
 				if is_instance_valid(c) and main.current == c:
 					c.call("demo_lift")
 				cool = 2.5
-		"sleep":
-			if c.get("going"):
-				if c.plan == "market":
-					if not c.stall_done:
-						c.call("_stall", ["ちょうちん屋", "お面屋", "わたあめ屋"].pick_random())
-					c.plan = "done_market"
-					c.going = false
-					c.call("_sleep")
-				return
-			if GameState.mode == "solo":
-				c.call("_choose", ["usual", "usual", "extra", "usual", "market", "usual", "early"][GameState.day % 7])
-			c.call("_sleep")
+		"night":
+			if not c.get("going"):
+				c.call("_morning")
 			cool = 2.0
-		"dream":
-			if c.finished:
-				main.go("hatch")
-			elif not c.auto:
-				c.call("demo_auto")
 		"hatch":
 			if not c.busy:
 				c.call("_next")
 				cool = 2.0
 		"moon":
 			if c.done:
-				main.go("sleep")
+				main.go("night")
 			elif c.lit < c.good_total:
 				c.call("demo_light_all")
 				cool = 4.0
@@ -175,26 +161,13 @@ func _promo() -> void:
 	await _wait(2.6)
 	main.current.call("demo_lift")
 	await _wait(2.6)
-	# 2) おやすみ → 夢へ（リズムが整っている夜）
+	# 2) 夜のおわり → 朝へ（入力は無い。玉は朝にかえる）
 	_mark("2)")
-	GameState.rhythm = 88
-	GameState.force_dream = true
-	GameState.bed_hist = [330, 330, 330]
 	GameState.scooped_tonight = true
-	await _go("sleep")
-	await _wait(0.8)
-	main.current.call("_choose", "usual")
-	await _wait(0.8)
-	main.current.call("_sleep")
+	await _go("night")
+	await _wait(1.6)
+	main.current.call("_morning")
 	await _wait(2.4)
-	# 3) 羊かぞえの夢
-	_mark("3)")
-	if main.current.has_method("demo_auto"):
-		main.current.call("demo_auto")
-	await _wait(5.4)
-	if main.current.has_method("_finish"):
-		main.current.call("_finish")
-	await _wait(1.3)
 	# 4) 朝の孵化（レア）
 	_mark("4)")
 	GameState.add_obake("yumemi")
@@ -208,7 +181,7 @@ func _promo() -> void:
 	main.fast_forward(6)
 	GameState.garden_seen_level = GameState.garden_level - 1
 	GameState.phase = "morning"
-	GameState.last_night = {"bed": 330, "wake": 420, "hours": 7.5, "score": 26, "parts": [["たっぷり眠る", 12], ["いつもの時刻", 10], ["休みの日の休息", 4]], "rhythm_before": 70, "rhythm": 86, "growth_gain": 18, "level_before": 0, "late": false, "visitor": ""}
+	GameState.last_night = {"growth_gain": 11, "level_before": 0, "worked": true, "river": true}
 	await _go("garden")
 	await _wait(1.6)
 	main.current.call("_after_morning")

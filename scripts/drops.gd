@@ -32,10 +32,10 @@ const CLOTHES := {
 
 
 ## 玉ひとつの中身を決める（すくう前、川に浮かんだ時点で決まっている）
-## 虹の玉（rare）も同じ割合で引き、材料・服なら「レアの品」にする（tier: rare）。夢の泡・夜の玉はおばネコ。
+## 虹の玉（rare）も同じ割合で引き、材料・服なら「レアの品」にする（tier: rare）。満月の夜のちょうちんの玉はおばネコ。
 ## 暮らしから来るレア（rares.gd）は玉とは別に決まるので、この割合には入らない。
 static func roll(orb_type: String, rare: bool) -> Dictionary:
-	if orb_type in ["sleep", "night"]:
+	if orb_type == "night":
 		return {"kind": "obake"}
 	var r := randi() % (W_MATERIAL + W_CLOTH + W_CAT)
 	var c: Dictionary

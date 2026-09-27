@@ -38,7 +38,7 @@ func _initialize() -> void:
 	check(not Drops.grant(dc), "同じ服は 2 回目は新しくない")
 	var coins0 := Wallet.balance()
 	gs.orbs = [{"type": "hall", "rare": false, "content": {"kind": "obake"}}]
-	gs.sleep(330, 420)
+	gs.end_night()
 	check((Wallet.balance() - coins0) % 10 == 0, "孵化ではコインは増えない（めあての +10 だけ） %d" % (Wallet.balance() - coins0))
 	# 頭に服を着たら、頭の持ち物（オボンのお盆）を隠す。手の服ではお盆は隠さない
 	var tray: Obake3D = Outfit.make("tray", {"head": "top_hat"})
@@ -54,16 +54,22 @@ func _initialize() -> void:
 	# 条件
 	gs.reset("data")
 	gs.roles_seen["kitchen"] = true
-	gs.good_hist = [true, true, true]
+	gs.work_hist = [true, false, true, false] # 休みの日の前までに、シフトは 2 回
 	var got := Wardrobe.check_unlocks()
-	check(got.has("chef_hat") and got.has("chef_scarf") and got.has("nightcap") and not got.has("pajamas"), "仕事と眠り " + str(got))
+	check(got.has("chef_hat") and got.has("chef_scarf") and not got.has("nightcap") and not got.has("pajamas"), "仕事の服だけ " + str(got))
+	gs.work_hist = [true, false, true, false, true, false] # シフト 3 回のあとの休みの日（続けて働いた日数は数えない）
+	check(Wardrobe.check_unlocks().has("nightcap"), "シフト 3 回のあとの休みの日にナイトキャップ")
+	gs.friend_visits = 1
+	check(Wardrobe.check_unlocks().has("pajamas"), "友だちの島へのおでかけでパジャマ")
+	for it in WardrobeData.ITEMS:
+		check(not String(it.src).begins_with("sleep"), "眠りの条件の服は無い " + String(it.id))
 	# 着る・コード
 	Wardrobe.set_outfit(gs.host(), {"head": "top_hat", "neck": "red_scarf", "back": "kimono"})
 	check(not Wardrobe.outfit_of(gs.host()).has("back"), "持っていない物は着ない")
 	var p := Wardrobe.pack(gs.host())
 	check(Wardrobe.unpack(p) == Wardrobe.outfit_of(gs.host()), "7 バイトの往復")
 	gs.orbs = [{"type": "hall", "rare": false}]
-	gs.sleep(330, 420)
+	gs.end_night()
 	var code: String = gs.island_code(["flowerbed"])
 	var isl: Dictionary = gs.decode_island(code)
 	check(isl.outfits.get(gs.host(), {}).get("head", "") == "top_hat", "島のコードに服 " + str(isl.get("outfits")))

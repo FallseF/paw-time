@@ -4,7 +4,9 @@ class_name WardrobeData
 ##
 ## 手に入れ方（src）
 ##   job:<仕事>     その仕事をはじめてしたら、制服ひとそろい（何時間働いても同じ）
-##   sleep:<夜>     よく眠れた夜が続いた回数（連続）
+##   restday:<回>  シフトを <回> 回したあとの、はじめての休みの日（続けて何日、は数えない）
+##   visits:<回>   友だちの島におでかけした回数
+##   zukan:<種>    図鑑に会えたおばけの数
 ##   rares:<体>     レアに会った数 ／ normal_all ふつうのおばけを全部
 ##   orb:<common|rare>  光る玉の中から（Wardrobe.random_drop）
 ##   shop:<コイン>  肉球コインのお店
@@ -30,10 +32,10 @@ const ITEMS := [
 	{"id": "work_gloves", "slot": "hand", "name": "Work gloves", "src": "job:stock", "c": "e8c48e", "c2": "8a6a44", "shape": "gloves"},
 
 	# ---- よく眠る（連続） ----
-	{"id": "nightcap", "slot": "head", "name": "Nightcap", "src": "sleep:3", "c": "5b6fc2", "c2": "fff1c8", "shape": "nightcap"},
-	{"id": "pajamas", "slot": "body", "name": "Star pajamas", "src": "sleep:5", "c": "a9b8ff", "c2": "fff1c8", "shape": "pajamas"},
-	{"id": "sleep_mask", "slot": "face", "name": "Sleep mask", "src": "sleep:7", "c": "8b7bff", "c2": "fff1c8", "shape": "sleep_mask"},
-	{"id": "pillow", "slot": "back", "name": "Pillow pack", "src": "sleep:10", "c": "f4f1ea", "c2": "8fb4ff", "shape": "pillow"},
+	{"id": "nightcap", "slot": "head", "name": "Nightcap", "src": "restday:3", "c": "5b6fc2", "c2": "fff1c8", "shape": "nightcap"},
+	{"id": "pajamas", "slot": "body", "name": "Star pajamas", "src": "visits:1", "c": "a9b8ff", "c2": "fff1c8", "shape": "pajamas"},
+	{"id": "sleep_mask", "slot": "face", "name": "Eye mask", "src": "zukan:12", "c": "8b7bff", "c2": "fff1c8", "shape": "sleep_mask"},
+	{"id": "pillow", "slot": "back", "name": "Pillow pack", "src": "zukan:20", "c": "f4f1ea", "c2": "8fb4ff", "shape": "pillow"},
 
 	# ---- 図鑑のごほうび ----
 	{"id": "star_glasses", "slot": "face", "name": "Star glasses", "src": "rares:1", "c": "ffd23f", "c2": "2e222f", "shape": "star_glasses"},
@@ -142,8 +144,12 @@ static func how_to_get(it: Dictionary) -> String:
 	match p[0]:
 		"job":
 			return TranslationServer.translate("Do a %s shift once") % TranslationServer.translate(JOB_NAME[p[1]])
-		"sleep":
-			return TranslationServer.translate("Sleep well %s nights in a row") % p[1]
+		"restday":
+			return TranslationServer.translate("Take a rest day after %s shifts") % p[1]
+		"visits":
+			return TranslationServer.translate("Visit a friend's island")
+		"zukan":
+			return TranslationServer.translate("Meet %s kinds of obake") % p[1]
 		"rares":
 			return TranslationServer.translate("Meet %s rare obake") % p[1]
 		"normal_all":

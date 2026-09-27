@@ -446,7 +446,7 @@ func _is_item_id(id: String, from: int, n: int) -> bool:
 
 
 func _type_label(t: String) -> String:
-	return {"register": "レジの経験", "dish": "皿洗いの経験", "hall": "ホールの経験", "kitchen": "キッチンの経験", "stock": "品出しの経験", "night": "夜ふかし", "rare": "はじめての経験", "sleep": "よく眠った朝"}.get(t, "")
+	return {"register": "レジの経験", "dish": "皿洗いの経験", "hall": "ホールの経験", "kitchen": "キッチンの経験", "stock": "品出しの経験", "night": "満月の夜", "rare": "はじめての経験"}.get(t, "")
 
 
 func _flash(a: float) -> void:

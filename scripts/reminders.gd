@@ -1,6 +1,6 @@
 class_name Reminders
 ## 前の晩と当日の朝の、ひとこと（ゲームの中だけ。通知は送らない）。
-##   前の晩：あした登録シフトがあれば、相棒が「あした 10:00・カフェ こもれび。早めに寝よう！」（島の夜・寝る前の画面）
+##   前の晩：あした登録シフトがあれば、相棒が「あした 10:00・カフェ こもれび。また向こうでね！」（島の夜・夜のおわりの画面）
 ##   当日の朝：まだ始まっていないきょうのシフトがあれば、やさしく「9:30 に出る？」のカード（島の朝・昼）
 ## 休んでも何も減らない。連続の記録もつけない。日付と時刻は求人と同じ日本時間（JST）。
 
@@ -56,9 +56,8 @@ static func morning_text(s: Dictionary) -> Array:
 	return [I18n.t("REMIND_AM_TITLE") % clock(float(s.start) - LEAVE_BEFORE), I18n.t("REMIND_AM_SUB") % [store_of(s), clock(s.start), clock(s.end)]]
 
 
-## 寝る前の画面に、相棒と吹き出しを置く（あしたのシフトがなければ何もしない）。
-## 「ほかの過ごし方」を開いている間は隠す（画面の plan_grid が見えている間）
-static func attach_sleep(parent: Control, y := 300.0) -> Control:
+## 夜のおわりの画面に、相棒と吹き出しを置く（あしたのシフトがなければ何もしない）
+static func attach_night(parent: Control, y := 300.0) -> Control:
 	var s := evening()
 	if s.is_empty():
 		return null
@@ -84,9 +83,6 @@ static func attach_sleep(parent: Control, y := 300.0) -> Control:
 	row.add_child(p)
 	parent.add_child(row)
 	cat.talk.call_deferred()
-	var grid = parent.get("plan_grid")
-	if grid is Control:
-		(grid as Control).visibility_changed.connect(func(): row.visible = not grid.visible)
 	return row
 
 

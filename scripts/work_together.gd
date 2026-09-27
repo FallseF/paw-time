@@ -19,7 +19,6 @@ const DAILY_CAP := 180 # hard cap per day, whatever happens
 const OVERTIME_GRACE_MIN := 30 # working this long after exhaustion costs tomorrow's mood
 const OVERTIME_MOOD := 0.85 # tomorrow's earnings multiplier after overtime
 const MANUAL_AUTO_END_H := 1.0 # a forgotten manual session closes this long after exhaustion
-const REST_MULT := [0.9, 1.0, 1.1, 1.2] # by sleep tier (0 = restless ... 3 = deep sleep)
 const WORK_NETS := 2
 
 const ROLES := ["register", "dish", "hall", "kitchen", "stock"]
@@ -112,19 +111,15 @@ static func coins_between(h0: float, h1: float, mult := 1.0) -> float:
 	return BASE_PER_HOUR * mult * (f.call(b) - f.call(a))
 
 
-## Multiplier for today: how rested the obake is (sleep tier) × yesterday's overtime mood
-static func day_mult(t: float, tier := -1) -> float:
+## Multiplier for today: 1.0, or OVERTIME_MOOD the day after overtime ("your cat is still tired today")
+static func day_mult(t: float) -> float:
 	_ensure()
-	if tier < 0:
-		tier = _sleep_tier()
-	return REST_MULT[clampi(tier, 0, 3)] * float(_mood.get(day_key(t), 1.0))
+	return float(_mood.get(day_key(t), 1.0))
 
 
-static func _sleep_tier() -> int:
-	var gs = Engine.get_main_loop().root.get_node_or_null("GameState") if Engine.get_main_loop() else null
-	if gs and gs.has_method("tier"):
-		return gs.tier()
-	return 1
+## The day after overtime, your cat is still a little tired (earns ×OVERTIME_MOOD)
+static func still_tired(t := -1.0) -> bool:
+	return day_mult(now() if t < 0.0 else t) < 1.0
 
 
 # ---------------------------------------------------------------- session
@@ -314,13 +309,13 @@ static func today_summary(t := -1.0) -> Dictionary:
 
 
 ## Sample-record mode: the recorded shift of `hours` is worked in one go (no real waiting).
-static func credit_recorded(role: String, hours: float, place := "", tier := -1) -> Dictionary:
+static func credit_recorded(role: String, hours: float, place := "") -> Dictionary:
 	_ensure()
 	var t := now()
 	var key := day_key(t)
 	var before := float(_days.get(key, {}).get("hours", 0.0))
 	var already := int(_days.get(key, {}).get("earned", 0))
-	var mult := day_mult(t, tier)
+	var mult := day_mult(t)
 	var coins: int = mini(int(floor(coins_between(before, before + hours, mult))), maxi(0, DAILY_CAP - already))
 	var d: Dictionary = _days.get(key, {"earned": 0, "hours": 0.0, "overtime_min": 0})
 	d.earned = already + coins
@@ -339,6 +334,8 @@ static func line(st: Dictionary) -> String:
 	if not st.get("working", false):
 		if st.get("exhausted", false):
 			return TranslationServer.translate("We worked hard today. Rest up!")
+		if still_tired():
+			return TranslationServer.translate("I'm still a little tired from yesterday. Let's go easy today.")
 		return TranslationServer.translate("Ready when you are.")
 	match st.stage:
 		"fresh":

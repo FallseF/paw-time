@@ -42,9 +42,9 @@ func _ready() -> void:
 	mm.height = 1.4
 	moon.mesh = mm
 	moon.material_override = Kit.glow(Color("fff1c8"), 2.0)
-	moon.position = Vector3(2.2, 2.2, -5)
+	moon.position = Vector3(2.4, 1.2, -5)
 	w.add_child(moon)
-	var ids := ["nemuri", "receipt", "lantern"]
+	var ids := ["bubble", "receipt", "lantern"]
 	for i in ids.size():
 		var o := Obake3D.new().setup(ids[i])
 		o.position = Vector3((i - 1) * 1.15, -0.5, 0)
@@ -92,10 +92,14 @@ func _ready() -> void:
 	t2.position = Vector2(0, 122)
 	t2.size = Vector2(360, 24)
 	add_child(t2)
-	var t3 := Kit.text("よく眠ると、庭が育つ", 13, Color(1, 1, 1, 0.7), false, HORIZONTAL_ALIGNMENT_CENTER)
+	var t3 := Kit.text("シフトの日は、猫もいっしょに働いた", 13, Color(1, 1, 1, 0.7), false, HORIZONTAL_ALIGNMENT_CENTER)
 	t3.position = Vector2(0, 150)
 	t3.size = Vector2(360, 20)
 	add_child(t3)
+	var t4 := Kit.text("猫が疲れるから、がんばりすぎなくていい", 12, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER)
+	t4.position = Vector2(0, 172)
+	t4.size = Vector2(360, 20)
+	add_child(t4)
 
 	var v := VBoxContainer.new()
 	v.position = Vector2(40, 430)
@@ -108,9 +112,8 @@ func _ready() -> void:
 		var peek := _peek()
 		if peek != "":
 			v.add_child(Kit.text(peek, 12, Color(1, 1, 1, 0.75), false, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.button("はじめる（見本の記録つき）", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("data"), Color.WHITE, 46, 15))
-	v.add_child(Kit.button("記録なしで、はじめる", Color(1, 1, 1, 0.92), func(): _new("solo"), Color("4a3f52"), 42, 14))
-	var n := Kit.text("記録なしでも、毎晩あそべます", 12, Color(1, 1, 1, 0.55), false, HORIZONTAL_ALIGNMENT_CENTER)
+	# はじめる（ひとつだけ）。シフトは自分で入れる・求人で受ける（見本の記録の自動のシフトは、確認用の OBAKE_START だけ）
+	v.add_child(Kit.button("はじめる", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("solo"), Color.WHITE, 46, 15))
 	var vb := Button.new()
 	vb.flat = true
 	vb.text = "島のコードで、おでかけ"
@@ -118,7 +121,6 @@ func _ready() -> void:
 	vb.add_theme_font_size_override("font_size", 13)
 	vb.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
 	vb.pressed.connect(_ask_code)
-	v.add_child(n)
 	v.add_child(vb)
 
 
@@ -129,9 +131,7 @@ func _process(delta: float) -> void:
 func _continue() -> void:
 	if GameState.load_game():
 		# 途中で閉じた朝の続きから
-		if GameState.dream_pending:
-			main.go("dream")
-		elif not GameState.hatched.is_empty():
+		if not GameState.hatched.is_empty():
 			main.go("hatch")
 		else:
 			main.go(Onboarding.resume_screen()) # はじめての流れの途中なら、その続きから

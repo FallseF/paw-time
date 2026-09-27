@@ -1,8 +1,9 @@
 extends Node
-## ゲーム全体の状態と決まりごと（Variant B「眠りのリズム」）。
-## 通貨は睡眠。いつも同じころに眠り、よく眠ると「リズム」が満ちて、夜の庭が育つ。
+## ゲーム全体の状態と決まりごと。
+## 毎日の暮らし（働いた日・休んだ日・夜のすくい・めあて）で、夜の庭が育つ。働きすぎを止めるのは、猫が疲れることだけ（WorkTogether）。
 ## 仕事はブースト：シフトの日は種類つきのポイと、その仕事にちなんだ庭の飾りが届く（時間の長さでは増えない）。
-## 記録がなくても（ひとりで遊ぶ）毎日の夜が来る。記録をつなぐと（見本データ）シフトと睡眠が自動で入る。
+## 夜にすくった玉は、次の朝にかえる（寝る時刻などの入力は無い。end_night() で朝になる）。
+## 記録がなくても（ひとりで遊ぶ）毎日の夜が来る。見本の記録（mode = data）ではシフトが自動で入る。
 
 signal changed
 signal goal_completed(text: String, all_done: bool)
@@ -17,10 +18,9 @@ const SPECIES := {
 	"tray": {"name": "オボン", "type": "hall", "desc": "頭のお盆は絶対に落とさない。中身は気にしない"},
 	"pan": {"name": "ジュウ", "type": "kitchen", "desc": "油の跳ねる音が好き。さわると少しあつい。本人は言わない"},
 	"box": {"name": "ダンボ", "type": "stock", "desc": "住居です。資源ごみに出さないでください"},
-	"nemuri": {"name": "スヤリ", "type": "sleep", "desc": "夢の羊を数えていたら、ついてきた。起きているところを見た者はいない"},
-	"lantern": {"name": "チョウチン", "type": "night", "desc": "夜ふかしの灯りに寄ってくる。本人もかなり眠い"},
+	"lantern": {"name": "チョウチン", "type": "night", "desc": "満月の夜の灯りに寄ってくる。提灯の中は、ほんのりあたたかい"},
 }
-const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "nemuri", "lantern"]
+const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "lantern"]
 
 const NETS := {
 	"plain": {"name": "いつものポイ", "short": "いつもの", "type": "any"},
@@ -45,19 +45,19 @@ const DECOS := {
 	"stock": {"short": "秘密基地", "name": "段ボールの秘密基地", "desc": "品出しの仕事から。ダンボが住みつく"},
 }
 
-## 庭の育ち。めぐみ（毎朝、リズムと睡眠で溜まる）がこの値をこえると、庭が一段育つ。
+## 庭の育ち。めぐみ（毎朝、きのうの暮らしで溜まる）がこの値をこえると、庭が一段育つ。
 const GARDEN := [
 	{"need": 0, "name": "さびしい庭", "desc": "土と、灯っていない灯籠がひとつ"},
 	{"need": 8, "name": "芝が生えた", "desc": "足もとがやわらかくなった"},
 	{"need": 26, "name": "花壇に芽が出た", "desc": "かかしが見張りに立った。真顔で"},
 	{"need": 52, "name": "灯籠がともった", "desc": "庭がほんのり明るくなった"},
-	{"need": 88, "name": "花が咲いた", "desc": "リズムが整うと、花がひらく"},
+	{"need": 88, "name": "花が咲いた", "desc": "毎日の暮らしで、花がひらく"},
 	{"need": 132, "name": "小さな池ができた", "desc": "月が映るようになった"},
 	{"need": 185, "name": "縁台が置かれた", "desc": "おじぞうも来て、並んで座った"},
 	{"need": 250, "name": "桜の木が育った", "desc": "いつ見ても、少しだけ咲いている"},
-	{"need": 325, "name": "ほたるが住みついた", "desc": "ぐっすりの夜は、数が増える"},
-	{"need": 410, "name": "月見台ができた", "desc": "満月の特等席。ねぶくろが先に寝ていた"},
-	{"need": 505, "name": "夢見の木が光った", "desc": "眠りを大切にした庭にだけ育つ木"},
+	{"need": 325, "name": "ほたるが住みついた", "desc": "にぎやかな夜は、数が増える"},
+	{"need": 410, "name": "月見台ができた", "desc": "満月の特等席。ねぶくろが先に来ていた"},
+	{"need": 505, "name": "星見の木が光った", "desc": "毎日を大切にした庭にだけ育つ木"},
 ]
 
 ## 見本の1週間（みか、大学2年）。月〜金。土日と2週目以降は記録を生成する。
@@ -78,14 +78,15 @@ const STORES := [
 const COWORKERS := ["さとう", "りん", "けん", "ようこ", "みお", "だいち", "はる", "ゆい"]
 
 const RARES_PER_NIGHT := 1
-const USUAL_DEFAULT := 330 # 23:30（18:00 からの分）
-const LATE_LINE := 420
-const RHYTHM_RATE := 0.6 # 1晩の点数がリズムに効く割合（良い夜 +15、悪い夜 -12 くらい） # 1:00 より遅いと夜ふかし
+## 毎朝のめぐみ（庭の育ち）：いつもの分 ＋ 働いた日 ＋ 川べりに行った夜。時間の長さでは増えない
+const GROW_DAY := 6
+const GROW_WORKED := 3
+const GROW_RIVER := 2
 
 var mode := "data" # data = 記録をつなぐ（見本）, solo = ゲームだけ
 var seed_base := 0
 var day := 0
-var phase := "day" # day → evening → (sleep) → 朝の孵化 → day
+var phase := "day" # day → evening → 夜のおわり（end_night）→ 朝の孵化 → day
 var nets := {}
 var owned: Array = [] # {id, level, xp}
 var seen := {}
@@ -95,12 +96,10 @@ var scooped_tonight := false
 var ALL := {}
 
 # 眠りのリズム
-var rhythm := 30.0
-var bed_hist: Array = [] # 寝た時刻（18:00 からの分）
-var sleep_hist: Array = [] # 睡眠時間（時間, float）
-var good_hist: Array = [] # よく眠れた夜か（満月の灯りに使う）
-var last_night := {} # 朝に見せる、昨夜のまとめ
-var dream_pending := false
+var river_hist: Array = [] # その夜、川べりですくったか（満月の灯りに使う）
+var last_night := {} # 朝に見せる、きのうのまとめ {growth_gain, level_before, worked, river}
+var friend_visits := 0 # 友だちの島におでかけした回数
+var store_count := {} # 店 → 働いた回数（同じ店にまた入った日に）
 
 # 庭
 var growth := 0
@@ -110,7 +109,7 @@ var decos := {} # role → 届いた回数
 var deco_store := {} # role → 飾りをくれた店
 var chores := {} # ひとりのときのおてつだいの回数
 var new_decos: Array = [] # 今日届いた飾り（庭で演出する）
-var dream_flowers := 0
+var dream_flowers := 0 # 満開のあとに咲く星見草（めぐみ 80 ごとに一輪）
 
 # 記録（レアの条件用）
 var roles_seen := {}
@@ -128,12 +127,11 @@ var moon_nights := 0
 var rare_pending: Array = []
 var tut := {} # チュートリアルの済み印
 var total_scooped := 0
-var night_plan := "" # "" / extra（もうひと玉）/ market（夜店）
+var night_plan := "" # 使わない（互換のため）
 var lit_deco := "" # 今夜ともす飾り（その仕事の玉が出やすい）
 var goals: Array = [] # 今日のめあて {id, text, done}
 var last_goals := 0
 var stall_claimed := false
-var force_dream := false # 宣伝動画用
 var stash := {} # 玉から出た材料と服 "kind:id" → 数（Drops.grant が数える）
 var last_new_cat_day := 0 # 最後に新しいおばネコがかえった日（Drops.CAT_PITY_NIGHTS の数え始め）
 
@@ -146,7 +144,7 @@ var visit := {} # いま、おでかけ中の島（空なら自分の島）
 var new_outfits: Array = [] # 光る玉から出た服（朝、庭で見せる）
 var my_obake := {} # マイおばけ猫 {type_id, look, answers, axes}。正本は user://my_obake.json
 var week_start_seen := 1
-var pending_toasts: Array = [] # 寝ている間に達成しためあての知らせ
+var pending_toasts: Array = [] # 夜のあいだに達成しためあての知らせ
 var week_start_growth := 0
 var quiet := false # 早送り中は知らせを出さない
 var newcomers: Array = [] # けさ初めて来た子（庭で縁側から出てくる）
@@ -186,12 +184,10 @@ func reset(new_mode := "data") -> void:
 	orbs = []
 	hatched = []
 	scooped_tonight = false
-	rhythm = 30.0
-	bed_hist = []
-	sleep_hist = []
-	good_hist = []
+	river_hist = []
 	last_night = {}
-	dream_pending = false
+	friend_visits = 0
+	store_count = {}
 	growth = 0
 	garden_level = 0
 	garden_seen_level = 0
@@ -321,52 +317,6 @@ func today() -> Dictionary:
 	return shift_for(day)
 
 
-## 記録モードのときの「スマホの睡眠記録」。いつもの時刻のまわりに、少しゆらぐ。
-func recorded_sleep() -> Dictionary:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_base * 31 + day * 977
-	var s := today()
-	# 見本の人（みか）は、ふだんは 23:30 ごろ寝る。夜のシフトの日は少し、深夜の日は大きくずれる
-	var bed := USUAL_DEFAULT + int(rng.randfn(0, 10))
-	if s.band == "夜":
-		bed += 25
-	elif s.band == "深夜":
-		bed += 100
-	if rng.randf() < 0.08:
-		bed += 80 # たまの夜ふかし
-	bed = int(round(bed / 10.0) * 10)
-	var wake := bed - 360 + 450 + int(rng.randfn(0, 15)) # だいたい 7.5 時間
-	if shift_for(day + 1).band == "朝":
-		wake = mini(wake, 400)
-	if s.role == "":
-		wake += 30
-	wake = int(round(wake / 10.0) * 10)
-	return {"bed": clampi(bed, 180, 540), "wake": clampi(wake, 300, 630)}
-
-
-## 明日の予定から決まる、起きる時刻
-func wake_for_tomorrow() -> int:
-	var nx := shift_for(day + 1)
-	if nx.band == "朝":
-		return 390
-	if nx.role == "" and (day + 1) % 7 >= 5:
-		return 480
-	return 420
-
-
-## ひとりで遊ぶときの、夜の過ごし方。寝る時刻が決まる。
-func plan_bed(plan: String) -> int:
-	var u := usual_bed()
-	match plan:
-		"extra":
-			return u + 60
-		"market":
-			return maxi(u + 120, 450)
-		"early":
-			return u - 30
-	return u
-
-
 # ---------- シフト（ブースト） ----------
 
 ## シフトを終えたとき。種類つきのポイ2本と、はじめての仕事なら庭の飾り・きらきらポイ。時間は関係ない。
@@ -379,6 +329,7 @@ func finish_shift() -> Array:
 	first_role_today = not roles_seen.has(s.role)
 	roles_seen[s.role] = true
 	stores_week[s.store] = true
+	store_count[s.store] = int(store_count.get(s.store, 0)) + 1
 	bands_week[s.band] = true
 	if s.band == "朝":
 		morning_shifts += 1
@@ -472,43 +423,7 @@ func deco_level(role: String) -> int:
 	return 0 if n == 0 else (1 if n < 3 else 2)
 
 
-# ---------- リズム ----------
-
-func usual_bed() -> int:
-	if bed_hist.is_empty():
-		return USUAL_DEFAULT
-	var recent: Array = bed_hist.slice(-5)
-	var sorted := recent.duplicate()
-	sorted.sort()
-	return sorted[sorted.size() / 2]
-
-
-func tier() -> int:
-	if rhythm >= 75:
-		return 3
-	elif rhythm >= 50:
-		return 2
-	elif rhythm >= 25:
-		return 1
-	return 0
-
-
-const TIER_NAME := ["ばらばら", "ゆらゆら", "ととのい", "ぐっすり"]
-const TIER_COLOR := [Color("ff8f7a"), Color("ffd36b"), Color("8fe0a0"), Color("9fb4ff")]
-
-
-func tier_name() -> String:
-	return TIER_NAME[tier()]
-
-
-static func clock(m: int) -> String:
-	var t := (m + 18 * 60) % (24 * 60)
-	return "%d:%02d" % [t / 60, t % 60]
-
-
-static func wake_clock(m: int) -> String:
-	return "%d:%02d" % [m / 60, m % 60]
-
+# ---------- ふしぎな時計（朝の庭の数字） ----------
 
 ## 7.67 → 「7時間40分」
 static func hm(h: float) -> String:
@@ -516,56 +431,6 @@ static func hm(h: float) -> String:
 	if m % 60 == 0:
 		return TranslationServer.translate("%d時間") % (m / 60)
 	return TranslationServer.translate("%d時間%d分") % [m / 60, m % 60]
-
-
-static func hours_of(bed: int, wake: int) -> float:
-	return (wake + 360 - bed) / 60.0
-
-
-## その夜の点数（寝る前の予想にも使う）
-func night_score(bed: int, wake: int) -> Dictionary:
-	var h := hours_of(bed, wake)
-	var parts: Array = []
-	var score := 0
-	if h >= 7.0 and h <= 9.0:
-		score += 12
-		parts.append(["たっぷり眠る", 12])
-	elif h > 9.0:
-		score += 5
-		parts.append(["寝すぎ", 5])
-	elif h >= 6.0:
-		score += 3
-		parts.append(["少し短い", 3])
-	else:
-		score -= 12
-		parts.append(["睡眠不足", -12])
-	var diff: int = absi(bed - usual_bed())
-	if bed_hist.is_empty():
-		score += 4
-		parts.append(["はじめての夜", 4])
-	elif diff <= 20:
-		score += 10
-		parts.append(["いつもの時刻", 10])
-	elif diff <= 45:
-		score += 3
-		parts.append(["いつもの時刻に近い", 3])
-	else:
-		score -= 5
-		parts.append(["時刻がずれた", -5])
-	if bed > LATE_LINE:
-		score -= 4
-		parts.append(["夜ふかし", -4])
-	if not shift_done_today and h >= 7.0:
-		score += 4
-		parts.append(["休みの日の休息", 4])
-	return {"score": score, "hours": h, "parts": parts, "late": bed > LATE_LINE, "good": score >= 14}
-
-
-func growth_gain(score: int, h: float) -> int:
-	var g: int = 3 + int(rhythm / 100.0 * 8.0) + maxi(0, score) / 4
-	if h < 6.0:
-		g = maxi(3, g - 3)
-	return g
 
 
 # ---------- すくい ----------
@@ -604,20 +469,20 @@ func _level_up(o: Dictionary) -> bool:
 	return up
 
 
-const TYPE_SPECIES := {"register": "receipt", "dish": "bubble", "hall": "tray", "kitchen": "pan", "stock": "box", "sleep": "nemuri", "night": "lantern", "rare": "kirari"}
-const TYPE_COLOR := {"register": Color("ffc23d"), "dish": Color("5fc4ff"), "hall": Color("a98bff"), "kitchen": Color("ff7a45"), "stock": Color("e8b878"), "rare": Color("fff2a8"), "any": Color("f4f1ea"), "sleep": Color("c9bdf5"), "night": Color("ff9a4d")}
+const TYPE_SPECIES := {"register": "receipt", "dish": "bubble", "hall": "tray", "kitchen": "pan", "stock": "box", "night": "lantern", "rare": "kirari"}
+const TYPE_COLOR := {"register": Color("ffc23d"), "dish": Color("5fc4ff"), "hall": Color("a98bff"), "kitchen": Color("ff7a45"), "stock": Color("e8b878"), "rare": Color("fff2a8"), "any": Color("f4f1ea"), "night": Color("ff9a4d")}
 
 
 func species_for_type(t: String) -> String:
 	return TYPE_SPECIES.get(t, "receipt")
 
 
-## ポイの破れにくさ（リズムで決まる）
+## ポイの破れにくさ（いつも同じ）
 func poi_strength() -> float:
-	return [0.9, 1.0, 1.15, 1.3][tier()]
+	return 1.1
 
 
-## 今夜の水面に出る玉。今日の仕事の種類が多めに出る。リズムが整うと、虹の玉が混ざりやすい。
+## 今夜の水面に出る玉。今日の仕事の種類が多めに出る。
 ## 今夜の川べりの様子（日ごとに決まる）
 func night_kind() -> String:
 	var w: String = today().weather
@@ -646,7 +511,7 @@ func tonight_orbs() -> Array:
 	var out: Array = []
 	var kind := night_kind()
 	var n := randi_range(4, 5) + (1 if kind == "rain" else 0) + (2 if kind == "bounty" else 0)
-	var rare_p: float = [0.04, 0.07, 0.11, 0.16][tier()] + (0.15 if s.get("first", false) else 0.0) + (0.12 if kind == "fireflies" else 0.0)
+	var rare_p: float = 0.09 + (0.15 if s.get("first", false) else 0.0) + (0.12 if kind == "fireflies" else 0.0)
 	for i in n:
 		var t: String = types.pick_random()
 		if s.get("role", "") != "" and randf() < 0.45:
@@ -680,29 +545,18 @@ func tonight_orbs() -> Array:
 	return out
 
 
-## 眠りのレアの「きざし」。あと少しで会えそうなものを一行で
+## レアの「きざし」。あと少しで会えそうなものを一行で
 func omen() -> String:
 	# 週の後半は、満月の夜までの数を
 	if weekday() >= 3 and weekday() <= 5:
-		var lit: int = good_hist.slice(-weekday()).count(true) if good_hist.size() >= weekday() else good_hist.count(true)
+		var lit: int = moon_lanterns().count(true)
 		if lit < 4:
-			return tr("満月まで：よい夜 %d / 4") % lit
+			return tr("満月まで：川べりの夜 %d / 4") % lit
 		return "日曜は、満月になりそう"
-	if not seen.has("asayake"):
-		var n := 0
-		for i in range(sleep_hist.size() - 1, -1, -1):
-			if sleep_hist[i] < 7.0:
-				break
-			n += 1
-		if n >= 1 and n < 3:
-			return tr("よく眠る夜が %d つ続いている") % n
-	if not seen.has("totonou") and bed_hist.size() >= 2:
-		if absi(bed_hist[-1] - bed_hist[-2]) <= 20:
-			return "同じ時刻の夜が続いている"
-	if not seen.has("hirunen") and shift_for(day).role == "":
-		return "休みの日は、たっぷり眠ろう"
-	if not seen.has("mangetsu") and sleep_hist.size() >= 7:
-		return tr("ひと月の眠り：%d / 28 夜") % sleep_hist.size()
+	if not seen.has("hirunen") and shift_for(day).role == "" and weekday() >= 5:
+		return "週末の休みに、だれかが来そう"
+	if not seen.has("nemurin") and friend_visits == 0:
+		return "友だちの島に、行ってみよう"
 	return ""
 
 
@@ -711,12 +565,10 @@ func omen() -> String:
 const GOAL_TEXT := {
 	"scoop3": "玉を3個すくう",
 	"talk": "庭のおばけに話しかける",
-	"usual": "いつもの時刻（±20分）に寝る",
-	"hours7": "7時間以上眠る",
 	"light": "飾りをひとつともす",
 	"match": "仕事のポイで、同じ色の玉をすくう",
 	"zukan": "図鑑でヒントを見る",
-	"early_ok": "0時までに寝る",
+	"outfit": "キセカエで服を着せる",
 	"moon4": "満月の夜に、灯りを4つともす",
 }
 
@@ -724,10 +576,7 @@ const GOAL_TEXT := {
 func make_goals() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_base * 13 + day * 71
-	var sleep_goal: String = ["usual", "hours7", "early_ok"][rng.randi() % 3]
-	if bed_hist.is_empty():
-		sleep_goal = "hours7"
-	var pool := ["scoop3", "talk", "zukan"] if weekday() != 6 else ["talk", "zukan"]
+	var pool := ["scoop3", "talk", "zukan", "outfit"] if weekday() != 6 else ["talk", "zukan", "outfit"]
 	if weekday() == 6 and moon_lanterns().count(true) >= 4:
 		pool.append("moon4")
 	var role_decos := decos.keys().filter(func(k): return ROLE_NET.has(k))
@@ -740,12 +589,12 @@ func make_goals() -> void:
 	if (typed or today().role != "") and weekday() != 6:
 		pool.append("match")
 	var picks: Array = []
-	while picks.size() < 2:
+	while picks.size() < 3:
 		var g: String = pool[rng.randi() % pool.size()]
 		if not picks.has(g):
 			picks.append(g)
 	goals = []
-	for g in picks + [sleep_goal]:
+	for g in picks:
 		goals.append({"id": g, "text": GOAL_TEXT[g], "done": false})
 
 
@@ -775,54 +624,32 @@ func goals_done() -> int:
 	return goals.filter(func(x): return x.done).size()
 
 
-# ---------- 眠る ----------
+# ---------- 夜のおわり ----------
 
-## 眠る。リズム・庭の育ち・夜の訪問者・レア・玉の孵化をまとめて決める。
-func sleep(bed: int, wake: int) -> void:
-	var ns := night_score(bed, wake)
-	var h: float = ns.hours
-	var hours := int(round(h))
+## 夜が明ける（入力は無い）。庭の育ち・レア・玉の孵化をまとめて決めて、次の朝へ。
+func end_night() -> void:
 	var s: Dictionary = today()
-	var rhythm_before := rhythm
-	rhythm = clampf(rhythm + ns.score * RHYTHM_RATE, 0.0, 100.0)
-	var gain := growth_gain(ns.score, h)
+	var worked := shift_done_today or work_nets_day == day
+	var river := scooped_tonight or tonight_caught > 0
+	var gain := GROW_DAY + (GROW_WORKED if worked else 0) + (GROW_RIVER if river else 0)
 	var level_before := garden_level
 	growth += gain
-	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:
-		garden_level += 1
-	var diff_usual: int = absi(bed - usual_bed())
-	if not bed_hist.is_empty() and diff_usual <= 20:
-		goal("usual")
-	if h >= 7.0:
-		goal("hours7")
-	if bed <= 360:
-		goal("early_ok")
+	_recalc_level()
 	last_goals = goals_done()
-	bed_hist.append(bed)
-	sleep_hist.append(h)
-	good_hist.append(ns.good)
-	last_night = {"bed": bed, "wake": wake, "hours": h, "score": ns.score, "parts": ns.parts, "rhythm_before": rhythm_before, "rhythm": rhythm, "growth_gain": gain, "level_before": level_before, "late": ns.late, "visitor": ""}
+	river_hist.append(river)
+	last_night = {"growth_gain": gain, "level_before": level_before, "worked": worked, "river": river}
 	hatched = []
-	# 夜ふかしの夜は、夜のおばけが寄ってくる（リズムと引きかえ）
-	if ns.late:
-		orbs.append({"type": "night", "rare": false})
-		last_night.visitor = "lantern"
-	# 夢：リズムが整っていて、よく眠った夜
-	dream_pending = h >= 7.0 and ((tier() >= 3 and randf() < 0.75) or (tier() == 2 and randf() < 0.45))
-	if force_dream:
-		dream_pending = true
-		force_dream = false
 	# 条件を満たしたレアが生まれる
 	var have := seen.duplicate()
 	for rid in rare_pending:
 		have[rid] = true
-	var fresh: Array = Rares.check(rare_context(s, h, bed), have)
+	var fresh: Array = Rares.check(rare_context(s), have)
 	rare_pending = fresh + rare_pending
 	for i in min(RARES_PER_NIGHT, rare_pending.size()):
 		var rid: String = rare_pending.pop_front()
 		add_obake(rid)
 		hatched.append({"id": rid, "is_new": true, "level": 1, "rare": true})
-	_hatch_orbs(h)
+	_hatch_orbs()
 	work_hist.append(shift_done_today)
 	gifted_today = false
 	scooped_tonight = false
@@ -846,7 +673,7 @@ func sleep(bed: int, wake: int) -> void:
 	changed.emit()
 
 
-func _hatch_orbs(h: float) -> void:
+func _hatch_orbs() -> void:
 	for orb in orbs:
 		# 中身が材料・服なら、おばけではなくそれが出る
 		var c: Dictionary = orb.get("content", {})
@@ -859,42 +686,19 @@ func _hatch_orbs(h: float) -> void:
 		var lv := 1
 		for o in owned:
 			if o.id == sid:
-				o.xp += int(h * 4) + (60 if orb.rare else 0) + tier() * 6
+				o.xp += 40 + (60 if orb.rare else 0)
 				_level_up(o)
 				lv = o.level
 		hatched.append({"id": sid, "is_new": is_new, "level": lv, "rare": false, "big": orb.rare})
 	orbs = []
 
 
-## 夢の結果（羊かぞえ）。数えた数に応じて、スヤリの玉と庭のめぐみ。
-func finish_dream(count: int) -> Dictionary:
-	dream_pending = false
-	var n_orbs := 1 + count / 5
-	var bonus := count / 2
-	for i in n_orbs:
-		var is_new := add_obake("nemuri")
-		var lv := 1
-		for o in owned:
-			if o.id == "nemuri":
-				lv = o.level
-		hatched.append({"id": "nemuri", "is_new": is_new, "level": lv, "rare": false, "dream": true})
-	growth += bonus
-	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:
-		garden_level += 1
-	if count >= 10:
-		dream_flowers += 1
-	last_night["dream"] = count
-	last_night["growth_gain"] = last_night.get("growth_gain", 0) + bonus
-	save()
-	return {"orbs": n_orbs, "growth": bonus, "flower": count >= 10}
-
-
 # ---------- 満月の夜 ----------
 
-## この週の夜（直近 6 夜）のうち、よく眠れた夜の数
+## この週の夜（直近 6 夜）のうち、川べりですくった夜
 func moon_lanterns() -> Array:
 	var out: Array = []
-	var recent: Array = good_hist.slice(-6)
+	var recent: Array = river_hist.slice(-6)
 	for i in 6 - recent.size():
 		out.append(false)
 	for g in recent:
@@ -912,14 +716,14 @@ func finish_moon(lit: int, bonus_taps: int) -> Dictionary:
 	growth += gain
 	while garden_level + 1 < GARDEN.size() and growth >= GARDEN[garden_level + 1].need:
 		garden_level += 1
-	# 月の玉：灯りの数に応じて段階的に。3つで夢の玉、4つで満月（虹の玉とツキミ）
+	# 月の玉：灯りの数に応じて段階的に。3つでちょうちんの玉、4つで満月（虹の玉とツキミ）
 	var n := clampi((lit + 1) / 2, 1, 3)
 	for i in n:
 		# 満月の虹の玉はおばネコのまま（ツキミの夜）。ほかの月の玉は、ふつうの玉と同じ割合（Drops）
 		var mt: String = "rare" if won and i == 0 else ["register", "dish", "hall", "kitchen", "stock"].pick_random()
 		orbs.append({"type": mt, "rare": won and i == 0, "content": {"kind": "obake"} if won and i == 0 else Drops.roll(mt, false)})
 	if lit >= 3:
-		orbs.append({"type": "sleep", "rare": false})
+		orbs.append({"type": "night", "rare": false})
 		n += 1
 	scooped_tonight = true
 	save()
@@ -928,7 +732,7 @@ func finish_moon(lit: int, bonus_taps: int) -> Dictionary:
 
 # ---------- レア条件 ----------
 
-func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
+func rare_context(s: Dictionary) -> Dictionary:
 	var worked: bool = s.get("role", "") != "" and shift_done_today
 	var streak := 0
 	for i in range(work_hist.size() - 1, -1, -1):
@@ -947,21 +751,18 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 	for id in ["receipt", "bubble", "tray", "pan", "box"]:
 		if not seen.has(id):
 			normal_all = false
-	var total := 0.0
-	for x in sleep_hist:
-		total += x
-	var same_bed := 0
-	if bed_hist.size() >= 3:
-		var last3: Array = bed_hist.slice(-3)
-		if absi(last3[0] - last3[1]) <= 20 and absi(last3[1] - last3[2]) <= 20:
-			same_bed = 3
 	var sh := s.duplicate()
 	if not worked:
 		sh.role = ""
 	return {
 		"shift": sh,
-		"sleep": hours,
-		"sleep_hist": sleep_hist,
+		"rest_day": not worked and day > 0,
+		"weekend": weekday() >= 5,
+		"after_moon": weekday() == 0 and moon_nights > 0,
+		"moon_nights": moon_nights,
+		"friend_visits": friend_visits,
+		"keepsakes": keepsakes.size(),
+		"same_store_again": worked and int(store_count.get(s.get("store", ""), 0)) >= 2,
 		"first_role": worked and first_role_today and day > 0,
 		"roles_seen": roles_seen.size(),
 		"stores_week": stores_week.size(),
@@ -976,18 +777,13 @@ func rare_context(s: Dictionary, hours: float, bed: int) -> Dictionary:
 		"weekend_both": weekend_shifts.size() >= 2,
 		"normal_all": normal_all,
 		"zukan_count": seen.size(),
-		"avg_sleep_month": total / max(1, sleep_hist.size()),
-		"nights": sleep_hist.size(),
-		"same_bed": same_bed,
 		"moon_won": moon_won_today,
-		"rhythm": rhythm,
-		"late": bed > LATE_LINE,
 	}
 
 
 # ---------- セーブ ----------
 
-const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "rhythm", "bed_hist", "sleep_hist", "good_hist", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "dream_pending", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "last_new_cat_day"]
+const SAVE_KEYS := ["mode", "seed_base", "day", "phase", "nets", "owned", "seen", "orbs", "scooped_tonight", "river_hist", "friend_visits", "store_count", "last_night", "growth", "garden_level", "garden_seen_level", "decos", "new_decos", "dream_flowers", "roles_seen", "stores_week", "coworker_count", "morning_shifts", "bands_week", "shift_done_today", "weekend_shifts", "gifted", "received", "moon_nights", "rare_pending", "tut", "total_scooped", "first_role_today", "night_plan", "lit_deco", "goals", "deco_store", "chores", "work_hist", "tonight_caught", "moon_won_today", "hatched", "last_goals", "newcomers", "stall_claimed", "week_start_seen", "week_start_growth", "pending_toasts", "layout", "nickname", "host_id", "keepsakes", "stash", "work_nets_day", "last_new_cat_day"]
 
 
 func save() -> void:
@@ -1031,7 +827,15 @@ func load_game() -> bool:
 		decos[r] = int(decos[r])
 	for c in coworker_count:
 		coworker_count[c] = int(coworker_count[c])
-	bed_hist = bed_hist.map(func(x): return int(x))
+	# 眠りの仕組みをやめる前の保存：スヤリ（夢のおばけ）と夢の玉は、もういない。
+	# 条件を眠りから変えたレアは、前の条件で待っていた分を取り消す（新しい条件で会う）
+	if d.has("bed_hist"):
+		rare_pending = rare_pending.filter(func(r): return not r in ["nemurin", "yumemi", "asayake", "yomise", "hirunen", "totonou", "mangetsu"])
+	owned = owned.filter(func(o): return o.id != "nemuri")
+	seen.erase("nemuri")
+	orbs = orbs.filter(func(o): return o.get("type", "") != "sleep")
+	if not last_night.has("growth_gain") or last_night.has("bed"):
+		last_night = {}
 	var ws := {}
 	for k in weekend_shifts:
 		ws[int(k)] = true
@@ -1047,10 +851,10 @@ func delete_save() -> void:
 
 # ---------- 島のシェア（サーバーなし：URL の #island=<code>） ----------
 
-const SHARE_URL := "https://obake-breakroom-b-sleep.vercel.app/#island="
+const SHARE_URL := "https://paw-time-play.vercel.app/#island="
 ## 動かせる物（順番がコードの番号。後ろに足すだけにする）
 const ISLAND_ITEMS := ["flowerbed", "lantern", "pond", "bench", "sakura", "moondeck", "dream", "deco_register", "deco_hall", "deco_dish", "deco_kitchen", "deco_stock", "deco_mask", "res_kakashi", "res_jizo", "res_nebukuro"]
-const ITEM_NAME := {"flowerbed": "花壇", "lantern": "灯籠", "pond": "池", "bench": "縁台", "sakura": "桜", "moondeck": "月見台", "dream": "夢見の木", "deco_register": "パラソル席", "deco_hall": "赤ちょうちん", "deco_dish": "泡のたらい", "deco_kitchen": "おでん鍋", "deco_stock": "秘密基地", "deco_mask": "お面屋", "res_kakashi": "かかし", "res_jizo": "おじぞう", "res_nebukuro": "ねぶくろ"}
+const ITEM_NAME := {"flowerbed": "花壇", "lantern": "灯籠", "pond": "池", "bench": "縁台", "sakura": "桜", "moondeck": "月見台", "dream": "星見の木", "deco_register": "パラソル席", "deco_hall": "赤ちょうちん", "deco_dish": "泡のたらい", "deco_kitchen": "おでん鍋", "deco_stock": "秘密基地", "deco_mask": "お面屋", "res_kakashi": "かかし", "res_jizo": "おじぞう", "res_nebukuro": "ねぶくろ"}
 
 
 func species_list() -> Array:
@@ -1082,7 +886,7 @@ func island_code(items_present: Array) -> String:
 	var b := PackedByteArray()
 	b.append(5) # 版5：服（キセカエ）＋置き物キット＋広げた場所＋乗り物。版1〜4も読める
 	b.append(garden_level)
-	b.append(tier())
+	b.append(2) # もとは眠りの段の欄。コードの形を変えないよう、いつも 2
 	var nm := (nickname if nickname != "" else "ななし").to_utf8_buffer()
 	if nm.size() > 30:
 		nm = nm.slice(0, 30)
