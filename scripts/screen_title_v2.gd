@@ -18,7 +18,9 @@ const SKY_HORIZON := 0.58 # 空の絵の中の水平線（ここを HORIZON に�
 const FOV := 46.0 # 縦の画角
 const CAM_H := 2.4 # 海面近くからのカメラの高さ（手前の島の上の芝と岸の縁が見える、見下ろし 12〜15°）
 const SEA_Y := -0.14 # 島の画面と同じ海面の高さ
-const GROUND_Y := 0.2 # 手前の島の芝の高さ（海から少し上げて、砂の岸を見せる）
+const GROUND_Y := 0.32 # 手前の岬の芝の高さ（崖の段が海から立ち上がって見える）
+const TERRAIN_SEA := 0.8 # 岬（terrain_title.glb）の芝から海面までの高さ（tools/blender/build_island_kit.py の TITLE_SEA）
+const FAR_SWAY := 0.3 # 遠くの島は、カメラのゆれの 3 割だけ動かす（枠の 55〜92% から出ないように）
 const SIDE_LAYER := 1 << 9 # 横長の画面で、縦の枠の外にも描くもの（海・海の底・ヘリ）
 const CREAM := Color("fff6e6")
 const NAVY := Color("23285a")
@@ -41,6 +43,9 @@ var pier: Node3D
 var raft: Node3D
 var heli: Node3D
 var far_isles: Array[Node3D] = []
+var far_root: Node3D # 遠くの島の入れ物（カメラの位置を軸に、ゆれを打ち消す）
+var props: Array[Node3D] = [] # 岬の上の小物（掲示板・物干し）
+var lamp: Node3D # 桟橋の根元の灯り
 var spinners: Array = []
 var logo: TextureRect
 var start_btn: Button
@@ -155,12 +160,28 @@ func _build_world() -> void:
 	sea.layers = 1 | SIDE_LAYER
 	world.add_child(sea)
 	# 手前の自分の島（左下を切り取る）と桟橋
+	# 手前の岬：島の置き物キットの地形（段のある砂岩の崖・芝のふち）。水ぎわに小石、左のふちに低い茂み
 	island = Node3D.new()
 	world.add_child(island)
 	var land := MeshInstance3D.new()
-	land.mesh = IslandProps.land_lobe(6.0, 3) # 大きな半径で作って縮める（砂浜の帯を細く）
-	land.material_override = _ground_mat()
+	land.mesh = IslandProps.glb("terrain_title")
+	var lm := _ground_mat(Color("e9dcc3"))
+	lm.set_shader_parameter("ground_mottle", 0.0) # 崖の面に縦の筋が出るので、まだらは付けない
+	land.material_override = lm
 	island.add_child(land)
+	var kit := IslandProps.new()
+	var rnd := RandomNumberGenerator.new()
+	rnd.seed = 11
+	for deg in [4.0, 16.0, 29.0, 43.0]: # 見えている崖（猫の右〜桟橋の下）の水ぎわだけ
+		var th := deg_to_rad(deg)
+		var rr := 4.5 * (1.0 + 0.045 * sin(3.0 * th + 1.1) + 0.03 * sin(5.0 * th + 0.3)) + rnd.randf_range(0.55, 0.7) # 崖の下の棚（水ぎわ）
+		kit.add(island, IslandProps.glb("rock"), IslandProps.m(Color("b39a86").darkened(rnd.randf() * 0.15)),
+			Vector3(cos(th) * rr, -TERRAIN_SEA + 0.05, sin(th) * rr), Vector3(0, rnd.randf() * 3.0, 0), Vector3.ONE * rnd.randf_range(0.2, 0.3))
+	for i in 2:
+		var b := IslandProps.build("bush")
+		b.name = "Bush%d" % i
+		island.add_child(b)
+	_build_props()
 	pier = IslandProps.build("pier")
 	world.add_child(pier)
 	raft = VehicleProps.build_vehicle("raft")
@@ -169,12 +190,16 @@ func _build_world() -> void:
 	cat = _make_cat()
 	world.add_child(cat)
 	# 遠くの 2 つの島：カフェ（赤い瓦としま模様の日よけ）と、角のお店（緑の屋根）
-	far_isles.append(_far_isle(Color("e0674f"), Color("fff1dc"), "tree_round"))
-	far_isles.append(_far_isle(Color("6fae6a"), Color("fff6e6"), "tree_palm"))
+	far_root = Node3D.new()
+	world.add_child(far_root)
+	far_isles.append(_far_isle(Color("e0674f"), Color("fff1dc"), "tree_round", "cup"))
+	far_isles.append(_far_isle(Color("6fae6a"), Color("fff6e6"), "tree_palm", "apple"))
 	heli = VehicleProps.build_vehicle("helicopter")
 	world.add_child(heli)
-	for m in heli.find_children("*", "GeometryInstance3D", true, false):
-		(m as VisualInstance3D).layers |= SIDE_LAYER
+	# 横長の画面では、ヘリと手前の岬（小物ごと）も枠の外へ続ける（枠のふちで切れないように）
+	for n in [heli, island]:
+		for m in (n as Node3D).find_children("*", "GeometryInstance3D", true, false):
+			(m as VisualInstance3D).layers |= SIDE_LAYER
 	for v in [raft, heli]:
 		for n in (v as Node3D).find_children("*", "Node3D", true, false):
 			if n.has_meta("spin"):
@@ -190,13 +215,13 @@ func _camera() -> Camera3D:
 	return c
 
 
-## 地形と同じ塗り（頂点色の芝・砂・ぬれた砂）
-func _ground_mat() -> ShaderMaterial:
+## 地形と同じ塗り（頂点色の芝・砂・ぬれた砂）。tint は夕方の色へ寄せる掛け色
+func _ground_mat(tint := Color("f4ead8")) -> ShaderMaterial:
 	var m := Obake3D.skin(Color.WHITE, 0.0, null, 0.06, 0.0, false, 0.02).duplicate() as ShaderMaterial
 	m.set_shader_parameter("vertex_albedo", 1.0)
 	m.set_shader_parameter("top_light", 0.12)
 	m.set_shader_parameter("ground_mottle", 0.06)
-	m.set_shader_parameter("base_color", Color("f4ead8")) # 夕方の芝（少し落ち着いた黄緑へ）
+	m.set_shader_parameter("base_color", tint) # 夕方の芝（少し落ち着いた黄緑へ）
 	return m
 
 
@@ -216,20 +241,26 @@ func _make_cat() -> MyObake3D:
 		b.material_override = cat_mat
 	c.bob = false
 	c.set_process(false) # 息・まばたき・耳はここで動かす（しぐさで体がゆれないように）
-	c.rotation.y = 0.7 # 右（遠くの島）を向いた 3/4
+	c.rotation.y = 0.44 # 右（遠くの島）を向いた 3/4。両目・ω の口・ひげが読める向き
+	# しっぽは体の右がわ（画面の左）へ回して、輪郭からのぞかせる
+	var tail := c.body.find_child("Tail", true, false) as Node3D
+	if tail:
+		tail.rotation.y = 1.25
 	return c
 
 
-func _far_isle(sign_c: Color, accent: Color, tree_id: String) -> Node3D:
+func _far_isle(sign_c: Color, accent: Color, tree_id: String, icon: String) -> Node3D:
 	var n := Node3D.new()
 	var land := MeshInstance3D.new()
 	land.mesh = IslandProps.land_lobe(1.7, 7)
+	land.name = "Land" # 水の下まで広がる板なので、横の広がりを測るときは数えない
 	land.material_override = _ground_mat()
 	n.add_child(land)
 	var shop := ShopLandmarks.build_shop(sign_c, accent)
 	shop.scale = Vector3.ONE * 0.8
 	shop.position = Vector3(0, 0, -0.2)
 	n.add_child(shop)
+	_sign_icon(shop, icon)
 	var tree := IslandProps.build(tree_id)
 	tree.position = Vector3(1.35, 0, -0.5)
 	tree.scale = Vector3.ONE * 0.9
@@ -246,8 +277,67 @@ func _far_isle(sign_c: Color, accent: Color, tree_id: String) -> Node3D:
 		g.material_override = Kit.glow(Color("ffd98a"), 1.6)
 		g.position = p
 		n.add_child(g)
-	world.add_child(n)
+	far_root.add_child(n)
 	return n
+
+
+## お店の屋根の看板に、ひと目でわかる印（カフェはコーヒーカップ、角のお店はりんご）
+func _sign_icon(shop: Node3D, icon: String) -> void:
+	var k := IslandProps.new()
+	var at := Vector3(0, 1.98, 0.3) # 看板の板の前（ShopLandmarks._shop）
+	var icon_root := k.node(shop, at)
+	icon_root.scale = Vector3.ONE * 1.35
+	at = Vector3.ZERO
+	if icon == "cup":
+		var brown := IslandProps.m(Color("6e3f2a"))
+		k.add(icon_root, k.cyl(0.13, 0.1, 0.2), brown, at + Vector3(-0.03, 0.0, 0))
+		k.add(icon_root, k.torus(0.04, 0.075), brown, at + Vector3(0.12, 0.01, 0), Vector3(PI / 2, 0, 0))
+		k.add(icon_root, k.cyl(0.19, 0.19, 0.025), IslandProps.m(Color("b9784f")), at + Vector3(-0.03, -0.11, 0))
+		k.add(icon_root, k.cyl(0.11, 0.11, 0.012), IslandProps.m(Color("3a2218")), at + Vector3(-0.03, 0.1, 0))
+	else:
+		k.add(icon_root, k.sph(0.14), IslandProps.m(Color("d8453b"), 0.4), at + Vector3(0, -0.02, 0), Vector3.ZERO, Vector3(1.05, 0.95, 0.8))
+		k.add(icon_root, k.cyl(0.012, 0.015, 0.09), IslandProps.m(Color("5a3a24")), at + Vector3(0.0, 0.14, 0.02), Vector3(0, 0, -0.3))
+		k.add(icon_root, k.box(Vector3(0.1, 0.02, 0.05)), IslandProps.m(Color("5fae4f")), at + Vector3(0.06, 0.15, 0.02), Vector3(0, 0, 0.35))
+
+
+## 岬の上の小物：仕事の掲示板（紙が 2 枚）、エプロンを干した短い物干し、桟橋のそばの灯り
+func _build_props() -> void:
+	var k := IslandProps.new()
+	var board := Node3D.new()
+	board.name = "JobBoard"
+	for x in [-0.4, 0.4]:
+		k.add(board, k.cyl(0.035, 0.035, 1.05), IslandProps.m(IslandProps.WOOD_D), Vector3(x, 0.52, 0))
+	k.add(board, k.box(Vector3(0.9, 0.56, 0.05)), IslandProps.m(Color("c69a6c")), Vector3(0, 0.74, 0))
+	k.add(board, k.box(Vector3(1.0, 0.07, 0.16), 0.02), IslandProps.m(Color("8a5a3c")), Vector3(0, 1.06, 0))
+	for i in 2:
+		var x := -0.18 + i * 0.36
+		k.add(board, k.box(Vector3(0.26, 0.3, 0.01), 0.004), IslandProps.m([Color("fff6e0"), Color("ffe6d6")][i]), Vector3(x, 0.72 + i * 0.03, 0.035), Vector3(0, 0, (i - 0.5) * 0.12))
+		for j in 3:
+			k.add(board, k.box(Vector3(0.16, 0.012, 0.004)), IslandProps.m(Color("b9a58e")), Vector3(x, 0.78 - j * 0.06 + i * 0.03, 0.043), Vector3(0, 0, (i - 0.5) * 0.12))
+		k.add(board, k.sph(0.018), IslandProps.m(IslandProps.RED), Vector3(x, 0.85 + i * 0.03, 0.05))
+	props.append(board)
+	var line := Node3D.new()
+	line.name = "Clothesline"
+	for x in [-0.55, 0.55]:
+		k.add(line, k.cyl(0.03, 0.035, 0.95), IslandProps.m(IslandProps.WOOD_D), Vector3(x, 0.47, 0))
+	k.add(line, k.cyl(0.008, 0.008, 1.12), IslandProps.m(Color("e8dcc0")), Vector3(0, 0.88, 0), Vector3(0, 0, PI / 2))
+	# 小さなエプロン（猫のカフェのエプロン）：胸当て・ポケット・ひも、洗濯ばさみ 2 つ
+	var ap := Color("d9774f")
+	k.add(line, k.box(Vector3(0.3, 0.34, 0.015), 0.006), IslandProps.m(ap), Vector3(0.05, 0.68, 0))
+	k.add(line, k.box(Vector3(0.16, 0.08, 0.02), 0.004), IslandProps.m(ap), Vector3(0.05, 0.86, 0))
+	k.add(line, k.box(Vector3(0.14, 0.08, 0.02), 0.004), IslandProps.m(Color("fff1dc")), Vector3(0.05, 0.64, 0.012))
+	for x in [-0.03, 0.13]:
+		k.add(line, k.box(Vector3(0.02, 0.06, 0.03)), IslandProps.m(Color("f2c14e")), Vector3(x, 0.89, 0.01))
+	k.add(line, k.box(Vector3(0.12, 0.14, 0.012), 0.004), IslandProps.m(Color("9fc6e8")), Vector3(-0.3, 0.8, 0)) # 小さな手ぬぐい
+	props.append(line)
+	for pr in props:
+		island.add_child(pr)
+	lamp = IslandProps.build("paper_lantern")
+	lamp.name = "Lantern"
+	for l in lamp.find_children("*", "OmniLight3D", true, false):
+		(l as OmniLight3D).light_energy = 0.9
+		(l as OmniLight3D).omni_range = 1.4
+	world.add_child(lamp)
 
 
 # ---------------------------------------------------------------- 置き場所
@@ -373,11 +463,25 @@ func _layout() -> void:
 func _place_world() -> void:
 	# 猫：体ぜんぶ。真ん中が横 32%、耳の先 48%・しっぽの下 70%（画面の高さの 22%）
 	_fit_cat(0.32, 0.48, 0.70)
-	# 手前の島：芝の縁は左下から上がり、猫の右（47%, 72%）へ。その下は海（ボタンは海の上）
+	# 手前の岬：芝の縁は左下から上がり、猫の右（47%, 72%）へ。その下は海（ボタンは海の上）。
+	# 岬の崖は +X+Z の 40° の弧（terrain_title）。半径 4.5 の地形を、芝から海までが TERRAIN_SEA になるよう縮める
 	var a := _on_plane(0.47, 0.72, GROUND_Y)
 	var q := absf(a.x - _on_plane(0.0, 0.72, GROUND_Y).x) / 1.876 # 横の見え方（9:16 で 1）
-	island.position = Vector3(a.x - 2.19 * q, GROUND_Y, a.z - 1.12) # 手前の岸は左の 80% へ下りる
-	island.scale = Vector3(2.35 * q / 6.16, 1.6, 2.8 / 6.16) # 波打ちぎわは land_lobe の半径 r+0.16。縦は岸の斜面を立てる
+	var ts := (GROUND_Y - SEA_Y) / TERRAIN_SEA
+	island.position = Vector3(a.x - 2.45 * q, GROUND_Y, a.z - 0.82)
+	island.scale = Vector3(ts * q, ts, ts)
+	# 小物：猫の左うしろ（猫にはかぶせない）。茂みは左のふち
+	var cs := cat.scale.x
+	var spots := {"JobBoard": [0.07, 0.64, 0.7, 0.3], "Clothesline": [0.1, 0.72, 0.5, 0.2],
+		"Bush0": [0.0, 0.765, 0.5, 0.0], "Bush1": [0.2, 0.775, 0.38, 1.0]}
+	for key in spots:
+		var n := island.get_node(key) as Node3D
+		var sp: Array = spots[key]
+		var wp := _on_plane(sp[0], sp[1], GROUND_Y)
+		n.position = island.to_local(wp)
+		# 岬の縮尺（横と奥で少し違う）を打ち消して、猫に対する大きさで置く
+		n.scale = Vector3(cs * sp[2] / island.scale.x, cs * sp[2] / island.scale.y, cs * sp[2] / island.scale.z)
+		n.rotation.y = sp[3]
 	# 短い桟橋：猫の右の岸から右奥へ。いかだはその手前に横づけ (62%, 70%)
 	var shore := _on_plane(0.44, 0.685, GROUND_Y)
 	var tip := _on_plane(0.74, 0.655, SEA_Y)
@@ -387,19 +491,49 @@ func _place_world() -> void:
 	pier.rotation.y = atan2(dir.x, dir.z)
 	pier.position = (shore + tip) * 0.5
 	pier.position.y = GROUND_Y + 0.02 - 0.14 * ws
+	# 灯り：桟橋の根元の、手前がわのふち（猫にはかからない）
+	var side := Vector3(dir.z, 0, -dir.x).normalized()
+	if side.z < 0.0:
+		side = -side
+	lamp.position = shore + dir * 0.3 + side * 0.36 * ws + Vector3(0, 0.02, 0)
+	lamp.scale = Vector3.ONE * cs * 0.5
+	lamp.rotation.y = atan2(dir.x, dir.z) + PI * 0.5
 	var rp := _on_plane(0.62, 0.70, SEA_Y)
 	raft_y = SEA_Y + 0.01
 	raft.position = Vector3(rp.x, raft_y, rp.z)
 	raft.scale = Vector3.ONE * _world_w(rp, 0.2) / 1.3
 	raft.rotation.y = pier.rotation.y - PI * 0.5
-	# 遠くの島：カフェ（左）と角のお店（右）。水平線に乗り、横 55〜95%、屋根の上が 30% くらい
-	var spots := [[0.63, 0.447, 0.325], [0.845, 0.442, 0.34]]
-	for i in far_isles.size():
-		var fp := _on_plane(spots[i][0], spots[i][1], SEA_Y)
-		var isle := far_isles[i]
-		isle.position = Vector3(fp.x, SEA_Y + 0.1, fp.z)
-		isle.scale = Vector3.ONE * _fit_height(isle.position, spots[i][0], spots[i][2], 2.1)
-		isle.rotation.y = atan2(-fp.x, -fp.z) + (0.3 if i == 0 else -0.25)
+	# 遠くの島：カフェ（左）と角のお店（右）。水平線に乗り、屋根の上が 30% くらい。
+	# ふたつ合わせた横の広がりを 58〜89% に詰める（ゆれを足しても 55〜92% に収まる）
+	far_root.position = Vector3(0, CAM_H, 0)
+	far_root.rotation = Vector3.ZERO
+	var fx := [0.63, 0.845]
+	var tops := [0.325, 0.34]
+	var bases := [0.447, 0.442]
+	for it in 4:
+		for i in far_isles.size():
+			var fp := _on_plane(fx[i], bases[i], SEA_Y)
+			var isle := far_isles[i]
+			isle.global_position = Vector3(fp.x, SEA_Y + 0.1, fp.z)
+			isle.scale = Vector3.ONE * _fit_height(isle.global_position, fx[i], tops[i], 2.1)
+			isle.rotation.y = atan2(-fp.x, -fp.z) + (0.3 if i == 0 else -0.25)
+		var lo := 1.0
+		var hi := 0.0
+		for isle in far_isles:
+			for m in isle.find_children("*", "MeshInstance3D", true, false):
+				var mi := m as MeshInstance3D
+				if mi.name == "Land":
+					continue
+				var bb := mi.global_transform * mi.get_aabb()
+				for c in 8:
+					var px := (_proj(bb.get_endpoint(c)).x - frame.position.x) / frame.size.x
+					lo = minf(lo, px)
+					hi = maxf(hi, px)
+		var k := 0.31 / maxf(hi - lo, 0.01)
+		var mid := (lo + hi) * 0.5
+		for i in 2:
+			fx[i] = 0.735 + (fx[i] - mid) * k
+			tops[i] = bases[i] - (bases[i] - tops[i]) * k
 	var sm := (world.get_node("Sea") as MeshInstance3D).material_override as ShaderMaterial
 	sm.set_shader_parameter("sun_dir", _ray(0.76, 0.35))
 	# ヘリ：右上 (86%, 22%) から左へゆっくり
@@ -540,6 +674,7 @@ func _process(delta: float) -> void:
 	# カメラ：12 秒で ±1.5° ゆっくり左右に
 	cam.rotation = Vector3(pitch, deg_to_rad(1.5) * sin(_t * TAU / 12.0), 0)
 	cam_wide.rotation = cam.rotation
+	far_root.rotation.y = cam.rotation.y * (1.0 - FAR_SWAY)
 	logo.position.y = logo_y + sin(_t * TAU / 5.0) * 4.0
 	raft.position.y = raft_y + sin(_t * 1.1) * 0.025 * cat.scale.x
 	raft.rotation.z = sin(_t * 0.8 + 0.6) * 0.03
