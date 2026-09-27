@@ -139,3 +139,14 @@ test("store: the sample month has confirmed pay from punched shifts and no pay f
     assert.ok(p.noShows >= 0);
   }
 });
+
+test("csv: text cells that a spreadsheet would run as a formula are prefixed with a quote", () => {
+  assert.equal(csvCell('=HYPERLINK("http://x")'), `"'=HYPERLINK(""http://x"")"`);
+  const out = toCsv([['=HYPERLINK("http://x")', "+1", "-cmd", "@SUM(A1)", "\tx", "\rx", "Maya"]]).slice(1);
+  const cells = ["'=HYPERLINK", "'+1", "'-cmd", "'@SUM(A1)", "'\tx", "\"'\rx\"", "Maya"];
+  for (const c of cells) assert.ok(out.includes(c), `${JSON.stringify(c)} in ${JSON.stringify(out)}`);
+  // The first cell, once unquoted, starts with '=
+  assert.ok(out.startsWith(`"'=`));
+  // Numbers are data, not text: negative amounts stay numbers.
+  assert.equal(csvCell(-120), "-120");
+});
