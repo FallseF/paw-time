@@ -115,59 +115,10 @@ static func grant(c: Dictionary) -> bool:
 	return is_new
 
 
-## 玉の中に見せる小さな影（材料は木片、服はリボンの輪）。hatch では大きくして出す
+## 中身の形（OrbContents：材料は本物の小さな形、服は台にのせた服、乗り物）。孵化で大きくして出す。
+## glow=true なら、玉の中と同じく自分でほんのり光らせる
 static func make_icon(c: Dictionary, glow := false) -> Node3D:
-	var n := Node3D.new()
-	var col: Color = info(c).get("color", Color.WHITE)
-	var m := MeshInstance3D.new()
-	if c.kind == "material":
-		match c.id:
-			"driftwood", "wood":
-				var cy := CylinderMesh.new()
-				cy.top_radius = 0.18
-				cy.bottom_radius = 0.22
-				cy.height = 1.0
-				m.mesh = cy
-				m.rotation = Vector3(0.2, 0.5, 1.3)
-			"pebble", "moss", "stone", "seed":
-				var sp := SphereMesh.new()
-				sp.radius = 0.45
-				sp.height = 0.6
-				m.mesh = sp
-			"shell":
-				var sh := SphereMesh.new()
-				sh.radius = 0.5
-				sh.height = 0.5
-				sh.is_hemisphere = true
-				m.mesh = sh
-				m.rotation = Vector3(-0.4, 0, 0)
-			_:
-				var b := BoxMesh.new()
-				b.size = Vector3(0.6, 0.35, 0.45)
-				m.mesh = b
-				m.rotation = Vector3(0.3, 0.6, 0.2)
-	elif c.kind == "vehicle":
-		var v := VehicleProps.build_vehicle(c.id)
-		v.scale = Vector3.ONE * 0.45
-		n.add_child(v)
-	else:
-		var t := TorusMesh.new()
-		t.inner_radius = 0.28
-		t.outer_radius = 0.48
-		m.mesh = t
-		m.rotation = Vector3(1.2, 0, 0.3)
-		var k := MeshInstance3D.new()
-		var s := SphereMesh.new()
-		s.radius = 0.16
-		s.height = 0.32
-		k.mesh = s
-		k.material_override = Obake3D.toon(col.darkened(0.15), 0.2)
-		n.add_child(k)
-	if c.kind != "vehicle":
-		m.material_override = Obake3D.toon(col, 0.25)
-		n.add_child(m)
+	var n := OrbContents.build(c)
 	if glow:
-		# 玉の中では、光る影にして、ガラス越しに形が読めるように
-		for mi in n.find_children("*", "MeshInstance3D", true, false):
-			(mi as MeshInstance3D).material_override = Kit.glow(col.lightened(0.2), 2.2)
+		OrbContents.restyle(n, info(c).get("color", Color.WHITE))
 	return n

@@ -307,8 +307,9 @@ func _next() -> void:
 			orb.light_scale = 0.3 + i * 0.3
 		await tw2.finished
 		await get_tree().create_timer(0.3 - i * 0.04).timeout
-	# 割れる
-	_flash(1.0 if is_cat else 0.9)
+	# 割れる：殻にひびが走り、破片と光の筋（OrbModel.hatch_vfx）。画面の白い閃光は控えめに（白飛びさせない）
+	await orb.model.hatch_vfx(world, is_cat)
+	_flash(0.18 if is_cat else 0.1)
 	if is_cat:
 		_light_burst(orb.position)
 	sfx["hatch"].play()
@@ -369,7 +370,7 @@ func _open_batch() -> void:
 			tw2.tween_property(o, "scale", Vector3.ONE * (1.2 + k * 0.2), 0.12)
 		await tw2.finished
 		await get_tree().create_timer(0.15).timeout
-	_flash(0.8)
+	_flash(0.3)
 	sfx["hatch"].play()
 	var counts := {}
 	var levels := {}
@@ -387,6 +388,7 @@ func _open_batch() -> void:
 		ob.scale = Vector3.ONE * 0.05
 		world.add_child(ob)
 		batch_obs.append(ob)
+		o.model.shatter(world)
 		o.queue_free()
 		create_tween().tween_property(ob, "scale", Vector3.ONE * (0.3 if not item else 0.28), 0.5).set_delay(i * 0.06).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	burst.position = Vector3(0, 0.6, 0.5)
@@ -432,7 +434,7 @@ func _light_burst(at: Vector3) -> void:
 	world.add_child(l)
 	Kit.shake(cam, 0.05, 0.35)
 	var tw := create_tween()
-	tw.tween_property(l, "light_energy", 5.0, 0.12)
+	tw.tween_property(l, "light_energy", 0.8, 0.12)
 	tw.tween_property(l, "light_energy", 0.0, 0.9).set_trans(Tween.TRANS_SINE)
 	tw.tween_callback(l.queue_free)
 
