@@ -9,9 +9,9 @@
 3. 下の「統合の案」に、どれを採るかを一言返す
 
 ## 遊べる URL（Vercel、個人の eiyutos-projects、誰でも開ける）
-- ローンチ資料（3案の紹介・広告動画・レア30体の図鑑）：https://obake-breakroom-launch.vercel.app
+- ローンチ資料（3案の紹介・広告動画・レア30体の図鑑）：https://paw-time-launch.vercel.app
 - A：https://obake-breakroom-a-scoop.vercel.app
-- B：https://obake-breakroom-b-sleep.vercel.app
+- B：https://paw-time-play.vercel.app
 - C：https://obake-breakroom-c-defense.vercel.app
 - 最初の読み込みは約60〜70MB（エンジン 39MB＋データ 22〜28MB）。スマホの回線では数十秒かかる。
 
