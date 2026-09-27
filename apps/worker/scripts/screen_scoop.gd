@@ -409,6 +409,8 @@ const ORB_TAG := {"register": "ピッと動いて、止まる", "dish": "ふわ�
 
 ## その色の玉にはじめて会ったときだけ、玉の上に性格をひとこと
 func _orb_tag(o: Orb3D) -> void:
+	if Onboarding.at("scoop"):
+		return # はじめての夜は、相棒の説明（コーチ）だけ。玉の上のひとことは次の夜から
 	var ck: String = o.data.get("content", {}).get("kind", "obake")
 	if ck != "obake" and not GameState.tut.has("hint_" + ck):
 		GameState.tut["hint_" + ck] = true

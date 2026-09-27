@@ -66,9 +66,10 @@ func _build_world() -> void:
 	cam = Camera3D.new()
 	cam.fov = 40
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
-	cam.position = Vector3(0, 1.45, 4.2)
+	# 相棒は画面の上半分（吹き出しの下・カードの上）に見えるよう、足もとより下を見る
+	cam.position = Vector3(0, 1.25, 3.6)
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.75, 0))
+	cam.look_at(Vector3(0, -0.05, 0))
 	var floor_m := MeshInstance3D.new()
 	var fm := CylinderMesh.new()
 	fm.top_radius = 7.0
@@ -79,8 +80,8 @@ func _build_world() -> void:
 	floor_m.position = Vector3(0, -0.05, -0.4)
 	world.add_child(floor_m)
 	_box(Vector3(8, 4, 0.1), Vector3(0, 1.6, -1.9), Color("f7e6cf"))
-	_box(Vector3(1.3, 0.8, 0.05), Vector3(-1.1, 1.9, -1.82), Color("ffd9a0"))
-	_box(Vector3(0.9, 0.06, 0.3), Vector3(1.2, 1.5, -1.75), Color("a0673f")) # 棚
+	_box(Vector3(1.1, 0.7, 0.05), Vector3(-1.0, 1.35, -1.82), Color("ffd9a0")) # 窓
+	_box(Vector3(0.7, 0.5, 0.05), Vector3(1.05, 1.3, -1.82), Color("4f7a5a")) # シフト表の黒板
 	partner = MyObake3D.from_saved()
 	if partner == null:
 		partner = MyObake3D.new().setup_look(QuizData.TYPES["IFHY"].look)
@@ -276,7 +277,7 @@ func _start_mock() -> void:
 	chip = _panel(Color(0.1, 0.08, 0.2, 0.7), 16)
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chip.add_child(_text(tr("ONB_SHIFT_MOCK"), 13, Color.WHITE, true))
-	chip.position = Vector2(60, 66)
+	chip.position = Vector2(60, 420) # 下のカードのすぐ上（上は仕事場の見出しと相棒の吹き出し）
 	chip.size = Vector2(240, 0)
 	add_child(chip)
 	var tw2 := create_tween()
