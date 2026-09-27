@@ -2311,7 +2311,7 @@ func _show_card() -> void:
 				Kit.nudge.call_deferred(b)
 		else:
 			# 休みの日：1 行だけ（仕事に行く・島づくりは、下のタブと ✎ から）
-			_today("夜の庭へ、ようこそ" if first else ("今日の仕事は、おしまい" if GameState.shift_done_today else "今日は休み"), "川べりは、夕方 5 時から", "", Callable(), [
+			_today("夜の庭へ、ようこそ" if first else ("今日の仕事は、おしまい" if GameState.shift_done_today else "今日は休み"), ("すくうタブから、いつでも川べりへ" if GameState.ANYTIME else "川べりは、夕方 5 時から"), "", Callable(), [
 				Kit.text(tr("毎日の暮らしで、庭が育つ") if first else tr("休みの日も、庭はちゃんと育つ"), 13, Color("6a5f70"))])
 			GameState.tut["first"] = true
 	elif GameState.phase == "evening":
