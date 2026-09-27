@@ -6,6 +6,7 @@ extends Node
 ##   - 「話す」札：いつも見えて、押すとカメラが相棒に寄ってからチャット。閉じたら眺めに戻る
 ##   - いかだ（桟橋の乗り物）を押すと、行き先えらび（友だちの島・お店の島）。読めないコードでは出かけない
 ##   - 島の拡大・縮小（ホイール・二本の指でつまむ）。範囲の中に収まり、拡大してもおばけのタップが当たる
+##   - 島をなぞって動かす（慣性・範囲の外はやわらかく押しもどす）。なぞりはタップにならない。「もどる」で家の前へ
 ## OBAKE_NOSAVE=1 godot --headless --path . res://tests/test_island_ui.tscn
 
 var fails := 0
@@ -110,6 +111,7 @@ func _run() -> void:
 	g.share_ui.queue_free()
 	await _frames(2)
 	await _zoom(g)
+	await _pan(g)
 
 	print("ISLAND UI TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	get_tree().quit(0 if fails == 0 else 1)
@@ -170,12 +172,17 @@ func _zoom(g) -> void:
 	_touch(g, 1, Vector2(210, 330), true)
 	_drag(g, 1, Vector2(270, 330))
 	_check(absf(g.zoom_to - 0.5) < 0.01, "pinch out halves the distance (%.2f)" % g.zoom_to)
-	var orbit0: float = g.orbit
+	var pan0: Vector2 = g.pan
 	var mm := InputEventMouseMotion.new()
 	mm.button_mask = MOUSE_BUTTON_MASK_LEFT
+	mm.position = Vector2(100, 330)
 	mm.relative = Vector2(-60, 0)
 	g._gui_input(mm)
-	_check(g.orbit == orbit0, "no orbit while pinching")
+	_check(g.pan == pan0, "one-finger pan is off while pinching")
+	# 二本の指を同じ向きに動かすと、つまみながら島が動く
+	_drag(g, 0, Vector2(110, 330))
+	_drag(g, 1, Vector2(230, 330))
+	_check(g.pan.x > pan0.x + 0.2, "two fingers moving together pan the island (%s)" % g.pan)
 	_touch(g, 1, Vector2(270, 330), false)
 	_touch(g, 0, Vector2(150, 330), false)
 	_check(g.touches.is_empty(), "fingers released")
@@ -243,3 +250,61 @@ func _raft(g) -> void:
 	g.raft_ui.queue_free()
 	g._toggle_card()
 	await get_tree().create_timer(0.5).timeout
+
+
+## なぞって島を動かす：指の下の地面がついてくる・離したあと少しすべる・範囲の外からもどる・なぞりはタップにならない・「もどる」
+func _pan(g) -> void:
+	g.recenter()
+	await get_tree().create_timer(1.2).timeout
+	_check(g.pan.length() < 0.02, "starts centred (%s)" % g.pan)
+	var labels0 := 0
+	for w in g.walkers:
+		labels0 += (w.o as Node).get_child_count()
+	# 地面の 1 点が、指についてくるか（押した点の真下の地面 → 離した点の真下）
+	var at := Vector2(180, 300)
+	var ground0: Vector3 = g._ground_at(at)
+	g.demo_pan(Vector2(-90, 0), at)
+	var ground1: Vector3 = g._ground_at(at + Vector2(-90, 0))
+	_check(ground0.distance_to(ground1) < 0.35, "the ground under the finger follows it (%.2f)" % ground0.distance_to(ground1))
+	var p1: Vector2 = g.pan
+	_check(p1.x > 0.5, "dragging left moves the view right (%s)" % p1)
+	var labels1 := 0
+	for w in g.walkers:
+		labels1 += (w.o as Node).get_child_count()
+	_check(labels1 == labels0, "a drag is not a tap on an obake")
+	await _frames(6)
+	_check(g.pan.x > p1.x + 0.05, "keeps gliding after release (momentum %s -> %s)" % [p1, g.pan])
+	# 大きく引っぱって外へ：離すと範囲の中へもどる
+	for i in 6:
+		g.demo_pan(Vector2(-300, -200), Vector2(330, 500))
+		await _frames(1)
+	await get_tree().create_timer(1.6).timeout
+	_check(g._pan_clamped(g.pan).distance_to(g.pan) < 0.05, "settles inside the island bounds (%s)" % g.pan)
+	var cw: Vector3 = g._ground_at(Vector2(180, 300))
+	var near_land := false
+	for c in g.pan_circles:
+		near_land = near_land or Vector2(cw.x - c.x, cw.z - c.y).length() < c.z + g.PAN_MARGIN + 0.3
+	_check(near_land, "the middle of the screen shows land, not open sea (%s)" % cw)
+	_check(g.pan.length() > 2.0, "panned far from home (%s)" % g.pan)
+	await _frames(2)
+	_check(g.recenter_btn != null and g.recenter_btn.visible, "the Home button shows when panned away")
+	if g.recenter_btn:
+		var br: Rect2 = g.recenter_btn.get_global_rect()
+		_check(br.position.x >= 0 and br.end.x <= 360, "Home button on screen (%s)" % br)
+		g.recenter_btn.pressed.emit()
+	await get_tree().create_timer(1.4).timeout
+	_check(g.pan.length() < 0.05, "Home glides back to the house (%s)" % g.pan)
+	_check(g.recenter_btn == null or not g.recenter_btn.visible, "Home button hides at home")
+	# 短い押し離し（ほぼ動かさない）はタップのまま
+	var hit := false
+	for w in g.walkers:
+		var ob: Node3D = w.o
+		var sp := View3D.unproject(g.cam, ob.global_position + Vector3(0, 0.35, 0))
+		if sp.y < 140 or sp.y > 400 or sp.x < 20 or sp.x > 340:
+			continue
+		var n0 := ob.get_child_count()
+		_tap(sp)
+		await _frames(2)
+		hit = ob.get_child_count() > n0
+		break
+	_check(hit, "tap on an obake still works after panning")
