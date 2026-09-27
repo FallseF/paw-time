@@ -218,7 +218,9 @@ func _show_clash(clash: Dictionary) -> void:
 	_hide_clash()
 	Kit.play(self, "tap", 0.8)
 	clash_box.add_child(I18n.wrap(_text(tr("R3_OVERLAP_TITLE"), 15, Color("b0502a"), true)))
-	clash_box.add_child(I18n.wrap(_text(tr("R3_OVERLAP_BODY") % JobDesk.shift_label(clash), 13, INK)))
+	# JobDesk は GameState（autoload）を使うので、名前で参照せず実行時に読む（-s のテストでも ShiftForm を読めるように）
+	var jd: GDScript = load("res://scripts/job_desk.gd")
+	clash_box.add_child(I18n.wrap(_text(tr("R3_OVERLAP_BODY") % jd.shift_label(clash), 13, INK)))
 	var link := Button.new()
 	link.text = tr("R3_SEE_MY_SHIFTS")
 	link.flat = true
