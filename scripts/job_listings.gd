@@ -149,7 +149,11 @@ static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1
 	for e in pool:
 		if out.size() >= count_n:
 			break
-		out.append(_make_job(e, prefs, dates[rng.randi_range(0, dates.size() - 1)], rng))
+		# 週のマス：その店の時間帯が、その曜日に選んだ時間帯と重なる日だけ
+		var ok_dates: Array = dates.filter(func(d0): return windows_of(e).any(func(w): return w in JobPrefs.windows_on(prefs, weekday_mon(d0))))
+		if ok_dates.is_empty():
+			continue
+		out.append(_make_job(e, prefs, ok_dates[rng.randi_range(0, ok_dates.size() - 1)], rng))
 	out.sort_custom(func(a, b): return a.start < b.start)
 	return out
 
@@ -172,7 +176,8 @@ static func weekday_mon(unix: float) -> int:
 
 
 static func _make_job(e: Array, prefs: Dictionary, day0: int, rng: RandomNumberGenerator) -> Dictionary:
-	var wins: Array = windows_of(e).filter(func(w): return prefs.windows.is_empty() or w in prefs.windows)
+	var allowed: Array = JobPrefs.windows_on(prefs, weekday_mon(day0))
+	var wins: Array = windows_of(e).filter(func(w): return allowed.is_empty() or w in allowed)
 	var win: String = wins[rng.randi_range(0, wins.size() - 1)]
 	var span: Array = JobPrefs.WINDOWS[win]
 	var hours: int = mini(int(e[7]), span[1] - span[0])

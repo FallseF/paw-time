@@ -84,6 +84,7 @@ func _run() -> void:
 			_check(prefs.pay == "any" or j.pay == prefs.pay, "pay %s != %s" % [j.pay, prefs.pay])
 			_check(JobListings.pays_of(JobListings.entry(j.listing)).has(j.pay), "pay not offered")
 			_check(days.has(JobListings.weekday_mon(j.start)), "weekday %d not in %s" % [JobListings.weekday_mon(j.start), days])
+			_check(("%d:%s" % [JobListings.weekday_mon(j.start), j.window]) in JobPrefs.normalize(prefs).slots, "slot %d:%s not chosen" % [JobListings.weekday_mon(j.start), j.window])
 			_check(j.start > base and j.start < base + 8 * 86400, "date out of range")
 			_check(j.area == JobPrefs.normalize(prefs).area, "area")
 			_check(String(j.place).contains(JobPrefs.area_label(j.area)), "place shows area: %s" % j.place)
@@ -108,6 +109,13 @@ func _run() -> void:
 	# 条件のそろえ方（型・範囲・知らない値）。お金の本物の情報は、渡されても持たない
 	var lp := JobPrefs.normalize({"area": " 中野 ", "days": [5.0, 1.0, 1.0], "windows": ["night", "morning", "x"], "min_wage": 99999, "pay": "weird", "bank_account": "1234567", "card": "4111"})
 	_check(lp.area == "中野" and lp.days == [1, 5] and lp.windows == ["morning", "night"] and lp.min_wage == JobPrefs.WAGE_MAX and lp.pay == "any", "prefs normalize %s" % lp)
+	# 週のマス（曜日×時間帯）：古い形（days × windows）は全部のマスに。マスは曜日ごとに違ってよい
+	_check(lp.slots == ["1:morning", "1:night", "5:morning", "5:night"], "old prefs become slots %s" % [lp.slots])
+	var gp := JobPrefs.normalize({"slots": ["0:morning", "2:evening", "2:evening", "9:day", "3:x"], "min_wage": 1000, "pay": "any"})
+	_check(gp.slots == ["0:morning", "2:evening"] and gp.days == [0, 2] and gp.windows == ["morning", "evening"], "slots normalize %s" % [gp])
+	for j in JobListings.generate(gp, 4, 3, base):
+		var wd := JobListings.weekday_mon(j.start)
+		_check((wd == 0 and j.window == "morning") or (wd == 2 and j.window == "evening"), "grid job on %d %s" % [wd, j.window])
 	var raw := JSON.stringify(lp).to_lower()
 	for bad in ["bank", "card", "1234567"]:
 		_check(not raw.contains(bad), "prefs must not hold %s" % bad)

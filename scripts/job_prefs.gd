@@ -1,7 +1,8 @@
 class_name JobPrefs
 ## 働く条件（プレイヤーが入力する希望）。user://job_prefs.json に置く（ゲーム本体のセーブとは別）。
 ## 口座・カード番号など、お金の受け取りの本物の情報は、聞かないし持たない。受け取り方の「希望」（日払い・週払い・月払い）だけ。
-## 形: {area, days: [0..6（0=月）], windows: ["morning"|"day"|"evening"|"night"], min_wage: 円/時, pay: "daily"|"weekly"|"monthly"|"any", suggest: bool}
+## 形: {area, slots: ["<曜日>:<時間帯>", …]（週のマス。曜日 0=月、時間帯 morning|day|evening|night）, days, windows, min_wage: 円/時, pay: "daily"|"weekly"|"monthly"|"any", suggest: bool}
+## days と windows は slots から作る（どの曜日・どの時間帯が一つでもあるか）。slots の無い古い保存は days × windows を slots にする
 ## suggest＝相棒が毎日の求人を知らせるか（Off なら毎日の求人カードは出さない。自分で入れたシフトと評価はそのまま）
 
 const PATH := "user://job_prefs.json"
@@ -25,7 +26,30 @@ static var path := PATH
 
 
 static func defaults() -> Dictionary:
-	return {"area": "", "days": [0, 1, 2, 3, 4, 5, 6], "windows": ["day", "evening"], "min_wage": 1200, "pay": "any", "suggest": true}
+	var d := {"area": "", "days": [0, 1, 2, 3, 4, 5, 6], "windows": ["day", "evening"], "min_wage": 1200, "pay": "any", "suggest": true}
+	d["slots"] = grid(d.days, d.windows)
+	return d
+
+
+## 曜日 × 時間帯のマスを全部（古い形の保存の読み替えにも使う）
+static func grid(days: Array, windows: Array) -> Array:
+	var out: Array = []
+	for i in days:
+		for w in WINDOW_ORDER:
+			if w in windows:
+				out.append("%d:%s" % [int(i), w])
+	return out
+
+
+## その曜日（0=月）に選んだ時間帯（マスが一つも無ければ、どれでも）
+static func windows_on(prefs: Dictionary, weekday: int) -> Array:
+	if prefs.get("slots", []).is_empty():
+		return WINDOW_ORDER.duplicate()
+	var out: Array = []
+	for w in WINDOW_ORDER:
+		if ("%d:%s" % [weekday, w]) in prefs.get("slots", []):
+			out.append(w)
+	return out
 
 
 static func exists() -> bool:
@@ -62,18 +86,32 @@ static func save_prefs(p: Dictionary) -> bool:
 static func normalize(p: Dictionary) -> Dictionary:
 	var d := defaults()
 	d.area = String(p.get("area", "")).strip_edges().left(40)
+	var src: Array = []
+	if p.get("slots", null) is Array:
+		src = p.slots
+	else:
+		src = grid(p.get("days", []).map(func(x): return int(x)), p.get("windows", []))
+	var slots: Array = []
 	var days: Array = []
-	for x in p.get("days", []):
-		var i := int(x)
-		if i >= 0 and i <= 6 and not days.has(i):
-			days.append(i)
-	days.sort()
-	d.days = days
 	var wins: Array = []
-	for w in WINDOW_ORDER:
-		if w in p.get("windows", []):
-			wins.append(w)
-	d.windows = wins
+	for x in src:
+		var parts := String(x).split(":")
+		if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1] in WINDOW_ORDER:
+			continue
+		var i := int(parts[0])
+		if i < 0 or i > 6:
+			continue
+		var key := "%d:%s" % [i, parts[1]]
+		if not slots.has(key):
+			slots.append(key)
+		if not days.has(i):
+			days.append(i)
+		if not wins.has(parts[1]):
+			wins.append(parts[1])
+	days.sort()
+	d.slots = grid(days, WINDOW_ORDER).filter(func(k): return slots.has(k))
+	d.days = days
+	d.windows = WINDOW_ORDER.filter(func(w): return wins.has(w))
 	d.min_wage = clampi(int(p.get("min_wage", 1200)), WAGE_MIN, WAGE_MAX)
 	var pay := String(p.get("pay", "any"))
 	d.pay = pay if pay in PAYS else "any"

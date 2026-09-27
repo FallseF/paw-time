@@ -683,8 +683,6 @@ PREFS_TITLE,How do you like to work?,どんなふうに働きたい？
 PREFS_SUB,%s will look for jobs that fit.,%s が、合う仕事をさがすよ。
 PREFS_AREA,Area,場所
 PREFS_AREA_PH,Area or station (e.g. Shibuya),地域や駅（例：渋谷）
-PREFS_DAYS,Days you can work,働ける曜日
-PREFS_TIME,Time of day,時間帯
 PREFS_WIN_MORNING,Morning 6–12,朝 6〜12時
 PREFS_WIN_DAY,Daytime 11–17,昼 11〜17時
 PREFS_WIN_EVENING,Evening 17–22,夕方 17〜22時
@@ -692,9 +690,8 @@ PREFS_WIN_NIGHT,Late night 22–5,深夜 22〜5時
 PREFS_WAGE,Minimum hourly wage,最低時給
 PREFS_WAGE_VAL,¥%s / h,¥%s／時
 PREFS_PAY,Pay schedule,お給料の受け取り方
-PREFS_SAFE,We never ask for bank or card numbers. Your choices stay on this device.,口座やカードの番号は聞きません。入れた条件は、この端末の中だけに残ります。
 PREFS_GO,Find jobs for me,この条件でさがして
-PREFS_NEED,Pick at least one day and time,曜日と時間帯を1つ以上えらんでね
+PREFS_NEED,Pick at least one square,マスを1つ以上えらんでね
 JOB_AREA_SHIBUYA,Shibuya,渋谷
 JOB_AREA_SHINJUKU,Shinjuku,新宿
 JOB_AREA_IKEBUKURO,Ikebukuro,池袋
@@ -1733,3 +1730,9 @@ Take a rest day after %s shifts,Take a rest day after %s shifts,シフト %s 回
 Visit a friend's island,Visit a friend's island,友だちの島におでかけする
 Meet %s kinds of obake,Meet %s kinds of obake,おばけに %s 種類会う
 I'm still a little tired from yesterday. Let's go easy today.,I'm still a little tired from yesterday. Let's go easy today.,きのうの疲れが、まだ少し残ってる。今日はゆっくりね。
+PREFS_WEEK,When can you work? (tap the squares),働ける時間（マスをタップ）
+PREFS_WIN_S_MORNING,Morn,朝
+PREFS_WIN_S_DAY,Day,昼
+PREFS_WIN_S_EVENING,Eve,夕方
+PREFS_WIN_S_NIGHT,Night,深夜
+PREFS_WIN_HOURS,Morning 6–12 · Day 11–17 · Evening 17–22 · Night 22–5,朝 6〜12時・昼 11〜17時・夕方 17〜22時・深夜 22〜5時

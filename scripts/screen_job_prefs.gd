@@ -1,7 +1,7 @@
 extends Control
 ## 働く条件の入力（はじめての流れの「prefs」、あとから仕事の知らせからも開ける）。
-## 地域（自由入力＋候補）・曜日・時間帯・最低時給・受け取り方の希望。保存は JobPrefs（user://job_prefs.json）。
-## 口座・カード番号など、本物のお金の情報は聞かない（画面の下にもそう書く）。
+## 地域（自由入力＋候補）・週のマス（曜日×時間帯）・最低時給・受け取り方の希望。保存は JobPrefs（user://job_prefs.json）。
+## 口座・カード番号など、本物のお金の情報は聞かない。
 ## 主ボタンは「この条件で探して」ひとつ。
 
 var main
@@ -16,8 +16,7 @@ const LILAC := Color("8b7bff")
 var prefs := {}
 var area_edit: LineEdit
 var area_chips := {}
-var day_chips: Array[Button] = []
-var win_chips := {}
+var cells := {} # "<曜日>:<時間帯>" → Button（週のマス）
 var pay_chips := {}
 var suggest_chips := {}
 var wage_l: Label
@@ -95,30 +94,27 @@ func _ready() -> void:
 		af.add_child(c)
 	area_box.add_child(af)
 
-	# 曜日
-	var day_box := _section(v, tr("PREFS_DAYS"))
-	var dh := HBoxContainer.new()
-	dh.add_theme_constant_override("separation", 4)
+	# 週のマス（曜日 × 時間帯）。選んだマスは塗りとチェック、選んでいないマスは白と枠
+	var week_box := _section(v, tr("PREFS_WEEK"))
+	var g := GridContainer.new()
+	g.columns = 8
+	g.add_theme_constant_override("h_separation", 3)
+	g.add_theme_constant_override("v_separation", 4)
+	g.add_child(Control.new())
 	for i in 7:
-		var c := _chip(tr("JOB_WD_%d" % i), func(): _toggle_day(i), 38)
-		c.custom_minimum_size = Vector2(0, 38)
-		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		day_chips.append(c)
-		dh.add_child(c)
-	day_box.add_child(dh)
-
-	# 時間帯
-	var win_box := _section(v, tr("PREFS_TIME"))
-	var wg := GridContainer.new()
-	wg.columns = 2
-	wg.add_theme_constant_override("h_separation", 6)
-	wg.add_theme_constant_override("v_separation", 6)
+		var dh := _head(tr("JOB_WD_%d" % i), func(): _toggle_column(i))
+		g.add_child(dh)
 	for w in JobPrefs.WINDOW_ORDER:
-		var c := _chip(tr("PREFS_WIN_" + w.to_upper()), func(): _toggle_win(w), 40)
-		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		win_chips[w] = c
-		wg.add_child(c)
-	win_box.add_child(wg)
+		var wl := _head(tr("PREFS_WIN_S_" + w.to_upper()), func(): _toggle_row(w))
+		wl.custom_minimum_size = Vector2(46, 34)
+		g.add_child(wl)
+		for i in 7:
+			var key := "%d:%s" % [i, w]
+			var c := _cell(func(): _toggle_slot(key))
+			cells[key] = c
+			g.add_child(c)
+	week_box.add_child(g)
+	week_box.add_child(I18n.wrap(Kit.text(tr("PREFS_WIN_HOURS"), 11, SUB)))
 
 	# 最低時給
 	var wage_box := _section(v, tr("PREFS_WAGE"))
@@ -163,12 +159,6 @@ func _ready() -> void:
 	var own := Kit.button(tr("SHIFT_FORM_OPEN"), Color("f3ecff"), open_shift_form, Color("6a5bd6"), 40, 14)
 	sug_box.add_child(own)
 
-	# 本物のお金の情報は聞かない
-	var note := PanelContainer.new()
-	note.add_theme_stylebox_override("panel", Kit.pill(Color("eef6ea"), 14, 0.0, Vector2(12, 8)))
-	note.add_child(I18n.wrap(Kit.text(tr("PREFS_SAFE"), 12, Color("3f6a4a"), true)))
-	v.add_child(note)
-
 	go_btn = Kit.button(tr("PREFS_GO"), ORANGE, _save)
 	go_btn.position = Vector2(24, 570)
 	go_btn.size = Vector2(312, 54)
@@ -211,25 +201,85 @@ func _chip_style(b: Button, on: bool) -> void:
 		b.add_theme_color_override(k, fg)
 
 
+## 週のマスの見出し（曜日・時間帯）。タップで、その列・その行をまとめて切りかえ
+func _head(t: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.flat = true
+	b.custom_minimum_size = Vector2(33, 26)
+	b.add_theme_font_override("font", Kit.black())
+	b.add_theme_font_size_override("font_size", 12)
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(k, SUB)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		cb.call())
+	return b
+
+
+## 週のマスひとつ。選んだらチェック（字ではなく線で描く。字形に ✓ が無いため）
+func _cell(cb: Callable) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(33, 34)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.pressed.connect(func():
+		Kit.play(self, "tap", 1.15)
+		cb.call())
+	var mark := Control.new()
+	mark.name = "Check"
+	mark.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mark.draw.connect(func():
+		var c := mark.size / 2.0
+		mark.draw_polyline(PackedVector2Array([c + Vector2(-7, 0), c + Vector2(-2, 5), c + Vector2(8, -6)]), Color.WHITE, 3.0, true))
+	b.add_child(mark)
+	return b
+
+
+func _cell_style(b: Button, on: bool) -> void:
+	for k in ["normal", "hover", "pressed"]:
+		var st := StyleBoxFlat.new()
+		st.set_corner_radius_all(9)
+		if on:
+			st.bg_color = LILAC if k != "pressed" else LILAC.darkened(0.08)
+		else:
+			st.bg_color = Color.WHITE if k != "pressed" else Color("f3ecff")
+			st.border_color = Color("d9cfe0")
+			st.set_border_width_all(2)
+		b.add_theme_stylebox_override(k, st)
+	b.get_node("Check").visible = on
+
+
 func _round_btn(t: String, cb: Callable) -> Button:
 	var b := Kit.button(t, Color("f3ecff"), cb, Color("6a5bd6"), 40, 20)
 	b.custom_minimum_size = Vector2(48, 40)
 	return b
 
 
-func _toggle_day(i: int) -> void:
-	if prefs.days.has(i):
-		prefs.days.erase(i)
+func _toggle_slot(key: String) -> void:
+	if prefs.slots.has(key):
+		prefs.slots.erase(key)
 	else:
-		prefs.days.append(i)
+		prefs.slots.append(key)
 	_refresh()
 
 
-func _toggle_win(w: String) -> void:
-	if prefs.windows.has(w):
-		prefs.windows.erase(w)
-	else:
-		prefs.windows.append(w)
+## 列（曜日）をまとめて：全部ついていれば消す、そうでなければ全部つける
+func _toggle_column(i: int) -> void:
+	_toggle_many(JobPrefs.WINDOW_ORDER.map(func(w): return "%d:%s" % [i, w]))
+
+
+func _toggle_row(w: String) -> void:
+	_toggle_many(range(7).map(func(i): return "%d:%s" % [i, w]))
+
+
+func _toggle_many(keys: Array) -> void:
+	var all_on := keys.all(func(k): return prefs.slots.has(k))
+	for k in keys:
+		prefs.slots.erase(k)
+		if not all_on:
+			prefs.slots.append(k)
 	_refresh()
 
 
@@ -261,10 +311,8 @@ func _sync_area_chips() -> void:
 
 
 func _refresh() -> void:
-	for i in 7:
-		_chip_style(day_chips[i], prefs.days.has(i))
-	for w in win_chips:
-		_chip_style(win_chips[w], prefs.windows.has(w))
+	for key in cells:
+		_cell_style(cells[key], prefs.slots.has(key))
 	for p in pay_chips:
 		_chip_style(pay_chips[p], prefs.pay == p)
 	for on in suggest_chips:
@@ -272,7 +320,7 @@ func _refresh() -> void:
 	wage_l.text = tr("PREFS_WAGE_VAL") % JobListings._commas(int(prefs.min_wage))
 	if wage_slider and int(wage_slider.value) != int(prefs.min_wage):
 		wage_slider.set_value_no_signal(prefs.min_wage)
-	var ok: bool = not prefs.days.is_empty() and not prefs.windows.is_empty()
+	var ok: bool = not prefs.slots.is_empty()
 	if not prefs.suggest:
 		ok = true # 知らせを受けないなら、曜日・時間帯は空でもよい
 	go_btn.disabled = not ok
@@ -308,8 +356,7 @@ func _save() -> void:
 func demo_fill() -> void:
 	area_edit.text = JobPrefs.area_label("shibuya")
 	_sync_area_chips()
-	prefs.days = [0, 2, 4, 5]
-	prefs.windows = ["day", "evening"]
+	prefs.slots = JobPrefs.grid([0, 2, 4], ["day", "evening"]) + ["5:morning", "5:day"]
 	prefs.min_wage = 1250
 	prefs.pay = "weekly"
 	_refresh()
