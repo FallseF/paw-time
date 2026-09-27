@@ -179,7 +179,7 @@ export function TodayPage() {
         <div className="stack">
           <Panel title={t.today.island} actions={<Link className="btn sm ghost" href="/reviews">{t.today.islandLink}<Icon name="chevronRight" /></Link>}>
             <div className="panel-b stack-sm">
-              <IslandArt island={view.island} shopName={profile.name} signColor={profile.signColor} compact labels={t.landmarks} />
+              <IslandArt island={view.island} shopName={profile.name} signColor={profile.signColor} compact labels={t.landmarks} note={t.sample} />
               <ul className="lm-list">
                 {topLandmarks.map((l) => (
                   <li key={l.id}>

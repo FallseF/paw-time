@@ -33,7 +33,7 @@ export function ReviewsPage() {
         <Panel title={t.reviews.island} sub={t.reviews.basedOn(island.basedOn)}>
           <div className="island-panel">
             <div className="island-art">
-              <IslandArt island={island} shopName={profile.name} signColor={profile.signColor} labels={t.landmarks} />
+              <IslandArt island={island} shopName={profile.name} signColor={profile.signColor} labels={t.landmarks} tags={t.tags} note={t.sample} />
               <p className="small muted" style={{ marginTop: 8 }}>“{profile.values}”</p>
             </div>
             <div className="island-side">
