@@ -80,8 +80,9 @@ func _garden_card(show: bool) -> void:
 # ---------------------------------------------------------------- 今日の求人（保存）
 
 static func today_key() -> String:
-	var d := Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_system()) + JobListings.JST)
-	return "%d-%04d%02d%02d" % [GameState.day, d.year, d.month, d.day]
+	# 町（言語）が変われば、その町の求人に作り直す
+	var d := JobListings.local(Time.get_unix_time_from_system())
+	return "%d-%04d%02d%02d-%s" % [GameState.day, d.year, d.month, d.day, JobListings.region()]
 
 
 static func _load_board() -> Dictionary:
@@ -722,9 +723,9 @@ func _list_row(j: Dictionary) -> Button:
 
 # ---------------------------------------------------------------- 曜日のカード（求人・自分のシフト）
 
-## 日本時間の、その日の 0 時（unix 秒）
+## 見本の町（今の言語）の、その日の 0 時（unix 秒）
 static func day0_of(t: float) -> int:
-	return int(floor((t + JobListings.JST) / 86400.0)) * 86400 - JobListings.JST
+	return JobListings.day0(t)
 
 
 ## 仕事・シフトを日ごとのカードに分ける。first_d0 から n 日は毎日カードを出し（何もない日も）、それ以外の日は何かあれば足す。
@@ -732,7 +733,7 @@ static func day0_of(t: float) -> int:
 static func day_groups(list: Array, first_d0: int, n: int) -> Array:
 	var by := {}
 	for i in n:
-		by[first_d0 + i * 86400] = []
+		by[JobListings.next_day0(first_d0, i)] = []
 	for it in list:
 		var d := day0_of(float(it.start))
 		if not by.has(d):
@@ -750,14 +751,14 @@ static func day_groups(list: Array, first_d0: int, n: int) -> Array:
 
 ## 例: 「火 9/29」「Tue 9/29」
 static func day_label(d0: int) -> String:
-	var d := Time.get_datetime_dict_from_unix_time(d0 + JobListings.JST)
+	var d := JobListings.local(d0)
 	return I18n.t("R2_DAY") % [I18n.t("JOB_WD_%d" % JobListings.weekday_mon(d0)), d.month, d.day]
 
 
-## 例: 「12:00–17:00」（日本時間）
+## 例: 「12:00–17:00」（そのシフトの町の時刻）
 static func clock_range(it: Dictionary) -> String:
-	var s := Time.get_datetime_dict_from_unix_time(int(it.start) + JobListings.JST)
-	var e := Time.get_datetime_dict_from_unix_time(int(it.end) + JobListings.JST)
+	var s := JobListings.local(it.start, JobListings.tz_of(it))
+	var e := JobListings.local(it.end, JobListings.tz_of(it))
 	return "%02d:%02d–%02d:%02d" % [s.hour, s.minute, e.hour, e.minute]
 
 
@@ -1012,8 +1013,7 @@ func _accept() -> void:
 	busy = true
 	var j: Dictionary = jobs[index]
 	# 一緒に働く係と共有する約束：Shifts の 1 件の形
-	var s := {"id": j.id, "title": j.title, "place": j.place, "store": j.store, "role": j.role, "start": j.start, "end": j.end,
-		"wage": j.wage, "pay": j.pay, "listing": j.listing, "sample": true}
+	var s := JobListings.as_shift(j)
 	var invited := Invites.is_invite(j)
 	if invited:
 		s = Invites.accept(j)
@@ -1350,8 +1350,9 @@ func demo_review() -> void:
 	# 終わったばかりの見本のシフトを1件入れて、評価を開く
 	var now := Time.get_unix_time_from_system()
 	var e: Array = JobListings.LIST[0]
-	var s := {"id": "demo_review", "title": I18n.t("JOB_TITLE_REGISTER"), "store": JobListings.store_name(e[0]), "place": I18n.t("JOB_PLACE") % [JobListings.store_name(e[0]), JobPrefs.area_label("shibuya")],
-		"role": "register", "start": now - 5 * 3600, "end": now - 3600, "wage": 1200, "pay": "weekly", "listing": e[0], "sample": true}
+	var j := JobListings.demo_pay({"id": "demo_review", "listing": e[0], "role": "register", "area": "shibuya", "start": now - 5 * 3600, "end": now - 3600, "pay": "weekly", "line_n": 1})
+	JobListings.localize(j)
+	var s := JobListings.as_shift(j)
 	if not Reviews.is_reviewed("demo_review"):
 		Shifts.add(s)
 	_clear_notes()

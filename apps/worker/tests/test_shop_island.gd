@@ -152,18 +152,22 @@ func _run() -> void:
 	# 過ぎたおさそいは出さない
 	_check(Invites.pending(t0 + 30 * 86400).is_empty(), "old invites hidden")
 
-	# 4. 前の晩・当日の朝
-	Shifts.reset()
-	var d0 := int(floor((t0 + JobListings.JST) / 86400.0)) * 86400 - JobListings.JST
-	var eve := float(d0 + 21 * 3600)
-	Shifts.add({"id": "tmr", "store": "Cafe", "listing": "cafe_mori", "start": d0 + 86400 + 10 * 3600, "end": d0 + 86400 + 14 * 3600})
-	_check(Reminders.evening(eve).get("id", "") == "tmr", "evening reminder for tomorrow's shift")
-	_check(Reminders.morning(eve).is_empty(), "no morning card the evening before")
-	var am := float(d0 + 86400 + 7 * 3600)
-	_check(Reminders.morning(am).get("id", "") == "tmr", "morning card on the shift day")
-	_check(Reminders.morning(float(d0 + 86400 + 11 * 3600)).is_empty(), "no card after the shift started")
-	_check(Reminders.evening(float(d0 - 86400 + 21 * 3600)).is_empty(), "no reminder two days before")
-	_check(Reminders.morning_text(Reminders.morning(am))[0].contains("9:30"), "leave 30 min before")
+	# 4. 前の晩・当日の朝（見本の町の暦：日本語＝日本時間、英語＝サンフランシスコ）
+	for loc in ["ja", "en"]:
+		TranslationServer.set_locale(loc)
+		Shifts.reset()
+		var d0 := JobListings.day0(t0)
+		var d1 := JobListings.next_day0(d0, 1)
+		var eve := float(JobListings.at_hour(d0, 21))
+		Shifts.add({"id": "tmr", "store": "Cafe", "listing": "cafe_mori", "start": JobListings.at_hour(d1, 10), "end": JobListings.at_hour(d1, 14)})
+		_check(Reminders.evening(eve).get("id", "") == "tmr", "[%s] evening reminder for tomorrow's shift" % loc)
+		_check(Reminders.morning(eve).is_empty(), "[%s] no morning card the evening before" % loc)
+		var am := float(JobListings.at_hour(d1, 7))
+		_check(Reminders.morning(am).get("id", "") == "tmr", "[%s] morning card on the shift day" % loc)
+		_check(Reminders.morning(float(JobListings.at_hour(d1, 11))).is_empty(), "[%s] no card after the shift started" % loc)
+		_check(Reminders.evening(float(JobListings.at_hour(JobListings.next_day0(d0, -1), 21))).is_empty(), "[%s] no reminder two days before" % loc)
+		_check(Reminders.morning_text(Reminders.morning(am))[0].contains("9:30"), "[%s] leave 30 min before" % loc)
+	TranslationServer.set_locale("en")
 	Shifts.reset()
 	Invites.reset()
 

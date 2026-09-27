@@ -54,8 +54,8 @@ func _run() -> void:
 
 	# 2. Quiet hours (JST)
 	var base := 1790000000.0
-	var day0 := floorf((base + ChatShops.JST) / 86400.0) * 86400.0 - ChatShops.JST
-	var h := func(hh: float) -> float: return day0 + hh * 3600.0
+	var day0 := JobListings.day0(base) # the sample town's time (en = San Francisco)
+	var h := func(hh: float) -> float: return float(JobListings.at_hour(day0, hh))
 	_check(ChatShops.deliver_at(h.call(12.0)) == h.call(12.0), "noon is delivered at once")
 	_check(ChatShops.deliver_at(h.call(8.0)) == h.call(8.0), "8:00 is open")
 	_check(ChatShops.deliver_at(h.call(20.99)) == h.call(20.99), "20:59 is open")

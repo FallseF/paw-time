@@ -54,8 +54,8 @@ func _setup() -> void:
 	GameState.clock_offset = 0.0
 	# 今日の求人は 1 枚だけ（見本のカフェ、ホール）。受けたら、そのシフトがすぐ始まる
 	var now := Time.get_unix_time_from_system()
-	var job := {"id": "demo3_job", "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "shibuya", "start": now + 3600.0, "end": now + 3600.0 + SHIFT_H * 3600.0,
-		"wage": 1250, "pay": "daily", "line_n": 1}
+	var job := JobListings.demo_pay({"id": "demo3_job", "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "shibuya", "start": now + 3600.0, "end": now + 3600.0 + SHIFT_H * 3600.0,
+		"pay": "daily", "line_n": 1})
 	JobListings.localize(job)
 	JobDesk._board = {"key": JobDesk.today_key(), "jobs": [job], "decided": {}}
 	JobDesk._save_board(JobDesk._board)

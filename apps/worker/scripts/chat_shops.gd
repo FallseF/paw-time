@@ -6,7 +6,7 @@ class_name ChatShops
 ## - FAQ (what to wear / staff entrance / break) is answered at once from the shop's profile (mock data below).
 ## - Anything else: the shop cat says it will ask, and a person replies ("From the shop (staff)").
 ## - Running late / swap / thank you: one tap, and your cat phrases it nicely.
-## - Quiet hours: messages from the shop's people are only delivered 8:00–21:00 (JST). Outside that they wait
+## - Quiet hours: messages from the shop's people are only delivered 8:00–21:00 (the sample town's time: Japan / San Francisco). Outside that they wait
 ##   until 8:00. Instant answers you asked for are not held (they are your own lookup).
 ## Storage and "sending" go through ChatBackend (ChatBackendLocal today).
 ## A message: {who: "me"|"shop", kind: "relay"|"auto"|"staff", parts: [[key, args]] or text, t, deliver_at, faq, nice, reported}
@@ -74,29 +74,29 @@ static func now() -> float:
 	if _clock_base < 0:
 		var hm := c.split(":")
 		var t := Time.get_unix_time_from_system()
-		var day0 := floorf((t + JST) / 86400.0) * 86400.0 - JST
-		_clock_base = day0 + int(hm[0]) * 3600 + (int(hm[1]) * 60 if hm.size() > 1 else 0) - Time.get_ticks_msec() / 1000.0
+		_clock_base = JobListings.at_hour(JobListings.day0(t), int(hm[0]) + (int(hm[1]) / 60.0 if hm.size() > 1 else 0.0)) - Time.get_ticks_msec() / 1000.0
 	return _clock_base + Time.get_ticks_msec() / 1000.0
 
 
+## Local hour in the sample town (Japan in Japanese, San Francisco in English)
 static func hour_jst(t: float) -> float:
-	return fposmod(t + JST, 86400.0) / 3600.0
+	var d := JobListings.local(t)
+	return d.hour + d.minute / 60.0 + d.second / 3600.0
 
 
-## When a message from the shop's people may reach you: now if it is 8:00–21:00, else the next 8:00 (JST)
+## When a message from the shop's people may reach you: now if it is 8:00–21:00, else the next 8:00 (sample town time)
 static func deliver_at(t: float) -> float:
 	var h := hour_jst(t)
 	if h >= OPEN_H and h < CLOSE_H:
 		return t
-	var day0 := floorf((t + JST) / 86400.0) * 86400.0 - JST
-	var at := day0 + OPEN_H * 3600
+	var day0 := JobListings.day0(t)
 	if h >= CLOSE_H:
-		at += 86400
-	return at
+		day0 = JobListings.next_day0(day0, 1)
+	return JobListings.at_hour(day0, OPEN_H)
 
 
 static func clock_text(t: float) -> String:
-	var d := Time.get_datetime_dict_from_unix_time(int(t) + JST)
+	var d := JobListings.local(t)
 	return "%d:%02d" % [d.hour, d.minute]
 
 
