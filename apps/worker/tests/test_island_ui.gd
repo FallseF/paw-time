@@ -98,6 +98,17 @@ func _run() -> void:
 
 	await _talk(g)
 	await _raft(g)
+	# おてつだいミニゲーム：5 つの仕事のおさらい
+	g._open_help_games()
+	await _frames(2)
+	var n := 0
+	for b in g.share_ui.find_children("*", "Button", true, false):
+		if String(b.text).ends_with("›"):
+			n += 1
+	_check(n == 5, "help-out lists the 5 practice games (%d)" % n)
+	_check(not g.expand_btn.visible, "expand pill hidden while the help-out list is open")
+	g.share_ui.queue_free()
+	await _frames(2)
 	await _zoom(g)
 
 	print("ISLAND UI TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)

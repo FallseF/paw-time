@@ -1774,6 +1774,9 @@ R2_RAFT_CODE_HINT,Paste an island code or link,島のコードかリンクを貼
 R2_RAFT_GO,Go,行く
 R2_RAFT_BAD,That code didn't work. Check it and try again.,そのコードは読めませんでした。たしかめてもう一度。
 R2_RAFT_SHOPS,Visit a shop island,お店の島へ
+R2_HELP_GAMES,Help-out mini games ›,おてつだいミニゲーム ›
+R2_HELP_TITLE,Help-out mini games,おてつだいミニゲーム
+R2_HELP_BODY,Just for fun: the practice games from My skills. Clear one to earn its badge.,遊びでどうぞ。マイスキルのおさらいと同じミニゲーム。クリアでバッジがもらえる。
 EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
 川べりは、夕方 5 時から,The river opens at 5 p.m.,川べりは、夕方 5 時から
 今日の仕事は、おしまい,Work's done for today,今日の仕事は、おしまい

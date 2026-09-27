@@ -1997,6 +1997,7 @@ func _show_card() -> void:
 			row.add_child(_link("今日はのんびりする", _rest))
 			row.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
 			card_box.add_child(row)
+			card_box.add_child(_link(tr("R2_HELP_GAMES"), _open_help_games))
 		elif s.role != "" and GameState.skip_shift_day != GameState.day and not GameState.shift_done_today:
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])], 14, Color("6a5f70")))
@@ -2016,6 +2017,7 @@ func _show_card() -> void:
 			# 夜は実際の時計で来る（夕方 5 時から、川べりへ）
 			card_box.add_child(Kit.text("川べりは、夕方 5 時から", 14, Color("5b6fc2"), true))
 			card_box.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
+			card_box.add_child(_link(tr("R2_HELP_GAMES"), _open_help_games))
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 			GameState.tut["first"] = true
@@ -2070,6 +2072,21 @@ func _work_card() -> bool:
 		_toast(tr("Shift's over!"), tr("+%d Paw Coins") % r.get("coins", 0))
 		_show_card()))
 	return true
+
+
+## おてつだいミニゲーム：マイスキルのおさらい（5 つの仕事）を、島のおてつだいとして遊べる（任意）
+func _open_help_games() -> void:
+	var v := _popup(tr("R2_HELP_TITLE"), tr("R2_HELP_BODY"), "")
+	for r in Skills.ROLES:
+		var role: String = r
+		var st := Skills.star_text(Skills.stars(role))
+		var b := Kit.button(Skills.role_name(role) + ("  " + st if st != "" else "") + "  ›", Color("fff1e0"), func():
+			share_ui.queue_free()
+			Skills.practice_role = role
+			main.go("practice"), Color("b0502a"), 40, 14)
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		v.add_child(b)
+	v.add_child(Kit.button(tr("KIT_UI_CLOSE"), Color(1, 1, 1, 0.95), func(): share_ui.queue_free(), Color("6a5f70"), 40, 14))
 
 
 func _gift() -> void:
@@ -2443,6 +2460,11 @@ func _talk_ui(show: bool) -> void:
 		if c and is_instance_valid(c) and c.visible:
 			c.visible = false
 			talk_hidden.append(c)
+
+
+## 確認用：おてつだいミニゲームの一覧
+func demo_help_games() -> void:
+	_open_help_games()
 
 
 ## 確認用：いかだを押したのと同じ
