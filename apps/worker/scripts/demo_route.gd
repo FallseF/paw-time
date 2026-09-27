@@ -181,6 +181,7 @@ func _start_shift(s: Dictionary) -> void:
 	Shifts.remove(shift_id)
 	s.start = now
 	s.end = now + (SHIFT_H * 3600.0 + 60.0) / FAST # 実時間での終わり（早送りの時計では 7.5 時間後）
+	s["hours"] = SHIFT_H # 今日のお給料の目安は、早送りの時計での長さで
 	Shifts.add(s)
 	WorkTogether.set_speed(FAST)
 	WorkTogether.sync()

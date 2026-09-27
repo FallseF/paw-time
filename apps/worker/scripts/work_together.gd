@@ -316,7 +316,8 @@ static func pay_estimate(summary: Dictionary, shifts: Array) -> Dictionary:
 				break
 	if pick.is_empty():
 		return {}
-	var hours := maxf(0.0, (float(pick.end) - float(pick.start)) / 3600.0)
+	# hours があればそれ（3 分デモは早送りのため、実時間の start / end が数十秒しかない）
+	var hours := maxf(0.0, float(pick.get("hours", (float(pick.end) - float(pick.start)) / 3600.0)))
 	var cur := Money.of(pick)
 	if cur == Money.USD:
 		var w := float(pick.wage)
