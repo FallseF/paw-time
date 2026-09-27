@@ -1,6 +1,8 @@
 extends Control
 ## はじめての流れの「shift」の段（診断のあと）。小さな場面を 3 つ、順に：
-##   1. name  … 相棒に名前をつける（いまの呼び名が入っている。10 文字まで。「あとで」でそのままでもよい）
+##   1. name  … 相棒に名前をつける（診断で会った子に。候補から選ぶか、打つ。10 文字まで。「あとで」でそのままでもよい）
+##              入っている名前は、診断の結果で呼んだ名前（「Sunny だよ」→ Sunny）。候補もその名前が先頭で、
+##              あとは英語版は英語の名前・日本語版は日本語の名前（SpecialObake.name_ideas）
 ##   2. go    … 相棒「きみがシフトの間、ぼくも働くね！」。主ボタン「シフトに行く」
 ##   3. mock  … 猫の仕事場（screen_work.gd）をこの画面の中に置き、早送りで 4 時間の見本のシフト。
 ##              終わったら「いっしょにがんばったね！」で肉球コインとポイ → はじめての夜のすくいへ
@@ -30,6 +32,7 @@ var bubble: PanelContainer
 var bubble_l: Label
 var card: PanelContainer
 var name_edit: LineEdit
+var name_web: WebTextField # Web では、入力欄の上にブラウザの <input> を重ねる（スマホのキーボード・変換・音声入力のため）
 var main_btn: Button
 var work: Control # 猫の仕事場（screen_work.gd）。見本のシフトの間だけ
 var chip: PanelContainer
@@ -40,6 +43,10 @@ var busy := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# 名前は、診断で相棒に会ってから。まだ診断を受けていなければ、診断へ（名前を先に聞かない）
+	if GameState.my_obake.is_empty() and main:
+		main.go.call_deferred("quiz", true)
+		return
 	Onboarding.end_mock_shift() # 前に途中で閉じた見本のシフトが残っていたら、片づけてから
 	_build_world()
 	_build_bubble()
@@ -186,6 +193,7 @@ func _show_name() -> void:
 	var v := _card()
 	v.add_child(_text(tr("ONB_NAME_TITLE"), 20, INK, true))
 	name_edit = LineEdit.new()
+	# いまの呼び名（診断の結果で「Sunny だよ」と呼んだ名前。自分でつけた名前があればそれ）
 	name_edit.text = SpecialObake.pet_name()
 	name_edit.max_length = SpecialObake.NAME_MAX
 	name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -204,10 +212,55 @@ func _show_name() -> void:
 	name_edit.add_theme_color_override("font_color", INK)
 	name_edit.text_submitted.connect(func(_t): _name_ok())
 	v.add_child(name_edit)
+	name_web = WebTextField.attach(name_edit, _name_ok)
+	# 候補（タップで入る）。先頭は診断の結果で出た呼び名、そのあとに名前の案を 3 つ
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	for n in chip_names():
+		row.add_child(_chip(String(n)))
+	v.add_child(row)
 	v.add_child(I18n.wrap(_text(tr("ONB_NAME_HINT") % SpecialObake.NAME_MAX, 12, SUB)))
 	main_btn = Kit.button(tr("ONB_NAME_OK"), ORANGE, _name_ok)
 	v.add_child(main_btn)
 	v.add_child(_link(tr("ONB_NAME_SKIP"), _name_skip))
+
+
+## 名前の候補：診断の結果で出た呼び名 → 名前の案（重なりは除く）
+static func chip_names() -> Array:
+	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
+	var out: Array = [SpecialObake.pet_name(SpecialObake._without_name(gs.my_obake))]
+	for n in SpecialObake.name_ideas(4):
+		if not out.has(n) and out.size() < 4:
+			out.append(n)
+	return out
+
+
+## 名前の候補のボタン（押すと入力欄に入る）
+func _chip(n: String) -> Button:
+	var b := Button.new()
+	b.text = n
+	b.focus_mode = Control.FOCUS_NONE
+	b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	b.custom_minimum_size = Vector2(0, 34)
+	b.add_theme_font_override("font", Kit.bold())
+	b.add_theme_font_size_override("font_size", 14)
+	for k in ["normal", "hover", "pressed"]:
+		b.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k != "pressed" else Color("ffe0c2"), 17, 0.0, Vector2(10, 4)))
+	for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, INK)
+	b.pressed.connect(func():
+		Kit.play(b, "tap")
+		_set_name_text(n))
+	return b
+
+
+func _set_name_text(n: String) -> void:
+	if name_web:
+		name_web.set_text(n)
+	else:
+		name_edit.text = n
+		name_edit.caret_column = n.length()
 
 
 func _name_ok() -> void:
@@ -217,6 +270,8 @@ func _name_ok() -> void:
 	if n != "":
 		SpecialObake.set_partner_name(n)
 	name_edit.release_focus()
+	if name_web:
+		name_web.blur()
 	_hop(partner, 0.4)
 	Kit.play(self, "sparkle")
 	_show_go(tr("ONB_NAME_THANKS") % SpecialObake.pet_name())
@@ -226,6 +281,8 @@ func _name_skip() -> void:
 	if phase != "name":
 		return
 	name_edit.release_focus()
+	if name_web:
+		name_web.blur()
 	_show_go("")
 
 
@@ -382,6 +439,11 @@ func demo_name(n := "") -> void:
 	if n != "":
 		name_edit.text = n
 	_name_ok()
+
+
+func demo_pick(i: int) -> void:
+	var row: HBoxContainer = name_edit.get_parent().get_child(name_edit.get_index() + 1)
+	row.get_child(i).pressed.emit()
 
 
 func demo_skip() -> void:

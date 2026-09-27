@@ -65,10 +65,53 @@ func _ready() -> void:
 	header.text = tr("朝だ。光る玉が 1 個") if n_orbs == 1 else tr("朝だ。光る玉が %d 個") % n_orbs
 	next_btn.text = "玉をひらく"
 	_refresh_buttons()
-	# 最初の玉は、待たずにひらく
-	await get_tree().create_timer(0.4).timeout
+	_warm_up()
+	# 最初の玉は、待たずにひらく（暗転が明けたらすぐ）
+	await get_tree().create_timer(0.15).timeout
 	if index == 0 and not busy and is_inside_tree():
 		_next()
+
+
+## 割れる演出の材料（破片・光の筋のシェーダー）と、生まれる子の体を、画面を開いたときに一度だけ描いておく。
+## WebGL は材料をはじめて描くときに組み立てるので、そのままだと割れた瞬間・子が出た瞬間に止まって見える。
+## 壁の裏（カメラの向きの中・壁に隠れる所）に置いて、暗転が明ける前のいちばん初めのコマで一緒に組み立てる
+func _warm_up() -> void:
+	if orbs.is_empty():
+		return
+	var hidden_at := Vector3(0, 1.0, -2.2)
+	var nodes: Array = []
+	var dummy := Orb3D.new().setup({"type": "rare", "rare": true, "weight": 0.3, "content": {"kind": "obake"}})
+	dummy.position = hidden_at
+	world.add_child(dummy)
+	dummy.model.shatter(world, true)
+	dummy.model.shatter(world, false)
+	nodes.append(dummy)
+	for h in GameState.hatched:
+		var ob: Node3D = Drops.make_icon(h.content) if h.has("kind") else Obake3D.make(h.id)
+		ob.position = hidden_at
+		world.add_child(ob)
+		nodes.append(ob)
+	# はじめての夜の子は、割れたあと自分の猫がひとこと言うので、その猫も
+	if GameState.hatched.any(func(x): return x.get("special", false)):
+		var me := MyObake3D.from_saved()
+		if me:
+			me.position = hidden_at
+			world.add_child(me)
+			nodes.append(me)
+	# おばネコが出る瞬間の光（_light_burst）も、足した光で描く組み合わせを先に作っておく（ほとんど見えない明るさ）
+	var l := OmniLight3D.new()
+	l.omni_range = 4.0
+	l.light_energy = 0.001
+	l.position = Vector3(0, 0.85, 0.9)
+	world.add_child(l)
+	nodes.append(l)
+	# 3 コマ描いたら片づける（破片は自分で消える）
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	for n in nodes:
+		if is_instance_valid(n):
+			n.queue_free()
 
 
 func _build_world() -> void:
@@ -333,9 +376,9 @@ func _next() -> void:
 		await _open_batch()
 		return
 	var tw0 := create_tween()
-	tw0.tween_property(card, "modulate:a", 0.0, 0.15)
+	tw0.tween_property(card, "modulate:a", 0.0, 0.12)
 	if current_obake:
-		tw0.parallel().tween_property(current_obake, "position:x", -3.0, 0.3)
+		tw0.parallel().tween_property(current_obake, "position:x", -3.0, 0.2)
 	await tw0.finished
 	if current_obake:
 		current_obake.queue_free()
@@ -345,23 +388,23 @@ func _next() -> void:
 	_track_hatch(h)
 	# 玉が前に出て、震える
 	var tw := create_tween()
-	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw.finished
-	# おばネコはいまレアなので、少しだけ長めに（震えるたびに光が強くなる）。材料と服は、ぽんと
+	# おばネコはいまレアなので、ひと震え多く（震えるたびに光が強くなる）。材料と服は、ぽんと。待たせないよう短く
 	var is_cat: bool = not h.has("kind")
-	var shakes := 3 if is_cat else 1
+	var shakes := 2 if is_cat else 1
 	for i in shakes:
-		var amp := 0.03 + i * 0.025
+		var amp := 0.03 + i * 0.035
 		var tw2 := create_tween()
-		tw2.tween_property(orb, "position:x", amp, 0.06)
-		tw2.tween_property(orb, "position:x", -amp, 0.08)
-		tw2.tween_property(orb, "position:x", 0.0, 0.06)
-		tw2.parallel().tween_property(orb, "scale", Vector3.ONE * (1.0 + i * 0.18), 0.2)
+		tw2.tween_property(orb, "position:x", amp, 0.05)
+		tw2.tween_property(orb, "position:x", -amp, 0.06)
+		tw2.tween_property(orb, "position:x", 0.0, 0.05)
+		tw2.parallel().tween_property(orb, "scale", Vector3.ONE * (1.0 + i * 0.25), 0.16)
 		if is_cat:
-			orb.energy_scale = 0.8 + i * 0.35
-			orb.light_scale = 0.3 + i * 0.3
+			orb.energy_scale = 0.8 + i * 0.6
+			orb.light_scale = 0.3 + i * 0.5
 		await tw2.finished
-		await get_tree().create_timer(0.12).timeout
+		await get_tree().create_timer(0.04).timeout
 	# 割れる：殻にひびが走り、破片と光の筋（OrbModel.hatch_vfx。おばネコは大きく、材料と服はぽんと）。画面の閃光は控えめに
 	await orb.model.hatch_vfx(world, is_cat)
 	_flash(0.18 if is_cat else 0.1)
@@ -413,9 +456,9 @@ func _next() -> void:
 ## いつもの子たちの玉は、まとめて一度にひらく
 func _open_batch() -> void:
 	var tw0 := create_tween()
-	tw0.tween_property(card, "modulate:a", 0.0, 0.15)
+	tw0.tween_property(card, "modulate:a", 0.0, 0.12)
 	if current_obake:
-		tw0.parallel().tween_property(current_obake, "position:x", -3.0, 0.3)
+		tw0.parallel().tween_property(current_obake, "position:x", -3.0, 0.2)
 	await tw0.finished
 	if current_obake:
 		current_obake.queue_free()
@@ -423,14 +466,14 @@ func _open_batch() -> void:
 	var rest: Array = orbs.slice(index)
 	var tw := create_tween().set_parallel()
 	for i in rest.size():
-		tw.tween_property(rest[i], "position", Vector3((i - (rest.size() - 1) / 2.0) * 0.36, 0.6, 0.5), 0.4)
+		tw.tween_property(rest[i], "position", Vector3((i - (rest.size() - 1) / 2.0) * 0.36, 0.6, 0.5), 0.25)
 	await tw.finished
 	for k in 2:
 		var tw2 := create_tween().set_parallel()
 		for o in rest:
-			tw2.tween_property(o, "scale", Vector3.ONE * (1.2 + k * 0.2), 0.12)
+			tw2.tween_property(o, "scale", Vector3.ONE * (1.2 + k * 0.2), 0.1)
 		await tw2.finished
-		await get_tree().create_timer(0.15).timeout
+		await get_tree().create_timer(0.04).timeout
 	_flash(0.3)
 	sfx["hatch"].play()
 	var counts := {}
@@ -540,7 +583,7 @@ func _cat_says(line: String) -> void:
 	var tw := create_tween()
 	tw.tween_property(bubble, "modulate:a", 1.0, 0.2)
 	sfx["sparkle"].play()
-	await get_tree().create_timer(1.4).timeout
+	await get_tree().create_timer(0.9).timeout
 	var tw2 := create_tween()
 	tw2.tween_property(bubble, "modulate:a", 0.0, 0.2)
 	if me:
