@@ -26,21 +26,24 @@ func setup(d: Dictionary) -> Orb3D:
 	add_child(model)
 	light = model.light
 	halo_mat = StandardMaterial3D.new()
-	# 中身のヒント：材料・服なら、眠る子猫の影の代わりに小さな影
+	# 中身（すくう前から決まっている）を、玉の中に小さく本物の形で見せる。
+	# おばネコは、孵る子の色（仕事の種類で決まる子。虹の玉はまだ分からないのでクリーム色）
 	var c: Dictionary = d.get("content", {})
-	# おばネコの玉（中身の決まった玉だけ。夢の泡・夜の玉は別の見た目）は、強く・ちがう色で光る
+	model.set_contents(c if not c.is_empty() else {"kind": "obake"}, _cat_color(d.type))
+	# おばネコの玉（中身の決まった玉だけ。満月の夜のちょうちんの玉は別の見た目）は、金の縁と粒で光る
 	cat = c.get("kind", "") == "obake" and d.type != "night"
 	if cat:
 		model.mark_cat()
-	if c.get("kind", "obake") != "obake" and model.sleeper:
-		model.sleeper.visible = false
-		var ic := Drops.make_icon(c, true)
-		ic.scale = Vector3.ONE * 0.2
-		ic.position = model.sleeper.position
-		model.add_child(ic)
 	_t = randf() * TAU
 	vel = Vector3(randf_range(-0.3, 0.3), 0, randf_range(-0.3, 0.3))
 	return self
+
+
+static func _cat_color(t: String) -> Color:
+	var gs = Engine.get_main_loop().root.get_node_or_null("GameState") if Engine.get_main_loop() else null
+	if gs and t != "rare" and gs.TYPE_SPECIES.has(t):
+		return Obake3D.COLORS.get(gs.species_for_type(t), Color("fff1c8"))
+	return Color("fff1c8")
 
 
 func _process(delta: float) -> void:

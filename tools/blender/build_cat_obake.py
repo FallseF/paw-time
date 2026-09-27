@@ -28,7 +28,6 @@ import bpy
 import numpy as np
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-OUT_DIR = os.path.join(ROOT, "assets", "models")
 
 VARIANTS = {
     # 基本の猫おばけ（頭 r0.5 / 中心 y0.5 は Obake3D.face() の置き場所と合わせてある）
@@ -37,6 +36,10 @@ VARIANTS = {
     "plain": dict(ears=False, tail=False),
     # ずんぐり（胴が短く、裾が広い）
     "squat": dict(ears=True, tail=True, body_top=0.45, hem_r=0.6, lobe_lift=0.05),
+    # 丸まって眠る子（光る玉の中身）：胴を低く・裾を広げたおもち形に、尻尾を前へぐるりと巻きつける
+    # 書き出し先は assets/orb/。curl_lo は遠くの玉用の粗い形（細分なし）
+    "curl": dict(ears=True, tail=True, tail_path="wrap", body_top=0.42, body_r=0.54, hem_r=0.68, flare_top=0.34, lobe_amp=0.012, lobe_lift=0.035, out="orb"),
+    "curl_lo": dict(ears=True, tail=True, tail_path="wrap", body_top=0.42, body_r=0.54, hem_r=0.68, flare_top=0.34, lobe_amp=0.012, lobe_lift=0.035, out="orb", res=9, subsurf=0),
 }
 
 BASE = dict(
@@ -53,6 +56,10 @@ BASE = dict(
     flare_top=0.46,  # 裾へ広がり始める高さ
     ears=True,
     tail=True,
+    out="models",  # assets/ の下の書き出し先
+    res=18,  # 立方体の 1 面の割り数
+    subsurf=1,  # 細分の段数
+    tail_path="up",  # up = ふわっと上がる / wrap = 裾に沿って前へ巻く
     ear_blend=0.055,
 )
 
@@ -314,19 +321,35 @@ def set_sphere_uv(ob):
 # ---------------------------------------------------------------- 尻尾
 
 
-def build_tail():
-    """ふわっと上がる尻尾。付け根は胴の中に埋め、先はまるく少しふくらませる"""
+def tail_path_up():
     base = np.array([0.1, 0.22, -0.45])
     pts = [base + np.array([0.0, -0.02, 0.2])]
     for i in range(24):
         t = i / 23.0
         pts.append(base + np.array([math.sin(t * 1.6) * 0.3, t * 0.55, -0.12 * min(1.0, t * 3.0) - math.sin(t * math.pi) * 0.18]))
-    P = np.array(pts)
+    return np.array(pts)
+
+
+def tail_path_wrap():
+    """裾のまわりを後ろから右回りに前へ。先は顔の下で少し持ち上がる"""
+    pts = [np.array([-0.05, 0.16, -0.38])]
+    for i in range(32):
+        t = i / 31.0
+        a = math.pi + 0.35 - t * (math.pi * 0.95)  # 後ろ（-Z）から右（+X）を回って前（+Z）へ
+        r = 0.62 + 0.07 * math.sin(t * math.pi)
+        y = 0.1 + 0.03 * math.sin(t * math.pi) + 0.1 * max(0.0, t - 0.8) ** 1.5 * 5.0
+        pts.append(np.array([math.sin(a) * r * -1.0, y, math.cos(a) * r]))
+    return np.array(pts)
+
+
+def build_tail(path="up", smooth=True):
+    """ふわっと上がる尻尾（up）か、前へ巻きつく尻尾（wrap）。付け根は胴の中に埋め、先はまるく少しふくらませる"""
+    P = tail_path_wrap() if path == "wrap" else tail_path_up()
     # 点をなめらかに間引き直す（弧長でそろえる）
     seg = np.linalg.norm(np.diff(P, axis=0), axis=1)
     s = np.concatenate([[0], np.cumsum(seg)])
     L = s[-1]
-    M = 40
+    M = 40 if smooth else 18
     ss = np.linspace(0, L, M)
     C = np.stack([np.interp(ss, s, P[:, k]) for k in range(3)], axis=1)
     T = np.gradient(C, axis=0)
@@ -347,7 +370,7 @@ def build_tail():
         r += 0.012 * math.exp(-((t - 0.9) / 0.08) ** 2)  # 先がふわっと太る
         return r
 
-    seg_n = 16
+    seg_n = 16 if smooth else 8
     verts = []
     faces = []
     for i in range(M):
@@ -380,7 +403,8 @@ def build_tail():
         faces.append([prev + j, prev + (j + 1) % seg_n, tip])
     V = np.array(verts)
     ob = make_object("Tail", V, faces)
-    apply_subsurf(ob, 1)
+    if smooth:
+        apply_subsurf(ob, 1)
     me = ob.data
     for p in me.polygons:
         p.use_smooth = True
@@ -449,12 +473,13 @@ def build(name, over):
     shape = Shape(prm)
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
-    V0, faces = cube_sphere(18)
+    V0, faces = cube_sphere(prm["res"])
     center = np.array([0.0, 0.5, 0.0])
     # 耳のある向きへ頂点を寄せてから、中心から光線を飛ばして表面に写す（耳の先まで形が残る）
     V = shoot_rays(shape, shape.warp_dirs(V0, center), center)
     body = make_object("Body", V, faces)
-    apply_subsurf(body, 1)
+    if prm["subsurf"] > 0:
+        apply_subsurf(body, prm["subsurf"])
     V = read_verts(body)
     dirs = V - center
     V = shoot_rays(shape, dirs / np.linalg.norm(dirs, axis=1, keepdims=True), center)
@@ -463,15 +488,16 @@ def build(name, over):
 
     objs = [body]
     if prm["tail"]:
-        objs.append(build_tail())
+        objs.append(build_tail(prm["tail_path"], prm["subsurf"] > 0))
     bake_ao(objs)
     finalize_colors(body, shape)
     set_normals(body, shape.normal(V))
     if prm["tail"]:
         finalize_colors(objs[1])
 
-    os.makedirs(OUT_DIR, exist_ok=True)
-    path = os.path.join(OUT_DIR, "cat_obake%s.glb" % ("" if name == "cat" else "_" + name))
+    out_dir = os.path.join(ROOT, "assets", prm["out"])
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "cat_obake%s.glb" % ("" if name == "cat" else "_" + name))
     for o in bpy.context.selected_objects:
         o.select_set(False)
     for o in objs:
