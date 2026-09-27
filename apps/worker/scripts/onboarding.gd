@@ -67,7 +67,8 @@ static func reset() -> void:
 ## 画面 screen が終わったあとの行き先。はじめての流れの途中でなければ fallback（その画面のいつもの行き先）
 static func next_after(screen: String, fallback: String) -> String:
 	match [screen, step()]:
-		["quiz", "quiz"]:
+		["quiz", "quiz"], ["quiz", "shift"]:
+			# 診断で相棒に会ったあとで、名前をつける（名前の段は、かならず診断のあと）
 			advance("shift")
 			return "onboard"
 		["catch", "scoop"]:
@@ -83,7 +84,8 @@ static func resume_screen() -> String:
 			return "quiz"
 		"shift":
 			end_mock_shift() # 見本のシフトの途中で閉じたときは、始めから（本物の仕事の記録を残さない）
-			return "onboard"
+			# 相棒がまだいない（診断の前）なら、名前より先に診断から
+			return "onboard" if not GameState.my_obake.is_empty() else "quiz"
 		"scoop":
 			return "catch"
 		"hatch":
