@@ -1,7 +1,8 @@
 extends Control
 ## はじめての流れの「shift」の段（診断のあと）。小さな場面を 3 つ、順に：
 ##   1. name  … 相棒に名前をつける（診断で会った子に。候補から選ぶか、打つ。10 文字まで。「あとで」でそのままでもよい）
-##              候補と入っている名前は、英語版は英語の名前・日本語版は日本語の名前（SpecialObake.name_ideas）
+##              入っている名前は、診断の結果で呼んだ名前（「Sunny だよ」→ Sunny）。候補もその名前が先頭で、
+##              あとは英語版は英語の名前・日本語版は日本語の名前（SpecialObake.name_ideas）
 ##   2. go    … 相棒「きみがシフトの間、ぼくも働くね！」。主ボタン「シフトに行く」
 ##   3. mock  … 猫の仕事場（screen_work.gd）をこの画面の中に置き、早送りで 4 時間の見本のシフト。
 ##              終わったら「いっしょにがんばったね！」で肉球コインとポイ → はじめての夜のすくいへ
@@ -192,9 +193,8 @@ func _show_name() -> void:
 	var v := _card()
 	v.add_child(_text(tr("ONB_NAME_TITLE"), 20, INK, true))
 	name_edit = LineEdit.new()
-	# 自分でつけた名前があればそれ。無ければ候補のはじめの 1 つ（英語版は英語の名前）
-	var ideas := SpecialObake.name_ideas(3)
-	name_edit.text = SpecialObake.pet_name() if SpecialObake.has_custom_name() else String(ideas[0])
+	# いまの呼び名（診断の結果で「Sunny だよ」と呼んだ名前。自分でつけた名前があればそれ）
+	name_edit.text = SpecialObake.pet_name()
 	name_edit.max_length = SpecialObake.NAME_MAX
 	name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_edit.custom_minimum_size = Vector2(0, 52)
@@ -213,18 +213,27 @@ func _show_name() -> void:
 	name_edit.text_submitted.connect(func(_t): _name_ok())
 	v.add_child(name_edit)
 	name_web = WebTextField.attach(name_edit, _name_ok)
-	# 候補（タップで入る）。診断の結果で出た呼び名も、最後に
+	# 候補（タップで入る）。先頭は診断の結果で出た呼び名、そのあとに名前の案を 3 つ
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 6)
-	var auto_name := SpecialObake.pet_name(SpecialObake._without_name(GameState.my_obake))
-	for n in ideas + ([auto_name] if not ideas.has(auto_name) else []):
+	for n in chip_names():
 		row.add_child(_chip(String(n)))
 	v.add_child(row)
 	v.add_child(I18n.wrap(_text(tr("ONB_NAME_HINT") % SpecialObake.NAME_MAX, 12, SUB)))
 	main_btn = Kit.button(tr("ONB_NAME_OK"), ORANGE, _name_ok)
 	v.add_child(main_btn)
 	v.add_child(_link(tr("ONB_NAME_SKIP"), _name_skip))
+
+
+## 名前の候補：診断の結果で出た呼び名 → 名前の案（重なりは除く）
+static func chip_names() -> Array:
+	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
+	var out: Array = [SpecialObake.pet_name(SpecialObake._without_name(gs.my_obake))]
+	for n in SpecialObake.name_ideas(4):
+		if not out.has(n) and out.size() < 4:
+			out.append(n)
+	return out
 
 
 ## 名前の候補のボタン（押すと入力欄に入る）

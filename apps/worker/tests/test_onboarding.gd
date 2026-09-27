@@ -81,11 +81,14 @@ func _run() -> void:
 
 	# 2 名前（英語版は英語の候補のはじめが入っている → 候補をタップ／打って、自分の名前にする）
 	_check(ob.phase == "name", "starts with the name input (%s)" % ob.phase)
-	_check(ob.name_edit.text == ideas[0], "prefilled with an English name idea (%s)" % ob.name_edit.text)
+	var shown := SpecialObake.pet_name(SpecialObake._without_name(GameState.my_obake))
+	_check(ob.name_edit.text == shown and shown != "", "prefilled with the name the quiz result showed (%s / %s)" % [ob.name_edit.text, shown])
+	var chips: Array = ob.chip_names()
+	_check(chips[0] == shown and chips.size() == 4, "the quiz's name is the first chip (%s)" % [chips])
 	_check(ob.name_edit.max_length == SpecialObake.NAME_MAX, "max length")
 	_check(ob.main_btn != null and ob.main_btn.text == tr("ONB_NAME_OK"), "a clear confirm button")
 	ob.demo_pick(1)
-	_check(ob.name_edit.text == ideas[1], "tapping an idea fills it in (%s)" % ob.name_edit.text)
+	_check(ob.name_edit.text == chips[1] and SpecialObake.NAME_IDEAS.en.has(chips[1]), "tapping an English idea fills it in (%s)" % ob.name_edit.text)
 	ob.demo_name("  Mochi  ")
 	_check(GameState.my_obake.get("name", "") == "Mochi", "the name is stored in my_obake")
 	_check(QuizResult.load_result().get("name", "") == "Mochi", "the name is saved in my_obake.json")
