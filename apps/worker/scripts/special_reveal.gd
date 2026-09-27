@@ -2,13 +2,13 @@ class_name SpecialReveal
 extends Control
 ## 特別なレア 6 匹の「はじめまして」の動画（コマ送り）。はじめてその子が生まれたときだけ、玉が割れたあとに流す。
 ## コマは assets/reveal/<id>/f_001..062.jpg（12 fps、そのまま書き出す）。1 コマずつ読んで同じテクスチャに上書きし、終わったら手放す。
-## 右上の「スキップ」と、1 秒たってからの画面タップで飛ばせる。音は無い。
+## 右上の「スキップ」と、1 秒たってからの画面タップで飛ばせる。音はファンファーレ（Music.fanfare、BGM は下げる）。
 ## はじめての夜の玉は、この 6 匹のどれか 1 匹（インストールごとに決まって、読み直しても変わらない）。
 ## 確認用：OBAKE_REVEAL=<id> で、その子の孵化の画面から
 
 signal done
 
-const IDS := ["sakura", "yomise", "amagasa", "kaminari", "mangetsu", "hyakki"]
+const IDS := ["sakura", "yomise", "amagasa", "kazaguruma", "mangetsu", "hyakki"]
 const FRAMES := 62
 const FPS := 12.0
 const PATH := "user://special_reveal.json"
@@ -53,8 +53,11 @@ static func _ensure() -> void:
 	if _nosave() or not FileAccess.file_exists(PATH):
 		return
 	var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-	if d is Dictionary and String(d.get("pick", "")) in IDS:
-		_pick = String(d.pick)
+	if d is Dictionary:
+		var p := String(d.get("pick", ""))
+		p = Rares.RENAMED.get(p, p)
+		if p in IDS:
+			_pick = p
 
 
 ## はじめての夜の玉からかえる子（このインストールで一度だけ決めて、覚えておく）
@@ -128,6 +131,7 @@ func _ready() -> void:
 	modulate.a = 0.0
 	create_tween().tween_property(self, "modulate:a", 1.0, 0.25)
 	_show_frame(0)
+	Music.fanfare()
 
 
 func _process(delta: float) -> void:
@@ -171,6 +175,7 @@ func _finish() -> void:
 	_finished = true
 	skip_btn.disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Music.fanfare_end()
 	done.emit()
 
 

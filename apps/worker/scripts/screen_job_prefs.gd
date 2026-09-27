@@ -80,13 +80,13 @@ func _ready() -> void:
 	area_edit.add_theme_color_override("font_placeholder_color", Color("a89ea6"))
 	area_edit.add_theme_font_override("font", Kit.bold())
 	area_edit.add_theme_font_size_override("font_size", 15)
-	area_edit.text = JobPrefs.area_label(prefs.area) if prefs.area in JobPrefs.AREAS else prefs.area
+	area_edit.text = JobPrefs.area_label(prefs.area) if prefs.area in JobPrefs.AREAS or prefs.area in JobPrefs.AREAS_SF else prefs.area
 	area_edit.text_changed.connect(func(_t): _sync_area_chips())
 	area_box.add_child(area_edit)
 	var af := HFlowContainer.new()
 	af.add_theme_constant_override("h_separation", 6)
 	af.add_theme_constant_override("v_separation", 6)
-	for a in JobPrefs.AREAS:
+	for a in JobPrefs.areas().slice(0, 6):
 		var c := _chip(JobPrefs.area_label(a), func():
 			area_edit.text = JobPrefs.area_label(a)
 			_sync_area_chips())
@@ -120,18 +120,19 @@ func _ready() -> void:
 	var wage_box := _section(v, tr("PREFS_WAGE"))
 	var wh := HBoxContainer.new()
 	wh.add_theme_constant_override("separation", 8)
-	wh.add_child(_round_btn("−", func(): _set_wage(int(prefs.min_wage) - 50)))
+	wh.add_child(_round_btn("−", func(): _step_wage(-1)))
 	wage_l = Kit.text("", 22, INK, true, HORIZONTAL_ALIGNMENT_CENTER)
 	wage_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wh.add_child(wage_l)
-	wh.add_child(_round_btn("+", func(): _set_wage(int(prefs.min_wage) + 50)))
+	wh.add_child(_round_btn("+", func(): _step_wage(1)))
 	wage_box.add_child(wh)
 	wage_slider = HSlider.new()
-	wage_slider.min_value = JobPrefs.WAGE_MIN
-	wage_slider.max_value = JobPrefs.WAGE_MAX
-	wage_slider.step = 50
-	wage_slider.value = prefs.min_wage
-	wage_slider.value_changed.connect(func(x): _set_wage(int(x)))
+	# 英語＝SF（US ドル、50 セント刻み）、日本語＝円（50 円刻み）
+	wage_slider.min_value = JobPrefs.WAGE_MIN_USD if _usd() else JobPrefs.WAGE_MIN
+	wage_slider.max_value = JobPrefs.WAGE_MAX_USD if _usd() else JobPrefs.WAGE_MAX
+	wage_slider.step = JobPrefs.WAGE_STEP_USD if _usd() else 50
+	wage_slider.value = _wage()
+	wage_slider.value_changed.connect(func(x): _set_wage(x))
 	wage_box.add_child(wage_slider)
 
 	# 受け取り方の希望
@@ -283,8 +284,24 @@ func _toggle_many(keys: Array) -> void:
 	_refresh()
 
 
-func _set_wage(n: int) -> void:
-	prefs.min_wage = clampi(n, JobPrefs.WAGE_MIN, JobPrefs.WAGE_MAX)
+func _usd() -> bool:
+	return Money.current() == Money.USD
+
+
+## 今の言語の町の最低時給（円 or ドル）
+func _wage() -> float:
+	return JobPrefs.min_wage_in(prefs, Money.current())
+
+
+func _step_wage(d: int) -> void:
+	_set_wage(_wage() + d * (JobPrefs.WAGE_STEP_USD if _usd() else 50.0))
+
+
+func _set_wage(n: float) -> void:
+	if _usd():
+		prefs.min_wage_usd = clampf(snappedf(n, 0.25), JobPrefs.WAGE_MIN_USD, JobPrefs.WAGE_MAX_USD)
+	else:
+		prefs.min_wage = clampi(int(n), JobPrefs.WAGE_MIN, JobPrefs.WAGE_MAX)
 	_refresh()
 
 
@@ -318,9 +335,9 @@ func _refresh() -> void:
 		_chip_style(pay_chips[p], prefs.pay == p)
 	for on in suggest_chips:
 		_chip_style(suggest_chips[on], bool(prefs.suggest) == on)
-	wage_l.text = tr("PREFS_WAGE_VAL") % JobListings._commas(int(prefs.min_wage))
-	if wage_slider and int(wage_slider.value) != int(prefs.min_wage):
-		wage_slider.set_value_no_signal(prefs.min_wage)
+	wage_l.text = Money.fmt_wage(_wage())
+	if wage_slider and not is_equal_approx(wage_slider.value, _wage()):
+		wage_slider.set_value_no_signal(_wage())
 	var ok: bool = not prefs.slots.is_empty()
 	if not prefs.suggest:
 		ok = true # 知らせを受けないなら、曜日・時間帯は空でもよい
@@ -331,7 +348,7 @@ func _refresh() -> void:
 ## 地域：候補の表示名と同じなら候補の ID で持つ（言語を変えても読める）
 func _area_value() -> String:
 	var t := area_edit.text.strip_edges()
-	for a in JobPrefs.AREAS:
+	for a in JobPrefs.AREAS + JobPrefs.AREAS_SF:
 		if t == JobPrefs.area_label(a):
 			return a
 	return t
@@ -355,10 +372,11 @@ func _save() -> void:
 # ---------------------------------------------------------------- 確認用
 
 func demo_fill() -> void:
-	area_edit.text = JobPrefs.area_label("shibuya")
+	area_edit.text = JobPrefs.area_label(JobPrefs.areas()[0] if Kit.is_en() else "shibuya")
 	_sync_area_chips()
 	prefs.slots = JobPrefs.grid([0, 2, 4], ["day", "evening"]) + ["5:morning", "5:day"]
 	prefs.min_wage = 1250
+	prefs.min_wage_usd = 21.5
 	prefs.pay = "weekly"
 	_refresh()
 

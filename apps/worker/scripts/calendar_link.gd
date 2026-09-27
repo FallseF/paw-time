@@ -3,6 +3,7 @@ class_name CalendarLink
 ## 1. Google カレンダー：予定の作成画面を、中身を埋めた URL で開く（OS.shell_open。Web でもデスクトップでも動く）
 ## 2. .ics ファイル：Web はダウンロード（JavaScriptBridge.download_buffer）、デスクトップは user:// に保存
 ## 時刻は UTC（…Z）で書くので、どの端末のタイムゾーンでも同じ時刻になる。
+## サンフランシスコ（英語）のシフトは、Google に ctz=America/Los_Angeles を付け、.ics は TZID と VTIMEZONE（PT）で書く。
 
 const GCAL := "https://calendar.google.com/calendar/render?action=TEMPLATE"
 
@@ -29,7 +30,8 @@ static func google_url(s: Dictionary) -> String:
 	return GCAL + "&text=" + summary(s).uri_encode() \
 		+ "&dates=" + utc_stamp(s.start) + "/" + utc_stamp(s.end) \
 		+ "&details=" + details(s).uri_encode() \
-		+ "&location=" + String(s.get("place", "")).uri_encode()
+		+ "&location=" + String(s.get("place", "")).uri_encode() \
+		+ ("&ctz=" + JobListings.TZ_SF.uri_encode() if JobListings.tz_of(s) == JobListings.TZ_SF else "")
 
 
 static func open_google(s: Dictionary) -> void:
@@ -40,24 +42,44 @@ static func _esc(t: String) -> String:
 	return t.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
 
+## 20260930T100000 の形（その町の壁時計の時刻。TZID と組で使う）
+static func local_stamp(unix: float, tz: String) -> String:
+	var d := JobListings.local(unix, tz)
+	return "%04d%02d%02dT%02d%02d%02d" % [d.year, d.month, d.day, d.hour, d.minute, d.second]
+
+
+## America/Los_Angeles の VTIMEZONE（2007 年からの夏時間の決まり）
+const VTZ_PT := [
+	"BEGIN:VTIMEZONE", "TZID:America/Los_Angeles",
+	"BEGIN:DAYLIGHT", "TZOFFSETFROM:-0800", "TZOFFSETTO:-0700", "TZNAME:PDT", "DTSTART:20070311T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU", "END:DAYLIGHT",
+	"BEGIN:STANDARD", "TZOFFSETFROM:-0700", "TZOFFSETTO:-0800", "TZNAME:PST", "DTSTART:20071104T020000", "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU", "END:STANDARD",
+	"END:VTIMEZONE",
+]
+
+
 static func ics(s: Dictionary) -> String:
+	var pt := JobListings.tz_of(s) == JobListings.TZ_SF
 	var lines := [
 		"BEGIN:VCALENDAR",
 		"VERSION:2.0",
 		"PRODID:-//Paw Time//Job Match//EN",
 		"CALSCALE:GREGORIAN",
 		"METHOD:PUBLISH",
+	]
+	if pt:
+		lines.append_array(VTZ_PT)
+	lines.append_array([
 		"BEGIN:VEVENT",
 		"UID:%s@pawtime" % String(s.get("id", "shift")),
 		"DTSTAMP:" + utc_stamp(Time.get_unix_time_from_system()),
-		"DTSTART:" + utc_stamp(s.start),
-		"DTEND:" + utc_stamp(s.end),
+		("DTSTART;TZID=%s:%s" % [JobListings.TZ_SF, local_stamp(s.start, JobListings.TZ_SF)]) if pt else "DTSTART:" + utc_stamp(s.start),
+		("DTEND;TZID=%s:%s" % [JobListings.TZ_SF, local_stamp(s.end, JobListings.TZ_SF)]) if pt else "DTEND:" + utc_stamp(s.end),
 		"SUMMARY:" + _esc(summary(s)),
 		"LOCATION:" + _esc(String(s.get("place", ""))),
 		"DESCRIPTION:" + _esc(details(s)),
 		"END:VEVENT",
 		"END:VCALENDAR",
-	]
+	])
 	return "\r\n".join(lines) + "\r\n"
 
 

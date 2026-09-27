@@ -1,6 +1,6 @@
 class_name SettingsScreen
 extends Control
-## マイページ（設定）。相棒の名前・言語・チャットの「ふたりだけのひみつ」・匿名の利用データ（送る／送らない・ID・削除）・
+## マイページ（設定）。相棒の名前・言語・音楽（音量と消音）・チャットの「ふたりだけのひみつ」・匿名の利用データ（送る／送らない・ID・削除）・
 ## プライバシーについて・はじめからやり直す。働く条件の画面から、利用データの項目はここへ移した。
 ##
 ## 開き方は 2 通り：
@@ -32,6 +32,7 @@ var id_l: Label
 var chips := {} # "lang:en" / "chat:true" / "tm:false" … → Button
 var confirm: Control
 var lang_changed := false
+var music_slider: HSlider
 
 
 ## いまの画面の上にマイページを重ねる。section = "privacy" でプライバシーの項目から
@@ -91,6 +92,7 @@ func _build() -> void:
 
 	_name_section()
 	_lang_section()
+	_music_section()
 	_chat_section()
 	_usage_section()
 	_privacy_section()
@@ -233,6 +235,38 @@ func set_lang(lang: String) -> void:
 	_build()
 
 
+## 音楽：鳴らす／消す と音量（scripts/music.gd。settings.cfg の [audio] に残る）
+func _music_section() -> void:
+	Music.load_prefs()
+	var v := _section("Music" if Kit.is_en() else "音楽")
+	v.add_child(_row([
+		_chip("music:true", tr("PREFS_SUGGEST_ON"), func(): set_music_on(true)),
+		_chip("music:false", tr("PREFS_SUGGEST_OFF"), func(): set_music_on(false)),
+	]))
+	music_slider = HSlider.new()
+	music_slider.min_value = 0.0
+	music_slider.max_value = 1.0
+	music_slider.step = 0.05
+	music_slider.value = Music.volume
+	music_slider.custom_minimum_size = Vector2(0, 32)
+	music_slider.focus_mode = Control.FOCUS_NONE
+	music_slider.value_changed.connect(set_music_volume)
+	v.add_child(music_slider)
+
+
+func set_music_on(on: bool) -> void:
+	Music.set_muted(not on)
+	_refresh()
+
+
+## つまみを動かしたら、消していても鳴らす
+func set_music_volume(x: float) -> void:
+	Music.set_volume(x)
+	if Music.muted and x > 0.0:
+		Music.set_muted(false)
+		_refresh()
+
+
 func _chat_section() -> void:
 	var v := _section(tr("SETTINGS_CHAT"))
 	v.add_child(_row([
@@ -292,7 +326,7 @@ func _reset_section() -> void:
 
 func _refresh() -> void:
 	var state := {"lang:en": Kit.is_en(), "lang:ja": not Kit.is_en(), "chat:true": ChatMe.is_private(), "chat:false": not ChatMe.is_private(),
-		"tm:true": Telemetry.is_enabled(), "tm:false": not Telemetry.is_enabled()}
+		"tm:true": Telemetry.is_enabled(), "tm:false": not Telemetry.is_enabled(), "music:true": not Music.muted, "music:false": Music.muted}
 	for k in chips:
 		_chip_style(chips[k], state.get(k, false))
 

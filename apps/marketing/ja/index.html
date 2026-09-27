@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Paw Time</title>
-<meta name="description" content="働いた日は、ポイが増える。よく寝た朝は、玉がかえる。働く人のためのゲーム。Recruit Innovation Cup 2026 / Team Dry Grape">
+<meta name="description" content="Paw Time：スキマバイトで働く人のためのゲーム。おばネコが求人を見つけ、シフト中は一緒に働き、働きすぎる前に疲れて止まる。長く働いても得はしない。Recruit Innovation Cup 2026 / Team Dry Grape">
 <meta property="og:title" content="Paw Time">
-<meta property="og:description" content="働いた日は、ポイが増える。よく寝た朝は、玉がかえる。">
+<meta property="og:description" content="スキマバイトの人のためのゲーム。おばネコが求人を見つけ、一緒に働き、働きすぎる前に疲れて止まる。">
 <meta property="og:image" content="../img/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
 <style>
 :root{
   --cream:#f6efe6; --paper:#fffaf3; --ink:#2a2233; --sub:#6a5f70; --line:#e6dbcd;
-  --orange:#ff8a5b; --orange-d:#e56a3c; --night:#141a3a; --night2:#232b5c; --lav:#8b7bff; --gold:#ffd23f;
+  --orange:#ff8a5b; --orange-d:#c9542a; --night:#141a3a; --night2:#232b5c; --lav:#8b7bff; --gold:#ffd23f;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -26,25 +26,25 @@ section{padding-block:72px}
 h1,h2,h3{line-height:1.3;margin:0;text-wrap:balance}
 h2{font-size:clamp(26px,4vw,38px);font-weight:900}
 .eyebrow{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--orange-d)}
-.lead{color:var(--sub);max-width:60ch;margin-top:12px}
+.lead{color:var(--sub);max-width:62ch;margin-top:12px}
 
 /* hero */
-.hero{background:radial-gradient(120% 90% at 50% 0%,#2e3778 0%,var(--night) 60%);color:#f3eeff;padding-block:48px 80px;overflow:hidden;position:relative}
-.stars{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 12% 20%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 30% 70%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 62% 18%,#fffb 50%,transparent 51%),radial-gradient(1px 1px at 82% 44%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 90% 12%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 48% 36%,#fff7 50%,transparent 51%)}
+.hero{background:linear-gradient(180deg,#f7c7a8 0%,#f4b39a 38%,#6f8fa6 100%);color:#221b3a;padding-block:56px 80px;overflow:hidden;position:relative}
 .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;position:relative}
-.hero h1{font-size:clamp(40px,7vw,72px);font-weight:900;letter-spacing:.02em}
-.hero .tag{font-size:clamp(18px,2.6vw,24px);font-weight:700;margin-top:18px;color:#fff}
-.hero .tag span{color:var(--gold)}
-.hero p.sub{color:#c9c3ec;margin-top:14px;max-width:44ch}
+.hero h1{font-size:clamp(44px,7vw,76px);font-weight:900;letter-spacing:.02em;color:#1f2457}
+.hero p.sub{color:#2d2748;margin-top:14px;max-width:46ch;font-size:17px;font-weight:500}
+.hero .eyebrow{color:#7a3a1c}
 .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:900;text-decoration:none;font-size:16px;transition:transform .15s}
 .btn:hover{transform:translateY(-2px)}
-.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn:focus-visible{outline:3px solid var(--night);outline-offset:3px}
 .btn-main{background:var(--orange);color:#fff;box-shadow:0 6px 0 var(--orange-d)}
-.btn-ghost{background:#ffffff1a;color:#fff;border:2px solid #ffffff55}
-.phone{width:min(300px,100%);margin-inline:auto;border-radius:34px;background:#0b0e22;padding:10px;box-shadow:0 30px 60px #0008,0 0 0 2px #ffffff22 inset}
-.phone video{border-radius:26px;aspect-ratio:9/16;width:100%;height:auto;background:#000;object-fit:cover}
-.float{position:absolute;width:120px;pointer-events:none;filter:drop-shadow(0 8px 12px #0006)}
+.btn-ghost{background:#ffffffb3;color:#1f2457;border:2px solid #1f245733}
+.hero .fine{margin:14px 0 0;font-size:14px;color:#2d2748}
+.hero .fine a{font-weight:700}
+.phone{width:min(300px,100%);margin-inline:auto;border-radius:34px;background:#0b0e22;padding:10px;box-shadow:0 30px 60px #0005,0 0 0 2px #ffffff22 inset}
+.phone video{border-radius:26px;aspect-ratio:9/16;width:100%;height:auto;background:#f4b39a;object-fit:cover}
+.float{position:absolute;width:120px;pointer-events:none;filter:drop-shadow(0 8px 12px #0004)}
 .f1{left:-30px;bottom:-10px;transform:rotate(-8deg)}
 .f2{right:-20px;top:20px;width:110px;transform:rotate(6deg)}
 @media (prefers-reduced-motion:no-preference){
@@ -53,31 +53,72 @@ h2{font-size:clamp(26px,4vw,38px);font-weight:900}
   @keyframes hop{0%,100%{translate:0 0}50%{translate:0 -10px}}
 }
 
+/* first day */
+.first{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:32px;counter-reset:st}
+.first div{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:18px 14px}
+.first b{display:block;font-size:13px;color:var(--orange-d);letter-spacing:.1em}
+.first h3{font-size:17px;margin-top:6px}
+.first p{font-size:14px;color:var(--sub);margin:6px 0 0}
+
 /* loop */
 .loop{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:32px}
 .step{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:18px 14px;text-align:center}
 .step b{display:block;font-size:13px;color:var(--orange-d);letter-spacing:.1em}
 .step h3{font-size:18px;margin-top:6px}
-.step p{font-size:13px;color:var(--sub);margin:6px 0 0}
+.step p{font-size:14px;color:var(--sub);margin:6px 0 0}
 .step.night{background:var(--night2);color:#f3eeff;border-color:var(--night2)}
-.step.night p{color:#c9c3ec}.step.night b{color:var(--gold)}
+.step.night p{color:#d6d0f5}.step.night b{color:var(--gold)}
 
-/* boosts */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
-.pillar{background:var(--paper);border-radius:22px;padding:24px;border:2px solid var(--line)}
-.pillar h3{font-size:20px}
-.pillar .num{font-size:40px;font-weight:900;color:var(--orange)}
-.pillar p{color:var(--sub);font-size:15px;margin:8px 0 0}
+/* values */
+.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:32px}
+.pillar{background:var(--night2);border-radius:22px;padding:24px;color:#f3eeff}
+.pillar h3{font-size:19px;margin-top:4px}
+.pillar .num{font-size:26px;font-weight:900;color:var(--gold);line-height:1.2}
+.pillar p{color:#d6d0f5;font-size:15px;margin:8px 0 0}
 
-/* variants */
-.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
-.v{background:var(--paper);border-radius:26px;padding:18px;border:2px solid var(--line);display:flex;flex-direction:column;gap:14px}
-.v video{border-radius:18px;aspect-ratio:9/16;width:100%;height:auto;object-fit:cover;background:#111}
-.v .badge{align-self:flex-start;font-size:12px;font-weight:900;padding:3px 12px;border-radius:999px;background:var(--ink);color:#fff}
-.v h3{font-size:22px}
-.v p{color:var(--sub);font-size:14px;margin:0}
-.v ul{margin:0;padding-left:1.2em;font-size:14px;color:var(--ink)}
-.v .btn{justify-content:center;margin-top:auto}
+/* for whom */
+.who{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.who div{border-left:4px solid var(--orange);padding:4px 0 4px 16px}
+.who h3{font-size:18px}.who p{color:var(--sub);font-size:15px;margin:6px 0 0}
+
+/* features */
+.feats{display:grid;gap:64px;margin-top:44px}
+.feat{display:grid;grid-template-columns:1fr 250px;gap:56px;align-items:center}
+.feat.flip{grid-template-columns:250px 1fr}
+.feat.flip .shots{order:-1}
+.feat.two{grid-template-columns:1fr 420px}
+.feat.flip.two{grid-template-columns:420px 1fr}
+.feat .tagline{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--orange-d)}
+.feat h3{font-size:clamp(22px,3vw,28px);margin-top:6px}
+.feat p{color:var(--sub);margin:12px 0 0}
+.feat ul{margin:12px 0 0;padding-left:1.2em;font-size:15px}
+.feat .note{font-size:13px;color:var(--sub);margin-top:10px}
+.shots{display:flex;gap:12px;justify-content:center}
+.shot{flex:1;min-width:0;max-width:250px;margin:0;border-radius:28px;background:#0b0e22;padding:8px;box-shadow:0 18px 36px #2a223333}
+.shot img{border-radius:21px;width:100%;height:auto;aspect-ratio:9/16;object-fit:cover}
+.hours{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.hours div{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:10px 12px;text-align:center}
+.hours b{display:block;font-size:13px;color:var(--sub)}
+.hours span{font-size:24px;font-weight:900;color:var(--orange-d)}
+.hours small{display:block;font-size:12px;color:var(--sub);line-height:1.4}
+.hours div.cap{border-color:var(--orange)}
+.odds{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.odds div{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:10px 12px;text-align:center}
+.odds span{display:block;font-size:24px;font-weight:900;color:var(--orange-d)}
+.odds small{font-size:13px;color:var(--sub)}
+
+/* special cats */
+.special{background:var(--night);color:#f3eeff}
+.special .lead{color:#d6d0f5}
+.special .eyebrow{color:var(--gold)}
+.reel{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:32px}
+.reel figure{margin:0}
+.reel video{width:100%;aspect-ratio:720/1260;height:auto;border-radius:20px;background:#232b5c;object-fit:cover}
+.reel figcaption{margin-top:8px;font-weight:700;text-align:center}
+.reel figcaption small{display:block;font-weight:500;font-size:13px;color:#d6d0f5;line-height:1.5}
+
+/* Japanese: break headings at phrase boundaries */
+:lang(ja) h2,:lang(ja) h3{word-break:auto-phrase}
 
 /* rares */
 .rare-sec{background:#fff}
@@ -92,128 +133,259 @@ h2{font-size:clamp(26px,4vw,38px);font-weight:900}
 .card small{display:block;color:var(--sub);font-size:12px;line-height:1.5;margin-top:4px}
 .card .g{display:inline-block;font-size:11px;font-weight:700;color:var(--orange-d)}
 
-/* fair */
-.fair{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
-.fair div{border-left:4px solid var(--orange);padding:4px 0 4px 16px}
-.fair h3{font-size:18px}.fair p{color:var(--sub);font-size:14px;margin:6px 0 0}
+/* links */
+.links{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.links a{display:block;background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:20px;text-decoration:none}
+.links a:hover{border-color:var(--orange)}
+.links a:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.links b{display:block;font-size:18px}
+.links span{display:block;color:var(--sub);font-size:14px;word-break:break-all}
 
-.lang{position:absolute;top:16px;right:20px;z-index:2;font-size:14px;font-weight:700;color:#fff;text-decoration:none;border:2px solid #ffffff55;border-radius:999px;padding:4px 14px}
-.lang:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-footer{background:var(--night);color:#c9c3ec;padding-block:40px;font-size:14px}
+footer{background:var(--night);color:#d6d0f5;padding-block:40px;font-size:14px}
 footer b{color:#fff}
 
+.lang{position:absolute;top:16px;right:20px;z-index:2;font-size:14px;font-weight:700;color:#1f2457;text-decoration:none;border:2px solid #1f245744;background:#ffffff88;border-radius:999px;padding:4px 14px}
+.lang:focus-visible{outline:3px solid var(--night);outline-offset:2px}
+
+@media (max-width:1000px){
+  .loop,.first{grid-template-columns:repeat(3,1fr)}
+  .pillars{grid-template-columns:1fr 1fr}
+  .reel{grid-template-columns:repeat(3,1fr)}
+}
 @media (max-width:860px){
   .hero-grid{grid-template-columns:1fr}
-  .loop{grid-template-columns:1fr 1fr}
-  .pillars,.variants,.fair{grid-template-columns:1fr}
+  .loop,.first{grid-template-columns:1fr 1fr}
+  .who,.feat,.feat.flip,.feat.two,.feat.flip.two,.links{grid-template-columns:1fr}
+  .feat{gap:24px}
+  .feat.flip .shots{order:0}
+  .shots{max-width:100%}
+  .shot{max-width:230px}
   .float{display:none}
+  .reel{grid-template-columns:1fr 1fr}
+}
+@media (max-width:520px){
+  .pillars{grid-template-columns:1fr}
+  .hours span,.odds span{font-size:20px}
 }
 </style>
 </head>
 <body>
 
 <header class="hero">
-  <div class="stars"></div>
   <a class="lang" href="../" hreflang="en">English</a>
   <div class="wrap hero-grid">
     <div>
-      <div class="eyebrow" style="color:#ffd23f">RECRUIT INNOVATION CUP 2026 ・ TEAM DRY GRAPE</div>
-      <h1 style="margin-top:14px">Paw Time</h1><p style="margin:6px 0 0;font-weight:700;color:#c9c3ec">猫おばけの休憩室</p>
-      <p class="tag">働いた日は、<span>ポイが増える</span>。<br>よく寝た朝は、<span>玉がかえる</span>。</p>
-      <p class="sub">仕事の種類と、ぐっすり眠った夜が、ゲームのブーストになる。長く働いても得はしない。働く人のための、毎日ひらきたくなるゲーム。</p>
+      <div class="eyebrow">RECRUIT INNOVATION CUP 2026 ・ TEAM DRY GRAPE</div>
+      <h1 style="margin-top:14px">Paw Time</h1>
+      <p class="sub">スキマバイトで働く人のためのゲーム。おばネコが週の予定に合う求人を見つけ、シフト中は一緒に働き、働きすぎる前に疲れて止まる。長く働いても得はしない。</p>
       <div class="cta">
-        <a class="btn btn-main" href="#play">3つの試作を遊ぶ</a>
-        <a class="btn btn-ghost" href="#rares">レア30体を見る</a>
+        <a class="btn btn-main" href="https://paw-time-play.vercel.app" target="_blank" rel="noopener">ブラウザで遊ぶ</a>
+        <a class="btn btn-ghost" href="https://paw-time-insights.vercel.app" target="_blank" rel="noopener">リクルート向け：データを見る</a>
       </div>
+      <p class="fine">無料・登録なし。急ぐときはタイトル画面の<b>「3分デモ」</b>から。最初の読み込みは数十秒かかります。</p>
     </div>
     <div style="position:relative">
       <img class="float f1" src="../img/rares/amagasa.webp" alt="">
-      <img class="float f2" src="../img/rares/kaminari.webp" alt="">
-      <div class="phone"><video src="../video/promo_c.mp4" poster="../img/poster_c.jpg" autoplay muted loop playsinline></video></div>
+      <img class="float f2" src="../img/rares/sakura.webp" alt="">
+      <div class="phone"><video src="../video/title_ja.mp4" poster="../img/poster_title_ja.jpg" autoplay muted loop playsinline aria-label="Paw Time のタイトル画面。夕方の島のおばネコと、奥にお店の島"></video></div>
     </div>
   </div>
 </header>
 
 <section>
   <div class="wrap">
-    <div class="eyebrow">1日の流れ</div>
-    <h2>働いて、すくって、眠って、朝に会う。</h2>
-    <p class="lead">現実のシフトと睡眠が、ゲームの中の1日とつながります。記録がなくても毎日遊べて、記録とつなぐと、少しだけ良くなる。</p>
-    <div class="loop">
-      <div class="step"><b>昼</b><h3>シフト</h3><p>仕事の種類のポイが届く。何時間働いても量は同じ</p></div>
-      <div class="step night"><b>夜</b><h3>おばけすくい</h3><p>川べりの光る玉を、ポイでそっとすくう</p></div>
-      <div class="step night"><b>寝る</b><h3>眠り</h3><p>量と、いつもの時刻。よく眠るほどポイは強い</p></div>
-      <div class="step"><b>朝</b><h3>玉がかえる</h3><p>1つずつ割れて、おばけが生まれる</p></div>
-      <div class="step"><b>ずっと</b><h3>図鑑とレア</h3><p>ふつう5種＋レア30体。条件はヒントだけ</p></div>
+    <div class="eyebrow">だれのため</div>
+    <h2>いろんな店を回って働く人へ。</h2>
+    <p class="lead">短期・スキマバイトの人。火曜はカフェ、金曜は倉庫。店も同僚も毎回ちがって、今週どれだけ働いたかを見てくれる人はいない。</p>
+    <div class="who">
+      <div><h3>どの店にもついてくる相棒</h3><p>おばネコはどのシフトにも一緒に行って、あなたの1週間を覚えている。</p></div>
+      <div><h3>求人を探し回らなくていい</h3><p>場所・曜日・時間・時給を一度伝えるだけ。口座やカードの番号は聞かない。</p></div>
+      <div><h3>長く同じ店で働く人も</h3><p>シフトを自分で入れて、求人の知らせを切れば、そのまま遊べる。</p></div>
     </div>
   </div>
 </section>
 
 <section style="padding-top:0">
   <div class="wrap">
-    <div class="eyebrow">しくみ</div>
-    <h2>仕事と睡眠は、ブーストアイテム。</h2>
-    <div class="pillars">
-      <div class="pillar"><div class="num">2本</div><h3>シフトのポイは一定</h3><p>4時間でも10時間でも同じ。効くのは時間ではなく、仕事の種類。レジ・皿洗い・ホール・キッチン・品出しで、寄ってくるおばけが変わる。</p></div>
-      <div class="pillar"><div class="num">×1.25</div><h3>よく寝た朝は強い</h3><p>7時間以上ねむると、ポイが破れにくく、玉がよくかえる。夜ふかしにも夜のおばけという得があるから、正解は一つじゃない。</p></div>
-      <div class="pillar"><div class="num">30体</div><h3>レアは暮らしの記録から</h3><p>雨の日のシフト、満月の夜、はじめての店、連勤のあとの休み。量ではなく、種類と休みとつながりで生まれる。</p></div>
+    <div class="eyebrow">はじめての5分</div>
+    <h2>相棒に出会い、一緒にシフトへ行き、最初の玉をすくう。</h2>
+    <div class="first">
+      <div><b>1</b><h3>診断</h3><p>12問で16タイプから、あなたのおばネコが決まる。</p></div>
+      <div><b>2</b><h3>名前をつける</h3><p>10文字まで。あとで変えられる。</p></div>
+      <div><b>3</b><h3>シフトに行く</h3><p>おばネコも小さな店で一緒に働く。はじめては早送り。</p></div>
+      <div><b>4</b><h3>はじめてのすくい</h3><p>もらったポイで、川の玉をすくう。</p></div>
+      <div><b>5</b><h3>特別なおばネコ</h3><p>特別なレアのどれかが、専用の動画つきでかえる。</p></div>
+    </div>
+    <div class="feats" style="margin-top:40px">
+      <article class="feat two">
+        <div>
+          <div class="tagline">マイおばネコ診断</div>
+          <h3>12問で、16タイプから自分の子が出る。</h3>
+          <p>MBTI風の診断で、あなたのおばネコが決まります。名前をつけると相棒になり、島のあるじになります。</p>
+          <p>そのあと「シフトに行こう」。あなたが働いている間、おばネコも働きます。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="../img/shot_quiz_ja.webp" width="450" height="800" alt="診断の結果に出た、花の冠のピンクのおばネコ"></figure>
+          <figure class="shot"><img src="../img/shot_goshift_ja.webp" width="450" height="800" alt="おばネコ「きみがシフトの間、ぼくも働くね！」。シフトに行くボタン"></figure>
+        </div>
+      </article>
     </div>
   </div>
 </section>
 
-<section id="play" style="background:#efe6da">
+<section style="background:#efe6da">
   <div class="wrap">
-    <div class="eyebrow">ひと晩で3つの試作</div>
-    <h2>同じ世界、ちがう遊び方。</h2>
-    <p class="lead">同じおばけ、同じ仕組みの上に、少しずつ違う遊びの芯を置いた3案です。ブラウザでそのまま遊べます（最初の読み込みは数十秒）。</p>
-    <div class="variants">
-      <article class="v">
-        <span class="badge">A</span>
-        <video src="../video/promo_a.mp4" poster="../img/poster_a.jpg" controls muted playsinline preload="metadata"></video>
-        <h3>すくいと収集</h3>
-        <p>おばけすくいの腕前と、図鑑を埋める楽しさが芯。</p>
-        <ul><li>揺らさず、真ん中で、重さを見て上げる</li><li>天気・お題・土曜の大すくい祭り</li><li>称号とメダル、育つと増える飾り</li></ul>
-        <a class="btn btn-main" href="https://obake-breakroom-a-scoop.vercel.app" target="_blank" rel="noopener">A を遊ぶ</a>
+    <div class="eyebrow">1日の流れ</div>
+    <h2>昼は一緒に働き、夜にすくい、朝に玉を開ける。</h2>
+    <p class="lead">現実のシフトが、ゲームの1日とつながります。休みの日もポイが1つ。島・キセカエ・おさらい・おしゃべりはいつでも。</p>
+    <div class="loop">
+      <div class="step"><b>昼</b><h3>シフト</h3><p>おばネコは自分の小さな店で仕事中。肉球コインを稼ぐ。シフト中は遊べない</p></div>
+      <div class="step"><b>勤務後</b><h3>ひとことレビュー</h3><p>10秒で店の感想。ポイがもう1つ</p></div>
+      <div class="step night"><b>夜</b><h3>おばけすくい</h3><p>川の光る玉を、金魚すくいのように</p></div>
+      <div class="step"><b>朝</b><h3>孵化</h3><p>玉が開く。材料、服、ときどきおばネコ</p></div>
+      <div class="step"><b>いつでも</b><h3>島など</h3><p>島づくり、キセカエ、おさらい、おしゃべり</p></div>
+    </div>
+
+    <div class="feats">
+
+      <article class="feat flip">
+        <div>
+          <div class="tagline">おばネコが求人を探す</div>
+          <h3>曜日ごとのカードで、1週間の求人。</h3>
+          <p>場所・曜日・時間・時給に合う求人を、おばネコが数件だけ持ってきて、曜日のカードに並べます。カードには時給と、そこで働いた人の声。</p>
+          <ul>
+            <li>受けると、シフトに登録。Googleカレンダーのリンクと .ics も出ます。</li>
+            <li>断っても、肩をすくめるだけ。罰はありません。</li>
+          </ul>
+          <p class="note">今の求人は見本データで、ゲーム内にも見本と表示しています。実際の募集ではありません。</p>
+        </div>
+        <div class="shots"><figure class="shot"><img src="../img/shot_jobs_ja.webp" width="450" height="800" alt="曜日のカード：月曜にキッチンスタッフ、時給1,350円"></figure></div>
       </article>
-      <article class="v">
-        <span class="badge">B</span>
-        <video src="../video/promo_b.mp4" poster="../img/poster_b.jpg" controls muted playsinline preload="metadata"></video>
-        <h3>眠りのリズム</h3>
-        <p>いつもの時刻に眠るほど、夜の庭が育つ。</p>
-        <ul><li>睡眠を量と時刻のそろい具合で採点</li><li>寝る前に過ごし方を選ぶ（夜店もある）</li><li>羊かぞえの夢、満月の夜</li></ul>
-        <a class="btn btn-main" href="https://obake-breakroom-b-sleep.vercel.app" target="_blank" rel="noopener">B を遊ぶ</a>
+
+      <article class="feat two">
+        <div>
+          <div class="tagline">一緒に働く</div>
+          <h3>おばネコが先に疲れるから、無理しなくていい。</h3>
+          <p>シフト中、おばネコは自分の小さな店で仕事中。肉球コインを稼ぎます。アプリを閉じていても進みます。はじめは1時間30コイン、疲れるほどペースが落ちて、最後は「もうへとへと…いっしょに帰ろう」。7.5時間を過ぎたらもう増えず、1日の上限は180コインです。</p>
+          <div class="hours">
+            <div><b>4時間</b><span>119</span><small>コイン</small></div>
+            <div class="cap"><b>7.5時間</b><span>165</span><small>コイン</small></div>
+            <div><b>12時間</b><span>165</span><small>コイン（同じ）</small></div>
+          </div>
+          <p>残業した翌日も、おばネコはまだ疲れています（×0.85）。週5日なら10時間ずつ（725）より7.5時間ずつ（825）のほうが多くなります。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="../img/shot_work_ja.webp" width="450" height="800" alt="いっしょに働いてる：レジのおばネコ、3時間20分・肉球コイン93"></figure>
+          <figure class="shot"><img src="../img/shot_tired_ja.webp" width="450" height="800" alt="おつかれさま：もうへとへと…いっしょに帰ろう。それ以上はコインにならない"></figure>
+        </div>
       </article>
-      <article class="v">
-        <span class="badge">C</span>
-        <video src="../video/promo_c.mp4" poster="../img/poster_c.jpg" controls muted playsinline preload="metadata"></video>
-        <h3>店を回す</h3>
-        <p>店のあちこちに湧く困りごとを、おばけ猫の持ち場で片づける。</p>
-        <ul><li>レジ・客席・キッチン・洗い場・棚に置く</li><li>仕事が合う持ち場ほど速い。疲れたら休憩</li><li>3つの店と、金曜の大ピーク</li></ul>
-        <a class="btn btn-main" href="https://obake-breakroom-c-defense.vercel.app" target="_blank" rel="noopener">C を遊ぶ</a>
+
+      <article class="feat flip">
+        <div>
+          <div class="tagline">ポイと光る玉</div>
+          <h3>働いた日はポイ2つ。何時間でも同じ。</h3>
+          <p>シフトのある日はポイが2つ。3時間でも10時間でも同じです。休みの日は1つ。夜にそのポイで光る玉をすくい、朝に開けます。</p>
+          <div class="odds">
+            <div><span>70%</span><small>島の材料</small></div>
+            <div><span>20%</span><small>服</small></div>
+            <div><span>10%</span><small>おばネコ</small></div>
+          </div>
+          <p>新しいおばネコが出ない夜が7回続いたら、次の夜の玉には必ずおばネコが入っています。</p>
+        </div>
+        <div class="shots"><figure class="shot"><img src="../img/shot_scoop_ja.webp" width="450" height="800" alt="夜のおばけすくい：川に浮かぶ光る玉とポイ"></figure></div>
       </article>
+
+      <article class="feat two">
+        <div>
+          <div class="tagline">お店の島</div>
+          <h3>お店の島は、働いた人の声だけで育つ。</h3>
+          <p>どのお店にも、訪ねられる島があります。島の目印は、働いた人の評価のうち良かったところだけで育ちます（「時間どおりに帰れる ×16」で時計台が建つ）。お店がお金で買うことはできません。</p>
+          <p>不満は島に出ません。5人以上が同じことを言ったときだけ、匿名でお店に届きます。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="../img/shot_shopisland_ja.webp" width="450" height="800" alt="カフェ こもれびの島：働いた人の評価35件から。目印は評価だけで育つ"></figure>
+          <figure class="shot"><img src="../img/shot_shopchat_ja.webp" width="450" height="800" alt="お店の猫とのチャット：10分ほど遅れそうです"></figure>
+        </div>
+      </article>
+
+      <article class="feat flip two">
+        <div>
+          <div class="tagline">おばネコとおしゃべり</div>
+          <h3>話したことは、お店に届かない。</h3>
+          <p>今日どうだったか、明日が不安なこと。おばネコに話すと、合う仕事さがしのために覚えておきます。その言葉がお店に渡ることはありません。</p>
+          <p>シフトの前には、おばネコがお店の猫と話せます。何を着ればいいか、スタッフの入口はどこか、「10分ほど遅れそう」。おばネコがていねいに言いかえて伝えます。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="../img/shot_chat_ja.webp" width="450" height="800" alt="話すまえに：話したことは合う仕事さがしのために覚えておく。あなたの言葉はお店に届かない"></figure>
+        </div>
+      </article>
+
+      <article class="feat two">
+        <div>
+          <div class="tagline">おさらい</div>
+          <h3>仕事のミニゲームと、自分のものになるスキルの記録。</h3>
+          <p>レジ・皿洗い・ホール・キッチン・品出しの短いミニゲーム。休みの日に遊べます。クリアするとマイスキルにバッジがつき、その記録はどのお店にも持っていけます。</p>
+          <p class="note">おさらいは任意です。お店が求めることはできません。お店が必要とする研修は、賃金の出る労働時間です。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="../img/shot_practice_ja.webp" width="450" height="800" alt="レジのおさらい：注文を聞いて、おつりを正しく渡す"></figure>
+          <figure class="shot"><img src="../img/shot_skills_ja.webp" width="450" height="800" alt="マイスキル：レジ・皿洗い・キッチンのバッジ"></figure>
+        </div>
+      </article>
+
+      <article class="feat flip two">
+        <div>
+          <div class="tagline">島</div>
+          <h3>建てて、広げて、見せ合う。</h3>
+          <p>材料で飾りを建て、岸の「＋」から材料とコインで陸地を足す。島はリンクで共有できます。</p>
+          <p>友だちの島やお店の島へは、いかだ・ボート・水上飛行機・ヘリで。乗り物は見た目だけで、速さもご褒美も同じです。</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="../img/shot_island_ja.webp" width="450" height="800" alt="自分の島：今日のシフトのカードと、あいぼうが見つけた求人"></figure>
+          <figure class="shot"><img src="../img/shot_expanded_ja.webp" width="450" height="800" alt="陸地と小島を足して広がった島"></figure>
+        </div>
+      </article>
+
+      <article class="feat">
+        <div>
+          <div class="tagline">キセカエ</div>
+          <h3>おばネコの服と小物。</h3>
+          <p>帽子、ピン、マフラーなど、頭から背中まで。キセカエの部屋で試着して保存。体の色はその子のまま。キセカエは服だけです。</p>
+          <ul>
+            <li>はじめての種類の仕事をすると、その仕事の制服</li>
+            <li>玉の中身、図鑑、肉球コインのお店</li>
+          </ul>
+        </div>
+        <div class="shots"><figure class="shot"><img src="../img/shot_wardrobe_ja.webp" width="450" height="800" alt="キセカエ：王冠を試着"></figure></div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="special" id="special">
+  <div class="wrap">
+    <div class="eyebrow">特別なおばネコ</div>
+    <h2>一部のレアは、専用の動画でかえる。</h2>
+    <p class="lead">はじめてのすくいでは、必ずこの中のどれかが出ます。そのあとは、雨、強い風、春、満月、同じ店にまた入った日、図鑑をうめたときに。</p>
+    <div class="reel">
+      <figure><video src="../video/special_sakura.mp4" poster="../img/special/sakura.jpg" autoplay muted loop playsinline aria-label="サクラがかえる動画"></video><figcaption>サクラ<small>春のシフト</small></figcaption></figure>
+      <figure><video src="../video/special_yomise.mp4" poster="../img/special/yomise.jpg" autoplay muted loop playsinline aria-label="ヨミセがかえる動画"></video><figcaption>ヨミセ<small>前に働いた店にまた入った日</small></figcaption></figure>
+      <figure><video src="../video/special_amagasa.mp4" poster="../img/special/amagasa.jpg" autoplay muted loop playsinline aria-label="アマガサがかえる動画"></video><figcaption>アマガサ<small>雨の日のシフト</small></figcaption></figure>
+      <figure><video src="../video/special_kazaguruma.mp4" poster="../img/special/kazaguruma.jpg" autoplay muted loop playsinline aria-label="かざぐるまがかえる動画"></video><figcaption>かざぐるま<small>風の強い日に働いたら</small></figcaption></figure>
+      <figure><video src="../video/special_mangetsu.mp4" poster="../img/special/mangetsu.jpg" autoplay muted loop playsinline aria-label="マンゲツがかえる動画"></video><figcaption>マンゲツ<small>満月の夜を4回</small></figcaption></figure>
+      <figure><video src="../video/special_hyakki.mp4" poster="../img/special/hyakki.jpg" autoplay muted loop playsinline aria-label="ヒャッキがかえる動画"></video><figcaption>ヒャッキ<small>ふつうのおばけを全種類</small></figcaption></figure>
     </div>
   </div>
 </section>
 
 <section id="rares" class="rare-sec">
   <div class="wrap">
-    <div class="eyebrow">レア30体</div>
-    <h2>見えない仕事と、良い休みから生まれる。</h2>
-    <p class="lead">図鑑では、会うまでヒント一文だけ。集めることが、そのまま「良い働き方と眠り方」の練習になります。</p>
+    <div class="eyebrow">レアおばネコ</div>
+    <h2>レアは、働いた長さではなく、働き方と休み方から。</h2>
+    <p class="lead">はじめての店、はじめての仕事、天気、満月、同僚、休みの日。図鑑では、会うまでヒント一文だけ。</p>
     <div class="filters" role="group" aria-label="まとまりで絞り込む" id="filters"></div>
     <div class="grid" id="grid"></div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="eyebrow">設計で守っていること</div>
-    <h2>働かせるゲームにしない。</h2>
-    <div class="fair">
-      <div><h3>長く働いても得をしない</h3><p>シフトの報酬は時間によらず一定。効くのは仕事の種類と、休みを挟むこと。</p></div>
-      <div><h3>寝ないと強くならない</h3><p>睡眠がポイの強さと、朝にかえる玉の質を決める。休みの日だけのレアもいる。</p></div>
-      <div><h3>ランキングを出さない</h3><p>比べる相手は昨日の自分と、同じシフトの仲間。同僚とはおばけを贈り合う。</p></div>
-    </div>
   </div>
 </section>
 
@@ -221,11 +393,24 @@ footer b{color:#fff}
   <div class="wrap">
     <div class="eyebrow" style="color:#ffd23f">わたしたちの価値観</div>
     <h2>労働を、楽しいものに彩る。働かせる道具にはしない。</h2>
-    <p class="lead" style="color:#c9c3ec">おばネコは、あなたのシフト中も一緒に働きます。十分に働いたら、おばネコが疲れて「今日はここまでにしよう」と言い、それ以上の報酬は出ません。労働を搾るのではなく、彩ります。</p>
+    <p class="lead" style="color:#d6d0f5">おばネコは、あなたのシフト中も一緒に働きます。十分に働いたら、おばネコが疲れて「いっしょに帰ろう」と言い、それ以上の報酬は出ません。</p>
     <div class="pillars">
-      <div class="pillar" style="background:#232b5c;border-color:#232b5c;color:#f3eeff"><div class="num" style="color:#ffd23f">無料</div><h3>働く人は払わない</h3><p style="color:#c9c3ec">遊びの機能はすべて無料。報酬は、仕事の種類・休み・人とのつながりから。時間やお金では増えない。</p></div>
-      <div class="pillar" style="background:#232b5c;border-color:#232b5c;color:#f3eeff"><div class="num" style="color:#ffd23f">B2B</div><h3>払うのはお店</h3><p style="color:#c9c3ec">求人の掲載、急なシフトの穴埋め、働いた人の匿名レビューの集計（「休憩がちゃんと取れる ★4.6」）。</p></div>
-      <div class="pillar" style="background:#232b5c;border-color:#232b5c;color:#f3eeff"><div class="num" style="color:#ffd23f">賃金は触らない</div><h3>課金は見た目だけ</h3><p style="color:#c9c3ec">服や島の飾りの買い切りだけ。ガチャなし、時短なし、現金に戻せるものなし。賃金はゲームに入らない。</p></div>
+      <div class="pillar"><div class="num">無料</div><h3>働く人は払わない</h3><p>遊びの機能はすべて無料。報酬は、仕事の種類・休み・人とのつながりから。時間やお金では増えない。</p></div>
+      <div class="pillar"><div class="num">B2B</div><h3>払うのはお店</h3><p>求人の掲載、急なシフトの穴埋め、働いた人の評価の匿名の集計。</p></div>
+      <div class="pillar"><div class="num">賃金は触らない</div><h3>課金は見た目だけ</h3><p>服や島の飾りの買い切りだけ。ガチャなし、時短なし、現金に戻せるものなし。賃金はゲームに入らない。</p></div>
+      <div class="pillar"><div class="num">点数なし</div><h3>個人を採点してお店に渡さない</h3><p>お店に見えるのは匿名の集計だけ。働く人ひとりひとりの点数や順位は出さない。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">リンク</div>
+    <h2>遊ぶ、データを見る、コードを読む。</h2>
+    <div class="links">
+      <a href="https://paw-time-play.vercel.app" target="_blank" rel="noopener"><b>ブラウザで遊ぶ</b><span>paw-time-play.vercel.app</span></a>
+      <a href="https://paw-time-insights.vercel.app" target="_blank" rel="noopener"><b>リクルート向け：データを見る</b><span>paw-time-insights.vercel.app</span></a>
+      <a href="https://github.com/ooyamakeigo/paw-time" target="_blank" rel="noopener"><b>ソースコード</b><span>github.com/ooyamakeigo/paw-time</span></a>
     </div>
   </div>
 </section>
@@ -233,22 +418,22 @@ footer b{color:#fff}
 <footer>
   <div class="wrap">
     <b>Paw Time</b> ・ Team Dry Grape（大山慶悟・青木悠登・小柳璃紗）・ Recruit Innovation Cup 2026<br>
-    試作はすべて大会期間中に制作。ゲームエンジン Godot 4。おばけはすべてゲーム内の 3D モデル。
+    ゲームエンジンは Godot 4。おばネコはすべてゲーム内の 3D モデル。
   </div>
 </footer>
 
 <script>
-const RARES = [{"id": "nemurin", "name": "ネムリン", "group": "睡眠", "desc": "7時間以上ねむった朝に生まれる。寝息がやさしい"}, {"id": "yumemi", "name": "ユメミ", "group": "睡眠", "desc": "8時間以上ねむった朝に。見た夢の色をしている"}, {"id": "asayake", "name": "アサヤケ", "group": "睡眠", "desc": "3日続けて7時間以上ねむると生まれる。朝焼けの色"}, {"id": "yomise", "name": "ヨミセ", "group": "睡眠", "desc": "5時間以下の睡眠の朝に。提灯をさげて夜を歩く"}, {"id": "hirunen", "name": "ヒルネン", "group": "睡眠", "desc": "休みの日に9時間ねむると生まれる。日だまりの匂い"}, {"id": "totonou", "name": "トトノウ", "group": "睡眠", "desc": "3日続けて同じ時間ねむると生まれる。いつも落ち着いている"}, {"id": "kirari", "name": "キラリ", "group": "はじめて", "desc": "はじめての店で働いた日に生まれる"}, {"id": "hajimete", "name": "ハジメテ", "group": "はじめて", "desc": "はじめての種類の仕事をした日に。まだ少しぎこちない"}, {"id": "wataridori", "name": "ワタリドリ", "group": "はじめて", "desc": "5種類の仕事をぜんぶ経験すると生まれる。どこへでも行ける"}, {"id": "mitsuboshi", "name": "ミツボシ", "group": "はじめて", "desc": "1週間で3つの店で働くと生まれる"}, {"id": "hatsukoe", "name": "ハツコエ", "group": "はじめて", "desc": "はじめての同僚とシフトに入った日に。あいさつが上手"}, {"id": "yonaki", "name": "ヨナキ", "group": "時間帯", "desc": "深夜のシフトの日に生まれる。静かな場所が好き"}, {"id": "asatsuyu", "name": "アサツユ", "group": "時間帯", "desc": "朝のシフトに3回入ると生まれる。露のしずくでできている"}, {"id": "tsukimi", "name": "ツキミ", "group": "時間帯", "desc": "満月の夜のシフトで生まれる。うさぎの耳のような裾"}, {"id": "tasogare", "name": "タソガレ", "group": "時間帯", "desc": "同じ週に昼と夜のシフトに入ると生まれる"}, {"id": "shinya", "name": "マヨナカ", "group": "時間帯", "desc": "深夜の品出しをした日に。箱の角が好き"}, {"id": "amagasa", "name": "アマガサ", "group": "天気", "desc": "雨の日のシフトで生まれる。傘の下で歌う"}, {"id": "yukimi", "name": "ユキミ", "group": "天気", "desc": "雪の日のシフトで生まれる。ひんやりしている"}, {"id": "kaminari", "name": "カミナリ", "group": "天気", "desc": "雷の日のシフトで生まれる。ちょっとせっかち"}, {"id": "sakura", "name": "サクラ", "group": "天気", "desc": "春のシフトで生まれる。花びらをまとう"}, {"id": "nakayoshi", "name": "ナカヨシ", "group": "つながり", "desc": "同じ同僚と3回シフトに入ると生まれる"}, {"id": "okurimono", "name": "オクリモノ", "group": "つながり", "desc": "同僚におばけを贈ると生まれる"}, {"id": "morattan", "name": "モラッタン", "group": "つながり", "desc": "同僚からおばけを贈られると生まれる"}, {"id": "teamwork", "name": "テヲツナグ", "group": "つながり", "desc": "大ピークを乗り切ると生まれる"}, {"id": "senpai", "name": "センパイ", "group": "つながり", "desc": "はじめて入る人と同じシフトに入ると生まれる。頼られると伸びる"}, {"id": "yasumijouzu", "name": "ヤスミジョウズ", "group": "リズム", "desc": "2日以上働いたあとに休むと生まれる。休み方の名人"}, {"id": "shuumatsu", "name": "シュウマツ", "group": "リズム", "desc": "週末の両方でシフトに入ると生まれる"}, {"id": "hyakki", "name": "ヒャッキ", "group": "リズム", "desc": "ふつうのおばけを全種類あつめると生まれる。百鬼夜行の先頭"}, {"id": "kazoeuta", "name": "カゾエウタ", "group": "リズム", "desc": "図鑑が10種類をこえると生まれる。数を歌う"}, {"id": "mangetsu", "name": "マンゲツ", "group": "リズム", "desc": "ひと月の平均睡眠が7時間をこえると生まれる"}];
-const groups = ["すべて", "睡眠", "はじめて", "時間帯", "天気", "つながり", "リズム"];
+const RARES = [{"id": "nemurin", "name": "ネムリン", "group": "休み", "desc": "友だちの島におでかけすると生まれる。旅の荷物はまくらひとつ"}, {"id": "yumemi", "name": "ユメミ", "group": "休み", "desc": "友だちの島におばけを置いてくると生まれる。会ったことのない色をしている"}, {"id": "asayake", "name": "アサヤケ", "group": "休み", "desc": "満月の夜のあとの朝に生まれる。朝焼けの色"}, {"id": "yomise", "name": "ヨミセ", "group": "休み", "desc": "前に働いた店に、もう一度入った日に生まれる。常連さんの顔をしている"}, {"id": "hirunen", "name": "ヒルネン", "group": "休み", "desc": "シフトの無い土曜か日曜に生まれる。日だまりの匂い"}, {"id": "totonou", "name": "トトノウ", "group": "休み", "desc": "雨の日の休みに生まれる。いつも落ち着いている"}, {"id": "kirari", "name": "キラリ", "group": "はじめて", "desc": "はじめての店で働いた日に生まれる"}, {"id": "hajimete", "name": "ハジメテ", "group": "はじめて", "desc": "はじめての種類の仕事をした日に。まだ少しぎこちない"}, {"id": "wataridori", "name": "ワタリドリ", "group": "はじめて", "desc": "5種類の仕事をぜんぶ経験すると生まれる。どこへでも行ける"}, {"id": "mitsuboshi", "name": "ミツボシ", "group": "はじめて", "desc": "1週間で3つの店で働くと生まれる"}, {"id": "hatsukoe", "name": "ハツコエ", "group": "はじめて", "desc": "はじめての同僚とシフトに入った日に。あいさつが上手"}, {"id": "yonaki", "name": "ヨナキ", "group": "時間帯", "desc": "深夜のシフトの日に生まれる。静かな場所が好き"}, {"id": "asatsuyu", "name": "アサツユ", "group": "時間帯", "desc": "朝のシフトに3回入ると生まれる。露のしずくでできている"}, {"id": "tsukimi", "name": "ツキミ", "group": "時間帯", "desc": "満月の夜に、灯りを4つ以上ともすと生まれる。うさぎの耳のような裾"}, {"id": "tasogare", "name": "タソガレ", "group": "時間帯", "desc": "同じ週に昼と夜のシフトに入ると生まれる"}, {"id": "shinya", "name": "マヨナカ", "group": "時間帯", "desc": "深夜の品出しをした日に。箱の角が好き"}, {"id": "amagasa", "name": "アマガサ", "group": "天気", "desc": "雨の日のシフトで生まれる。傘の下で歌う"}, {"id": "yukimi", "name": "ユキミ", "group": "天気", "desc": "雪の日のシフトで生まれる。ひんやりしている"}, {"id": "kazaguruma", "name": "かざぐるま", "group": "天気", "desc": "風の強い嵐の日のシフトで生まれる。頭のかざぐるまが止まらない"}, {"id": "sakura", "name": "サクラ", "group": "天気", "desc": "春のシフトで生まれる。花びらをまとう"}, {"id": "nakayoshi", "name": "ナカヨシ", "group": "つながり", "desc": "同じ同僚と3回シフトに入ると生まれる"}, {"id": "okurimono", "name": "オクリモノ", "group": "つながり", "desc": "同僚におばけを贈ると生まれる"}, {"id": "morattan", "name": "モラッタン", "group": "つながり", "desc": "同僚からおばけを贈られると生まれる"}, {"id": "teamwork", "name": "テヲツナグ", "group": "つながり", "desc": "8種類以上の仲間と、満月の夜を迎えると生まれる"}, {"id": "senpai", "name": "センパイ", "group": "つながり", "desc": "はじめて入る人と同じシフトに入ると生まれる。頼られると伸びる"}, {"id": "yasumijouzu", "name": "ヤスミジョウズ", "group": "リズム", "desc": "2日以上働いたあとに休むと生まれる。休み方の名人"}, {"id": "shuumatsu", "name": "シュウマツ", "group": "リズム", "desc": "週末の両方でシフトに入ると生まれる"}, {"id": "hyakki", "name": "ヒャッキ", "group": "リズム", "desc": "ふつうのおばけを全種類あつめると生まれる。百鬼夜行の先頭"}, {"id": "kazoeuta", "name": "カゾエウタ", "group": "リズム", "desc": "図鑑が10種類をこえると生まれる。数を歌う"}, {"id": "mangetsu", "name": "マンゲツ", "group": "リズム", "desc": "満月の夜を4回むかえると生まれる。月の満ち欠けにくわしい"}];
+const groups = ["すべて", "休み", "はじめて", "時間帯", "天気", "つながり", "リズム"];
 const grid = document.getElementById("grid");
 const filters = document.getElementById("filters");
 function render(g){
   grid.innerHTML = "";
   for (const r of RARES){
-    if (g !== "すべて" && r.group !== g) continue;
+    if (g !== groups[0] && r.group !== g) continue;
     const c = document.createElement("div");
     c.className = "card";
-    c.innerHTML = `<img src="../img/rares/${r.id}.webp" alt="${r.name}"><span class="g">${r.group}</span><h4>${r.name}</h4><small>${r.desc}</small>`;
+    c.innerHTML = `<img src="../img/rares/${r.id}.webp" width="256" height="256" alt="${r.name}"><span class="g">${r.group}</span><h4>${r.name}</h4><small>${r.desc}</small>`;
     grid.appendChild(c);
   }
   for (const b of filters.children) b.setAttribute("aria-pressed", String(b.dataset.g === g));
@@ -259,7 +444,7 @@ for (const g of groups){
   b.addEventListener("click", () => render(g));
   filters.appendChild(b);
 }
-render("すべて");
+render(groups[0]);
 </script>
 </body>
 </html>

@@ -6,7 +6,8 @@ extends Node
 ##   → 最後のカード「Recruit の見え方を見る」（RECRUIT_VIEW_URL）
 ## 画面の行き先は main.go() がここ（route）を通して決める。デモの間はテレメトリーに demo_session が付く。
 
-const RECRUIT_VIEW_URL := "https://paw-time-insights.vercel.app/?mode=live"
+## Recruit の見え方（insights のモック：シミュレーション・離職リスクの画面・ライブの引き出し）。lang は今の言語
+const RECRUIT_VIEW_URL := "https://paw-time-insights.vercel.app/?mode=sim&view=at-risk&drawer=live&demo=1"
 const PRESET_TYPE := "OPHK" # 見本の診断結果（ホールの子。印は SpecialObake.pick で決まる）
 const SHIFT_H := WorkTogether.EXHAUST_HOURS # へとへとになるところで終わるシフト
 const FAST := 1080.0 # 実時間 1 秒 = 18 分（7.5 時間 ≒ 25 秒）
@@ -53,8 +54,8 @@ func _setup() -> void:
 	GameState.clock_offset = 0.0
 	# 今日の求人は 1 枚だけ（見本のカフェ、ホール）。受けたら、そのシフトがすぐ始まる
 	var now := Time.get_unix_time_from_system()
-	var job := {"id": "demo3_job", "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "shibuya", "start": now + 3600.0, "end": now + 3600.0 + SHIFT_H * 3600.0,
-		"wage": 1250, "pay": "daily", "line_n": 1}
+	var job := JobListings.demo_pay({"id": "demo3_job", "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "shibuya", "start": now + 3600.0, "end": now + 3600.0 + SHIFT_H * 3600.0,
+		"pay": "daily", "line_n": 1})
 	JobListings.localize(job)
 	JobDesk._board = {"key": JobDesk.today_key(), "jobs": [job], "decided": {}}
 	JobDesk._save_board(JobDesk._board)
@@ -180,6 +181,7 @@ func _start_shift(s: Dictionary) -> void:
 	Shifts.remove(shift_id)
 	s.start = now
 	s.end = now + (SHIFT_H * 3600.0 + 60.0) / FAST # 実時間での終わり（早送りの時計では 7.5 時間後）
+	s["hours"] = SHIFT_H # 今日のお給料の目安は、早送りの時計での長さで
 	Shifts.add(s)
 	WorkTogether.set_speed(FAST)
 	WorkTogether.sync()
@@ -218,7 +220,7 @@ func _final_card() -> void:
 	p.add_child(v)
 	v.add_child(Kit.text(tr("DEMO3_FINAL_TITLE"), 22, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.wrap(Kit.text(tr("DEMO3_FINAL_BODY") % int(Time.get_ticks_msec() / 1000.0 - _t0), 14, Color("4a3f52"), false, HORIZONTAL_ALIGNMENT_CENTER)))
-	var url := RECRUIT_VIEW_URL + "&lang=" + ("en" if Kit.is_en() else "ja")
+	var url := recruit_view_url()
 	v.add_child(Kit.button(tr("DEMO3_RECRUIT"), Color("ff8a5b"), func(): OS.shell_open(url)))
 	v.add_child(Kit.button(tr("DEMO3_KEEP"), Color("f3ecff"), _end, Color("6a5bd6"), 44, 15))
 	p.pivot_offset = Vector2(156, 120)
@@ -228,6 +230,10 @@ func _final_card() -> void:
 	tw.tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(p, "modulate:a", 1.0, 0.25)
 	Kit.play(self, "sparkle")
+
+
+static func recruit_view_url() -> String:
+	return RECRUIT_VIEW_URL + "&lang=" + ("en" if Kit.is_en() else "ja")
 
 
 ## デモを終えて、そのまま遊びつづける

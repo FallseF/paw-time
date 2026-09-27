@@ -530,7 +530,7 @@ func _pay_box(est: Dictionary) -> PanelContainer:
 		v.add_child(Kit.text("—", 22, Color("3f8a55"), true, HORIZONTAL_ALIGNMENT_CENTER))
 		v.add_child(Kit.text(tr("R2_WT_PAY_NONE"), 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
 		return p
-	v.add_child(Kit.text("¥" + JobListings._commas(int(est.yen)), 26, Color("2f6e43"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(Money.fmt(float(est.amount), Money.of(est)), 26, Color("2f6e43"), true, HORIZONTAL_ALIGNMENT_CENTER))
 	var hrs: float = est.hours
 	var hs := tr("R2_WT_H") % [int(hrs), int(round(fmod(hrs * 60.0, 60.0)))]
 	v.add_child(Kit.text(tr("R2_WT_PAY_HOW") % [hs, JobListings.wage_text(est)], 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))

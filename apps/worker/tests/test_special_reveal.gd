@@ -48,8 +48,26 @@ func _run() -> void:
 		SpecialReveal.reset()
 		_check(SpecialReveal.pick() == kept, "reload keeps the pick (%s)" % kept)
 	SpecialReveal.reset(true)
+	# カミナリをやめてカザグルマにした：前にカミナリを引いていたインストールは、カザグルマになる
+	_check("kazaguruma" in SpecialReveal.IDS and not "kaminari" in SpecialReveal.IDS, "the 6 specials swap kaminari for kazaguruma (%s)" % [SpecialReveal.IDS])
+	var f := FileAccess.open(SpecialReveal.PATH, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"pick": "kaminari"}))
+	f.close()
+	SpecialReveal.reset()
+	_check(SpecialReveal.pick() == "kazaguruma", "an old kaminari pick becomes kazaguruma (%s)" % SpecialReveal.pick())
+	SpecialReveal.reset(true)
 	SpecialReveal.force_save = false
 	SpecialReveal.reset()
+
+	# 古いセーブ：カミナリを持っていたら、カザグルマを持っていることになる（落ちない）
+	GameState.reset("solo")
+	var old := {"owned": [{"id": "receipt", "level": 1, "xp": 0}, {"id": "kaminari", "level": 2, "xp": 5}], "seen": {"receipt": true, "kaminari": true},
+		"rare_pending": ["kaminari"], "host_id": "kaminari", "hatched": [{"id": "kaminari", "is_new": true, "level": 1, "rare": true, "special": true}]}
+	_check(GameState.load_text(JSON.stringify(old)), "an old save with kaminari loads")
+	_check(GameState.seen.has("kazaguruma") and not GameState.seen.has("kaminari"), "seen: kaminari → kazaguruma (%s)" % [GameState.seen])
+	_check(GameState.owned.any(func(o): return o.id == "kazaguruma" and o.level == 2) and not GameState.owned.any(func(o): return o.id == "kaminari"), "owned: kaminari → kazaguruma (%s)" % [GameState.owned])
+	_check(GameState.rare_pending == ["kazaguruma"] and GameState.host_id == "kazaguruma" and GameState.hatched[0].id == "kazaguruma", "pending / host / hatched follow the rename")
+	_check(Rares.is_rare("kazaguruma") and not Rares.is_rare("kaminari") and GameState.info("kazaguruma").get("type", "") == "rare", "kazaguruma is a rare, kaminari is gone")
 
 	# はじめての夜：すくった玉から、その子がかえる（手に入ったことになる）
 	GameState.reset("solo")

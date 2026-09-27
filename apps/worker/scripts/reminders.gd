@@ -2,7 +2,7 @@ class_name Reminders
 ## 前の晩と当日の朝の、ひとこと（ゲームの中だけ。通知は送らない）。
 ##   前の晩：あした登録シフトがあれば、相棒が「あした 10:00・カフェ こもれび。また向こうでね！」（島の夜・夜のおわりの画面）
 ##   当日の朝：まだ始まっていないきょうのシフトがあれば、やさしく「9:30 に出る？」のカード（島の朝・昼）
-## 休んでも何も減らない。連続の記録もつけない。日付と時刻は求人と同じ日本時間（JST）。
+## 休んでも何も減らない。連続の記録もつけない。日付と時刻は見本の求人と同じ町の時刻（日本語＝日本時間、英語＝サンフランシスコ）。
 
 const LEAVE_BEFORE := 30 * 60 # 出発の目安：始まる 30 分前
 
@@ -14,10 +14,10 @@ static func now() -> float:
 
 
 static func _day0(t: float) -> int:
-	return int(floor((t + JobListings.JST) / 86400.0)) * 86400 - JobListings.JST
+	return JobListings.day0(t)
 
 
-## あした（JST の暦の上で）始まるシフトのうち、いちばん早いもの。無ければ空
+## あした（見本の町の暦の上で）始まるシフトのうち、いちばん早いもの。無ければ空
 static func evening(t := -1.0) -> Dictionary:
 	var n := t if t >= 0 else now()
 	var d1 := _day0(n) + 86400
@@ -27,7 +27,7 @@ static func evening(t := -1.0) -> Dictionary:
 	return {}
 
 
-## きょう（JST）これから始まるシフトのうち、いちばん早いもの。無ければ空
+## きょう（見本の町の暦）これから始まるシフトのうち、いちばん早いもの。無ければ空
 static func morning(t := -1.0) -> Dictionary:
 	var n := t if t >= 0 else now()
 	var d0 := _day0(n)
@@ -38,7 +38,7 @@ static func morning(t := -1.0) -> Dictionary:
 
 
 static func clock(unix: float) -> String:
-	var d := Time.get_datetime_dict_from_unix_time(int(unix) + JobListings.JST)
+	var d := JobListings.local(unix)
 	return "%d:%02d" % [d.hour, d.minute]
 
 
@@ -89,7 +89,6 @@ static func attach_night(parent: Control, y := 300.0) -> Control:
 ## 確認用：あした（eve）／きょう（am）の 10:00〜14:00 に、見本のお店のシフトを 1 件入れる
 static func demo_shift(kind: String) -> void:
 	var d0 := _day0(now()) + (86400 if kind == "eve" else 0)
-	var job := {"id": "demo_remind_" + kind, "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "", "start": d0 + 10 * 3600, "end": d0 + 14 * 3600, "line_n": 1}
+	var job := JobListings.demo_pay({"id": "demo_remind_" + kind, "listing": Invites.SAMPLE_LISTING, "role": "hall", "area": "", "start": JobListings.at_hour(d0, 10), "end": JobListings.at_hour(d0, 14), "line_n": 1, "pay": "weekly"})
 	JobListings.localize(job)
-	Shifts.add({"id": job.id, "title": job.title, "place": job.place, "store": job.store, "role": job.role, "start": job.start, "end": job.end,
-		"wage": 1200, "pay": "weekly", "listing": job.listing, "sample": true})
+	Shifts.add(JobListings.as_shift(job))

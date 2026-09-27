@@ -889,7 +889,12 @@ func load_game() -> bool:
 	if not has_save():
 		return false
 	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	var d = JSON.parse_string(f.get_as_text())
+	return load_text(f.get_as_text())
+
+
+## セーブの中身（JSON の文字列）を読みこむ。やめたレアの id は代わりの子へ置きかえる
+func load_text(text: String) -> bool:
+	var d = JSON.parse_string(Rares.migrate_text(text))
 	if typeof(d) != TYPE_DICTIONARY:
 		return false
 	for k in SAVE_KEYS:
