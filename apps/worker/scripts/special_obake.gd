@@ -49,8 +49,9 @@ static func has_custom_name() -> bool:
 
 
 ## 相棒に名前をつける（はじめての流れの名前の入力・マイページ）。空なら自動の呼び名にもどす。
+## （set_name だと、スクリプト自体の Resource.set_name が呼ばれてしまうので別の名前）
 ## my_obake.json（QuizResult）に入るので、名前を出すところは全部 pet_name() を通せば同じ名前になる
-static func set_name(n: String) -> void:
+static func set_partner_name(n: String) -> void:
 	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
 	if gs == null or gs.my_obake.is_empty():
 		return

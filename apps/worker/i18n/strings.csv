@@ -637,27 +637,20 @@ SPECIAL_BLOSSOM_PET,Sakura,さくら
 ONB_SPECIAL_KICKER,A SPECIAL obake cat appeared!,とくべつなおばけ猫が あらわれた！
 ONB_SPECIAL_RIBBON,★ SPECIAL · %s ★,★ とくべつ・%s ★
 ONB_SPECIAL_PET,"Say hi to %s, your partner!",あいぼうの %s だよ！
-ONB_SHIFT_PLACE,Practice shift · Café Komorebi,体験バイト・カフェ こもれび
-ONB_SHIFT_MOCK,Just pretend! 4 hours in 30 seconds,練習だよ！ 4時間を30秒で
-ONB_SHIFT_HELLO,I'm %s! Let's try a shift together!,%s だよ！ いっしょに働いてみよう！
-ONB_SHIFT_HINT_START,Tap to open the café,押して、お店をあけよう
-ONB_SHIFT_START,Open the café,お店をあける
-ONB_SHIFT_GO,Here they come!,お客さんが来るよ！
-ONB_SHIFT_HINT_WAIT,Wait for a customer…,お客さんを待とう…
-ONB_SHIFT_HINT_SERVE,A customer! Tap Serve,お客さんだ！ 「出す」を押そう
-ONB_SHIFT_SERVE,Serve,出す
-ONB_SHIFT_NOT_YET,Wait for a customer first!,まずはお客さんを待とう！
-ONB_SHIFT_SERVED,Served: %d,出した数：%d
-ONB_ORDER_1,"Latte, please!",ラテください！
-ONB_ORDER_2,One melon soda!,メロンソーダひとつ！
-ONB_ORDER_3,"Pancakes, please!",パンケーキください！
-ONB_ORDER_4,Hot cocoa!,ココアください！
-ONB_CHEER_1,Nice one!,いいね！
-ONB_CHEER_2,You're a natural!,じょうず！
-ONB_CHEER_3,They loved it!,よろこんでたよ！
-ONB_SHIFT_DONE_SAY,We did it! Great shift!,おつかれさま！ いいシフトだった！
-ONB_SHIFT_DONE,Shift done!,シフトおわり！
-ONB_SHIFT_RESULT,Customers served: %d,お客さん %d 人に出したよ
+ONB_SHIFT_PLACE,Practice shift,練習のシフト
+ONB_SHIFT_MOCK,▶▶ Practice: 4 hours in 8 seconds,▶▶ 練習：4時間を8秒で
+ONB_NAME_SAY,What will you call me?,ぼくの名前、どうする？
+ONB_NAME_TITLE,Name your partner,相棒の名前
+ONB_NAME_HINT,Up to %d letters. You can change it later in My page.,%d文字まで。あとでマイページから変えられるよ。
+ONB_NAME_OK,Use this name,この名前にする
+ONB_NAME_SKIP,Decide later,あとで決める
+ONB_NAME_THANKS,%s! I love it!,%s！ うれしい！
+ONB_GO_SAY,"While you're at your shift, I'll work too!",きみがシフトの間、ぼくも働くね！
+ONB_GO_TITLE,Go to your shift,シフトに行こう
+ONB_GO_BODY,"When you go to work, %s works at a tiny shop too and earns Paw Coins. Try a sped-up one!",きみが働きに行くと、%s も小さなお店で働いて肉球コインをかせぐよ。早送りでやってみよう！
+ONB_GO_BTN,Go to my shift,シフトに行く
+ONB_TOGETHER_SAY,Good work! Look how much we earned!,おつかれさま！ こんなにかせいだよ！
+ONB_TOGETHER_TITLE,We did it together!,いっしょにがんばったね！
 ONB_SHIFT_EARNED,+2 poi,ポイ +2
 ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
 ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ

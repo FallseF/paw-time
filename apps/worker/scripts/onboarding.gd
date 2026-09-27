@@ -1,6 +1,6 @@
 class_name Onboarding
 ## はじめての流れ（持ち主の指定どおりの順番）。
-##   quiz（マイおばけ猫の診断）→ shift（体験バイト）→ scoop（はじめての夜のすくい）
+##   quiz（マイおばけ猫の診断）→ shift（相棒の名前 → 早送りの見本のシフトを猫の仕事場で）→ scoop（はじめての夜のすくい）
 ##   → hatch（すくいの結果から、そのまま朝の孵化へ。夜の場面は挟まない）
 ##   → island（島の育ち方の説明）→ prefs（働く条件の入力）→ found（相棒が仕事を見つけて知らせる）→ done
 ## 状態は user://onboarding.json（ゲーム本体のセーブとは別。Wallet / Shifts と同じ作法）。
@@ -82,6 +82,7 @@ static func resume_screen() -> String:
 		"quiz":
 			return "quiz"
 		"shift":
+			end_mock_shift() # 見本のシフトの途中で閉じたときは、始めから（本物の仕事の記録を残さない）
 			return "onboard"
 		"scoop":
 			return "catch"
@@ -103,6 +104,25 @@ static func tutorial_orbs() -> Array:
 		o["content"] = c
 		out.append(o)
 	return out
+
+
+# ---------------------------------------------------------------- 見本のシフト（shift の段）
+
+## 見本のシフトの場所（WorkTogether の place に入れる。猫の仕事場の見出しでは tr() で「練習のシフト」）
+const MOCK_PLACE := "ONB_SHIFT_PLACE"
+
+
+## 見本のシフトが動いているか
+static func mock_shift_active() -> bool:
+	return WorkTogether.active() and String(WorkTogether.session().get("place", "")) == MOCK_PLACE
+
+
+## 見本のシフトを片づける（本物の仕事の記録・疲れ・ポイの 1 日 1 回に残さない）。はじめての人なので記録はほかに無い
+static func end_mock_shift() -> void:
+	if not mock_shift_active():
+		return
+	WorkTogether.reset()
+	WorkTogether.set_speed(1.0, true)
 
 
 # ---------------------------------------------------------------- はじめての朝

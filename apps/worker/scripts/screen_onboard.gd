@@ -1,60 +1,55 @@
 extends Control
-## はじめての流れの、専用の2場面。
-##   "onboard"       … 体験バイト（見本）：30 秒で 17:00→21:00 を早送り。カフェで相棒が応援し、お客さんに「出す」を押す。
-##                     終わるとポイ（すくいの網）がもらえて、はじめての夜のすくいへ。
-## ひとつの画面に、主ボタンはひとつ。説明はひとつずつ。
+## はじめての流れの「shift」の段（診断のあと）。小さな場面を 3 つ、順に：
+##   1. name  … 相棒に名前をつける（いまの呼び名が入っている。10 文字まで。「あとで」でそのままでもよい）
+##   2. go    … 相棒「きみがシフトの間、ぼくも働くね！」。主ボタン「シフトに行く」
+##   3. mock  … 猫の仕事場（screen_work.gd）をこの画面の中に置き、早送りで 4 時間の見本のシフト。
+##              終わったら「いっしょにがんばったね！」で肉球コインとポイ → はじめての夜のすくいへ
+## 仕事場は本物の WorkTogether で動かし、終わったら記録を片づける（Onboarding.end_mock_shift）。残すのはコインとポイだけ。
+## ひとつの場面に、主ボタンはひとつ。
 
 var main
 var screen_name := "onboard"
 
-const SHIFT_SEC := 30.0
-const CLOCK_FROM := 17 * 60
-const CLOCK_TO := 21 * 60
+const MOCK_HOURS := 4.0 # 見本のシフトの長さ（ゲームの中の時間）
+const MOCK_SEC := 8.0 # それを実時間で何秒に
+const MOCK_NETS := 2 # もらえるポイ（泡のポイ。はじめての夜の玉に強い）
 const INK := Color("2a2233")
 const SUB := Color("6a5f70")
 const CREAM := Color(1, 0.99, 0.97, 0.97)
 const ORANGE := Color("ff8a5b")
+const LILAC := Color("6a5bd6")
 
+var phase := "name" # name → go → mock → done
+var box: SubViewportContainer
 var vp: SubViewport
 var world: Node3D
 var cam: Camera3D
-var env: Environment
-var rig: Dictionary
 var partner: MyObake3D
-var customer: Obake3D
-var window_mat: StandardMaterial3D
 
-var clock_l: Label
-var place_l: Label
-var bar: ProgressBar
 var bubble: PanelContainer
 var bubble_l: Label
-var order: PanelContainer
-var order_l: Label
-var hint: Label
+var card: PanelContainer
+var name_edit: LineEdit
 var main_btn: Button
-var served_l: Label
+var work: Control # 猫の仕事場（screen_work.gd）。見本のシフトの間だけ
+var chip: PanelContainer
 var sheet: PanelContainer
-
-var running := false
-var t := 0.0
-var served := 0
-var waiting := false # お客さんが待っている
-var next_customer := 0.6
+var coins_earned := 0
 var busy := false
-const CUSTOMERS := ["receipt", "tray", "pan", "box", "nemuri"]
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	Onboarding.end_mock_shift() # 前に途中で閉じた見本のシフトが残っていたら、片づけてから
 	_build_world()
-	_build_shift()
+	_build_bubble()
+	_show_name()
 
 
-# ---------------------------------------------------------------- 3D
+# ---------------------------------------------------------------- 3D（休憩室の相棒）
 
 func _build_world() -> void:
-	var box := SubViewportContainer.new()
+	box = SubViewportContainer.new()
 	box.stretch = true
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -66,18 +61,32 @@ func _build_world() -> void:
 	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	# 光と空気は他の画面と同じ Look（体験バイトは休憩室の夕方）
-	rig = Look.apply(world, "room", Color("f6d9b8"), false, false)
-	env = rig.env
+	# 光と空気は他の画面と同じ Look（休憩室）
+	Look.apply(world, "room", Color("f6d9b8"), false, false)
 	cam = Camera3D.new()
 	cam.fov = 40
 	cam.keep_aspect = Camera3D.KEEP_WIDTH
-	cam.position = Vector3(0, 1.5, 4.4)
+	cam.position = Vector3(0, 1.45, 4.2)
 	world.add_child(cam)
-	cam.look_at(Vector3(0, 0.55, 0))
+	cam.look_at(Vector3(0, 0.75, 0))
+	var floor_m := MeshInstance3D.new()
+	var fm := CylinderMesh.new()
+	fm.top_radius = 7.0
+	fm.bottom_radius = 7.0
+	fm.height = 0.1
+	floor_m.mesh = fm
+	floor_m.material_override = Obake3D.toon(Color("c99a6e"), 0.1)
+	floor_m.position = Vector3(0, -0.05, -0.4)
+	world.add_child(floor_m)
+	_box(Vector3(8, 4, 0.1), Vector3(0, 1.6, -1.9), Color("f7e6cf"))
+	_box(Vector3(1.3, 0.8, 0.05), Vector3(-1.1, 1.9, -1.82), Color("ffd9a0"))
+	_box(Vector3(0.9, 0.06, 0.3), Vector3(1.2, 1.5, -1.75), Color("a0673f")) # 棚
 	partner = MyObake3D.from_saved()
 	if partner == null:
 		partner = MyObake3D.new().setup_look(QuizData.TYPES["IFHY"].look)
+	partner.position = Vector3(0, 0.0, 0.4)
+	partner.scale = Vector3.ONE * 0.85
+	world.add_child(partner)
 
 
 func _box(size: Vector3, pos: Vector3, c: Color) -> MeshInstance3D:
@@ -91,229 +100,238 @@ func _box(size: Vector3, pos: Vector3, c: Color) -> MeshInstance3D:
 	return m
 
 
+func _panel(bg: Color, radius := 18) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(bg, radius, 0.14, Vector2(16, 12)))
+	return p
+
+
 func _text(s: String, size: int, color := INK, heavy := false) -> Label:
 	var l := Kit.text(s, size, color, heavy, HORIZONTAL_ALIGNMENT_CENTER)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
 
-func _panel(bg: Color, radius := 18) -> PanelContainer:
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", Kit.pill(bg, radius, 0.14, Vector2(14, 8)))
-	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return p
+func _link(t: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(0, 36)
+	b.add_theme_font_override("font", Kit.bold())
+	b.add_theme_font_size_override("font_size", 14)
+	for k in ["font_color", "font_hover_color", "font_pressed_color"]:
+		b.add_theme_color_override(k, SUB)
+	b.pressed.connect(func():
+		Kit.play(b, "tap")
+		cb.call())
+	return b
 
 
-## 相棒の吹き出し（ひとこと）
+## 相棒の吹き出し（頭の上。ひとこと）
+func _build_bubble() -> void:
+	bubble = _panel(Color("fffaf2"), 18)
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bubble.position = Vector2(30, 40)
+	bubble.size = Vector2(300, 0)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	bubble.add_child(v)
+	bubble_l = I18n.wrap(_text("", 17, INK, true))
+	bubble_l.custom_minimum_size = Vector2(268, 0)
+	v.add_child(bubble_l)
+	add_child(bubble)
+
+
 func _say(s: String) -> void:
 	bubble_l.text = s
 	bubble.visible = true
-	bubble.pivot_offset = bubble.size / 2
+	bubble.size.y = 0
+	bubble.pivot_offset = Vector2(150, 30)
 	bubble.scale = Vector2(0.85, 0.85)
 	create_tween().tween_property(bubble, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-func _hop(ob: Node3D, h := 0.25) -> void:
+func _hop(ob: Node3D, h := 0.3) -> void:
 	var y := ob.position.y
 	var tw := create_tween()
 	tw.tween_property(ob, "position:y", y + h, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(ob, "position:y", y, 0.18).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
 
-# ---------------------------------------------------------------- 体験バイト
+## 下のカード（場面ごとに作り直す）。中身の高さに合わせて、画面の下にそろえる
+func _card() -> VBoxContainer:
+	if card:
+		card.queue_free()
+	card = _panel(CREAM, 24)
+	card.position = Vector2(16, 400)
+	card.size = Vector2(328, 0)
+	add_child(card)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	card.add_child(v)
+	var c := card
+	Kit.keep_fit(c, func():
+		c.size.y = 0
+		c.position.y = 624.0 - c.size.y)
+	return v
 
-func _build_shift() -> void:
-	# カフェ：床・奥の壁と窓・カウンター（奥）・コーヒーマシン。相棒は手前の左、お客さんは右から来る
-	var floor_m := MeshInstance3D.new()
-	var fm := CylinderMesh.new()
-	fm.top_radius = 7.0
-	fm.bottom_radius = 7.0
-	fm.height = 0.1
-	floor_m.mesh = fm
-	floor_m.material_override = Obake3D.toon(Color("c99a6e"), 0.1)
-	floor_m.position = Vector3(0, -0.05, -0.4)
-	world.add_child(floor_m)
-	_box(Vector3(8, 4, 0.1), Vector3(0, 1.6, -1.9), Color("f7e6cf"))
-	var win := _box(Vector3(1.3, 0.8, 0.05), Vector3(-1.1, 1.75, -1.82), Color("ffd9a0"))
-	window_mat = Obake3D.toon(Color("ffd9a0"), 0.1, 0.4, 0.012)
-	win.material_override = window_mat
-	_box(Vector3(0.8, 0.6, 0.05), Vector3(1.15, 1.75, -1.82), Color("4f7a5a")) # メニューの黒板
-	_box(Vector3(3.2, 0.5, 0.5), Vector3(0, 0.25, -0.9), Color("a0673f"))
-	_box(Vector3(3.3, 0.06, 0.58), Vector3(0, 0.52, -0.9), Color("f6efe4"))
-	_box(Vector3(0.36, 0.42, 0.3), Vector3(-1.1, 0.76, -0.95), Color("6b6f7a"))
-	_box(Vector3(0.12, 0.12, 0.12), Vector3(0.1, 0.61, -0.8), Color("fffaf2"))
-	partner.position = Vector3(-0.75, 0.0, 0.55)
-	partner.scale = Vector3.ONE * 0.7
-	partner.rotation.y = 0.45
-	world.add_child(partner)
 
-	# 上：どこで・いま何時（早送り）
-	var top := VBoxContainer.new()
-	top.position = Vector2(16, 14)
-	top.size = Vector2(328, 0)
-	top.add_theme_constant_override("separation", 6)
-	add_child(top)
-	var tp := _panel(CREAM, 20)
-	var th := HBoxContainer.new()
-	th.add_theme_constant_override("separation", 10)
-	tp.add_child(th)
-	place_l = Kit.text(tr("ONB_SHIFT_PLACE"), 14, SUB, true)
-	place_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	th.add_child(place_l)
-	clock_l = Kit.text("17:00", 20, INK, true)
-	th.add_child(clock_l)
-	top.add_child(tp)
-	bar = Kit.bar(0.0, ORANGE, 328, 8, Color(1, 1, 1, 0.6))
-	top.add_child(bar)
-	var mock := _text(tr("ONB_SHIFT_MOCK"), 12, Color("7a5a48"), true)
-	top.add_child(mock)
+# ---------------------------------------------------------------- 1. 名前
 
-	# 相棒のひとこと
-	bubble = _panel(Color("fffaf2"), 16)
-	bubble.position = Vector2(20, 150)
-	bubble.size = Vector2(190, 0)
-	bubble_l = I18n.wrap(Kit.text("", 14, INK, true))
-	bubble_l.custom_minimum_size = Vector2(160, 0)
-	bubble.add_child(bubble_l)
-	add_child(bubble)
-	# お客さんの注文
-	order = _panel(Color("fff6d8"), 16)
-	order.position = Vector2(196, 190)
-	order.size = Vector2(140, 0)
-	order_l = I18n.wrap(Kit.text("", 13, Color("8a5a10"), true))
-	order_l.custom_minimum_size = Vector2(112, 0)
-	order.add_child(order_l)
-	order.visible = false
-	add_child(order)
+func _show_name() -> void:
+	phase = "name"
+	_say(tr("ONB_NAME_SAY"))
+	var v := _card()
+	v.add_child(_text(tr("ONB_NAME_TITLE"), 20, INK, true))
+	name_edit = LineEdit.new()
+	name_edit.text = SpecialObake.pet_name()
+	name_edit.max_length = SpecialObake.NAME_MAX
+	name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_edit.custom_minimum_size = Vector2(0, 52)
+	name_edit.select_all_on_focus = true
+	name_edit.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_DEFAULT
+	var st := Kit.pill(Color.WHITE, 16, 0.0, Vector2(12, 8))
+	st.border_color = Color("e2d6c8")
+	st.set_border_width_all(2)
+	name_edit.add_theme_stylebox_override("normal", st)
+	var stf := st.duplicate() as StyleBoxFlat
+	stf.border_color = ORANGE
+	name_edit.add_theme_stylebox_override("focus", stf)
+	name_edit.add_theme_font_override("font", Kit.black())
+	name_edit.add_theme_font_size_override("font_size", 22)
+	name_edit.add_theme_color_override("font_color", INK)
+	name_edit.text_submitted.connect(func(_t): _name_ok())
+	v.add_child(name_edit)
+	v.add_child(I18n.wrap(_text(tr("ONB_NAME_HINT") % SpecialObake.NAME_MAX, 12, SUB)))
+	main_btn = Kit.button(tr("ONB_NAME_OK"), ORANGE, _name_ok)
+	v.add_child(main_btn)
+	v.add_child(_link(tr("ONB_NAME_SKIP"), _name_skip))
 
-	served_l = _text("", 14, SUB, true)
-	served_l.position = Vector2(0, 470)
-	served_l.size = Vector2(360, 22)
-	add_child(served_l)
-	hint = _text("", 16, INK, true)
-	hint.position = Vector2(16, 494)
-	hint.size = Vector2(328, 40)
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	add_child(hint)
-	main_btn = Kit.button(tr("ONB_SHIFT_START"), ORANGE, _on_main)
-	main_btn.position = Vector2(40, 552)
-	main_btn.size = Vector2(280, 56)
-	add_child(main_btn)
-	_say(tr("ONB_SHIFT_HELLO") % SpecialObake.pet_name())
-	hint.text = tr("ONB_SHIFT_HINT_START")
+
+func _name_ok() -> void:
+	if phase != "name":
+		return
+	var n := SpecialObake.clean_name(name_edit.text)
+	if n != "":
+		SpecialObake.set_partner_name(n)
+	name_edit.release_focus()
+	_hop(partner, 0.4)
+	Kit.play(self, "sparkle")
+	_show_go(tr("ONB_NAME_THANKS") % SpecialObake.pet_name())
+
+
+func _name_skip() -> void:
+	if phase != "name":
+		return
+	name_edit.release_focus()
+	_show_go("")
+
+
+# ---------------------------------------------------------------- 2. シフトへ
+
+func _show_go(first_line: String) -> void:
+	phase = "go"
+	_say((first_line + "\n" if first_line != "" else "") + tr("ONB_GO_SAY"))
+	var v := _card()
+	v.add_child(_text(tr("ONB_GO_TITLE"), 20, INK, true))
+	v.add_child(I18n.wrap(_text(tr("ONB_GO_BODY") % SpecialObake.pet_name(), 14, SUB)))
+	main_btn = Kit.button(tr("ONB_GO_BTN"), ORANGE, _start_mock)
+	v.add_child(main_btn)
 	Kit.nudge.call_deferred(main_btn)
 
 
-func _on_main() -> void:
-	if sheet:
-		return
-	if not running:
-		running = true
-		t = 0.0
-		main_btn.text = tr("ONB_SHIFT_SERVE")
-		main_btn.pivot_offset = main_btn.size / 2
-		main_btn.scale = Vector2.ONE
-		_say(tr("ONB_SHIFT_GO"))
-		hint.text = tr("ONB_SHIFT_HINT_WAIT")
-		return
-	_serve()
+# ---------------------------------------------------------------- 3. 見本のシフト（猫の仕事場を早送りで）
 
-
-func _process(delta: float) -> void:
-	if not running:
-		return
-	t += delta
-	var k := clampf(t / SHIFT_SEC, 0.0, 1.0)
-	bar.value = k
-	var m := int(lerpf(CLOCK_FROM, CLOCK_TO, k))
-	clock_l.text = "%02d:%02d" % [m / 60, m % 60]
-	# 窓の外が、夕方から夜へ
-	window_mat.albedo_color = Color("ffd9a0").lerp(Color("3b4a8c"), k)
-	env.background_color = Color("f6d9b8").lerp(Color("d9b8a8"), k)
-	if not waiting:
-		next_customer -= delta
-		if next_customer <= 0.0 and t < SHIFT_SEC - 2.0:
-			_customer_in()
-	if t >= SHIFT_SEC:
-		running = false
-		_end_shift()
-
-
-func _customer_in() -> void:
-	waiting = true
-	if customer:
-		customer.queue_free()
-	customer = Obake3D.make(CUSTOMERS[served % CUSTOMERS.size()])
-	customer.scale = Vector3.ONE * 0.55
-	customer.position = Vector3(2.6, 0, 0.5)
-	customer.rotation.y = -1.2
-	world.add_child(customer)
-	var tw := create_tween()
-	tw.tween_property(customer, "position", Vector3(0.8, 0, 0.5), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	await tw.finished
-	if not is_instance_valid(customer):
-		return
-	order_l.text = tr("ONB_ORDER_%d" % (served % 4 + 1))
-	order.visible = true
-	hint.text = tr("ONB_SHIFT_HINT_SERVE")
-	Kit.play(self, "bell", 1.2, -8)
-
-
-func _serve() -> void:
-	if busy:
-		return
-	if not waiting or not order.visible:
-		_say(tr("ONB_SHIFT_NOT_YET"))
+func _start_mock() -> void:
+	if phase != "go" or busy:
 		return
 	busy = true
-	served += 1
-	waiting = false
-	order.visible = false
-	Kit.play(self, "chime", 1.0 + served * 0.05, -4)
-	served_l.text = tr("ONB_SHIFT_SERVED") % served
-	_hop(partner, 0.3)
-	_say([tr("ONB_CHEER_1"), tr("ONB_CHEER_2"), tr("ONB_CHEER_3")][served % 3])
-	hint.text = tr("ONB_SHIFT_HINT_WAIT")
-	var c := customer
-	_hop(c, 0.2)
-	await get_tree().create_timer(0.35).timeout
-	if is_instance_valid(c):
-		c.rotation.y = 1.2
-		var tw := create_tween()
-		tw.tween_property(c, "position", Vector3(2.8, 0, 0.6), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-		tw.tween_callback(c.queue_free)
-	next_customer = 1.3
+	var fade := ColorRect.new()
+	fade.color = Color("0b1026")
+	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade.modulate.a = 0.0
+	add_child(fade)
+	var tw := create_tween()
+	tw.tween_property(fade, "modulate:a", 1.0, 0.2)
+	await tw.finished
+	phase = "mock"
+	for n in [box, bubble, card]:
+		n.queue_free()
+	card = null
+	# ほんものの「一緒に働く」を、見本の場所で早送り（1 秒 = 30 分）。はじめたことは見本として送る
+	WorkTogether.set_speed(MOCK_HOURS * 3600.0 / MOCK_SEC)
+	Telemetry.set_demo_session(true)
+	WorkTogether.start(_role(), Onboarding.MOCK_PLACE)
+	Telemetry.set_demo_session(false)
+	work = load("res://scripts/screen_work.gd").new()
+	work.set("main", self) # 仕事場の「島へ」などは、この画面が受ける（go）
+	work.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(work)
+	move_child(work, 0)
+	# 見本なので「帰る」は押させない（時間が来たら自分で終わる）
+	var act = work.get("action")
+	if act:
+		act.visible = false
+	chip = _panel(Color(0.1, 0.08, 0.2, 0.7), 16)
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_child(_text(tr("ONB_SHIFT_MOCK"), 13, Color.WHITE, true))
+	chip.position = Vector2(60, 66)
+	chip.size = Vector2(240, 0)
+	add_child(chip)
+	var tw2 := create_tween()
+	tw2.tween_property(fade, "modulate:a", 0.0, 0.25)
+	tw2.tween_callback(fade.queue_free)
 	busy = false
 
 
-func _end_shift() -> void:
-	clock_l.text = "21:00"
-	order.visible = false
-	if customer and is_instance_valid(customer):
-		customer.queue_free()
-	main_btn.visible = false
-	hint.text = ""
-	served_l.text = ""
-	_hop(partner, 0.4)
-	_say(tr("ONB_SHIFT_DONE_SAY"))
-	Kit.play(self, "sparkle")
-	# ポイ（すくいの網）をもらう：泡のポイ 2 本（今夜の玉に強い）＋いつものポイはそのまま
-	GameState.nets["bubble"] = GameState.nets.get("bubble", 0) + 2
+## 相棒の向いている仕事（診断のタイプ）
+func _role() -> String:
+	var tid: String = GameState.my_obake.get("type_id", "")
+	return QuizData.TYPES[tid].get("job", "hall") if QuizData.TYPES.has(tid) else "hall"
+
+
+func _process(_delta: float) -> void:
+	if phase != "mock":
+		return
+	var st := WorkTogether.status()
+	if st.get("working", false) and float(st.get("hours_session", 0.0)) >= MOCK_HOURS:
+		_end_mock(int(st.get("coins", 0)))
+
+
+func _end_mock(coins: int) -> void:
+	phase = "done"
+	coins_earned = coins
+	Onboarding.end_mock_shift()
+	if work:
+		work.set_process(false) # 仕事場はこの形のまま止める（コインの山と、相棒）
+		var bl = work.get("bubble_label")
+		if bl:
+			bl.text = tr("ONB_TOGETHER_SAY")
+	if chip:
+		chip.queue_free()
+	# 肉球コインとポイ（すくいの網）をもらう：泡のポイ（今夜の玉に強い）
+	Wallet.add(coins_earned, "onboarding")
+	GameState.nets["bubble"] = GameState.nets.get("bubble", 0) + MOCK_NETS
 	GameState.save()
-	sheet = _panel(CREAM, 24)
-	sheet.mouse_filter = Control.MOUSE_FILTER_STOP
-	sheet.position = Vector2(16, 396)
-	sheet.size = Vector2(328, 0)
+	Kit.play(self, "sparkle")
+	var dim := ColorRect.new()
+	dim.color = Color(0.1, 0.08, 0.15, 0.4)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(dim)
+	sheet = _panel(CREAM, 26)
+	sheet.position = Vector2(20, 200)
+	sheet.size = Vector2(320, 0)
 	add_child(sheet)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 8)
 	sheet.add_child(v)
-	v.add_child(_text(tr("ONB_SHIFT_DONE"), 22, INK, true))
-	v.add_child(_text(tr("ONB_SHIFT_RESULT") % maxi(served, 1), 14, SUB))
+	v.add_child(_text(tr("ONB_TOGETHER_TITLE"), 22, INK, true))
+	v.add_child(_text(tr("+%d Paw Coins") % coins_earned, 28, Color("d99a1a"), true))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 8)
-	for i in 2:
+	for i in MOCK_NETS:
 		var dot := Panel.new()
 		dot.custom_minimum_size = Vector2(22, 22)
 		var sb := StyleBoxFlat.new()
@@ -325,11 +343,14 @@ func _end_shift() -> void:
 		row.add_child(dot)
 	row.add_child(Kit.text(tr("ONB_SHIFT_EARNED"), 17, Color("2f7bb0"), true))
 	v.add_child(row)
-	var why := I18n.wrap(_text(tr("ONB_SHIFT_POI_WHY"), 13, SUB))
-	v.add_child(why)
+	v.add_child(I18n.wrap(_text(tr("ONB_SHIFT_POI_WHY"), 13, SUB)))
 	var b := Kit.button(tr("ONB_SHIFT_TO_RIVER"), Color("5b6fc2"), _to_river)
 	v.add_child(b)
-	sheet.pivot_offset = Vector2(164, 120)
+	var s := sheet
+	Kit.keep_fit(s, func():
+		s.size.y = 0
+		s.position.y = (640.0 - s.size.y) / 2.0)
+	sheet.pivot_offset = Vector2(160, 120)
 	sheet.scale = Vector2(0.9, 0.9)
 	sheet.modulate.a = 0.0
 	var tw := create_tween().set_parallel()
@@ -338,7 +359,16 @@ func _end_shift() -> void:
 	Kit.nudge.call_deferred(b)
 
 
+## 仕事場の中のボタン（「島へ」など）が呼ぶ行き先。見本のシフトの間は、どこへも行かない
+func go(to: String, _instant := false) -> void:
+	if phase == "done" and to == "garden":
+		_to_river()
+
+
 func _to_river() -> void:
+	if busy:
+		return
+	busy = true
 	Onboarding.advance("scoop")
 	GameState.phase = "evening"
 	GameState.save()
@@ -347,18 +377,24 @@ func _to_river() -> void:
 
 # ---------------------------------------------------------------- 確認用
 
+func demo_name(n := "") -> void:
+	if n != "":
+		name_edit.text = n
+	_name_ok()
+
+
+func demo_skip() -> void:
+	_name_skip()
+
+
 func demo_start() -> void:
-	_on_main()
-
-
-func demo_customer() -> void:
-	t = 12.0
-	next_customer = 0.0
-
-
-func demo_serve() -> void:
-	_serve()
+	_start_mock()
 
 
 func demo_end() -> void:
-	t = SHIFT_SEC
+	if phase == "mock":
+		_end_mock(int(WorkTogether.status().get("coins", 0)))
+
+
+func demo_river() -> void:
+	_to_river()
