@@ -133,9 +133,15 @@ func _run() -> void:
 	var n: int = sc.orbs.size()
 	_check(n >= 3 and n <= 4, "3–4 orbs on the first scoop (%d)" % n)
 	_check(sc.orbs.any(func(o): return String(o.data.get("content", {}).get("special", "")) != ""), "the special cat orb is among them")
-	_check(sc.coach != null and sc.coach.visible, "the coach shows at first")
-	await get_tree().create_timer(6.8).timeout
-	_check(sc.coach == null or not sc.coach.visible, "the coach hides by itself")
+	# 説明は、半透明の手だけ（文字の説明は出さない）
+	_check(sc.hand != null and sc.hand.visible, "the hand tutorial shows on the first scoop")
+	_check(not sc.hint.visible and not sc.tip.visible, "no text coaching while the hand shows")
+	_check(not sc.get_children().any(func(c): return c is PanelContainer and c.find_children("*", "Label", true, false).any(func(l): return l.text == tr("ONB_SCOOP_COACH"))), "no text coach panel")
+	# まとめ：朝を待たせず「玉をあける」
+	sc._finish()
+	await get_tree().process_frame
+	var open_btn: Array = sc.find_children("*", "Button", true, false).filter(func(b): return b.text == tr("ONB_NIGHT_OPEN"))
+	_check(not open_btn.is_empty(), "the first-night result goes straight to opening the orbs")
 
 	# 5 結果 → そのまま朝の孵化（夜の場面なし）
 	GameState.orbs = Onboarding.tutorial_orbs()
@@ -145,6 +151,10 @@ func _run() -> void:
 	_check(GameState.hatched.any(func(h): return h.get("special", false)), "the special cat hatches")
 	main.go(nxt)
 	await _until(func(): return _screen() == "screen_hatch.gd", 5.0, "the morning hatch opens")
+	# 材料からひとつずつあけて、特別な子はいちばん最後
+	var hs: Array = GameState.hatched
+	_check(hs.size() >= 2 and hs.back().get("special", false) and not hs.front().get("special", false), "materials first, the special cat last %s" % [hs.map(func(h): return h.id)])
+	_check(main.current.batch_from == hs.size(), "the first morning opens orbs one by one")
 
 	# 6 画面の順番
 	var order := visited.filter(func(s): return s in ["screen_quiz.gd", "screen_onboard.gd", "screen_work.gd", "screen_scoop.gd", "screen_hatch.gd", "screen_title.gd"])
