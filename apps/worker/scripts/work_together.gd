@@ -298,6 +298,28 @@ static func stop(t := -1.0) -> Dictionary:
 	return summary
 
 
+## 今日のお給料の目安（ゲームはお給料そのものにはふれない）＝ 登録したシフトの時間 × そのシフトの時給。
+## 終わった勤務のシフト（shift_id）、無ければ同じ日の時給の入った登録シフト。見つからなければ空（自分で入れたシフトには時給が無い）
+## 返り値 {hours, wage, yen, shift_id}
+static func pay_estimate(summary: Dictionary, shifts: Array) -> Dictionary:
+	var pick := {}
+	var sid := String(summary.get("shift_id", ""))
+	if sid != "":
+		for s in shifts:
+			if String(s.get("id", "")) == sid and int(s.get("wage", 0)) > 0:
+				pick = s
+	if pick.is_empty():
+		var key := day_key(float(summary.get("start", 0.0)))
+		for s in shifts:
+			if int(s.get("wage", 0)) > 0 and day_key(float(s.get("start", 0.0))) == key:
+				pick = s
+				break
+	if pick.is_empty():
+		return {}
+	var hours := maxf(0.0, (float(pick.end) - float(pick.start)) / 3600.0)
+	return {"hours": hours, "wage": int(pick.wage), "yen": int(round(hours * int(pick.wage))), "shift_id": String(pick.get("id", ""))}
+
+
 ## 2 nets of the job's type, once per day, same amount for any length (the variant-B rule)
 static func _give_nets(role: String) -> int:
 	var gs = Engine.get_main_loop().root.get_node_or_null("GameState") if Engine.get_main_loop() else null

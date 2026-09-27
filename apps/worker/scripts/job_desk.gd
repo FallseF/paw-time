@@ -52,6 +52,17 @@ func _start() -> void:
 			_daily()
 
 
+## 島の上に、この係の何かが開いているか（シート・吹き出し・求人カード／評価・シフトの入力・チャット）。島の札を隠すのに使う
+func overlay_open() -> bool:
+	for n in [sheet, speech, viewer]:
+		if n and is_instance_valid(n) and not n.is_queued_for_deletion():
+			return true
+	for c in get_children():
+		if (c is ShiftForm or c is ScreenChat) and not c.is_queued_for_deletion():
+			return true
+	return false
+
+
 func _go(screen: String) -> void:
 	var m = garden.get("main")
 	if m:
@@ -158,7 +169,8 @@ func _chip(t: String, bg: Color, fg := Color.WHITE) -> PanelContainer:
 
 
 ## 下からの説明シート（島の説明・見つけた知らせ）。主ボタンはひとつ
-func _sheet(who: String, title: String, body: String, btn: String, cb: Callable, dots := -1, of := 0, links: Array = []) -> void:
+## extra は本文の下（例: 曜日のカード）、after は主ボタンの下（例: ほかの選択肢）に入る
+func _sheet(who: String, title: String, body: String, btn: String, cb: Callable, dots := -1, of := 0, links: Array = [], extra: Control = null, after: Control = null) -> void:
 	if sheet and is_instance_valid(sheet):
 		sheet.queue_free()
 	sheet = PanelContainer.new()
@@ -184,9 +196,14 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 		top.add_child(_text("%d / %d" % [dots, of], 12, SUB, true))
 	v.add_child(top)
 	v.add_child(I18n.wrap(_text(title, 19, INK, true)))
-	v.add_child(I18n.wrap(_text(body, 14, SUB)))
+	if body != "":
+		v.add_child(I18n.wrap(_text(body, 14, SUB)))
+	if extra:
+		v.add_child(extra)
 	var b := Kit.button(btn, ORANGE, cb)
 	v.add_child(b)
+	if after:
+		v.add_child(after)
 	for l in links: # [文字, Callable] の小さなリンク
 		v.add_child(_link(l[0], l[1]))
 	var s := sheet
@@ -304,19 +321,20 @@ func _island_tour() -> void:
 	_tour_step()
 
 
+## 4 枚の順番（レビュー）：① 相棒が仕事を持ってくる ② 働くとポイ（肉球コインもここで）③ ポイで材料・服 ④ 島を育てる
 func _tour_step() -> void:
 	var pet := SpecialObake.pet_name()
 	var n := 4
 	tour_i += 1
 	match tour_i:
 		1:
-			_sheet(pet, tr("TOUR_1_TITLE"), tr("TOUR_1_BODY") % pet, tr("TOUR_NEXT"), _tour_step, 1, n)
+			_sheet(pet, tr("R2_TOUR_1_TITLE") % pet, tr("R2_TOUR_1_BODY") % pet, tr("TOUR_NEXT"), _tour_step, 1, n)
 		2:
-			_sheet(pet, tr("TOUR_2_TITLE"), tr("TOUR_2_BODY"), tr("TOUR_NEXT"), _tour_step, 2, n)
+			_sheet(pet, tr("R2_TOUR_2_TITLE"), tr("R2_TOUR_2_BODY") % [pet, Wallet.balance()], tr("TOUR_NEXT"), _tour_step, 2, n)
 		3:
-			_sheet(pet, tr("TOUR_3_TITLE"), tr("TOUR_3_BODY"), tr("TOUR_NEXT"), _tour_step, 3, n)
+			_sheet(pet, tr("R2_TOUR_3_TITLE"), tr("R2_TOUR_3_BODY"), tr("TOUR_NEXT"), _tour_step, 3, n)
 		4:
-			_sheet(pet, tr("TOUR_4_TITLE") % Wallet.balance(), tr("TOUR_4_BODY") % pet, tr("TOUR_TO_PREFS") % pet, func():
+			_sheet(pet, tr("R2_TOUR_4_TITLE"), tr("R2_TOUR_4_BODY"), tr("TOUR_TO_PREFS") % pet, func():
 				Onboarding.advance("prefs")
 				_go("prefs"), 4, n)
 
@@ -448,6 +466,8 @@ func _work_pill() -> void:
 	work_btn = Kit.button(tr("WORK_PILL"), Color(1, 0.99, 0.97, 0.94), open_work_menu, Color("6a5bd6"), 32, 13)
 	work_btn.size = Vector2(0, 32)
 	add_child(work_btn)
+	if garden.has_method("hud_pill"):
+		garden.hud_pill(work_btn)
 	# 右上（図鑑の下）。左上はキセカエの札
 	await get_tree().process_frame
 	if is_instance_valid(work_btn):
@@ -458,14 +478,54 @@ func _work_pill() -> void:
 			goals.position.x = work_btn.position.x - 6 - goals.size.x
 
 
+## しごと：まず今日からの自分のシフトを曜日のカードで。下に、ほかの選択肢
+## （自分でシフトを入れる・働く条件・お店の島・シフトのチャット・求人を見る）
 func open_work_menu() -> void:
 	if viewer:
 		return
 	_garden_card(false)
 	var pet := SpecialObake.pet_name()
-	var body := tr("WORK_MENU_BODY") % Shifts.upcoming().size()
-	_sheet(pet, tr("WORK_MENU_TITLE"), body, tr("SHIFT_FORM_OPEN"), open_shift_form, -1, 0,
-		[[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("CHAT_MENU_SHOPS"), func(): ChatHub.open(self, "list")], [tr("WORK_MENU_CLOSE"), _close_sheet]])
+	var now := Time.get_unix_time_from_system()
+	var mine: Array = Shifts.all().filter(func(x): return float(x.end) > now)
+	var days := VBoxContainer.new()
+	days.add_theme_constant_override("separation", 6)
+	_days(days, day_groups(mine, day0_of(now), 7), "shifts", 0)
+	var opts := HFlowContainer.new()
+	opts.alignment = FlowContainer.ALIGNMENT_CENTER
+	opts.add_theme_constant_override("h_separation", 6)
+	opts.add_theme_constant_override("v_separation", 6)
+	for o in [[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("CHAT_MENU_SHOPS"), func(): ChatHub.open(self, "list")], [tr("R2_WORK_MENU_JOBS"), _jobs_from_menu]]:
+		opts.add_child(Kit.button(o[0], Color("f3ecff"), o[1], Color("6a5bd6"), 34, 13))
+	# 説明の文は出さない（シートが上の札にかからない高さに）
+	_sheet(pet, tr("WORK_MENU_TITLE"), "", tr("SHIFT_FORM_OPEN"), open_shift_form, -1, 0,
+		[[tr("WORK_MENU_CLOSE"), _close_sheet]], days, opts)
+
+
+## しごとの「求人を見る」：シートを閉じて、今日の求人の曜日のカードへ
+func _jobs_from_menu() -> void:
+	if sheet and is_instance_valid(sheet):
+		sheet.queue_free()
+	_open_viewer()
+
+
+## 自分のシフトの 1 行（時刻を大きく、店と仕事）
+func _shift_row(sh: Dictionary) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 14, 0.08, Vector2(12, 6)))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	p.add_child(h)
+	h.add_child(_text(clock_range(sh), 16, INK, true))
+	var nm := String(sh.get("store", ""))
+	if String(sh.get("title", "")) != "" and String(sh.get("title", "")) != nm:
+		nm = "%s · %s" % [sh.title, nm] if nm != "" else String(sh.title)
+	var l := _text(nm, 13, SUB, true)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	l.clip_text = true
+	h.add_child(l)
+	return p
 
 
 ## 働いたお店の一覧（お店の島へ）。まだ無ければ、見本のお店
@@ -578,6 +638,7 @@ func _open_viewer() -> void:
 	index = 0
 	accepted = 0
 	done_ids = {}
+	job_day = -1
 	_build_viewer()
 	_show_list()
 
@@ -585,7 +646,8 @@ func _open_viewer() -> void:
 var done_ids := {} # この知らせの中で、受けた・見送った仕事
 
 
-## 並べて比べる：残りの仕事を一覧に（仕事・店・日時・時給・働いた人の声）。タップで詳しく、受けるのは詳しい方から
+## 並べて比べる：残りの仕事を曜日のカードに（翌日から 1 週間。スワイプか ‹ › で日を送る）。
+## 1 日のカードには、その日の仕事（時給を大きく）。タップで詳しく、受けるのは詳しい方から
 func _show_list() -> void:
 	_clear_card()
 	var left: Array = jobs.filter(func(j): return not done_ids.has(j.id))
@@ -595,18 +657,27 @@ func _show_list() -> void:
 	_say(tr("JOB_LIST_SAY"))
 	stage.talk()
 	card_box.add_child(_text(tr("JOB_LIST_TITLE") % left.size(), 17, INK, true))
-	for j in left:
-		card_box.add_child(_list_row(j))
+	var groups := day_groups(left, day0_of(Time.get_unix_time_from_system()) + 86400, 7)
+	# はじめて開いたときは、仕事のある最初の日から。受けた・見送ったあとは、同じ日に戻る
+	if job_day < 0 or job_day >= groups.size() or groups[job_day].items.is_empty():
+		job_day = maxi(0, groups.find_custom(func(g): return not g.items.is_empty()))
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	card_box.add_child(box)
+	_days(box, groups, "jobs", job_day)
 	card_box.add_child(_link(tr("JOB_LIST_LATER"), _close_viewer))
 	_pop_card()
 
 
+var job_day := -1 # 求人の曜日のカードの、いま見ている日
+
+
+## 求人の 1 行：色の印・仕事と店・時間と評判、右に時給（大きく太く）
 func _list_row(j: Dictionary) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(0, 56)
+	b.custom_minimum_size = Vector2(0, 58)
 	for k in ["normal", "hover", "pressed", "focus"]:
 		b.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k == "pressed" else Color.WHITE, 14, 0.08, Vector2(10, 6)))
-	var jid: String = j.id
 	b.pressed.connect(func():
 		Kit.play(self, "tap", 1.1)
 		index = jobs.find(j)
@@ -619,12 +690,12 @@ func _list_row(j: Dictionary) -> Button:
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(h)
 	var dot := Panel.new()
-	dot.custom_minimum_size = Vector2(12, 36)
+	dot.custom_minimum_size = Vector2(10, 36)
 	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ds := StyleBoxFlat.new()
 	ds.bg_color = Color("ff8fb1") if Invites.is_invite(j) else role_color(j.role)
-	ds.set_corner_radius_all(6)
+	ds.set_corner_radius_all(5)
 	dot.add_theme_stylebox_override("panel", ds)
 	h.add_child(dot)
 	var v := VBoxContainer.new()
@@ -632,18 +703,185 @@ func _list_row(j: Dictionary) -> Button:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var t1 := _text(("%s  " % tr("INVITE_CHIP") if Invites.is_invite(j) else "") + "%s · %s" % [j.title, j.store], 14, INK, true)
+	var t1 := _text(("%s  " % tr("INVITE_CHIP") if Invites.is_invite(j) else "") + "%s · %s" % [j.title, j.store], 13, INK, true)
 	t1.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	t1.clip_text = true
 	v.add_child(t1)
 	var sm := Reviews.summary(j.listing)
-	var t2 := _text("%s · %s · ★%.1f" % [JobListings.when_text(j), JobListings.wage_text(j), sm.stars], 12, SUB, true)
+	var t2 := _text("%s · ★%.1f" % [clock_range(j), sm.stars], 12, SUB, true)
 	t2.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	t2.clip_text = true
 	v.add_child(t2)
 	h.add_child(v)
-	h.add_child(_text("›", 18, SUB, true))
+	var wl := _text(JobListings.wage_text(j), 18, Color("e0663a"), true, HORIZONTAL_ALIGNMENT_RIGHT)
+	wl.add_theme_font_override("font", Kit.black())
+	wl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(wl)
 	return b
+
+
+# ---------------------------------------------------------------- 曜日のカード（求人・自分のシフト）
+
+## 日本時間の、その日の 0 時（unix 秒）
+static func day0_of(t: float) -> int:
+	return int(floor((t + JobListings.JST) / 86400.0)) * 86400 - JobListings.JST
+
+
+## 仕事・シフトを日ごとのカードに分ける。first_d0 から n 日は毎日カードを出し（何もない日も）、それ以外の日は何かあれば足す。
+## 日付の順、中は始まりの順。返り値 [{d0, items}]
+static func day_groups(list: Array, first_d0: int, n: int) -> Array:
+	var by := {}
+	for i in n:
+		by[first_d0 + i * 86400] = []
+	for it in list:
+		var d := day0_of(float(it.start))
+		if not by.has(d):
+			by[d] = []
+		by[d].append(it)
+	var keys: Array = by.keys()
+	keys.sort()
+	var out: Array = []
+	for d in keys:
+		var items: Array = by[d]
+		items.sort_custom(func(a, b): return float(a.start) < float(b.start))
+		out.append({"d0": int(d), "items": items})
+	return out
+
+
+## 例: 「火 9/29」「Tue 9/29」
+static func day_label(d0: int) -> String:
+	var d := Time.get_datetime_dict_from_unix_time(d0 + JobListings.JST)
+	return I18n.t("R2_DAY") % [I18n.t("JOB_WD_%d" % JobListings.weekday_mon(d0)), d.month, d.day]
+
+
+## 例: 「12:00–17:00」（日本時間）
+static func clock_range(it: Dictionary) -> String:
+	var s := Time.get_datetime_dict_from_unix_time(int(it.start) + JobListings.JST)
+	var e := Time.get_datetime_dict_from_unix_time(int(it.end) + JobListings.JST)
+	return "%02d:%02d–%02d:%02d" % [s.hour, s.minute, e.hour, e.minute]
+
+
+var day_box: VBoxContainer # いま見せている曜日のカード（スワイプを受ける）
+var day_list: Array = []
+var day_kind := ""
+var day_i := 0
+var swipe_from := Vector2(-1, -1)
+
+
+## 曜日のカードを box に。kind = "jobs"（求人）/ "shifts"（自分のシフト）
+func _days(box: VBoxContainer, groups: Array, kind: String, start: int) -> void:
+	day_box = box
+	day_list = groups
+	day_kind = kind
+	day_i = clampi(start, 0, maxi(0, groups.size() - 1))
+	_fill_day()
+
+
+func _fill_day() -> void:
+	if not (day_box and is_instance_valid(day_box)) or day_list.is_empty():
+		return
+	for c in day_box.get_children():
+		c.queue_free()
+	var g: Dictionary = day_list[day_i]
+	var today := day0_of(Time.get_unix_time_from_system())
+	# 見出し：‹ 火 9/29（2 件）›
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 4)
+	head.add_child(_day_arrow("‹", -1))
+	var mid := VBoxContainer.new()
+	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mid.add_theme_constant_override("separation", -2)
+	var lbl := day_label(g.d0)
+	if g.d0 == today:
+		lbl = tr("R2_TODAY") + " · " + lbl
+	mid.add_child(_text(lbl, 18, INK, true, HORIZONTAL_ALIGNMENT_CENTER))
+	if day_kind == "jobs":
+		mid.add_child(_text(tr("R2_DAY_JOBS_1") if g.items.size() == 1 else tr("R2_DAY_JOBS") % g.items.size(), 11, SUB, true, HORIZONTAL_ALIGNMENT_CENTER))
+	head.add_child(mid)
+	head.add_child(_day_arrow("›", 1))
+	day_box.add_child(head)
+	# 曜日の札（月〜日。何かある日は色つき）。押すとその日へ
+	if day_list.size() <= 8:
+		var strip := HBoxContainer.new()
+		strip.alignment = BoxContainer.ALIGNMENT_CENTER
+		strip.add_theme_constant_override("separation", 3)
+		for i in day_list.size():
+			strip.add_child(_day_tab(i))
+		day_box.add_child(strip)
+	# その日の中身
+	if g.items.is_empty():
+		var none := I18n.wrap(_text(tr("R2_DAY_NONE") if day_kind == "jobs" else tr("R2_SHIFT_NONE"), 13, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+		none.custom_minimum_size = Vector2(0, 44)
+		day_box.add_child(none)
+	for it in g.items:
+		day_box.add_child(_list_row(it) if day_kind == "jobs" else _shift_row(it))
+
+
+func _day_arrow(t: String, d: int) -> Button:
+	var b := Kit.button(t, Color("f3ecff"), func(): _go_day(d), Color("6a5bd6"), 36, 22)
+	b.custom_minimum_size.x = 40
+	var at_end := (day_i == 0 and d < 0) or (day_i == day_list.size() - 1 and d > 0)
+	b.disabled = at_end
+	b.modulate.a = 0.35 if at_end else 1.0
+	return b
+
+
+func _day_tab(i: int) -> Button:
+	var g: Dictionary = day_list[i]
+	var on := i == day_i
+	var has: bool = not g.items.is_empty()
+	var b := Button.new()
+	b.text = I18n.t("JOB_WD_%d" % JobListings.weekday_mon(g.d0))
+	b.custom_minimum_size = Vector2(36, 30)
+	b.add_theme_font_override("font", Kit.black())
+	b.add_theme_font_size_override("font_size", 12)
+	var bg := Color("ff8a5b") if on else (Color("ffe3d3") if has else Color("f4f0f5"))
+	var fg := Color.WHITE if on else (Color("b0502a") if has else Color("b8aeb6"))
+	for k in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(k, Kit.pill(bg, 10, 0.0, Vector2(4, 2)))
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(k, fg)
+	b.pressed.connect(func():
+		if i != day_i:
+			Kit.play(self, "tap", 1.2)
+			_set_day(i))
+	return b
+
+
+func _go_day(d: int) -> void:
+	var n := clampi(day_i + d, 0, day_list.size() - 1)
+	if n == day_i:
+		return
+	Kit.play(self, "tap", 1.0 + 0.1 * d)
+	_set_day(n)
+
+
+func _set_day(n: int) -> void:
+	day_i = n
+	if day_kind == "jobs":
+		job_day = n
+	_fill_day()
+	if day_box and is_instance_valid(day_box):
+		day_box.modulate.a = 0.4
+		create_tween().tween_property(day_box, "modulate:a", 1.0, 0.18)
+
+
+## 曜日のカードの上を横にすべらせたら、となりの日へ（ボタンの上から始めても。押したことにはしない）
+func _input(event: InputEvent) -> void:
+	if not (day_box and is_instance_valid(day_box) and day_box.is_visible_in_tree()):
+		return
+	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	if event.pressed:
+		swipe_from = event.position if day_box.get_global_rect().grow(8).has_point(event.position) else Vector2(-1, -1)
+		return
+	if swipe_from.x < 0:
+		return
+	var d: Vector2 = event.position - swipe_from
+	swipe_from = Vector2(-1, -1)
+	if absf(d.x) > 48.0 and absf(d.x) > absf(d.y) * 1.5:
+		get_viewport().set_input_as_handled()
+		_go_day(-1 if d.x > 0 else 1)
 
 
 func _clear_card() -> void:
@@ -756,7 +994,7 @@ func _small_link(t: String, cb: Callable, color: Color) -> Button:
 
 
 ## スキルの記録（feature/skills）：その仕事の自分のバッジ（例: Register ★2 · 3 shifts）。
-## その仕事がはじめてなら「2 分のおさらい、する？」（任意。受けるかどうかとは関係ない）
+## はじめての仕事の「おさらい、する？」は、ここではなく受けたあとのカードで聞く（求人を見ている間は分かりにくい、というレビュー）
 func _skill_row(j: Dictionary) -> void:
 	var role := String(j.role)
 	var txt := Skills.badge_text(role)
@@ -766,10 +1004,6 @@ func _skill_row(j: Dictionary) -> void:
 		row.add_child(SkillBadge.make(role, Skills.stars(role), 24))
 		row.add_child(_text(tr("SK_CARD_YOURS") % txt, 12, Color("3b5ba5"), true))
 		card_box.add_child(row)
-	if Skills.suggest_practice(role):
-		card_box.add_child(_small_link(tr("SK_CARD_SUGGEST"), func():
-			Skills.practice_role = role
-			_go("practice"), Color("3b5ba5")))
 
 
 func _accept() -> void:
@@ -811,6 +1045,12 @@ func _accept() -> void:
 		status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
 	card_box.add_child(status)
 	card_box.add_child(_link(tr("CHAT_ASK_SHOP"), func(): ChatHub.open(self, ChatShops.thread_id_for(s)), Color("6a5bd6"))) # お店の猫に聞く（feature/cat-chat）
+	# はじめての仕事なら、シフトの前のおさらい（任意。受けたあとにだけ聞く）
+	var role := String(j.role)
+	if Skills.suggest_practice(role):
+		card_box.add_child(_small_link(tr("R2_ACCEPT_PRACTICE"), func():
+			Skills.practice_role = role
+			_go("practice"), Color("3b5ba5")))
 	var more := jobs.any(func(x): return not done_ids.has(x.id))
 	card_box.add_child(Kit.button(tr("JOB_BACK_LIST") if more else tr("JOB_DONE"), ORANGE, _next))
 	_pop_card()
@@ -1004,6 +1244,11 @@ func demo_shift_add() -> void:
 
 func demo_open() -> void:
 	_open_viewer()
+
+
+## 曜日のカードを次の日へ（› を押したのと同じ）
+func demo_day_next() -> void:
+	_go_day(1)
 
 
 ## 求人カードの「このお店の島を見にいく」と同じ
