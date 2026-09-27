@@ -66,6 +66,51 @@ func _run() -> void:
 	var t := _texts(desk.card_box)
 	_check(t.contains(tr("R3_OVERLAP_TITLE")) and t.contains("My Bakery"), "the clash message names the other shift: %s" % t.replace("\n", " | "))
 
+	# 2. 受けたら「マイシフトに入った」とリンク。リンクでマイシフトのその日へ
+	Shifts.reset()
+	desk.index = 0
+	desk._show_job()
+	await _frames()
+	desk._accept()
+	await _frames()
+	_check(Shifts.all().size() == 1, "the job is added")
+	t = _texts(desk.card_box)
+	_check(t.contains(tr("R3_IN_MY_SHIFTS")) and t.contains(tr("R3_SEE_MY_SHIFTS")), "accepted card says it is in My shifts, with a link")
+	var link: Button = null
+	for b in desk.card_box.find_children("*", "Button", true, false):
+		if b.text == tr("R3_SEE_MY_SHIFTS"):
+			link = b
+	link.pressed.emit()
+	await _frames(4)
+	_check(desk.viewer == null and desk.sheet != null and is_instance_valid(desk.sheet), "the link closes the job cards and opens My shifts")
+	_check(desk.day_list[desk.day_i].d0 == JobDesk.day0_of(float(j.start)), "My shifts opens on the day of that shift")
+
+	# 3. マイシフトの行を押すと、くわしいカード
+	var row: Button = null
+	for b in desk.day_box.find_children("*", "Button", false, false):
+		if _texts(b).contains(String(j.store)):
+			row = b
+	_check(row != null, "My shifts has a row for the shift")
+	if row:
+		row.pressed.emit()
+		await _frames(4)
+		var st := _texts(desk.sheet)
+		for k in [String(j.store), JobListings.when_text(j), JobListings.wage_text(j), tr("JOB_MAP") + " ›", tr("R3_SHIFT_CANCEL")]:
+			_check(st.contains(k), "shift detail shows %s: %s" % [k, st.replace("\n", " | ")])
+		_check(st.contains(tr("CHAT_ASK_SHOP")), "shift detail has the shop chat")
+		var cancel: Button = null
+		for b in desk.sheet.find_children("*", "Button", true, false):
+			if b.text == tr("R3_SHIFT_CANCEL"):
+				cancel = b
+		cancel.pressed.emit()
+		await _frames()
+		_check(Shifts.all().size() == 1 and cancel.text == tr("R3_SHIFT_CANCEL_SURE"), "first tap asks to confirm")
+		cancel.pressed.emit()
+		await _frames(4)
+		_check(Shifts.all().is_empty(), "second tap cancels the shift")
+	desk._close_sheet()
+	Shifts.reset()
+
 	await _finish()
 
 

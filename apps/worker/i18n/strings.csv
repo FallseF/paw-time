@@ -1847,3 +1847,7 @@ R3_OVERLAP_BODY,This overlaps with %s — you can't take both.,%s と時間が�
 R3_OVERLAP_SAY,You already have a shift then!,その時間は、もうシフトがあるよ！
 R3_SEE_MY_SHIFTS,See it in My shifts ›,マイシフトで見る ›
 R3_IN_MY_SHIFTS,It's in My shifts now (the calendar in the app).,アプリの中のカレンダー「マイシフト」に入ったよ。
+R3_SHIFT_NOW,Working now,いま勤務中
+R3_SHIFT_MANUAL,A shift you added yourself,自分で入れたシフト
+R3_SHIFT_CANCEL,Cancel this shift,このシフトを取り消す
+R3_SHIFT_CANCEL_SURE,Tap again to cancel it,もう一度押すと取り消します

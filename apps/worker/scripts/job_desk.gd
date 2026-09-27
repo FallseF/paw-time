@@ -513,24 +513,105 @@ func _jobs_from_menu() -> void:
 	_open_viewer()
 
 
-## 自分のシフトの 1 行（時刻を大きく、店と仕事）
-func _shift_row(sh: Dictionary) -> PanelContainer:
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 14, 0.08, Vector2(12, 6)))
-	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+## 自分のシフトの 1 行（時刻を大きく、店と仕事）。押すと、そのシフトのくわしいカード
+func _shift_row(sh: Dictionary) -> Button:
+	var p := Button.new()
+	p.custom_minimum_size = Vector2(0, 44)
+	for k in ["normal", "hover", "pressed", "focus"]:
+		p.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k == "pressed" else Color.WHITE, 14, 0.08, Vector2(12, 6)))
+	p.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		open_shift_detail(sh))
 	var h := HBoxContainer.new()
+	h.set_anchors_preset(Control.PRESET_FULL_RECT)
+	h.offset_left = 12
+	h.offset_right = -10
 	h.add_theme_constant_override("separation", 10)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(h)
-	h.add_child(_text(clock_range(sh), 16, INK, true))
+	var tl := _text(clock_range(sh), 16, INK, true)
+	tl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(tl)
 	var nm := String(sh.get("store", ""))
 	if String(sh.get("title", "")) != "" and String(sh.get("title", "")) != nm:
 		nm = "%s · %s" % [sh.title, nm] if nm != "" else String(sh.title)
 	var l := _text(nm, 13, SUB, true)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	l.clip_text = true
 	h.add_child(l)
+	var ar := _text("›", 18, SUB, true)
+	ar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(ar)
 	return p
+
+
+var cancel_armed := false # 取り消しは二度押し（一度目で確かめる）
+
+
+## マイシフトの 1 件のくわしいカード（求人のカードと同じ中身：店・時間・場所・時給・地図・お店のチャット・取り消し）
+func open_shift_detail(sh: Dictionary) -> void:
+	cancel_armed = false
+	var now := Time.get_unix_time_from_system()
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 6)
+	if sh.has("role") and not sh.get("manual", false):
+		top.add_child(_chip(tr("JOB_ROLE_" + String(sh.role).to_upper()), role_color(sh.role).darkened(0.25)))
+	if String(sh.get("pay", "")) in JobPrefs.PAYS and not sh.get("manual", false):
+		top.add_child(_chip(tr("JOB_PAY_" + String(sh.pay).to_upper()), Color("e9f3ea"), GREEN))
+	if float(sh.start) <= now and now < float(sh.end):
+		top.add_child(_chip(tr("R3_SHIFT_NOW"), Color("3f8a55")))
+	if top.get_child_count() > 0:
+		box.add_child(top)
+	var place := String(sh.get("place", ""))
+	if place != "":
+		var pr := HBoxContainer.new()
+		pr.add_theme_constant_override("separation", 6)
+		var pl := I18n.wrap(_text(place, 14, SUB))
+		pr.add_child(pl)
+		if String(sh.get("listing", "")) != "" or String(sh.get("store", "")) != "":
+			var mp := _small_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(sh)), Color("3b5ba5"))
+			mp.autowrap_mode = TextServer.AUTOWRAP_OFF
+			mp.size_flags_horizontal = Control.SIZE_SHRINK_END
+			pr.add_child(mp)
+		box.add_child(pr)
+	var row := HBoxContainer.new()
+	row.add_child(_text(JobListings.when_text(sh), 15, INK, true))
+	var sp := Control.new()
+	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(sp)
+	if float(sh.get("wage", 0)) > 0:
+		row.add_child(_text(JobListings.wage_text(sh), 18, Color("e0663a"), true))
+	box.add_child(row)
+	if sh.get("manual", false):
+		box.add_child(_text(tr("R3_SHIFT_MANUAL"), 12, SUB))
+	var tid := ChatShops.thread_id_for(sh)
+	if ChatShops.allowed(tid):
+		box.add_child(_small_link(tr("CHAT_ASK_SHOP") + " ›", func(): ChatHub.open(self, tid), Color("6a5bd6")))
+	var after := VBoxContainer.new()
+	if float(sh.start) > now:
+		var cancel := _link(tr("R3_SHIFT_CANCEL"), func(): pass, Color("b0502a"))
+		cancel.pressed.connect(func():
+			if not cancel_armed:
+				cancel_armed = true
+				cancel.text = tr("R3_SHIFT_CANCEL_SURE")
+				return
+			_cancel_shift(sh))
+		after.add_child(cancel)
+	var nm := String(sh.get("title", ""))
+	if String(sh.get("store", "")) != "" and String(sh.get("store", "")) != nm:
+		nm = "%s · %s" % [nm, sh.store] if nm != "" else String(sh.store)
+	_sheet(SpecialObake.pet_name(), nm, "", "‹ " + tr("WORK_MENU_TITLE"), func(): open_work_menu(float(sh.start)), -1, 0,
+		[[tr("WORK_MENU_CLOSE"), _close_sheet]], box, after)
+
+
+func _cancel_shift(sh: Dictionary) -> void:
+	Shifts.remove(String(sh.id))
+	Kit.play(self, "tap", 0.8)
+	open_work_menu(float(sh.start))
 
 
 ## 働いたお店の一覧（お店の島へ）。まだ無ければ、見本のお店
@@ -1045,6 +1126,15 @@ func _accept() -> void:
 	card_box.add_child(I18n.wrap(_text("%s · %s" % [j.title, j.store], 14, INK, true)))
 	card_box.add_child(_text(JobListings.when_text(j), 14, SUB))
 	card_box.add_child(_small_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(j)), Color("3b5ba5")))
+	# アプリの中のカレンダー（マイシフト）に入ったことを、はっきり。すぐ見に行けるリンク
+	var mine := PanelContainer.new()
+	mine.add_theme_stylebox_override("panel", Kit.pill(Color("e9f3ea"), 12, 0.0, Vector2(10, 6)))
+	var mv := VBoxContainer.new()
+	mv.add_theme_constant_override("separation", 0)
+	mv.add_child(I18n.wrap(_text(tr("R3_IN_MY_SHIFTS"), 13, GREEN, true)))
+	mv.add_child(_small_link(tr("R3_SEE_MY_SHIFTS"), func(): _to_my_shifts(float(s.start)), GREEN))
+	mine.add_child(mv)
+	card_box.add_child(mine)
 	var cal := Kit.button(tr("CAL_GOOGLE"), Color("eef3ff"), func():
 		Telemetry.track("calendar_add", {"kind": "google"})
 		CalendarLink.open_google(s), Color("3b5ba5"), 44, 15)
@@ -1069,7 +1159,6 @@ func _accept() -> void:
 
 ## 重なるシフトがあって受けられないとき：どのシフトと重なるか、と、マイシフトへのリンク
 func _show_overlap(clash: Dictionary) -> void:
-	Telemetry.track("job_overlap_blocked", JobListings.telemetry_shop(jobs[index].get("listing")))
 	stage.shrug()
 	Kit.play(self, "tap", 0.8)
 	_say(tr("R3_OVERLAP_SAY"))
