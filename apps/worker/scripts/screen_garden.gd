@@ -115,6 +115,7 @@ func _build_world() -> void:
 	cam.position = cam.position * float(fit.scale) + fit.shift
 	cam.look_at(Vector3(0, 0.0, -0.4) + fit.shift)
 	cam_home = cam.transform
+	cam_look = Vector3(0, 0.0, -0.4) + fit.shift
 
 	var L: int = _L()
 	var t: int = _T()
@@ -599,6 +600,10 @@ func _build_host(id: String) -> void:
 	l.outline_render_priority = 19
 	l.position = Vector3(0, 1.9 if not Rares.is_rare(id) else 2.5, 0)
 	host_node.add_child(l)
+	host_tag = l
+
+
+var host_tag: Label3D # あるじの札（話すときに寄ると大きすぎるので、そのあいだはしまう）
 
 
 ## 島の大きさ（段が上がるほど、岸がひろがる）
@@ -1329,6 +1334,9 @@ var _clock_t := 0.0
 
 func _process(delta: float) -> void:
 	_t += delta
+	_sync_expand()
+	_sync_hud()
+	_sync_zoom(delta)
 	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
 	_clock_t += delta
 	if _clock_t > 30.0:
@@ -1444,6 +1452,69 @@ func _center_count() -> int:
 ## 庭のおばけをタップすると、跳ねてひとこと
 var orbit := 0.0
 var cam_v := -1.6
+var cam_look := Vector3(0, 0, -0.4) # よこになぞる・拡大の中心
+## 島の拡大・縮小（つまむ・ホイール・トラックパッド）。1 = ふだん、小さいほど寄る
+const ZOOM_MIN := 0.5
+const ZOOM_MAX := 1.3
+var zoom := 1.0
+var zoom_to := 1.0
+var touches := {} # 指の番号 → 位置（2 本でつまむ）
+var pinch_d0 := 0.0
+var pinch_z0 := 1.0
+var cam_hold := false # 話すときの寄り（そのあいだは、拡大・なぞりでカメラを動かさない）
+
+
+## よこになぞった向きと拡大をあわせた、カメラの置き場所
+func _view_transform() -> Transform3D:
+	var t := cam_home
+	t.origin = cam_look + Basis(Vector3.UP, orbit) * (cam_home.origin - cam_look) * zoom
+	return t.looking_at(cam_look, Vector3.UP)
+
+
+func _zoom_by(k: float) -> void:
+	zoom_to = clampf(zoom_to * k, ZOOM_MIN, ZOOM_MAX)
+
+
+## 拡大をなめらかに（毎フレーム）。見せ場の寄り（_focus）・島づくり・話すときは動かさない
+func _sync_zoom(delta: float) -> void:
+	if is_equal_approx(zoom, zoom_to) or busy or editing or cam_hold:
+		return
+	zoom = lerpf(zoom, zoom_to, 1.0 - exp(-12.0 * delta))
+	if absf(zoom - zoom_to) < 0.002:
+		zoom = zoom_to
+	cam.transform = _view_transform()
+
+
+## ホイール・トラックパッド（つまむ・二本指のスクロール）・二本の指でつまむ。受けたら true
+func _zoom_input(event: InputEvent) -> bool:
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var f: float = event.factor if event.factor > 0.0 else 1.0
+		_zoom_by(pow(0.9, f) if event.button_index == MOUSE_BUTTON_WHEEL_UP else pow(1.0 / 0.9, f))
+		return true
+	if event is InputEventMagnifyGesture:
+		_zoom_by(1.0 / maxf(event.factor, 0.01))
+		return true
+	if event is InputEventPanGesture:
+		_zoom_by(1.0 + clampf(event.delta.y, -3.0, 3.0) * 0.04)
+		return true
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			touches[event.index] = event.position
+		else:
+			touches.erase(event.index)
+		if touches.size() == 2:
+			var p: Array = touches.values()
+			pinch_d0 = maxf((p[0] as Vector2).distance_to(p[1]), 1.0)
+			pinch_z0 = zoom_to
+		return touches.size() >= 2
+	if event is InputEventScreenDrag and touches.has(event.index):
+		touches[event.index] = event.position
+		if touches.size() >= 2:
+			var p: Array = touches.values()
+			var d := maxf((p[0] as Vector2).distance_to(p[1]), 1.0)
+			zoom_to = clampf(pinch_z0 * pinch_d0 / d, ZOOM_MIN, ZOOM_MAX)
+			return true
+	return false
 
 
 ## 庭をよこになぞると、ぐるっと少し回して見られる
@@ -1451,18 +1522,19 @@ func _gui_input(event: InputEvent) -> void:
 	if editing:
 		_edit_input(event)
 		return
+	if not busy and not cam_hold and _zoom_input(event):
+		accept_event()
+		return
 	if (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) or event is InputEventScreenDrag:
-		if busy:
+		if busy or cam_hold or touches.size() >= 2: # 二本の指でつまんでいる間は、回さない
 			return
 		orbit = clampf(orbit - event.relative.x * 0.006, -0.6, 0.6)
-		var t := cam_home
-		t.origin = Basis(Vector3.UP, orbit) * cam_home.origin
-		cam.transform = t.looking_at(Vector3(0, 0.0, -0.4), Vector3.UP)
+		cam.transform = _view_transform()
 		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var pos: Vector2 = event.position
-	if pos.y < 110 or (card and card.get_global_rect().has_point(pos)):
+	if pos.y < 110 or (card and card.is_visible_in_tree() and card.get_global_rect().has_point(pos)):
 		return
 	var best = null
 	var bd := 42.0
@@ -1473,6 +1545,12 @@ func _gui_input(event: InputEvent) -> void:
 		if d < bd:
 			bd = d
 			best = w
+	# 桟橋の乗り物（いかだ）：押すと行き先えらび（友だちの島・お店の島）。おばけの方が近ければ、おばけ
+	if not _vis() and parked and is_instance_valid(parked) and not busy:
+		var rd := _raft_screen_pos().distance_to(pos)
+		if rd < 46.0 and (best == null or rd < bd):
+			_open_raft()
+			return
 	if best == null:
 		return
 	var o: Obake3D = best.o
@@ -1523,6 +1601,31 @@ func _skills_pill() -> void:
 	sk.position = Vector2(12, y)
 	sk.size = Vector2(0, 32)
 	add_child(sk)
+	hud_pill(sk)
+
+
+var hud_pills: Array = [] # 上の段の札（キセカエ・マイスキル・しごと・話す）。くわしく・めあてを開いたら、重なる札はしまう
+
+
+## 上の段の札として登録する（しごと・話すの札は、重ね画面の係から）
+func hud_pill(b: Control) -> void:
+	hud_pills.append(b)
+
+
+## 島の段のくわしく（庭 Lv / ポイ）・めあての欄を開いている間は、それに重なる札をしまう（閉じたら戻す）
+func _sync_hud() -> void:
+	var covers: Array = []
+	if meters and meters.visible:
+		covers.append(meters.get_global_rect())
+	if goals_panel and is_instance_valid(goals_panel):
+		covers.append(goals_panel.get_global_rect())
+	hud_pills = hud_pills.filter(func(b): return is_instance_valid(b) and not b.is_queued_for_deletion())
+	for b in hud_pills:
+		var r: Rect2 = b.get_global_rect()
+		var covered: bool = covers.any(func(c): return c.intersects(r))
+		if covered != b.get_meta("hud_covered", false):
+			b.set_meta("hud_covered", covered)
+			b.visible = not covered
 
 
 func _build_ui() -> void:
@@ -1552,6 +1655,7 @@ func _build_ui() -> void:
 		wd.position = Vector2(12, 58)
 		wd.size = Vector2(0, 32)
 		add_child(wd)
+		hud_pill(wd)
 	_skills_pill()
 	var zk := Kit.button("図鑑", Color(1, 1, 1, 0.92), func(): main.go("zukan"), Color("8a5bd6"), 38, 15)
 	zk.custom_minimum_size.x = 64
@@ -1752,9 +1856,33 @@ func _place_expand() -> void:
 			return
 		expand_btn = Kit.button(tr("EXPAND_PILL"), Color("e9f6e6"), _expand_from_pill, Color("3f7d4f"), 30, 12)
 		add_child(expand_btn)
-	expand_btn.visible = show
+	expand_btn.visible = show and not overlay_open()
 	expand_btn.size = Vector2(0, 30)
 	expand_btn.position = Vector2(14, 598) if card_hidden or not card.visible else Vector2(card.position.x + 6, card.position.y - 14)
+
+
+## 島の上に、何かが重なって開いているか（しごとのシート・求人カード・シフトの入力・チャット・カタログ・お知らせの箱・届いた服）。
+## 開いている間は「＋ ひろげる」札を出さない（カードや見出しの上に札が乗ってしまうので）
+func overlay_open() -> bool:
+	for n in [catalog_ui, share_ui, raft_ui]:
+		if n and is_instance_valid(n) and not n.is_queued_for_deletion():
+			return true
+	for c in get_children():
+		if c is ScreenChat or c is OutfitReveal:
+			return true
+		if c is JobDesk and c.overlay_open():
+			return true
+	return false
+
+
+## 毎フレーム：重ね画面が開いたら札を隠し、閉じたら戻す
+func _sync_expand() -> void:
+	if expand_btn == null:
+		return
+	var want: bool = not _vis() and not editing and GameState.day >= 1 and IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS
+	var on := want and not overlay_open() and not cam_hold
+	if expand_btn.visible != on:
+		expand_btn.visible = on
 
 
 ## 札から：島づくりに入って、広げられる場所のカードを開く（足りるところがあれば、そこを先に）
@@ -1869,6 +1997,7 @@ func _show_card() -> void:
 			row.add_child(_link("今日はのんびりする", _rest))
 			row.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
 			card_box.add_child(row)
+			card_box.add_child(_link(tr("R2_HELP_GAMES"), _open_help_games))
 		elif s.role != "" and GameState.skip_shift_day != GameState.day and not GameState.shift_done_today:
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])], 14, Color("6a5f70")))
@@ -1888,6 +2017,7 @@ func _show_card() -> void:
 			# 夜は実際の時計で来る（夕方 5 時から、川べりへ）
 			card_box.add_child(Kit.text("川べりは、夕方 5 時から", 14, Color("5b6fc2"), true))
 			card_box.add_child(_link(tr("I'm going to work"), func(): main.go("work")))
+			card_box.add_child(_link(tr("R2_HELP_GAMES"), _open_help_games))
 			if GameState.day >= 2:
 				card_box.add_child(_link("島をつくる・シェアする", _enter_edit))
 			GameState.tut["first"] = true
@@ -1942,6 +2072,21 @@ func _work_card() -> bool:
 		_toast(tr("Shift's over!"), tr("+%d Paw Coins") % r.get("coins", 0))
 		_show_card()))
 	return true
+
+
+## おてつだいミニゲーム：マイスキルのおさらい（5 つの仕事）を、島のおてつだいとして遊べる（任意）
+func _open_help_games() -> void:
+	var v := _popup(tr("R2_HELP_TITLE"), tr("R2_HELP_BODY"), "")
+	for r in Skills.ROLES:
+		var role: String = r
+		var st := Skills.star_text(Skills.stars(role))
+		var b := Kit.button(Skills.role_name(role) + ("  " + st if st != "" else "") + "  ›", Color("fff1e0"), func():
+			share_ui.queue_free()
+			Skills.practice_role = role
+			main.go("practice"), Color("b0502a"), 40, 14)
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		v.add_child(b)
+	v.add_child(Kit.button(tr("KIT_UI_CLOSE"), Color(1, 1, 1, 0.95), func(): share_ui.queue_free(), Color("6a5f70"), 40, 14))
 
 
 func _gift() -> void:
@@ -2104,6 +2249,8 @@ func _reveal_deco(role: String) -> void:
 ## カメラを寄せる（mode 1）/ 戻す（mode 0）
 func _focus(at: Vector3, mode: int) -> void:
 	orbit = 0.0
+	zoom = 1.0
+	zoom_to = 1.0
 	var to := cam_home
 	if mode == 1:
 		to.origin = at + Vector3(0, 2.4, 4.4)
@@ -2254,6 +2401,88 @@ func demo_orbit() -> void:
 	m.button_mask = MOUSE_BUTTON_MASK_LEFT
 	m.relative = Vector2(-80, 0)
 	_gui_input(m)
+
+
+## 話す（ChatHub）：カメラを相棒へ寄せて、相棒を画面いっぱいに大きく。ひとことの吹き出しつき
+func zoom_to_cat(hi := "") -> void:
+	if host_node == null or not is_instance_valid(host_node):
+		return
+	cam_hold = true
+	_talk_ui(false)
+	var at := host_node.global_position
+	var to := Transform3D(Basis(), at + Vector3(0.0, 1.25, 2.4)).looking_at(at + Vector3(0, 0.62, 0), Vector3.UP)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "transform", to, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(cam, "v_offset", 0.0, 0.55).set_trans(Tween.TRANS_SINE)
+	Kit.play(self, "pop", 1.15, -4)
+	await tw.finished
+	if hi != "" and is_instance_valid(host_node):
+		var l := Kit.label3d(hi, 30, Color("fff6e8"))
+		l.position = Vector3(0, 1.55 if not Rares.is_rare(GameState.host()) else 2.2, 0)
+		l.no_depth_test = true
+		l.render_priority = 20
+		host_node.add_child(l)
+		var t2 := l.create_tween()
+		t2.tween_interval(1.6)
+		t2.tween_callback(l.queue_free)
+		var hop := create_tween()
+		hop.tween_property(host_node, "position:y", 0.25, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		hop.tween_property(host_node, "position:y", 0.0, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	await get_tree().create_timer(0.45).timeout
+
+
+## 話し終えたら、島の眺め（なぞった向き・拡大もそのまま）へ戻す
+func zoom_back() -> void:
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "transform", _view_transform(), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(cam, "v_offset", -0.7 if card_hidden else cam_v, 0.5).set_trans(Tween.TRANS_SINE)
+	await tw.finished
+	cam_hold = false
+	_talk_ui(true)
+
+
+var talk_hidden: Array = []
+
+
+## 話すあいだは、相棒の前にかかる物（今日のカード・知らせの列・札）をしまう。戻すときは、しまった物だけ
+func _talk_ui(show: bool) -> void:
+	if show:
+		for c in talk_hidden:
+			if is_instance_valid(c):
+				c.visible = true
+		talk_hidden.clear()
+		return
+	var list: Array = [card, handle, expand_btn, host_tag]
+	for c in get_children():
+		if c is JobDesk:
+			list.append_array(c.notes)
+	for c in list:
+		if c and is_instance_valid(c) and c.visible:
+			c.visible = false
+			talk_hidden.append(c)
+
+
+## 確認用：おてつだいミニゲームの一覧
+func demo_help_games() -> void:
+	_open_help_games()
+
+
+## 確認用：いかだを押したのと同じ
+func demo_raft() -> void:
+	if FriendIslands.all().is_empty(): # 撮影用に、友だちの島を 2 つ（自分の島のコードを借りる）
+		var nick := GameState.nickname
+		for nm in ["Mika", "Ren"]:
+			GameState.nickname = nm
+			var d := GameState.decode_island(GameState.island_code(_movable_keys()))
+			d.code = GameState.island_code(_movable_keys())
+			FriendIslands.record(d)
+		GameState.nickname = nick
+	_open_raft()
+
+
+## 確認用：島を寄せる（ホイールで 5 回ぶん）
+func demo_zoom() -> void:
+	_zoom_by(pow(0.9, 5))
 
 
 func demo_fps() -> void:
@@ -2625,6 +2854,111 @@ func _park_vehicle() -> void:
 	world.add_child(parked)
 
 
+func _raft_screen_pos() -> Vector2:
+	return View3D.unproject(cam, parked.global_position + Vector3(0, 0.25, 0))
+
+
+## いかだの行き先えらび：友だちの島（前にコードで行った島＋コードを入れる）・お店の島（働いたお店）
+func _open_raft() -> void:
+	if raft_ui and is_instance_valid(raft_ui):
+		raft_ui.queue_free()
+	Kit.play(self, "pop", 1.1)
+	raft_ui = Control.new()
+	raft_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(raft_ui)
+	var dim := ColorRect.new()
+	dim.color = Color(0.08, 0.06, 0.14, 0.5)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	raft_ui.add_child(dim)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(16, 14)))
+	p.position = Vector2(18, 90)
+	p.size = Vector2(324, 0)
+	raft_ui.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	v.custom_minimum_size = Vector2(292, 0)
+	p.add_child(v)
+	var head := HBoxContainer.new()
+	var ttl := Kit.text(tr("R2_RAFT_TITLE"), 19, Color("2a2233"), true)
+	ttl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(ttl)
+	var close := Kit.button("×", Color(1, 1, 1, 0.9), func(): raft_ui.queue_free(), Color("6a5f70"), 34, 16)
+	close.custom_minimum_size.x = 40
+	head.add_child(close)
+	v.add_child(head)
+	# 友だちの島
+	v.add_child(Kit.text(tr("R2_RAFT_FRIENDS"), 14, Color("8a5bd6"), true))
+	var friends := FriendIslands.all()
+	if friends.is_empty():
+		v.add_child(I18n.wrap(Kit.text(tr("R2_RAFT_FRIENDS_NONE"), 12, Color("6a5f70"))))
+	for f in friends.slice(0, 4):
+		var code: String = f.code
+		v.add_child(_raft_row(tr("R2_RAFT_ISLAND") % [f.name, int(f.level) + 1], Color("f3ecff"), Color("5a4ab0"), func(): _visit_code(code)))
+	var code_row := HBoxContainer.new()
+	code_row.add_theme_constant_override("separation", 6)
+	var le := LineEdit.new()
+	le.placeholder_text = tr("R2_RAFT_CODE_HINT")
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_edit(le)
+	le.add_theme_font_override("font", Kit.bold())
+	le.add_theme_font_size_override("font_size", 13)
+	code_row.add_child(le)
+	var bad := I18n.wrap(Kit.text("", 11, Color("c0473b")))
+	var go := Kit.button(tr("R2_RAFT_GO"), Color("8b7bff"), func():
+		if not _visit_code(le.text):
+			bad.text = tr("R2_RAFT_BAD"), Color.WHITE, 38, 14)
+	go.custom_minimum_size.x = 64
+	code_row.add_child(go)
+	v.add_child(Kit.text(tr("R2_RAFT_CODE"), 12, Color("6a5f70"), true))
+	v.add_child(code_row)
+	v.add_child(bad)
+	# お店の島（働いたお店。まだ無ければ見本）
+	v.add_child(Kit.text(tr("R2_RAFT_SHOPS"), 14, Color("3b8a7a"), true))
+	var ids := ShopCulture.worked_shops()
+	var sample := ids.is_empty()
+	if sample:
+		ids = [Invites.SAMPLE_LISTING, "cvs_machikado", "bk_komugi"]
+	for id in ids.slice(0, 4):
+		var lid: String = id
+		var nm := JobListings.store_name(lid) + ("  (%s)" % tr("SHOPS_SAMPLE") if sample else "")
+		v.add_child(_raft_row(nm, Color("e6f4f0"), Color("2f6e5f"), func(): _visit_shop_island(lid)))
+	p.pivot_offset = Vector2(162, 60)
+	p.scale = Vector2(0.92, 0.92)
+	create_tween().tween_property(p, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _raft_row(t: String, bg: Color, fg: Color, cb: Callable) -> Button:
+	var b := Kit.button(t + "  ›", bg, cb, fg, 40, 14)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	b.clip_text = true
+	return b
+
+
+## 友だちの島へ（自分の乗り物で海を渡ってから）。読めないコードなら false
+func _visit_code(text: String) -> bool:
+	var code := FriendIslands.parse_code(text)
+	# コードの字（base64url）でなければ、読む前に断る
+	var ok := RegEx.create_from_string("^[A-Za-z0-9+/=_-]+$").search(code) != null
+	var d := GameState.decode_island(code) if ok else {}
+	if d.is_empty():
+		return false
+	d.code = code
+	if GameState.has_save():
+		GameState.save()
+	GameState.visit = d
+	main.go("travel")
+	return true
+
+
+func _visit_shop_island(listing_id: String) -> void:
+	if GameState.has_save():
+		GameState.save()
+	GameState.visit = ShopCulture.visit_data(listing_id)
+	main.go("travel")
+
+
 ## しまってある物を島のまんなか近くに出して、選ぶ
 func _place_from_stock(id: String) -> void:
 	var at := _free_spot()
@@ -2662,6 +2996,7 @@ func _free_spot() -> Vector3:
 
 
 var catalog_ui: Control
+var raft_ui: Control # いかだ（船着き場）から開く、行き先えらび
 
 
 ## カタログ：肉球コインと材料を見せ、買える物は「買う」、足りない分は赤で出す
@@ -2754,7 +3089,8 @@ func _dock_list(list: VBoxContainer) -> void:
 		h.add_child(info)
 		info.add_child(Kit.text(Vehicles.name_of(id), 14, Color("2a2233"), true))
 		if vd.get("premium", false):
-			info.add_child(Kit.text("¥%d · %s" % [int(vd.yen), tr("KIT_UI_MOCK")], 10, Color("8a5bd6")))
+			# 「見本のストア（本当の支払いはありません）」は長いので折り返す（折り返さないと、行が画面の右へはみ出して × と「買う」が隠れる）
+			info.add_child(Kit.wrap(Kit.text("¥%d · %s" % [int(vd.yen), tr("KIT_UI_MOCK")], 10, Color("8a5bd6"))))
 			h.add_child(Kit.button(tr("KIT_UI_BUY"), Color("e9e2ff"), func(): _toast(Vehicles.name_of(id), tr("KIT_UI_MOCK")), Color("6a5bd6"), 34, 13))
 		elif Vehicles.owned().has(id):
 			var riding := Vehicles.current() == id
@@ -2957,6 +3293,7 @@ func _start_visit() -> void:
 	top.add_child(back)
 	night = 0.0
 	_apply_time(0.0)
+	FriendIslands.record(V) # いかだの行き先えらびの「友だちの島」に並ぶ
 	_clear_card()
 	card_box.add_child(Kit.text(tr("%sの島に、おでかけ") % V.name, 18, Color("2a2233"), true))
 	card_box.add_child(Kit.text(tr("おばけ %d 体・島 Lv%d") % [V.residents.size() + 1, int(V.level) + 1], 14, Color("6a5f70")))

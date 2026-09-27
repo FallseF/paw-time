@@ -474,10 +474,19 @@ func _show_result(r: Dictionary) -> void:
 	card.add_child(v)
 	v.add_child(Kit.text(tr("Shift's over!"), 22, INK, true, HORIZONTAL_ALIGNMENT_CENTER))
 	var h: float = r.get("hours", 0.0)
-	v.add_child(Kit.text(tr("%dh %02dm together") % [int(h), int(fmod(h * 60.0, 60.0))], 14, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.text(tr("+%d Paw Coins") % r.get("coins", 0), 30, Color("d99a1a"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	if int(r.get("nets", 0)) > 0:
-		v.add_child(Kit.text(tr("+%d %s nets") % [r.nets, WorkTogether.role_label(r.role)], 16, INK, true, HORIZONTAL_ALIGNMENT_CENTER))
+	if h * 60.0 >= 1.0:
+		v.add_child(Kit.text(tr("R2_WT_HOURS") % [int(h), int(fmod(h * 60.0, 60.0))], 14, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+	# 猫が稼いだ肉球コインと、ポイ（0 時間 0 分・+0 だけの結果にしない）
+	var got := HBoxContainer.new()
+	got.alignment = BoxContainer.ALIGNMENT_CENTER
+	got.add_theme_constant_override("separation", 8)
+	got.add_child(_stat(tr("R2_WT_COINS") % int(r.get("coins", 0)), Color("fff2c8"), Color("b07a10")))
+	var nets := int(r.get("nets", 0))
+	got.add_child(_stat(tr("R2_WT_POI") % nets if nets > 0 else tr("R2_WT_POI_DONE"), Color("eef3ff"), Color("3b5ba5")))
+	v.add_child(got)
+	if int(r.get("coins", 0)) == 0:
+		v.add_child(Kit.text(tr("R2_WT_COINS_ZERO"), 12, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(_pay_box(WorkTogether.pay_estimate(r, Shifts.all())))
 	if r.get("exhausted", false):
 		var note := Kit.text(tr("Your cat-obake got tired,\nso it stopped there.\nExtra time earns nothing."), 13, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)
 		_wrap_fixed(note)
@@ -487,9 +496,46 @@ func _show_result(r: Dictionary) -> void:
 		_wrap_fixed(note2)
 		v.add_child(note2)
 	v.add_child(Kit.button(tr("Back to the island"), Color("5b6fc2"), func(): main.go("garden")))
+	# 行が増えても画面に収まるよう、高さが決まってから一度だけ、まんなかへ
+	# （keep_fit で合わせ続けると、画面の倍率によっては大きさの知らせが止まらず固まった）
+	_center_card.call_deferred(card)
 	card.pivot_offset = Vector2(156, 120)
 	card.scale = Vector2(0.9, 0.9)
 	create_tween().tween_property(card, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _center_card(card: Control) -> void:
+	await get_tree().process_frame
+	if is_instance_valid(card):
+		card.position.y = clampf((640.0 - card.size.y) / 2.0 + 30.0, 70.0, maxf(70.0, 626.0 - card.size.y))
+
+
+## 結果の小さな札（コイン・ポイ）
+func _stat(t: String, bg: Color, fg: Color) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(bg, 14, 0.0, Vector2(10, 5)))
+	p.add_child(Kit.text(t, 16, fg, true, HORIZONTAL_ALIGNMENT_CENTER))
+	return p
+
+
+## 今日のお給料（目安）：登録したシフトの時間 × 時給。目安だとはっきり書く（ゲームはお給料にふれない）
+func _pay_box(est: Dictionary) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("f1f7f1"), 16, 0.0, Vector2(12, 8)))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	p.add_child(v)
+	v.add_child(Kit.text(tr("R2_WT_PAY_TITLE"), 13, Color("3f8a55"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	if est.is_empty():
+		v.add_child(Kit.text("—", 22, Color("3f8a55"), true, HORIZONTAL_ALIGNMENT_CENTER))
+		v.add_child(Kit.text(tr("R2_WT_PAY_NONE"), 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+		return p
+	v.add_child(Kit.text("¥" + JobListings._commas(int(est.yen)), 26, Color("2f6e43"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	var hrs: float = est.hours
+	var hs := tr("R2_WT_H") % [int(hrs), int(round(fmod(hrs * 60.0, 60.0)))]
+	v.add_child(Kit.text(tr("R2_WT_PAY_HOW") % [hs, JobListings.wage_text(est)], 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.text(tr("R2_WT_PAY_NOTE"), 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
+	return p
 
 
 ## Notes in the result card are written as short lines (no autowrap): a wrapping label here

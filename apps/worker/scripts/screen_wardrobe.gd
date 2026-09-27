@@ -237,8 +237,8 @@ func _who_name(id: String) -> String:
 	var gs = _gs()
 	if id == "my" and gs and not gs.my_obake.is_empty():
 		# とくべつな子は呼び名で、そうでなければタイプの名前（どちらも strings.csv）
-		if gs.my_obake.get("special", "") != "":
-			return SpecialObake.pet_name()
+		if gs.my_obake.get("special", "") != "" or SpecialObake.has_custom_name():
+			return SpecialObake.pet_name() # 自分でつけた名前も、ここから
 		return QuizData.type_name(gs.my_obake.type_id) if QuizData.TYPES.has(gs.my_obake.get("type_id", "")) else tr("Your cat obake")
 	return tr(gs.info(id).name) if gs else id
 

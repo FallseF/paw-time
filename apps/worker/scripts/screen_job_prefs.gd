@@ -19,7 +19,6 @@ var area_chips := {}
 var cells := {} # "<曜日>:<時間帯>" → Button（週のマス）
 var pay_chips := {}
 var suggest_chips := {}
-var telemetry_chips := {}
 var wage_l: Label
 var wage_slider: HSlider
 var go_btn: Button
@@ -159,31 +158,6 @@ func _ready() -> void:
 	sug_box.add_child(I18n.wrap(Kit.text(tr("PREFS_SUGGEST_NOTE"), 12, SUB)))
 	var own := Kit.button(tr("SHIFT_FORM_OPEN"), Color("f3ecff"), open_shift_form, Color("6a5bd6"), 40, 14)
 	sug_box.add_child(own)
-
-	# 匿名の利用データ（Telemetry）：送る／送らない、ID、削除、プライバシーについて
-	var tm_box := _section(v, tr("TELEMETRY_TOGGLE"))
-	var th := HBoxContainer.new()
-	th.add_theme_constant_override("separation", 6)
-	for on in [true, false]:
-		var c := _chip(tr("PREFS_SUGGEST_ON" if on else "PREFS_SUGGEST_OFF"), func():
-			Telemetry.set_enabled(on)
-			_refresh(), 40)
-		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		telemetry_chips[on] = c
-		th.add_child(c)
-	tm_box.add_child(th)
-	tm_box.add_child(I18n.wrap(Kit.text(tr("TELEMETRY_TOGGLE_HINT"), 12, SUB)))
-	var id_l := I18n.wrap(Kit.text(tr("TELEMETRY_ID") % Telemetry.install_id(), 10, SUB))
-	tm_box.add_child(id_l)
-	var tm_status := I18n.wrap(Kit.text("", 11, SUB))
-	var del := Kit.button(tr("TELEMETRY_DELETE"), Color("f3ecff"), func():
-		Telemetry.request_deletion()
-		tm_status.text = tr("TELEMETRY_DELETED")
-		id_l.text = tr("TELEMETRY_ID") % Telemetry.install_id(), Color("6a5bd6"), 40, 14)
-	tm_box.add_child(del)
-	tm_box.add_child(tm_status)
-	var more := Kit.button(tr("TELEMETRY_NOTICE_MORE") + " ›", Color.WHITE, func(): OS.shell_open(TelemetryNotice.PRIVACY_URL), Color("6a5bd6"), 34, 13)
-	tm_box.add_child(more)
 
 	go_btn = Kit.button(tr("PREFS_GO"), ORANGE, _save)
 	go_btn.position = Vector2(24, 570)
@@ -344,8 +318,6 @@ func _refresh() -> void:
 		_chip_style(pay_chips[p], prefs.pay == p)
 	for on in suggest_chips:
 		_chip_style(suggest_chips[on], bool(prefs.suggest) == on)
-	for on in telemetry_chips:
-		_chip_style(telemetry_chips[on], Telemetry.is_enabled() == on)
 	wage_l.text = tr("PREFS_WAGE_VAL") % JobListings._commas(int(prefs.min_wage))
 	if wage_slider and int(wage_slider.value) != int(prefs.min_wage):
 		wage_slider.set_value_no_signal(prefs.min_wage)

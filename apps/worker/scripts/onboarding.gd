@@ -1,6 +1,7 @@
 class_name Onboarding
 ## はじめての流れ（持ち主の指定どおりの順番）。
-##   quiz（マイおばけ猫の診断）→ shift（体験バイト）→ scoop（はじめての夜のすくい）→ hatch（朝の孵化）
+##   quiz（マイおばけ猫の診断）→ shift（相棒の名前 → 早送りの見本のシフトを猫の仕事場で）→ scoop（はじめての夜のすくい）
+##   → hatch（すくいの結果から、そのまま朝の孵化へ。夜の場面は挟まない）
 ##   → island（島の育ち方の説明）→ prefs（働く条件の入力）→ found（相棒が仕事を見つけて知らせる）→ done
 ## 状態は user://onboarding.json（ゲーム本体のセーブとは別。Wallet / Shifts と同じ作法）。
 ## 画面をまたぐ受け渡しは next_after() だけ。既存の画面には「進み先をここで聞く」1行だけを足している。
@@ -71,7 +72,7 @@ static func next_after(screen: String, fallback: String) -> String:
 			return "onboard"
 		["catch", "scoop"]:
 			advance("hatch")
-			return "onboard_night"
+			return first_morning()
 	return fallback
 
 
@@ -81,17 +82,64 @@ static func resume_screen() -> String:
 		"quiz":
 			return "quiz"
 		"shift":
+			end_mock_shift() # 見本のシフトの途中で閉じたときは、始めから（本物の仕事の記録を残さない）
 			return "onboard"
 		"scoop":
 			return "catch"
 		"hatch":
-			return "onboard_night"
+			return first_morning()
 		"prefs":
 			return "prefs"
 	return "garden"
 
 
-## はじめての夜は、ふわふわ逃げない泡の玉がひとつだけ（ゆっくり・軽い・まだ会ったことのない子）
+## はじめての夜は、ふわふわ逃げない泡の玉が 3 つ（ゆっくり・軽い）。待たせないよう、すぐすくえる数だけ
 static func tutorial_orbs() -> Array:
-	# はじめての玉は必ずおばネコで、中身は特別なレア 6 匹のどれか（インストールごとに決まる。SpecialReveal.pick）
-	return [{"type": "dish", "rare": false, "weight": 0.15, "easy": true, "content": {"kind": "obake", "special": SpecialReveal.pick()}}]
+	# はじめの玉は必ずおばネコで、中身は特別なレア 6 匹のどれか（インストールごとに決まる。SpecialReveal.pick）。
+	# のこりの 2 つは島の材料（朝に島の説明へつながる）
+	var easy := {"type": "dish", "rare": false, "weight": 0.15, "easy": true}
+	var out: Array = []
+	for c in [{"kind": "obake", "special": SpecialReveal.pick()}, {"kind": "material", "id": "wood"}, {"kind": "material", "id": "shell"}]:
+		var o := easy.duplicate()
+		o["content"] = c
+		out.append(o)
+	return out
+
+
+# ---------------------------------------------------------------- 見本のシフト（shift の段）
+
+## 見本のシフトの場所（WorkTogether の place に入れる。猫の仕事場の見出しでは tr() で「練習のシフト」）
+const MOCK_PLACE := "ONB_SHIFT_PLACE"
+
+
+## 見本のシフトが動いているか
+static func mock_shift_active() -> bool:
+	return WorkTogether.active() and String(WorkTogether.session().get("place", "")) == MOCK_PLACE
+
+
+## 見本のシフトを片づける（本物の仕事の記録・疲れ・ポイの 1 日 1 回に残さない）。はじめての人なので記録はほかに無い
+static func end_mock_shift() -> void:
+	if not mock_shift_active():
+		return
+	WorkTogether.reset()
+	WorkTogether.set_speed(1.0, true)
+
+
+# ---------------------------------------------------------------- はじめての朝
+
+## すくいの結果から、そのまま朝へ：夜が明けて玉がかえる。行き先（孵化の画面）を返す
+static func first_morning() -> String:
+	GameState.end_night()
+	# はじめての朝は「すくった玉から、新しい子」だけを見せる。条件を満たしたレアは、次の夜まで待ってもらう
+	for h in GameState.hatched.duplicate():
+		if h.get("rare", false) and not h.get("special", false):
+			GameState.hatched.erase(h)
+			GameState.seen.erase(h.id)
+			GameState.owned = GameState.owned.filter(func(o): return o.id != h.id)
+			GameState.rare_pending.push_front(h.id)
+	# 朝の庭の演出（きのうのまとめ）は2日目から。今朝は孵化 → 島の説明へ
+	GameState.phase = "day"
+	GameState.garden_seen_level = GameState.garden_level
+	GameState.save()
+	advance("island")
+	return "hatch"
