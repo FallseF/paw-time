@@ -1,0 +1,75 @@
+class_name Shifts
+## 受けたバイト（シフト）の共通の置き場。
+## 仕事探し（job_board）が add() し、一緒に働く（work_together）が upcoming()/current() を読む。
+## 1件: {id, title, place, role(register|dish|hall|kitchen|stock), start, end(unixtime), wage(時給・円), pay("daily"|"weekly"|"monthly")}
+## 保存は user://shifts.json。
+
+const PATH := "user://shifts.json"
+
+static var _loaded := false
+static var _list: Array = []
+
+
+static func _ensure() -> void:
+	if _loaded:
+		return
+	_loaded = true
+	if OS.get_environment("OBAKE_NOSAVE") != "" or not FileAccess.file_exists(PATH):
+		return
+	var f := FileAccess.open(PATH, FileAccess.READ)
+	if f == null:
+		return
+	var d = JSON.parse_string(f.get_as_text())
+	if d is Array:
+		_list = d
+
+
+static func _save() -> void:
+	if OS.get_environment("OBAKE_NOSAVE") != "":
+		return
+	var f := FileAccess.open(PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(_list))
+
+
+static func all() -> Array:
+	_ensure()
+	return _list.duplicate(true)
+
+
+static func add(s: Dictionary) -> void:
+	_ensure()
+	if not s.has("id"):
+		s["id"] = str(Time.get_unix_time_from_system()) + str(randi() % 1000)
+	_list.append(s)
+	_list.sort_custom(func(a, b): return a.start < b.start)
+	_save()
+
+
+static func remove(id: String) -> void:
+	_ensure()
+	_list = _list.filter(func(s): return s.id != id)
+	_save()
+
+
+## now 以降に始まるシフト（近い順）
+static func upcoming(now := -1.0) -> Array:
+	_ensure()
+	var t := now if now >= 0 else Time.get_unix_time_from_system()
+	return _list.filter(func(s): return s.start >= t)
+
+
+## いま勤務中のシフト（無ければ空）
+static func current(now := -1.0) -> Dictionary:
+	_ensure()
+	var t := now if now >= 0 else Time.get_unix_time_from_system()
+	for s in _list:
+		if s.start <= t and t < s.end:
+			return s
+	return {}
+
+
+static func reset() -> void:
+	_loaded = true
+	_list = []
+	_save()

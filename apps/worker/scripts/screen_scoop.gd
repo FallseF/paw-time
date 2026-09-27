@@ -1,13 +1,17 @@
 extends Control
 ## おばけすくい。夜の川べりで、水面をただよう光る玉をポイですくう。
 ## 押している間だけポイが水に入り、離すとすくい上げる。
-## ポイの枚数＝その日に働いた分、破れにくさ＝昨夜の睡眠。速く動かすほど、重い玉ほど破れやすい。
+## ポイの枚数＝その日に働いた分。速く動かすほど、重い玉ほど破れやすい。
 
 var main
 
 const WATER_RX := 2.7
 const WATER_RZ := 2.2
 const POI_R := 0.3
+## 玉が泳いでいい、画面の中の水面（上は岸の石、下はポイの選択バーの上まで）
+const ORB_SAFE := Rect2(30, 300, 300, 222)
+## 水面に、いつも少なくともこれだけの玉（すくったら足す。ポイがある間）
+const MIN_ON_SCREEN := 3
 
 var vp: SubViewport
 var cam: Camera3D
@@ -23,6 +27,10 @@ var caught_count := 0
 
 var poi_type := ""
 var durability := 1.0
+var dura_by := {} # ポイの種類ごとの残り（切りかえても回復しない）
+var perfect_streak := 0
+var tag_n := -1
+var rim_col := Color.WHITE
 var pressed := false
 var last_ground := Vector3.ZERO
 var busy := false
@@ -35,7 +43,7 @@ var poi_label: Label
 var dura_bar: ProgressBar
 var hint: Label
 var banner: Label
-var poi_btn: Button
+var net_bar: HBoxContainer
 var flash: ColorRect
 var drops: CPUParticles3D
 var stars: CPUParticles3D
@@ -50,12 +58,39 @@ func _ready() -> void:
 	_build_world()
 	_build_ui()
 	_build_audio()
-	var list := GameState.tonight_orbs()
+	# 休みの日のポイ 1 本（島の夜のカードを通らずに来たときも）
+	if not Onboarding.at("scoop"):
+		GameState.grant_rest_net()
+	# はじめての夜（Onboarding）は、ゆっくりで逃げない玉がひとつだけ
+	var list := Onboarding.tutorial_orbs() if Onboarding.at("scoop") else GameState.tonight_orbs()
+	if DemoRoute.active:
+		list = DemoRoute.scoop_orbs() # 3 分デモ：おばネコの玉がひとつ（中身は特別なレア）
 	total_tonight = list.size()
 	for d in list:
 		_spawn_orb(d)
 	_pick_poi()
 	_refresh_ui()
+	if Onboarding.at("scoop"):
+		_tutorial_coach()
+	# 今夜の川の様子を、はじめに知らせる
+	var kind := GameState.night_kind()
+	if kind != "" and GameState.day >= 1:
+		var kt: Array = GameState.NIGHT_KIND_TEXT[kind]
+		await get_tree().create_timer(0.5).timeout
+		var pn := PanelContainer.new()
+		pn.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.8), 20))
+		pn.position = Vector2(60, 190)
+		pn.size = Vector2(240, 0)
+		pn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(pn)
+		var vv := VBoxContainer.new()
+		pn.add_child(vv)
+		vv.add_child(_text(kt[0], 22, Color("fff2a8"), font_black))
+		vv.add_child(_text(kt[1], 14, Color("e8ecff")))
+		var tw := create_tween()
+		tw.tween_interval(2.4)
+		tw.tween_property(pn, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(pn.queue_free)
 
 
 # ---------- 世界 ----------
@@ -70,6 +105,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 
@@ -83,8 +119,8 @@ func _build_world() -> void:
 	env.glow_enabled = true
 	env.glow_intensity = 1.2
 	env.glow_strength = 1.2
-	env.glow_bloom = 0.25
-	env.glow_hdr_threshold = 0.7
+	env.glow_bloom = 0.0
+	env.glow_hdr_threshold = 1.0
 	var we := WorldEnvironment.new()
 	we.environment = env
 	world.add_child(we)
@@ -200,7 +236,7 @@ func _build_world() -> void:
 
 	# ほたる
 	var flies := CPUParticles3D.new()
-	flies.amount = 50
+	flies.amount = 140 if GameState.night_kind() == "fireflies" else 50
 	flies.lifetime = 7.0
 	flies.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	flies.emission_box_extents = Vector3(4, 0.6, 3)
@@ -219,6 +255,40 @@ func _build_world() -> void:
 	# しぶきと星
 	drops = _burst(Color("cfe8ff"), 24, 0.7, Vector3(0, -6, 0), 1.2, 2.4)
 	stars = _burst(Color("fff2a8"), 40, 1.1, Vector3(0, -1.5, 0), 1.0, 2.2)
+
+	# 雨・雪の夜は、川べりにも降る
+	var wt: String = GameState.today().weather
+	if wt == "雨" or wt == "雷" or wt == "雪":
+		var snow := wt == "雪"
+		var rp := CPUParticles3D.new()
+		rp.amount = 70 if snow else 140
+		rp.lifetime = 5.0 if snow else 1.1
+		rp.preprocess = rp.lifetime
+		rp.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		rp.emission_box_extents = Vector3(4, 0.2, 3.5)
+		rp.position = Vector3(0, 4.5, 0)
+		rp.direction = Vector3.DOWN
+		rp.spread = 40 if snow else 4
+		rp.gravity = Vector3(0, -0.3 if snow else -9.0, 0)
+		rp.initial_velocity_min = 0.3 if snow else 2.0
+		rp.initial_velocity_max = 0.6 if snow else 3.0
+		var rm: Mesh
+		if snow:
+			var sm2 := SphereMesh.new()
+			sm2.radius = 0.03
+			sm2.height = 0.06
+			rm = sm2
+		else:
+			var bm2 := BoxMesh.new()
+			bm2.size = Vector3(0.01, 0.2, 0.01)
+			rm = bm2
+		rp.mesh = rm
+		var rmat := StandardMaterial3D.new()
+		rmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		rmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		rmat.albedo_color = Color(1, 1, 1, 0.85) if snow else Color(0.75, 0.85, 1.0, 0.45)
+		rp.material_override = rmat
+		world.add_child(rp)
 
 	poi = _make_poi()
 	world.add_child(poi)
@@ -323,10 +393,53 @@ func _make_poi() -> Node3D:
 
 func _spawn_orb(d: Dictionary) -> void:
 	var o := Orb3D.new().setup(d)
-	var a := randf() * TAU
-	o.position = Vector3(cos(a) * WATER_RX * 0.5 * randf(), 0.0, sin(a) * WATER_RZ * 0.5 * randf())
+	# 画面の中の水面に置く（見えない所から始めない）
+	for i in 20:
+		var a := randf() * TAU
+		o.position = Vector3(cos(a) * WATER_RX * 0.6 * randf(), 0.0, sin(a) * WATER_RZ * 0.6 * randf())
+		if ORB_SAFE.has_point(View3D.unproject(cam, o.position)):
+			break
 	world.add_child(o)
 	orbs.append(o)
+	_orb_tag(o)
+
+
+const ORB_TAG := {"register": "ピッと動いて、止まる", "dish": "ふわふわ。逃げない", "hall": "まっすぐ滑って逃げる", "kitchen": "はねる", "stock": "重い。動かない", "rare": "輪をかいて泳ぐ"}
+
+
+## その色の玉にはじめて会ったときだけ、玉の上に性格をひとこと
+func _orb_tag(o: Orb3D) -> void:
+	var ck: String = o.data.get("content", {}).get("kind", "obake")
+	if ck != "obake" and not GameState.tut.has("hint_" + ck):
+		GameState.tut["hint_" + ck] = true
+		tag_n += 1
+		var hl := Kit.label3d(tr({"material": "中に、島の材料", "cloth": "中に、服", "vehicle": "中に、乗り物"}.get(ck, "中に、島の材料")), 30, Color("fff2a8"))
+		hl.pixel_size = 0.0035
+		hl.position = Vector3(0, 0.5, 0)
+		hl.visible = false
+		o.add_child(hl)
+		var tw0 := create_tween()
+		tw0.tween_interval(0.8 + tag_n * 2.4)
+		tw0.tween_callback(func(): if is_instance_valid(hl): hl.visible = true)
+		tw0.tween_interval(2.3)
+		tw0.tween_callback(func(): if is_instance_valid(hl): hl.queue_free())
+		return
+	var t: String = o.data.type
+	if not ORB_TAG.has(t) or GameState.tut.has("orb_" + t) or GameState.day < 1:
+		return
+	GameState.tut["orb_" + t] = true
+	tag_n += 1
+	var l := Kit.label3d(ORB_TAG[t], 30, GameState.TYPE_COLOR.get(t, Color.WHITE).lightened(0.3))
+	l.pixel_size = 0.0035
+	l.position = Vector3(0, 0.5, 0)
+	l.visible = false
+	o.add_child(l)
+	# ひとつずつ順番に出す（重ならないように）
+	var tw := create_tween()
+	tw.tween_interval(0.8 + tag_n * 2.4)
+	tw.tween_callback(func(): if is_instance_valid(l): l.visible = true)
+	tw.tween_interval(2.3)
+	tw.tween_callback(func(): if is_instance_valid(l): l.queue_free())
 
 
 # ---------- UI ----------
@@ -403,21 +516,34 @@ func _build_ui() -> void:
 	bg.set_corner_radius_all(5)
 	dura_bar.add_theme_stylebox_override("background", bg)
 	ph.add_child(dura_bar)
+
 	pp.add_child(ph)
 	top.add_child(pp)
 
-	hint = _text("押して水に入れる → 玉の下で離して、すくう", 14, Color(1, 1, 1, 0.85))
+	hint = _text("押して、玉の下へ → 離す", 14, Color(1, 1, 1, 0.85))
+	var tip := _text("縁が金色で離すと、ぴったり", 12, Color("c9bdf5"))
+	tip.position = Vector2(0, 116)
+	tip.size = Vector2(360, 20)
+	add_child(tip)
+	# はじめての夜は、下のヒントひとつだけ
+	tip.visible = GameState.day >= 1
 	hint.position = Vector2(0, 596)
 	hint.size = Vector2(360, 24)
 	add_child(hint)
 
-	poi_btn = Button.new()
-	poi_btn.position = Vector2(286, 520)
-	poi_btn.size = Vector2(60, 60)
-	poi_btn.add_theme_font_override("font", font_bold)
-	poi_btn.add_theme_font_size_override("font_size", 12)
-	poi_btn.pressed.connect(_cycle_poi)
-	add_child(poi_btn)
+	# ポイの選択バー（下に横並び。大きく押せる）
+	var bar_bg := PanelContainer.new()
+	bar_bg.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.72), 20))
+	bar_bg.position = Vector2(10, 530)
+	bar_bg.size = Vector2(340, 62)
+	add_child(bar_bg)
+	var bar_sc := ScrollContainer.new()
+	bar_sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	bar_sc.custom_minimum_size = Vector2(322, 50)
+	bar_bg.add_child(bar_sc)
+	net_bar = HBoxContainer.new()
+	net_bar.add_theme_constant_override("separation", 6)
+	bar_sc.add_child(net_bar)
 
 	banner = _text("", 36, Color.WHITE, font_black)
 	banner.add_theme_color_override("font_outline_color", Color("0b1026"))
@@ -477,7 +603,7 @@ func _refresh_ui() -> void:
 	var left := 0
 	for id in GameState.nets:
 		left += GameState.nets[id]
-	poi_label.text = "ポイ ×%d" % left
+	poi_label.text = tr("ポイ ×%d") % left
 	dura_bar.value = durability if poi_type != "" else 0.0
 	var fill := StyleBoxFlat.new()
 	fill.set_corner_radius_all(5)
@@ -487,46 +613,72 @@ func _refresh_ui() -> void:
 	var name := "なし"
 	if poi_type != "":
 		col = GameState.TYPE_COLOR.get(GameState.NETS[poi_type].type, Color("ffd84d"))
-		name = GameState.NETS[poi_type].name.replace("網", "")
-	var st := _pill(col, 30)
-	for k in ["normal", "hover", "pressed"]:
-		poi_btn.add_theme_stylebox_override(k, st)
-	poi_btn.text = "%s\n×%d" % [name, GameState.nets.get(poi_type, 0)]
-	poi_btn.add_theme_color_override("font_color", Color("1a1f3a"))
-	poi_btn.add_theme_color_override("font_hover_color", Color("1a1f3a"))
+		name = tr(GameState.NETS[poi_type].get("short", "ポイ"))
+	_refresh_net_bar()
 	if poi_type != "":
 		poi_rim.material_override = Obake3D.toon(col, 0.4, 0.4)
+		rim_col = col
 	poi_film_mat.albedo_color = Color(1, 1, 1, 0.15 + 0.4 * durability)
 
 
 func _pick_poi() -> void:
 	poi_type = ""
-	for id in GameState.nets:
-		if GameState.nets[id] > 0:
-			poi_type = id
-			break
-	durability = 1.0
-
-
-func _cycle_poi() -> void:
-	if busy or pressed:
-		return
-	var ids: Array = GameState.NETS.keys()
-	var start := ids.find(poi_type)
-	for i in range(1, ids.size() + 1):
-		var id: String = ids[(start + i) % ids.size()]
+	# 種類つきのポイを先に使う（今夜の仕事の玉に合う）
+	for id in ["kira", "receipt", "bubble", "tray", "pan", "box", "plain"]:
 		if GameState.nets.get(id, 0) > 0:
 			poi_type = id
-			durability = 1.0
 			break
+	durability = dura_by.get(poi_type, 1.0)
+
+
+## ポイを選ぶ（下のバー）。切りかえても、使いかけの破れ具合はそのまま
+func _select_poi(id: String) -> void:
+	if busy or pressed or id == poi_type or GameState.nets.get(id, 0) <= 0:
+		return
+	dura_by[poi_type] = durability
+	poi_type = id
+	durability = dura_by.get(id, 1.0)
+	Kit.play(self, "tap", 1.1)
 	_refresh_ui()
+
+
+## 下のバー：持っているポイを種類ごとに（色・名前・本数）。選んでいるものは白い縁
+func _refresh_net_bar() -> void:
+	if net_bar == null:
+		return
+	for c in net_bar.get_children():
+		c.queue_free()
+	for id in GameState.NETS:
+		var n: int = GameState.nets.get(id, 0)
+		if n <= 0:
+			continue
+		var col: Color = GameState.TYPE_COLOR.get(GameState.NETS[id].type, Color("ffd84d"))
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(86, 50)
+		b.text = "%s\n×%d" % [tr(GameState.NETS[id].get("short", "ポイ")), n]
+		b.add_theme_font_override("font", font_bold)
+		b.add_theme_font_size_override("font_size", 12)
+		for k in ["normal", "hover", "pressed", "focus"]:
+			var st := _pill(col, 16)
+			if id == poi_type:
+				st.border_color = Color.WHITE
+				st.set_border_width_all(3)
+			else:
+				st.bg_color = col.darkened(0.25)
+			b.add_theme_stylebox_override(k, st)
+		b.add_theme_color_override("font_color", Color("1a1f3a"))
+		b.add_theme_color_override("font_hover_color", Color("1a1f3a"))
+		b.add_theme_color_override("font_pressed_color", Color("1a1f3a"))
+		var nid: String = id
+		b.pressed.connect(func(): _select_poi(nid))
+		net_bar.add_child(b)
 
 
 # ---------- 入力 ----------
 
 func _ground(p: Vector2) -> Vector3:
-	var from := cam.project_ray_origin(p)
-	var dir := cam.project_ray_normal(p)
+	var from := cam.project_ray_origin(View3D.to_vp(cam, p))
+	var dir := cam.project_ray_normal(View3D.to_vp(cam, p))
 	if absf(dir.y) < 1e-4:
 		return last_ground
 	var t := -from.y / dir.y
@@ -571,16 +723,19 @@ func _gui_input(event: InputEvent) -> void:
 		poi.position = Vector3(g.x, -0.04, g.z)
 		_ripple(g)
 		_play("splash", randf_range(0.9, 1.1))
-		hint.text = "玉の下まで、そっと動かす"
+		hint.text = "玉の下まで、そっと"
 	elif motion:
 		if pressed:
 			var speed: float = g.distance_to(last_ground) / max(get_process_delta_time(), 0.001)
-			durability -= (0.02 + speed * 0.02) * get_process_delta_time() / GameState.poi_strength()
+			durability -= (0.008 + speed * 0.012) * get_process_delta_time() / GameState.poi_strength()
 			last_ground = g
 			poi.position = Vector3(g.x, -0.04, g.z)
 			if durability <= 0:
-				_tear(null)
-				return
+				if not GameState.tut.has("scoop") and GameState.total_scooped == 0:
+					durability = 0.3
+				else:
+					_tear(null)
+					return
 			_refresh_ui()
 		else:
 			poi.position = Vector3(g.x, 0.45, g.z)
@@ -613,18 +768,33 @@ func _lift() -> void:
 		drops.restart()
 		drops.emitting = true
 		await tw.finished
-		durability -= 0.05 / GameState.poi_strength()
+		perfect_streak = 0
+		if GameState.tut.has("scoop") or GameState.total_scooped > 0:
+			durability -= 0.03 / GameState.poi_strength()
 		if durability <= 0:
 			_tear(null)
 			return
-		hint.text = "玉の真下で離すと、すくえる"
+		hint.text = "縁が光ったら、離す"
 		_refresh_ui()
 		busy = false
 		return
 
-	var match_mult := 0.7 if GameState.NETS[poi_type].type == target.data.type else 1.0
+	var pt: String = GameState.NETS[poi_type].type
+	var match_mult := 1.0
+	if pt == target.data.type:
+		match_mult = 0.55 # 仕事の種類が合うポイは、その玉に強い
+	elif pt != "any":
+		match_mult = 0.85
 	var cost: float = target.data.weight * match_mult / GameState.poi_strength()
+	# 玉の真下で離すと「ぴったり」：破れにくく、3回続くとめぐみ
+	var perfect := best < POI_R * 0.4
+	if perfect:
+		cost *= 0.5
 	var will_hold := durability - cost > 0.0
+	# はじめての夜の最初の一玉は、かならずすくえる（やり方を覚えるため）
+	if not GameState.tut.has("scoop") and GameState.total_scooped == 0:
+		will_hold = true
+		cost = minf(cost, durability * 0.5)
 	target.caught = true
 	orbs.erase(target)
 	# スローモーションで持ち上げる
@@ -656,19 +826,39 @@ func _lift() -> void:
 	stars.restart()
 	stars.emitting = true
 	Engine.time_scale = 1.0
-	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare})
+	GameState.orbs.append({"type": target.data.type, "rare": target.data.rare, "content": target.data.get("content", {})})
+	GameState.total_scooped += 1
+	GameState.tonight_caught += 1
+	if GameState.tonight_caught >= 3:
+		GameState.goal("scoop3")
+	if GameState.NETS[poi_type].type == target.data.type:
+		GameState.goal("match")
 	caught_count += 1
-	_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
+	if coach:
+		coach.visible = false # はじめての夜の説明は、すくえたら消す（まん中の「ぴったり」と重ならないように）
+	if perfect:
+		perfect_streak += 1
+		var msg := "ぴったり！"
+		if perfect_streak >= 3:
+			msg = tr("ぴったり ×%d\nめぐみ +3") % perfect_streak
+			GameState.growth += 3
+			GameState._recalc_level()
+		_banner(msg if not target.data.rare else msg + tr("\nふしぎな光…"), Color("ffe27a"))
+		_play("sparkle")
+	else:
+		perfect_streak = 0
+		_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
 	tw2.tween_property(cam, "transform", cam_base, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw2.tween_property(target, "position", cam.project_position(Vector2(120, 40), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw2.tween_property(target, "position", cam.project_position(View3D.to_vp(cam, Vector2(120, 40)), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw2.tween_property(target, "scale", Vector3.ONE * 0.3, 0.7)
 	await tw2.finished
 	target.queue_free()
 	poi.position.y = 0.45
+	_top_up()
 	_refresh_ui()
 	busy = false
-	hint.text = "押して水に入れる → 玉の下で離して、すくう"
+	hint.text = "押して、玉の下へ → 離す"
 	if orbs.is_empty():
 		await get_tree().create_timer(0.6).timeout
 		_finish()
@@ -676,10 +866,13 @@ func _lift() -> void:
 
 func _tear(target: Orb3D) -> void:
 	busy = true
+	pressed = false
+	perfect_streak = 0
 	_play("tear")
 	Input.vibrate_handheld(80)
 	_banner("やぶれた…", Color("ffb3a8"))
 	GameState.nets[poi_type] -= 1
+	dura_by.erase(poi_type)
 	var tw := create_tween().set_parallel()
 	tw.tween_property(poi_film_mat, "albedo_color:a", 0.0, 0.2)
 	tw.tween_property(cam, "transform", cam_base, 0.5)
@@ -705,8 +898,32 @@ func _tear(target: Orb3D) -> void:
 
 # ---------- 毎フレーム ----------
 
+## ポイのまわりの、ゆっくり息をする輪（じっとしているほど満ちる）
 func _process(delta: float) -> void:
 	ripple_t += delta
+	# ポイの下に玉があると、縁が光る（真ん中なら金色）
+	if pressed and poi_rim and poi_rim.material_override:
+		var near := 99.0
+		for o in orbs:
+			near = minf(near, Vector2(o.position.x - poi.position.x, o.position.z - poi.position.z).length())
+		var m := poi_rim.material_override as StandardMaterial3D
+		if near < POI_R * 0.4:
+			m.emission_enabled = true
+			m.emission = Color("ffd23f")
+			m.emission_energy_multiplier = 2.2
+			hint.text = "ぴったり。いま離す！"
+			hint.add_theme_color_override("font_color", Color("ffe27a"))
+		elif near < POI_R:
+			m.emission_enabled = true
+			m.emission = Color("ffffff")
+			m.emission_energy_multiplier = 0.9
+			hint.text = "いま離せば、すくえる"
+			hint.add_theme_color_override("font_color", Color.WHITE)
+		else:
+			m.emission = rim_col
+			m.emission_energy_multiplier = 0.4
+			hint.text = "押したまま、玉の下へ"
+			hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
 	water_mat.set_shader_parameter("ripple_t", ripple_t)
 	var ps: Array[Vector4] = []
 	var cs: Array[Vector4] = []
@@ -724,20 +941,68 @@ func _process(delta: float) -> void:
 	for o: Orb3D in orbs:
 		if o.caught:
 			continue
-		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta
+		# 玉にも性格がある（色＝仕事の種類）
+		#  レジ：ピッと急に動いて止まる／泡：ふわふわ、あまり逃げない／お盆：まっすぐ滑る
+		#  キッチン：小刻みにはねる／品出し：重くて、ほとんど動かない／虹：ゆっくり輪をかく
+		var t: String = o.data.type
+		var noise: float = {"hall": 0.15, "stock": 0.25, "dish": 0.8, "kitchen": 1.2}.get(t, 0.6)
+		var flee: float = {"dish": 0.4, "stock": 0.1, "hall": 1.3, "register": 1.2}.get(t, 1.0)
+		var vmax: float = {"stock": 0.45, "dish": 0.8, "hall": 1.25}.get(t, 1.0)
+		var steer := Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6)) * delta * noise
+		if t == "rare":
+			steer += Vector3(-o.position.z, 0, o.position.x).normalized() * 0.4 * delta
 		# 水中でポイが近くにあると、少し逃げる
 		if pressed:
 			var away: Vector3 = o.position - poi.position
 			away.y = 0
 			var d: float = away.length()
 			if d < 0.7 and d > 0.001:
-				steer += away.normalized() * (0.7 - d) * 1.6 * delta
-		o.vel = (o.vel + steer).limit_length(0.35)
+				steer += away.normalized() * (0.7 - d) * flee * delta
+		var cap: float = 0.23 * vmax
+		if o.data.get("easy", false):
+			cap *= 0.3 # はじめての夜の玉
+		if t == "register":
+			var dt: float = o.get_meta("dash", randf() * 2.0) - delta
+			if dt <= 0:
+				dt = randf_range(1.4, 2.4)
+				o.vel += Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized() * 0.5
+			o.set_meta("dash", dt)
+			cap *= 1.0 if dt > 1.1 else 2.2
+			o.vel *= 1.0 - 1.5 * delta
+		o.vel = (o.vel + steer).limit_length(cap)
 		o.position += o.vel * delta
+		if t == "kitchen":
+			o.hop = absf(sin(ripple_t * 7.0 + o.position.x * 5.0)) * 0.07
 		var e: Vector2 = Vector2(o.position.x / WATER_RX, o.position.z / WATER_RZ)
 		if e.length() > 0.8:
 			o.vel -= Vector3(e.x, 0, e.y).normalized() * 0.6 * delta * 10.0
 		o.position.y = 0.0
+		_keep_visible(o)
+
+
+## 玉は画面の中の水面から出さない（出かけたら、池のまん中へ押しもどす）
+func _keep_visible(o: Orb3D) -> void:
+	var sp := View3D.unproject(cam, o.position)
+	if ORB_SAFE.has_point(sp):
+		return
+	var home := Vector3(0, 0, 0.2)
+	for i in 8:
+		o.position = o.position.lerp(home, 0.15)
+		if ORB_SAFE.has_point(View3D.unproject(cam, o.position)):
+			break
+	o.vel = (home - o.position).normalized() * 0.1
+
+
+## 水面の玉が少なくなったら、今夜の玉を足す（空の水面を待たせない。ポイがある間）
+func _top_up() -> void:
+	if Onboarding.at("scoop") or poi_type == "" or DemoRoute.active:
+		return
+	while orbs.size() < MIN_ON_SCREEN:
+		var more: Array = GameState.tonight_orbs()
+		if more.is_empty():
+			return
+		_spawn_orb(more[0])
+		total_tonight += 1
 
 
 # ---------- 演出 ----------
@@ -759,11 +1024,69 @@ func _flash(a: float) -> void:
 
 
 func _finish() -> void:
-	if GameState.scooped_tonight:
+	if GameState.scooped_tonight or busy:
 		return
 	GameState.scooped_tonight = true
+	Telemetry.track("scoop_night", {"orbs": mini(caught_count, 500)})
+	if coach:
+		coach.visible = false
+	if GameState.total_scooped > 0:
+		GameState.tut["scoop"] = true
 	Engine.time_scale = 1.0
-	main.go("sleep")
+	GameState.save()
+	busy = true
+	# 今夜のまとめ（静かに閉じる）
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color(0.06, 0.08, 0.2, 0.9), 24))
+	p.position = Vector2(40, 230)
+	p.size = Vector2(280, 0)
+	add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(_text("今夜のすくい", 16, Color("c9d2ff")))
+	v.add_child(_text(tr("1 個") if caught_count == 1 else tr("%d 個") % caught_count, 34, Color.WHITE, font_black))
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	for o in GameState.orbs:
+		var dot := Panel.new()
+		dot.custom_minimum_size = Vector2(16, 16)
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(8)
+		sb.bg_color = GameState.TYPE_COLOR.get(o.type, Color.WHITE)
+		dot.add_theme_stylebox_override("panel", sb)
+		row.add_child(dot)
+	v.add_child(row)
+	v.add_child(_text("玉は、朝になったらかえる" if caught_count > 0 else "今夜は、水の音だけ", 13, Color(1, 1, 1, 0.7)))
+	var b := Kit.button("島へもどる", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "garden")), Color.WHITE, 46, 16)
+	v.add_child(b)
+	p.pivot_offset = Vector2(140, 100)
+	p.scale = Vector2(0.8, 0.8)
+	p.modulate.a = 0.0
+	var tw := create_tween().set_parallel()
+	tw.tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(p, "modulate:a", 1.0, 0.25)
+
+
+## はじめての夜の説明（相棒のひとこと）。玉の中身は、おばけ・島の材料・服のどれか
+var coach: PanelContainer
+
+
+func _tutorial_coach() -> void:
+	coach = PanelContainer.new()
+	coach.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.95), 18))
+	coach.position = Vector2(16, 128)
+	coach.size = Vector2(328, 0)
+	coach.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(coach)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	coach.add_child(v)
+	var who := Kit.text(SpecialObake.pet_name(), 12, Color("8a5bd6"), true)
+	v.add_child(who)
+	var l := I18n.wrap(Kit.text(tr("ONB_SCOOP_COACH"), 14, Color("2a2233"), true))
+	v.add_child(l)
 
 
 # ---------- 確認用 ----------
@@ -783,3 +1106,38 @@ func demo_hold() -> void:
 func demo_lift() -> void:
 	pressed = false
 	_lift()
+
+
+## 確認用：本物の入力と同じ道筋で、1つ目の玉をすくう（押す→動かす→離す）
+func demo_real() -> void:
+	if orbs.is_empty():
+		return
+	var o: Orb3D = orbs[0]
+	o.set_process(false)
+	o.vel = Vector3.ZERO
+	var sp := View3D.unproject(cam, o.global_position)
+	var start := sp + Vector2(40, 30)
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = start
+	_gui_input(ev)
+	for i in 10:
+		await get_tree().process_frame
+		var m := InputEventMouseMotion.new()
+		m.position = start.lerp(sp, (i + 1) / 10.0)
+		m.button_mask = MOUSE_BUTTON_MASK_LEFT
+		_gui_input(m)
+	await get_tree().create_timer(0.2).timeout
+	var up := InputEventMouseButton.new()
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	up.position = sp
+	_gui_input(up)
+	print("[demo_real] caught=", caught_count, " dura=", durability)
+
+
+## 確認用：水の中で、ポイを玉のそばに入れておく
+func demo_still() -> void:
+	pressed = true
+	poi.position = Vector3(0.0, -0.04, 0.2)

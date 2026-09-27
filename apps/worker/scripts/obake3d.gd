@@ -148,9 +148,12 @@ static func eye_mat(col: Color) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = EYE_SHADER
 	if col.get_luminance() > 0.5:
-		m.set_shader_parameter("iris_top", col)
-		m.set_shader_parameter("iris_bottom", col.lerp(Color("c9b6ff"), 0.35))
-		m.set_shader_parameter("glint", Color("fff6c8"))
+		# 明るい目（暗い体の子）：真っ白な丸だと目に見えないので、濃い紺の黒目を明るい輪で縁取り、
+		# キャッチライトが見えるようにする
+		m.set_shader_parameter("iris_top", Color("1b1530"))
+		m.set_shader_parameter("iris_bottom", Color("3d3468"))
+		m.set_shader_parameter("ring_color", col.lerp(Color("d9ccff"), 0.25))
+		m.set_shader_parameter("ring_width", 0.26)
 	else:
 		m.set_shader_parameter("iris_top", col.darkened(0.25))
 		m.set_shader_parameter("iris_bottom", col.lerp(Color("7a4f6e"), 0.55))
@@ -212,9 +215,13 @@ func _ready() -> void:
 
 ## 足元のぼんやりした影。地面に近い部品の広がりに合わせる。
 func _add_contact_shadow() -> void:
+	if body == null: # setup() を通さずに部品だけ載せた入れ物（庭の住人など）
+		return
 	var box := AABB()
 	var first := true
-	for m in body.find_children("*", "MeshInstance3D", true, false):
+	# setup() を通さず ghost() だけで組んだ子（庭の住人など）は body が無いので、自分の下から探す
+	var src: Node = body if body else self
+	for m in src.find_children("*", "MeshInstance3D", true, false):
 		var mi := m as MeshInstance3D
 		if mi.material_override and mi.material_override is ShaderMaterial and (mi.material_override as ShaderMaterial).shader == DECAL_SHADER:
 			continue
@@ -271,6 +278,8 @@ func face(center: Vector3, k := 1.0, eye_col := INK, sleepy := false) -> Node3D:
 	var f := Node3D.new()
 	f.position = center
 	f.scale = Vector3.ONE * k
+	# 暗い体の子（明るい目）は、口とひげも明るい線にして読めるようにする
+	var ink := INK if eye_col.get_luminance() <= 0.5 else Color("e6dcff")
 	for x in [-0.17, 0.17]:
 		if sleepy:
 			var half := Vector2(0.085, 0.05)
@@ -288,15 +297,15 @@ func face(center: Vector3, k := 1.0, eye_col := INK, sleepy := false) -> Node3D:
 		var nh := Vector2(0.034, 0.026)
 		f.add_child(_decal(Vector2(0, -0.035), nh, decal_mat(1, Color("ee8597"), nh, 0.0, Color("ffd9df"))))
 		var mh := Vector2(0.09, 0.045)
-		f.add_child(_decal(Vector2(0, -0.088), mh, decal_mat(2, INK, mh, 0.0125)))
+		f.add_child(_decal(Vector2(0, -0.088), mh, decal_mat(2, ink, mh, 0.0125)))
 		var wh := Vector2(0.1, 0.012)
-		var wm := decal_mat(4, Color(INK, 0.92), wh, 0.011)
+		var wm := decal_mat(4, Color(ink, 0.92), wh, 0.011)
 		for sx in [-1.0, 1.0]:
 			for j in 3:
 				f.add_child(_whisker(sx, j, wh, wm))
 	else:
 		var mh := Vector2(0.05, 0.03)
-		f.add_child(_decal(Vector2(0, -0.07), mh, decal_mat(3, INK, mh, 0.014)))
+		f.add_child(_decal(Vector2(0, -0.07), mh, decal_mat(3, ink, mh, 0.014)))
 	return f
 
 
@@ -625,37 +634,41 @@ func _mesh(m: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
 
 
 func _add_prop(id: String) -> void:
+	# 持ち物はまとめて "Prop" に入れる（キセカエで同じ場所に服を着たら隠す。Outfit.PROP_SLOT）
+	var prop_root := Node3D.new()
+	prop_root.name = "Prop"
+	body.add_child(prop_root)
 	match id:
 		"bubble":
 			for p in [Vector3(-0.2, 1.05, 0.1), Vector3(0.05, 1.12, 0), Vector3(0.28, 1.0, -0.05)]:
-				body.add_child(_mesh(_sphere(0.1 + randf() * 0.05), prop(Color("f4fbff"), 0.8), p))
+				prop_root.add_child(_mesh(_sphere(0.1 + randf() * 0.05), prop(Color("f4fbff"), 0.8), p))
 		"tray":
-			body.add_child(_mesh(_cyl(0.5, 0.46, 0.05), prop(Color("c8ced6")), Vector3(0, 1.02, 0)))
-			body.add_child(_mesh(_cyl(0.08, 0.07, 0.2), prop(Color("ffcf5a")), Vector3(0.15, 1.14, 0)))
+			prop_root.add_child(_mesh(_cyl(0.5, 0.46, 0.05), prop(Color("c8ced6")), Vector3(0, 1.02, 0)))
+			prop_root.add_child(_mesh(_cyl(0.08, 0.07, 0.2), prop(Color("ffcf5a")), Vector3(0.15, 1.14, 0)))
 		"receipt":
 			var rm := _mesh(_box(Vector3(0.14, 0.02, 0.5)), prop(Color("fffaf2")), Vector3(0.35, 0.05, -0.35))
 			rm.rotation = Vector3(0.3, 0.6, 0)
-			body.add_child(rm)
+			prop_root.add_child(rm)
 		"pan":
-			body.add_child(_mesh(_cyl(0.22, 0.2, 0.06), prop(Color("4a4a52")), Vector3(0.62, 0.45, 0.1)))
-			body.add_child(_mesh(_sphere(0.08), prop(Color("ffd66b")), Vector3(0.62, 0.49, 0.1)))
+			prop_root.add_child(_mesh(_cyl(0.22, 0.2, 0.06), prop(Color("4a4a52")), Vector3(0.62, 0.45, 0.1)))
+			prop_root.add_child(_mesh(_sphere(0.08), prop(Color("ffd66b")), Vector3(0.62, 0.49, 0.1)))
 		"box":
-			body.add_child(_mesh(_box(Vector3(1.26, 0.45, 1.22)), prop(Color("d9a86c")), Vector3(0, 0.12, 0)))
+			prop_root.add_child(_mesh(_box(Vector3(1.26, 0.45, 1.22)), prop(Color("d9a86c")), Vector3(0, 0.12, 0)))
 		"lantern":
-			body.add_child(_mesh(_box(Vector3(0.18, 0.26, 0.18)), prop(Color("ff9a4d"), 0.3, 1.5), Vector3(0.6, 0.55, 0.1)))
+			prop_root.add_child(_mesh(_box(Vector3(0.18, 0.26, 0.18)), prop(Color("ff9a4d"), 0.3, 1.5), Vector3(0.6, 0.55, 0.1)))
 		"kirari":
 			for i in 5:
 				var a := TAU * i / 5.0
-				body.add_child(_mesh(_cyl(0.0, 0.07, 0.22), prop(Color("ffe27a"), 0.3, 0.8), Vector3(cos(a) * 0.22, 1.08, sin(a) * 0.22)))
+				prop_root.add_child(_mesh(_cyl(0.0, 0.07, 0.22), prop(Color("ffe27a"), 0.3, 0.8), Vector3(cos(a) * 0.22, 1.08, sin(a) * 0.22)))
 		"nemuri":
 			var cm := _mesh(_cyl(0.0, 0.42, 0.6), prop(Color("5b6fc2")), Vector3(0.05, 1.05, 0))
 			cm.rotation.z = -0.35
-			body.add_child(cm)
+			prop_root.add_child(cm)
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	if bob:
+	if bob and body:
 		body.position.y = sin(_t * 2.0) * 0.06
 		body.rotation.y = sin(_t * 0.7) * 0.25
 		body.scale = Vector3(1.0 + sin(_t * 4.0) * 0.015, 1.0 - sin(_t * 4.0) * 0.015, 1.0)
@@ -671,6 +684,6 @@ func _process(delta: float) -> void:
 	for e in eyes:
 		e.scale.y = lerpf(EYE_SCALE.y, 0.1, k)
 	var sh := get_node_or_null("ContactShadow") as Node3D
-	if sh:
+	if sh and body:
 		var lift := clampf(body.position.y, 0.0, 0.3)
 		sh.scale = Vector3.ONE * (1.0 - lift * 1.2)

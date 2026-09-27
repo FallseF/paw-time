@@ -1,0 +1,217 @@
+class_name Wardrobe
+## キセカエの持ち物と、だれが何を着ているか。保存は user://wardrobe.json（ほかのセーブと独立）。
+##
+## 外から使うとき（すくい・孵化・島など本線のコード）
+##   Wardrobe.grant(item_id) -> bool          手に入れる（はじめてなら true、NEW 印がつく）
+##   Wardrobe.random_drop(rarity) -> String   光る玉の中身として 1 つ選ぶ（"common" / "rare"）。持っていない物を優先。
+##                                            選ぶだけで、渡すのは grant()。空文字なら、もう全部ある
+##   Wardrobe.check_unlocks() -> Array        仕事・休み・おでかけ・図鑑の条件で届いた物（朝や画面を開いたときに呼ぶ）
+##   Wardrobe.outfit_of(obake_id) -> Dictionary   {slot: item_id}
+## 体の色は変えない（猫はそれぞれの色のまま。変わるのは服だけ）。古い保存・古いシェアのコードの「色」は読み飛ばす。
+##   Outfit.make(obake_id) -> Obake3D         着せた姿で作る（庭・島・店で Obake3D.make の代わりに）
+##   OutfitReveal.open(parent, item_id)       「新しい服！」の演出
+##
+## 特別な棚（premium）は見本：買えない。肉球コインやポイとは混ざらない。
+
+const PATH := "user://wardrobe.json"
+
+static var _loaded := false
+static var owned := {} # item_id → true
+static var fresh := {} # まだ見ていない（NEW 印）
+static var outfits := {} # obake_id → {slot: item_id}
+
+
+static func _ensure() -> void:
+	if _loaded:
+		return
+	_loaded = true
+	for it in WardrobeData.ITEMS:
+		if WardrobeData.kind(it) == "free":
+			owned[it.id] = true
+	if OS.get_environment("OBAKE_WARDROBE_DEMO") != "":
+		_demo()
+		return
+	if OS.get_environment("OBAKE_NOSAVE") != "" or not FileAccess.file_exists(PATH):
+		return
+	var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	if not d is Dictionary:
+		return
+	for id in d.get("owned", []):
+		if not WardrobeData.item(id).is_empty():
+			owned[id] = true
+	for id in d.get("fresh", []):
+		fresh[id] = true
+	var o = d.get("outfits", {})
+	if o is Dictionary:
+		outfits = o
+		for k in outfits:
+			if outfits[k] is Dictionary:
+				outfits[k].erase("tint") # 前の版の体の色は使わない
+
+
+static func save() -> void:
+	if OS.get_environment("OBAKE_NOSAVE") != "":
+		return
+	var f := FileAccess.open(PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify({"owned": owned.keys(), "fresh": fresh.keys(), "outfits": outfits}))
+
+
+static func has(id: String) -> bool:
+	_ensure()
+	return owned.has(id)
+
+
+static func grant(id: String) -> bool:
+	_ensure()
+	var it := WardrobeData.item(id)
+	if it.is_empty() or owned.has(id) or WardrobeData.kind(it) == "premium":
+		return false
+	owned[id] = true
+	fresh[id] = true
+	save()
+	return true
+
+
+## 光る玉の中身。rarity は "common" / "rare"（虹の玉）。持っていない物から選ぶ
+static func random_drop(rarity := "common") -> String:
+	_ensure()
+	var pool: Array = []
+	for it in WardrobeData.ITEMS:
+		if it.src == "orb:" + rarity and not owned.has(it.id):
+			pool.append(it.id)
+	if pool.is_empty() and rarity == "rare":
+		return random_drop("common")
+	return pool.pick_random() if not pool.is_empty() else ""
+
+
+## 肉球コインで買う
+static func buy(id: String) -> bool:
+	_ensure()
+	var it := WardrobeData.item(id)
+	var p := WardrobeData.price(it)
+	if p < 0 or owned.has(id):
+		return false
+	if not Wallet.spend(p, "wardrobe:" + id):
+		return false
+	owned[id] = true
+	save()
+	return true
+
+
+static func outfit_of(obake_id: String) -> Dictionary:
+	_ensure()
+	return outfits.get(obake_id, {})
+
+
+static func set_outfit(obake_id: String, o: Dictionary) -> void:
+	_ensure()
+	var clean := {}
+	for slot in WardrobeData.SLOTS:
+		var id: String = o.get(slot, "")
+		if id != "" and owned.has(id):
+			clean[slot] = id
+	if clean.is_empty():
+		outfits.erase(obake_id)
+	else:
+		outfits[obake_id] = clean
+	save()
+
+
+static func seen_all() -> void:
+	fresh.clear()
+	save()
+
+
+## 条件で届く物。GameState を読むだけで、長く働いても多くはもらえない（続けた日数も数えない）
+static func check_unlocks() -> Array:
+	_ensure()
+	var got: Array = []
+	var gs = Engine.get_main_loop().root.get_node_or_null("GameState") if Engine.get_main_loop() else null
+	if gs == null:
+		return got
+	# シフトを n 回したあとに、休みの日があったか（いちばん多い「休みの前のシフトの数」）
+	var rest_after := 0
+	var worked_n := 0
+	for w in gs.work_hist:
+		if w:
+			worked_n += 1
+		else:
+			rest_after = maxi(rest_after, worked_n)
+	var rare_n := 0
+	var normal_all := true
+	for id in gs.seen:
+		if Rares.is_rare(id):
+			rare_n += 1
+	for id in ["receipt", "bubble", "tray", "pan", "box"]:
+		if not gs.seen.has(id):
+			normal_all = false
+	for it in WardrobeData.ITEMS:
+		if owned.has(it.id):
+			continue
+		var p: PackedStringArray = String(it.src).split(":")
+		var ok := false
+		match p[0]:
+			"job":
+				ok = gs.roles_seen.has(p[1]) or gs.decos.get(p[1], 0) > 0 or gs.chores.get(p[1], 0) > 0
+			"restday":
+				ok = rest_after >= int(p[1])
+			"visits":
+				ok = gs.friend_visits >= int(p[1])
+			"zukan":
+				ok = gs.seen.size() >= int(p[1])
+			"rares":
+				ok = rare_n >= int(p[1])
+			"normal_all":
+				ok = normal_all
+		if ok and grant(it.id):
+			got.append(it.id)
+	return got
+
+
+## ---- シェアのコード用：着ている物を 7 バイトに（6 か所＋もとは色の欄。色はもう使わないので、いつも 0）。0 はなし ----
+static func pack(obake_id: String) -> PackedByteArray:
+	var o := outfit_of(obake_id)
+	var b := PackedByteArray()
+	for slot in WardrobeData.SLOTS:
+		b.append(WardrobeData.index_of(o.get(slot, "")) + 1)
+	b.append(0) # 7 バイト目（前の版の色）。コードの形を変えないため
+	return b
+
+
+static func unpack(b: PackedByteArray) -> Dictionary:
+	var o := {}
+	for i in mini(6, b.size()):
+		var k: int = b[i] - 1
+		if k >= 0 and k < WardrobeData.ITEMS.size():
+			o[WardrobeData.SLOTS[i]] = WardrobeData.ITEMS[k].id
+	return o # 7 バイト目（前の版の色）は読み飛ばす
+
+
+## 撮影用：いくつかの子に服を着せておく
+static func _demo() -> void:
+	for it in WardrobeData.ITEMS:
+		if WardrobeData.kind(it) != "premium":
+			owned[it.id] = true
+	outfits = {
+		"my": {"head": "straw_hat", "neck": "red_scarf", "hand": "balloon"},
+		"receipt": {"body": "reg_vest", "head": "reg_visor"},
+		"tray": {"neck": "hall_bowtie"},
+		"bubble": {"body": "dish_apron", "hand": "dish_gloves"},
+		"pan": {"head": "chef_hat", "neck": "chef_scarf"},
+		"box": {"head": "stock_cap", "back": "backpack"},
+		"lantern": {"back": "bat_wings"},
+		"kirari": {"head": "crown"},
+	}
+
+
+## テスト・はじめから用
+static func reset() -> void:
+	_loaded = true
+	owned = {}
+	fresh = {}
+	outfits = {}
+	for it in WardrobeData.ITEMS:
+		if WardrobeData.kind(it) == "free":
+			owned[it.id] = true
+	save()

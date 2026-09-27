@@ -1,7 +1,7 @@
 class_name Rares
 ## レアおばけ 30 体。記録の条件の組み合わせで、朝に生まれる（コレクション）。
 ## 図鑑では、会うまで一文のヒントだけ見せる。
-## 「たくさん働く」ことを条件にしたレアは作らない（量ではなく、種類・休み・つながり）。
+## 「たくさん働く」「長く働く」ことを条件にしたレアは作らない（量ではなく、種類・休み・つながり・天気・月）。眠りの記録も使わない。
 ##
 ## look は 3D の特別製モデルの設計図（RareObake3D が読む）:
 ##   skin: pearl / starry / flame / water / paper / crystal / cloud / leaf / aurora / ink / gold / moon
@@ -10,19 +10,19 @@ class_name Rares
 ##   c1, c2: 主色と副色
 
 const LIST := [
-	# ---- 睡眠 ----
-	{"id": "nemurin", "name": "ネムリン", "group": "睡眠", "hint": "よく眠った朝、枕元でまるくなっている",
-		"desc": "7時間以上ねむった朝に生まれる。寝息がやさしい", "look": {"skin": "cloud", "prop": "nightcap", "fx": "motes", "c1": "c9bdf5", "c2": "5b6fc2"}},
-	{"id": "yumemi", "name": "ユメミ", "group": "睡眠", "hint": "もっと長い夢の、その先にいる",
-		"desc": "8時間以上ねむった朝に。見た夢の色をしている", "look": {"skin": "aurora", "prop": "halo", "fx": "stars", "c1": "b9a7ff", "c2": "7fe3ff"}},
-	{"id": "asayake", "name": "アサヤケ", "group": "睡眠", "hint": "よく眠る夜が、三つ続くと",
-		"desc": "3日続けて7時間以上ねむると生まれる。朝焼けの色", "look": {"skin": "flame", "prop": "none", "fx": "motes", "c1": "ffb07a", "c2": "ff6f91"}},
-	{"id": "yomise", "name": "ヨミセ", "group": "睡眠", "hint": "夜ふかしの灯りに、寄ってくる",
-		"desc": "5時間以下の睡眠の朝に。提灯をさげて夜を歩く", "look": {"skin": "starry", "prop": "lantern", "fx": "fireflies", "c1": "2b3478", "c2": "ffb35c"}},
-	{"id": "hirunen", "name": "ヒルネン", "group": "睡眠", "hint": "休みの日に、たっぷり眠ると",
-		"desc": "休みの日に9時間ねむると生まれる。日だまりの匂い", "look": {"skin": "cloud", "prop": "leaf_hat", "fx": "motes", "c1": "ffe7a8", "c2": "8fd18a"}},
-	{"id": "totonou", "name": "トトノウ", "group": "睡眠", "hint": "同じ時間に眠る夜が、続くと",
-		"desc": "3日続けて同じ時間ねむると生まれる。いつも落ち着いている", "look": {"skin": "water", "prop": "bell", "fx": "bubbles", "c1": "8fe0d8", "c2": "3aa6a0"}},
+	# ---- 休みとおでかけ ----
+	{"id": "nemurin", "name": "ネムリン", "group": "休み", "hint": "友だちの島に、はじめて遊びに行くと",
+		"desc": "友だちの島におでかけすると生まれる。旅の荷物はまくらひとつ", "look": {"skin": "cloud", "prop": "nightcap", "fx": "motes", "c1": "c9bdf5", "c2": "5b6fc2"}},
+	{"id": "yumemi", "name": "ユメミ", "group": "休み", "hint": "だれかの島に、おばけを置いてくると",
+		"desc": "友だちの島におばけを置いてくると生まれる。会ったことのない色をしている", "look": {"skin": "aurora", "prop": "halo", "fx": "stars", "c1": "b9a7ff", "c2": "7fe3ff"}},
+	{"id": "asayake", "name": "アサヤケ", "group": "休み", "hint": "満月の夜が明けた、次の朝に",
+		"desc": "満月の夜のあとの朝に生まれる。朝焼けの色", "look": {"skin": "flame", "prop": "none", "fx": "motes", "c1": "ffb07a", "c2": "ff6f91"}},
+	{"id": "yomise", "name": "ヨミセ", "group": "休み", "hint": "また同じ店に、働きに行った日に",
+		"desc": "前に働いた店に、もう一度入った日に生まれる。常連さんの顔をしている", "look": {"skin": "starry", "prop": "lantern", "fx": "fireflies", "c1": "2b3478", "c2": "ffb35c"}},
+	{"id": "hirunen", "name": "ヒルネン", "group": "休み", "hint": "週末に、ちゃんと休むと",
+		"desc": "シフトの無い土曜か日曜に生まれる。日だまりの匂い", "look": {"skin": "cloud", "prop": "leaf_hat", "fx": "motes", "c1": "ffe7a8", "c2": "8fd18a"}},
+	{"id": "totonou", "name": "トトノウ", "group": "休み", "hint": "雨の日を、家でのんびり過ごすと",
+		"desc": "雨の日の休みに生まれる。いつも落ち着いている", "look": {"skin": "water", "prop": "bell", "fx": "bubbles", "c1": "8fe0d8", "c2": "3aa6a0"}},
 
 	# ---- はじめて ----
 	{"id": "kirari", "name": "キラリ", "group": "はじめて", "hint": "はじめての場所で、光る",
@@ -37,12 +37,12 @@ const LIST := [
 		"desc": "はじめての同僚とシフトに入った日に。あいさつが上手", "look": {"skin": "pearl", "prop": "bell", "fx": "sparks", "c1": "fff4d6", "c2": "ffb35c"}},
 
 	# ---- 時間帯 ----
-	{"id": "yonaki", "name": "ヨナキ", "group": "時間帯", "hint": "街が眠っているあいだに",
+	{"id": "yonaki", "name": "ヨナキ", "group": "時間帯", "hint": "街が静かなあいだに",
 		"desc": "深夜のシフトの日に生まれる。静かな場所が好き", "look": {"skin": "ink", "prop": "none", "fx": "fireflies", "c1": "23284f", "c2": "8fb4ff"}},
 	{"id": "asatsuyu", "name": "アサツユ", "group": "時間帯", "hint": "朝の光に、三度会うと",
 		"desc": "朝のシフトに3回入ると生まれる。露のしずくでできている", "look": {"skin": "water", "prop": "leaf_hat", "fx": "bubbles", "c1": "bdf0ff", "c2": "7fd18a"}},
-	{"id": "tsukimi", "name": "ツキミ", "group": "時間帯", "hint": "まるい月の夜に、働いていた",
-		"desc": "満月の夜のシフトで生まれる。うさぎの耳のような裾", "look": {"skin": "moon", "prop": "halo", "fx": "stars", "c1": "fff1c8", "c2": "c9b8ff"}},
+	{"id": "tsukimi", "name": "ツキミ", "group": "時間帯", "hint": "満月の夜、月がまんまるに満ちたら",
+		"desc": "満月の夜に、灯りを4つ以上ともすと生まれる。うさぎの耳のような裾", "look": {"skin": "moon", "prop": "halo", "fx": "stars", "c1": "fff1c8", "c2": "c9b8ff"}},
 	{"id": "tasogare", "name": "タソガレ", "group": "時間帯", "hint": "昼と夜、どちらも知っている",
 		"desc": "同じ週に昼と夜のシフトに入ると生まれる", "look": {"skin": "flame", "prop": "scarf", "fx": "motes", "c1": "ff9e6b", "c2": "5b4a9e"}},
 	{"id": "shinya", "name": "マヨナカ", "group": "時間帯", "hint": "真夜中の棚の前で",
@@ -65,8 +65,8 @@ const LIST := [
 		"desc": "同僚におばけを贈ると生まれる", "look": {"skin": "paper", "prop": "ribbon", "fx": "sparks", "c1": "fff1dc", "c2": "e85a4f"}},
 	{"id": "morattan", "name": "モラッタン", "group": "つながり", "hint": "誰かから、受け取った",
 		"desc": "同僚からおばけを贈られると生まれる", "look": {"skin": "paper", "prop": "bell", "fx": "petals", "c1": "fff1dc", "c2": "5fc4a8"}},
-	{"id": "teamwork", "name": "テヲツナグ", "group": "つながり", "hint": "大変な夜を、みんなで越えた",
-		"desc": "大ピークを乗り切ると生まれる", "look": {"skin": "flame", "prop": "halo", "fx": "sparks", "c1": "ff8a5b", "c2": "ffe27a"}},
+	{"id": "teamwork", "name": "テヲツナグ", "group": "つながり", "hint": "満月を、おおぜいで見上げた",
+		"desc": "8種類以上の仲間と、満月の夜を迎えると生まれる", "look": {"skin": "flame", "prop": "halo", "fx": "sparks", "c1": "ff8a5b", "c2": "ffe27a"}},
 	{"id": "senpai", "name": "センパイ", "group": "つながり", "hint": "はじめての人の、となりにいた",
 		"desc": "はじめて入る人と同じシフトに入ると生まれる。頼られると伸びる", "look": {"skin": "leaf", "prop": "book", "fx": "motes", "c1": "a8e07f", "c2": "4f8a5b"}},
 
@@ -79,8 +79,8 @@ const LIST := [
 		"desc": "ふつうのおばけを全種類あつめると生まれる。百鬼夜行の先頭", "look": {"skin": "ink", "prop": "crown", "fx": "fireflies", "c1": "2a2233", "c2": "ff6b5b"}},
 	{"id": "kazoeuta", "name": "カゾエウタ", "group": "リズム", "hint": "図鑑が、十をこえたら",
 		"desc": "図鑑が10種類をこえると生まれる。数を歌う", "look": {"skin": "crystal", "prop": "book", "fx": "stars", "c1": "d6f5ff", "c2": "b9a7ff"}},
-	{"id": "mangetsu", "name": "マンゲツ", "group": "リズム", "hint": "ひと月、眠りを大切にした",
-		"desc": "ひと月の平均睡眠が7時間をこえると生まれる", "look": {"skin": "moon", "prop": "crown", "fx": "stars", "c1": "fff1c8", "c2": "ffd23f"}},
+	{"id": "mangetsu", "name": "マンゲツ", "group": "リズム", "hint": "満月の夜を、四つ見届けると",
+		"desc": "満月の夜を4回むかえると生まれる。月の満ち欠けにくわしい", "look": {"skin": "moon", "prop": "crown", "fx": "stars", "c1": "fff1c8", "c2": "ffd23f"}},
 ]
 
 
@@ -95,21 +95,19 @@ static func is_rare(id: String) -> bool:
 	return not by_id(id).is_empty()
 
 
-## 1晩ごとに、条件を満たしたレアの id を返す（まだ持っていないものだけ）。
+## 夜が明けるごとに、条件を満たしたレアの id を返す（まだ持っていないものだけ）。
 ## ctx: その日の記録と、ここまでの記録のまとめ（GameState.rare_context が作る）
 static func check(ctx: Dictionary, have: Dictionary) -> Array:
 	var got: Array = []
 	var s: Dictionary = ctx.shift
-	var hrs: int = ctx.sleep
-	var hist: Array = ctx.sleep_hist
 	var worked: bool = s.get("role", "") != ""
 	var conds := {
-		"nemurin": hrs >= 7,
-		"yumemi": hrs >= 8,
-		"asayake": hist.size() >= 3 and hist.slice(-3).all(func(h): return h >= 7),
-		"yomise": hrs <= 5,
-		"hirunen": not worked and hrs >= 9,
-		"totonou": hist.size() >= 3 and hist.slice(-3).all(func(h): return h == hist[-1]),
+		"nemurin": ctx.get("friend_visits", 0) >= 1,
+		"yumemi": ctx.get("keepsakes", 0) >= 1,
+		"asayake": ctx.get("after_moon", false),
+		"yomise": ctx.get("same_store_again", false),
+		"hirunen": ctx.get("rest_day", false) and ctx.get("weekend", false),
+		"totonou": ctx.get("rest_day", false) and s.get("weather", "") == "雨",
 		"kirari": worked and s.get("first", false),
 		"hajimete": worked and ctx.first_role,
 		"wataridori": ctx.roles_seen >= 5,
@@ -117,7 +115,7 @@ static func check(ctx: Dictionary, have: Dictionary) -> Array:
 		"hatsukoe": worked and ctx.new_coworker,
 		"yonaki": worked and s.get("band", "") == "深夜",
 		"asatsuyu": ctx.morning_shifts >= 3,
-		"tsukimi": worked and s.get("moon", "") == "満月",
+		"tsukimi": ctx.get("moon_won", false),
 		"tasogare": ctx.day_and_night,
 		"shinya": worked and s.get("band", "") == "深夜" and s.get("role", "") == "stock",
 		"amagasa": worked and s.get("weather", "") == "雨",
@@ -127,13 +125,13 @@ static func check(ctx: Dictionary, have: Dictionary) -> Array:
 		"nakayoshi": ctx.same_coworker_max >= 3,
 		"okurimono": ctx.gifted,
 		"morattan": ctx.received,
-		"teamwork": ctx.battle_won,
+		"teamwork": ctx.get("moon_won", false) and ctx.zukan_count >= 8,
 		"senpai": worked and s.get("newbie", false),
 		"yasumijouzu": not worked and ctx.worked_streak_before >= 2,
 		"shuumatsu": ctx.weekend_both,
 		"hyakki": ctx.normal_all,
 		"kazoeuta": ctx.zukan_count >= 10,
-		"mangetsu": ctx.avg_sleep_month >= 7.0 and ctx.nights >= 28,
+		"mangetsu": ctx.get("moon_nights", 0) >= 4,
 	}
 	for r in LIST:
 		if have.has(r.id):
