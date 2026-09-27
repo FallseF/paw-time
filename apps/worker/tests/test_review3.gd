@@ -92,6 +92,14 @@ func _scroll() -> void:
 	_mouse(c, false)
 	await process_frame
 	_check(s.prefs.pay == "daily", "a plain tap still presses the chip (pay %s)" % s.prefs.pay)
+	# 地域のチップは押すたびに入れる／外す（いくつでも）。入力欄は「、」「,」で区切る
+	var ids: Array = JobPrefs.areas().slice(0, 3)
+	for a in ids:
+		s._toggle_area(a)
+	s._toggle_area(ids[1])
+	s.area_edit.text = "Bernal Heights、 %s ,," % JobPrefs.area_label("shibuya")
+	_check(s._area_values() == [ids[0], ids[2], "Bernal Heights", "shibuya"], "area chips toggle and free text splits %s" % [s._area_values()])
+	_check(s.area_chips[ids[0]].get_theme_stylebox("normal").bg_color == s.LILAC and s.area_chips[ids[1]].get_theme_stylebox("normal").bg_color != s.LILAC, "chip on/off looks")
 	s.queue_free()
 	await process_frame
 	Input.emulate_touch_from_mouse = false
@@ -121,7 +129,37 @@ func _overlap() -> void:
 # ---------------------------------------------------------------- 3. 地域をいくつも
 
 func _areas() -> void:
-	pass
+	# 古い保存（area ひとつ）は、そのまま一つえらんだ形で読める
+	var old := JobPrefs.normalize({"area": "shibuya", "days": [1]})
+	_check(old.get("areas", []) == ["shibuya"] and old.area == "shibuya", "old save: area -> areas %s" % [old.get("areas")])
+	_check(JobPrefs.normalize({"area": ""}).get("areas", null) == [], "no area -> no areas")
+	var was := JobPrefs.path
+	JobPrefs.path = "user://test_review3_prefs.json"
+	var f := FileAccess.open(JobPrefs.path, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"area": "中野", "days": [1, 3], "windows": ["day"], "min_wage": 1100, "pay": "any"}))
+	f.close()
+	var loaded := JobPrefs.load_prefs()
+	_check(loaded.get("areas", []) == ["中野"] and loaded.area == "中野", "old prefs file loads as one area %s" % [loaded.get("areas")])
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(JobPrefs.path))
+	JobPrefs.path = was
+	# いくつも：重なりと空は落とす。area は先頭（ほかの係の読み方はそのまま）
+	var many := JobPrefs.normalize({"areas": ["shibuya", " umeda ", "shibuya", "", "中野"]})
+	_check(many.areas == ["shibuya", "umeda", "中野"] and many.area == "shibuya", "areas normalized %s" % [many.areas])
+	# 日本：どの仕事も、えらんだ地域のどれか。いくつかの seed で、どの地域も出てくる
+	TranslationServer.set_locale("ja")
+	var base := 1790000000.0
+	var seen := {}
+	for n in 30:
+		for j in JobListings.generate({"areas": ["shibuya", "umeda", "中野"], "days": [], "windows": [], "min_wage": 1000, "pay": "any"}, 4, n * 7 + 1, base):
+			_check(j.area in ["shibuya", "umeda", "中野"], "jp job area is one of the chosen (%s)" % j.area)
+			seen[j.area] = true
+	_check(seen.size() == 3, "every chosen jp area shows up %s" % [seen.keys()])
+	# SF：えらんだ地区のどれかの店が先に
+	TranslationServer.set_locale("en")
+	var sf := JobListings.generate({"areas": ["dogpatch", "bayview"], "days": [], "windows": [], "min_wage_usd": 20.0, "pay": "any"}, 4, 3, base)
+	_check(sf.size() == 4 and sf.all(func(j): return j.area in ["dogpatch", "bayview"]), "sf: chosen neighborhoods first %s" % [sf.map(func(j): return j.area)])
+	var sf2 := JobListings.generate({"areas": ["mission", "soma"], "days": [], "windows": [], "min_wage_usd": 20.0, "pay": "any"}, 4, 5, base)
+	_check(sf2.all(func(j): return j.area in ["mission", "soma"]), "sf: all jobs from either chosen neighborhood when there are enough %s" % [sf2.map(func(j): return j.area)])
 
 
 # ---------------------------------------------------------------- 4. 呼び名

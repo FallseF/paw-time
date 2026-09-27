@@ -314,9 +314,10 @@ static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1
 		var tmp = pool[i]
 		pool[i] = pool[j]
 		pool[j] = tmp
-	# SF：選んだ地区の店を先に（ほかの地区の店も出す）
-	if reg == "sf" and prefs.area in JobPrefs.AREAS_SF:
-		pool = pool.filter(func(e): return SF[e[0]][0] == prefs.area) + pool.filter(func(e): return SF[e[0]][0] != prefs.area)
+	# SF：選んだ地区（どれか）の店を先に（ほかの地区の店も出す）
+	var picked: Array = prefs.areas.filter(func(a): return a in JobPrefs.AREAS_SF)
+	if reg == "sf" and not picked.is_empty():
+		pool = pool.filter(func(e): return SF[e[0]][0] in picked) + pool.filter(func(e): return not SF[e[0]][0] in picked)
 	var dates := _open_dates(now, prefs.days, tz)
 	var out: Array = []
 	if dates.is_empty():
@@ -384,11 +385,15 @@ static func _make_job(e: Array, prefs: Dictionary, day0_t: int, rng: RandomNumbe
 	var pays: Array = pays_of(e, reg)
 	var pay: String = prefs.pay if prefs.pay != "any" else pays[rng.randi_range(0, pays.size() - 1)]
 	var start := at_hour(day0_t, start_h, tz)
+	# 日本：えらんだ地域のどれか（ひとつなら、今までどおり乱数を使わない）
+	var area := String(prefs.area)
+	if prefs.areas.size() > 1:
+		area = String(prefs.areas[rng.randi_range(0, prefs.areas.size() - 1)])
 	var job := {
 		"id": "%s_%d_%d" % [e[0], start, rng.randi() % 1000],
 		"listing": e[0],
 		"role": role,
-		"area": String(SF[e[0]][0]) if reg == "sf" and SF.has(e[0]) else prefs.area,
+		"area": String(SF[e[0]][0]) if reg == "sf" and SF.has(e[0]) else area,
 		"window": win,
 		"start": start,
 		"end": start + hours * 3600,

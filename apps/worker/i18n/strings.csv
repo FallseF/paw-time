@@ -676,8 +676,8 @@ TOUR_NEXT,Next,つぎへ
 TOUR_TO_PREFS,Tell %s how you like to work,%s に、働き方を教える
 PREFS_TITLE,How do you like to work?,どんなふうに働きたい？
 PREFS_SUB,%s will look for jobs that fit.,%s が、合う仕事をさがすよ。
-PREFS_AREA,Area,場所
-PREFS_AREA_PH,Neighborhood (e.g. Mission),地域や駅（例：渋谷）
+PREFS_AREA,Areas (pick any),場所（いくつでも）
+PREFS_AREA_PH,"Other places, comma-separated",ほかの地域や駅（「、」で区切る）
 PREFS_WIN_MORNING,Morning 6–12,朝 6〜12時
 PREFS_WIN_DAY,Daytime 11–17,昼 11〜17時
 PREFS_WIN_EVENING,Evening 17–22,夕方 17〜22時

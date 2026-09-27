@@ -1,7 +1,7 @@
 class_name JobPrefs
 ## 働く条件（プレイヤーが入力する希望）。user://job_prefs.json に置く（ゲーム本体のセーブとは別）。
 ## 口座・カード番号など、お金の受け取りの本物の情報は、聞かないし持たない。受け取り方の「希望」（日払い・週払い・月払い）だけ。
-## 形: {area, slots: ["<曜日>:<時間帯>", …]（週のマス。曜日 0=月、時間帯 morning|day|evening|night）, days, windows, min_wage: 円/時, min_wage_usd: ドル/時（英語＝SF の見本）, pay: "daily"|"weekly"|"monthly"|"any", suggest: bool}
+## 形: {areas: [地域, …]（いくつでも。どれかに合えばよい）, area（areas の先頭。古い読み方のため）, slots: ["<曜日>:<時間帯>", …]（週のマス。曜日 0=月、時間帯 morning|day|evening|night）, days, windows, min_wage: 円/時, min_wage_usd: ドル/時（英語＝SF の見本）, pay: "daily"|"weekly"|"monthly"|"any", suggest: bool}
 ## 受け取り方の id は日本も SF も同じ。英語の画面では daily＝Instant pay、monthly＝Biweekly と読む（JOB_PAY_*）
 ## days と windows は slots から作る（どの曜日・どの時間帯が一つでもあるか）。slots の無い古い保存は days × windows を slots にする
 ## suggest＝相棒が毎日の求人を知らせるか（Off なら毎日の求人カードは出さない。自分で入れたシフトと評価はそのまま）
@@ -22,6 +22,7 @@ const AREAS := ["shibuya", "shinjuku", "ikebukuro", "kichijoji", "yokohama", "um
 ## 英語（サンフランシスコ）の地区。表示名は JOB_AREA_<ID>。はじめの 6 つを候補のチップに出す
 const AREAS_SF := ["mission", "soma", "north_beach", "sunset", "richmond", "hayes_valley", "castro", "chinatown", "dogpatch",
 	"bayview", "noe_valley", "haight", "marina", "japantown"]
+const MAX_AREAS := 8
 const WAGE_MIN := 1000
 const WAGE_MAX := 2000
 const WAGE_MIN_USD := 20.0
@@ -33,7 +34,7 @@ static var path := PATH
 
 
 static func defaults() -> Dictionary:
-	var d := {"area": "", "days": [0, 1, 2, 3, 4, 5, 6], "windows": ["day", "evening"], "min_wage": 1200, "min_wage_usd": 21.0, "pay": "any", "suggest": true}
+	var d := {"area": "", "areas": [], "days": [0, 1, 2, 3, 4, 5, 6], "windows": ["day", "evening"], "min_wage": 1200, "min_wage_usd": 21.0, "pay": "any", "suggest": true}
 	d["slots"] = grid(d.days, d.windows)
 	return d
 
@@ -92,7 +93,15 @@ static func save_prefs(p: Dictionary) -> bool:
 ## 型と範囲をそろえる（JSON の数値は float で戻るため）
 static func normalize(p: Dictionary) -> Dictionary:
 	var d := defaults()
-	d.area = String(p.get("area", "")).strip_edges().left(40)
+	# 地域：いくつでも（MAX_AREAS まで）。areas の無い古い保存は area ひとつを読む
+	var src_areas: Array = p.areas if p.get("areas", null) is Array and not p.areas.is_empty() else [p.get("area", "")]
+	var areas: Array = []
+	for a in src_areas:
+		var t := String(a).strip_edges().left(40)
+		if t != "" and not areas.has(t) and areas.size() < MAX_AREAS:
+			areas.append(t)
+	d.areas = areas
+	d.area = areas[0] if not areas.is_empty() else ""
 	var src: Array = []
 	if p.get("slots", null) is Array:
 		src = p.slots

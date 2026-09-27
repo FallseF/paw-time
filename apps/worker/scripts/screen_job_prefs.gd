@@ -1,6 +1,6 @@
 extends Control
 ## 働く条件の入力（はじめての流れの「prefs」、あとから仕事の知らせからも開ける）。
-## 地域（自由入力＋候補）・週のマス（曜日×時間帯）・最低時給・受け取り方の希望。保存は JobPrefs（user://job_prefs.json）。
+## 地域（候補のチップをいくつでも＋自由入力、どれかに合えばよい）・週のマス（曜日×時間帯）・最低時給・受け取り方の希望。保存は JobPrefs（user://job_prefs.json）。
 ## 口座・カード番号など、本物のお金の情報は聞かない。
 ## 主ボタンは「この条件で探して」ひとつ。
 
@@ -14,8 +14,9 @@ const ORANGE := Color("ff8a5b")
 const LILAC := Color("8b7bff")
 
 var prefs := {}
-var area_edit: LineEdit
+var area_edit: LineEdit # 候補にない地域（「、」「,」で区切っていくつでも）
 var area_chips := {}
+var area_on: Array = [] # えらんだ候補の地域（ID）
 var cells := {} # "<曜日>:<時間帯>" → Button（週のマス）
 var pay_chips := {}
 var suggest_chips := {}
@@ -80,19 +81,19 @@ func _ready() -> void:
 	area_edit.add_theme_color_override("font_placeholder_color", Color("a89ea6"))
 	area_edit.add_theme_font_override("font", Kit.bold())
 	area_edit.add_theme_font_size_override("font_size", 15)
-	area_edit.text = JobPrefs.area_label(prefs.area) if prefs.area in JobPrefs.AREAS or prefs.area in JobPrefs.AREAS_SF else prefs.area
-	area_edit.text_changed.connect(func(_t): _sync_area_chips())
-	area_box.add_child(area_edit)
+	# 候補のチップにある地域はチップで、それ以外（自由入力・ほかの町の地区）は入力欄に
+	var chip_ids: Array = JobPrefs.areas().slice(0, 6)
+	area_on = prefs.areas.filter(func(a): return a in chip_ids)
+	area_edit.text = ", ".join(prefs.areas.filter(func(a): return not a in chip_ids).map(func(a): return JobPrefs.area_label(a)))
 	var af := HFlowContainer.new()
 	af.add_theme_constant_override("h_separation", 6)
 	af.add_theme_constant_override("v_separation", 6)
-	for a in JobPrefs.areas().slice(0, 6):
-		var c := _chip(JobPrefs.area_label(a), func():
-			area_edit.text = JobPrefs.area_label(a)
-			_sync_area_chips())
+	for a in chip_ids:
+		var c := _chip(JobPrefs.area_label(a), func(): _toggle_area(a))
 		area_chips[a] = c
 		af.add_child(c)
 	area_box.add_child(af)
+	area_box.add_child(area_edit)
 
 	# 週のマス（曜日 × 時間帯）。選んだマスは塗りとチェック、選んでいないマスは白と枠
 	var week_box := _section(v, tr("PREFS_WEEK"))
@@ -324,9 +325,18 @@ func open_shift_form() -> void:
 	add_child(f)
 
 
+## 候補の地域のチップ：押すたびに入れる／外す（いくつでも）
+func _toggle_area(a: String) -> void:
+	if area_on.has(a):
+		area_on.erase(a)
+	else:
+		area_on.append(a)
+	_sync_area_chips()
+
+
 func _sync_area_chips() -> void:
 	for a in area_chips:
-		_chip_style(area_chips[a], area_edit.text.strip_edges() == JobPrefs.area_label(a))
+		_chip_style(area_chips[a], area_on.has(a))
 
 
 func _refresh() -> void:
@@ -346,17 +356,24 @@ func _refresh() -> void:
 	go_btn.text = (tr("PREFS_GO") if prefs.suggest else tr("PREFS_SAVE")) if ok else tr("PREFS_NEED")
 
 
-## 地域：候補の表示名と同じなら候補の ID で持つ（言語を変えても読める）
-func _area_value() -> String:
-	var t := area_edit.text.strip_edges()
-	for a in JobPrefs.AREAS + JobPrefs.AREAS_SF:
-		if t == JobPrefs.area_label(a):
-			return a
-	return t
+## 地域：えらんだチップ（候補の順）＋入力欄（「、」「,」で区切る）。候補の表示名と同じなら候補の ID で持つ（言語を変えても読める）
+func _area_values() -> Array:
+	var out: Array = JobPrefs.areas().filter(func(a): return area_on.has(a))
+	for part in area_edit.text.replace("、", ",").replace("，", ",").split(","):
+		var t := part.strip_edges()
+		if t == "":
+			continue
+		for a in JobPrefs.AREAS + JobPrefs.AREAS_SF:
+			if t == JobPrefs.area_label(a):
+				t = a
+		if not out.has(t):
+			out.append(t)
+	return out
 
 
 func _save() -> void:
-	prefs.area = _area_value()
+	prefs.areas = _area_values()
+	prefs.area = prefs.areas[0] if not prefs.areas.is_empty() else ""
 	JobPrefs.save_prefs(prefs)
 	stage.joy()
 	Kit.play(self, "sparkle")
@@ -373,7 +390,8 @@ func _save() -> void:
 # ---------------------------------------------------------------- 確認用
 
 func demo_fill() -> void:
-	area_edit.text = JobPrefs.area_label(JobPrefs.areas()[0] if Kit.is_en() else "shibuya")
+	area_on = [JobPrefs.areas()[0], JobPrefs.areas()[1]] if Kit.is_en() else ["shibuya", "shinjuku"]
+	area_edit.text = ""
 	_sync_area_chips()
 	prefs.slots = JobPrefs.grid([0, 2, 4], ["day", "evening"]) + ["5:morning", "5:day"]
 	prefs.min_wage = 1250
