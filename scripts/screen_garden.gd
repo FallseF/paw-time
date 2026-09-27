@@ -1714,6 +1714,7 @@ var card_hidden := false
 
 ## カードをしまって、庭をひろく見る
 func _place_handle() -> void:
+	_place_expand()
 	if GameState.day < 2:
 		return
 	if handle == null:
@@ -1733,6 +1734,56 @@ func _place_handle() -> void:
 		handle.text = "▼ しまう"
 		handle.position = Vector2(card.position.x + card.size.x - 84, card.position.y - 14)
 	handle.size = Vector2(0, 0)
+
+
+var expand_btn: Button
+
+
+## 島を広げる札（いつも見える。カードの左上、カードをしまったら左下）。広げきったら出さない
+func _place_expand() -> void:
+	var show: bool = not _vis() and not editing and GameState.day >= 1 and IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS
+	if expand_btn == null:
+		if not show:
+			return
+		expand_btn = Kit.button(tr("EXPAND_PILL"), Color("e9f6e6"), _expand_from_pill, Color("3f7d4f"), 30, 12)
+		add_child(expand_btn)
+	expand_btn.visible = show
+	expand_btn.size = Vector2(0, 30)
+	expand_btn.position = Vector2(14, 598) if card_hidden or not card.visible else Vector2(card.position.x + 6, card.position.y - 14)
+
+
+## 札から：島づくりに入って、広げられる場所のカードを開く（足りるところがあれば、そこを先に）
+func _expand_from_pill() -> void:
+	if busy or editing:
+		return
+	_enter_edit()
+	await get_tree().create_timer(0.7).timeout
+	var pick := ""
+	for e in IslandKit.EXPANSIONS:
+		if IslandKit.can_expand(e.id):
+			if pick == "":
+				pick = e.id
+			if IslandKit.expansion_missing(e.id).is_empty():
+				pick = e.id
+				break
+	if pick != "":
+		_expand_card(pick)
+
+
+## 材料がそろって広げられるようになったら、一度だけ知らせて札をゆらす（広げた数ごとに）
+func _maybe_expand_nudge() -> void:
+	if _vis() or expand_btn == null or not expand_btn.visible:
+		return
+	var key := "expand_nudge_%d" % IslandKit.expansions().size()
+	if GameState.tut.has(key):
+		return
+	for e in IslandKit.EXPANSIONS:
+		if IslandKit.can_expand(e.id) and IslandKit.expansion_missing(e.id).is_empty():
+			GameState.tut[key] = true
+			GameState.save()
+			_toast(tr("KIT_UI_EXPAND"), tr("EXPAND_READY"))
+			Kit.nudge(expand_btn)
+			return
 
 
 func _toggle_card() -> void:
@@ -2118,6 +2169,9 @@ func _after_morning() -> void:
 	_refresh_hud()
 	card.modulate.a = 0.0
 	_show_card()
+	# けさ材料が届いて、島を広げられるようになったら知らせる
+	await get_tree().create_timer(0.8).timeout
+	_maybe_expand_nudge()
 
 
 func _reveal_stage(level: int, st: Dictionary) -> void:
@@ -2231,6 +2285,8 @@ func _enter_edit() -> void:
 	card.visible = false
 	if handle:
 		handle.visible = false
+	if expand_btn:
+		expand_btn.visible = false
 	goals_btn.visible = false
 	meters.visible = false
 	var to := cam_home

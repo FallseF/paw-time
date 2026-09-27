@@ -1743,3 +1743,5 @@ JOB_MAP,Map,地図
 3つそろった！ 肉球コイン +10,All 3 done! +10 Paw Coins,3つそろった！ 肉球コイン +10
 ぜんぶひらく,Open all,ぜんぶひらく
 スキップ ›,Skip ›,スキップ ›
+EXPAND_PILL,+ Expand,＋ ひろげる
+EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
