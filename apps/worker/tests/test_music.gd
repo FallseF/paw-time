@@ -8,6 +8,8 @@ extends SceneTree
 ## 5. ループ：曲の終わりを越えたら loop_offset へ
 ## 6. Web のように最初の入力まで鳴らさない（その間に画面が変わっても、タップで今の曲から）
 ## 7. ducking（孵化の画面・ファンファーレ）と、消音
+## 8. 効果音（scripts/sfx.gd）：SFX のバスとつまみ、画面が作る音も SFX へ、BGM はそのまま、連打の間引き、
+##    ループの音（川・夜の庭）は輪の長さどおりに回る（PCM で読みこむ）、鳴らす名前の音がぜんぶある
 
 var fails := 0
 
@@ -144,6 +146,42 @@ func _run() -> void:
 	_steps(w, 0.1)
 	_check(w.voices.size() == 1 and w.voices[0].id == "island", "first tap starts the current screen's track")
 	w.queue_free()
+
+	# 8
+	_check(Sfx.bus() == Sfx.BUS and AudioServer.get_bus_index(Sfx.BUS) > 0, "SFX bus exists")
+	Sfx.set_volume(0.5)
+	_check(absf(Sfx.bus_db() - linear_to_db(0.25)) < 0.01, "SFX slider sets the bus volume (%.1f dB)" % Sfx.bus_db())
+	Sfx.set_volume(0.0)
+	_check(AudioServer.is_bus_mute(AudioServer.get_bus_index(Sfx.BUS)), "SFX slider at 0 mutes the bus")
+	Sfx.set_volume(0.8)
+	Sfx.install(self)
+	var sp := AudioStreamPlayer.new()
+	root.add_child(sp)
+	_check(sp.bus == Sfx.BUS, "a screen's own player goes to the SFX bus")
+	sp.queue_free()
+	var mm := _mk()
+	var bp := AudioStreamPlayer.new()
+	mm.add_child(bp)
+	_check(bp.bus == &"Master", "BGM players stay off the SFX bus")
+	mm.queue_free()
+	_check(Sfx.allow("t_gap") and not Sfx.allow("t_gap"), "the same sound twice in a row is thinned")
+	_check(Sfx.for_label(TranslationServer.translate("KIT_UI_CLOSE")) == "back" and Sfx.for_label("OK") == "confirm", "button sounds: close -> back, others -> confirm")
+	for n in ["night_amb", "river_loop"]:
+		var lw: AudioStreamWAV = load("res://assets/sfx/%s.wav" % n)
+		var frames := int(round(lw.get_length() * lw.mix_rate))
+		_check(lw.format == AudioStreamWAV.FORMAT_16_BITS and lw.data.size() / 2 == frames, "%s loops over its whole length (%d / %d)" % [n, lw.data.size() / 2, frames])
+	_check(not ResourceLoader.exists("res://assets/sfx/crickets.wav"), "the cricket loop is gone")
+	var re := RegEx.create_from_string("Kit\\.play\\([^,]+,\\s*\"([a-z_]+)\"")
+	var names := {}
+	for f in DirAccess.get_files_at("res://scripts"):
+		if f.ends_with(".gd"):
+			for mt in re.search_all(FileAccess.get_file_as_string("res://scripts/" + f)):
+				names[mt.get_string(1)] = true
+	for n in ["tap", "confirm", "back", "toggle", "tab", "open", "close", "error", "coin", "toast"]:
+		names[n] = true
+	for n in names:
+		_check(ResourceLoader.exists("res://assets/sfx/%s.wav" % n), "sound %s exists" % n)
+	_check(names.size() >= 15, "found the Kit.play names (%d)" % names.size())
 
 	print("test_music: ", "OK" if fails == 0 else "%d FAIL" % fails)
 	quit(1 if fails else 0)

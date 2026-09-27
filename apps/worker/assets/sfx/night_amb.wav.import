@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://b5ym4fevt6bou"
-path="res://.godot/imported/river_loop.wav-f754873b9f5cda56eb74770a7453c5c1.sample"
+uid="uid://cuaq4a1usf3i3"
+path="res://.godot/imported/night_amb.wav-b32121feb102f56ad08ebbe6fb6bcf9c.sample"
 
 [deps]
 
-source_file="res://assets/sfx/river_loop.wav"
-dest_files=["res://.godot/imported/river_loop.wav-f754873b9f5cda56eb74770a7453c5c1.sample"]
+source_file="res://assets/sfx/night_amb.wav"
+dest_files=["res://.godot/imported/night_amb.wav-b32121feb102f56ad08ebbe6fb6bcf9c.sample"]
 
 [params]
 
