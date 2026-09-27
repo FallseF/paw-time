@@ -103,6 +103,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 
@@ -394,7 +395,7 @@ func _spawn_orb(d: Dictionary) -> void:
 	for i in 20:
 		var a := randf() * TAU
 		o.position = Vector3(cos(a) * WATER_RX * 0.6 * randf(), 0.0, sin(a) * WATER_RZ * 0.6 * randf())
-		if ORB_SAFE.has_point(cam.unproject_position(o.position)):
+		if ORB_SAFE.has_point(View3D.unproject(cam, o.position)):
 			break
 	world.add_child(o)
 	orbs.append(o)
@@ -674,8 +675,8 @@ func _refresh_net_bar() -> void:
 # ---------- 入力 ----------
 
 func _ground(p: Vector2) -> Vector3:
-	var from := cam.project_ray_origin(p)
-	var dir := cam.project_ray_normal(p)
+	var from := cam.project_ray_origin(View3D.to_vp(cam, p))
+	var dir := cam.project_ray_normal(View3D.to_vp(cam, p))
 	if absf(dir.y) < 1e-4:
 		return last_ground
 	var t := -from.y / dir.y
@@ -847,7 +848,7 @@ func _lift() -> void:
 		_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
 	tw2.tween_property(cam, "transform", cam_base, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw2.tween_property(target, "position", cam.project_position(Vector2(120, 40), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw2.tween_property(target, "position", cam.project_position(View3D.to_vp(cam, Vector2(120, 40)), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw2.tween_property(target, "scale", Vector3.ONE * 0.3, 0.7)
 	await tw2.finished
 	target.queue_free()
@@ -979,13 +980,13 @@ func _process(delta: float) -> void:
 
 ## 玉は画面の中の水面から出さない（出かけたら、池のまん中へ押しもどす）
 func _keep_visible(o: Orb3D) -> void:
-	var sp := cam.unproject_position(o.position)
+	var sp := View3D.unproject(cam, o.position)
 	if ORB_SAFE.has_point(sp):
 		return
 	var home := Vector3(0, 0, 0.2)
 	for i in 8:
 		o.position = o.position.lerp(home, 0.15)
-		if ORB_SAFE.has_point(cam.unproject_position(o.position)):
+		if ORB_SAFE.has_point(View3D.unproject(cam, o.position)):
 			break
 	o.vel = (home - o.position).normalized() * 0.1
 
@@ -1111,7 +1112,7 @@ func demo_real() -> void:
 	var o: Orb3D = orbs[0]
 	o.set_process(false)
 	o.vel = Vector3.ZERO
-	var sp := cam.unproject_position(o.global_position)
+	var sp := View3D.unproject(cam, o.global_position)
 	var start := sp + Vector2(40, 30)
 	var ev := InputEventMouseButton.new()
 	ev.button_index = MOUSE_BUTTON_LEFT

@@ -132,6 +132,7 @@ func _shelf() -> Control:
 	vp.transparent_bg = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	var w := Node3D.new()
 	vp.add_child(w)
 	Look.apply(w, "studio", Color(0, 0, 0, 0), true)

@@ -61,6 +61,7 @@ static func render(host: Node, result: Dictionary) -> Image:
 	vp3.msaa_3d = Viewport.MSAA_4X
 	vp3.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	box.add_child(vp3)
+	View3D.fit(box, vp3)
 	var ob := _stage3d(vp3, t.look)
 	# 舞台の中の小さなタグ（向いてる仕事）
 	var job := _chip(QuizData.t("QUIZ_CARD_JOB") % QuizData.job_name(t.job), bold, 30, Color.WHITE, col.darkened(0.35))

@@ -51,6 +51,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	var rig := Look.apply(world, "moon", Color("0e1330"), false, false)
@@ -194,7 +195,7 @@ func _gui_input(event: InputEvent) -> void:
 	for L in lanterns:
 		if L.lit or not L.good:
 			continue
-		var sp := cam.unproject_position(L.lamp.global_position)
+		var sp := View3D.unproject(cam, L.lamp.global_position)
 		if sp.distance_to(pos) < 40:
 			_light(L)
 			return

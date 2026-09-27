@@ -36,7 +36,7 @@ func _cat_screen_pos():
 	var cam = garden.get("cam") if garden else null
 	if host == null or cam == null or not is_instance_valid(host) or not (host as Node3D).is_inside_tree():
 		return null
-	return (cam as Camera3D).unproject_position((host as Node3D).global_position + Vector3(0, 0.45, 0))
+	return View3D.unproject(cam as Camera3D, (host as Node3D).global_position + Vector3(0, 0.45, 0))
 
 
 func _free_to_talk() -> bool:

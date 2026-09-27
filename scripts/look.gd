@@ -10,6 +10,17 @@ extends RefCounted
 
 const CHAR_LAYER := 2
 
+## 色の仕上げ（Look を使う全画面に共通）。強さはここだけで変える。on = false か各値 0 で切れる。トーンマップは LINEAR のまま
+const GRADE := {
+	"on": true,
+	"warm": 0.035, # 明るいところを少し暖かく、暗いところを少し青紫に
+	"tame": 0.14, # 強すぎる緑・水色（色相 70°〜205°くらい）の彩度を下げる割合。黄色・橙・桃は触らない
+	"vignette": 0.2, # 四隅をわずかに落とす（3D の上だけ。背景が透明な舞台には付けない）
+}
+const _LUT_N := 17
+static var _lut: ImageTexture3D
+static var _vignette: Shader
+
 const PRESETS := {
 	# 図鑑カード・棚：明るいスタジオ。影は青紫、光は暖かい
 	"studio": {
@@ -112,10 +123,14 @@ static func apply(world: Node, preset := "studio", bg := Color(0, 0, 0, 0), tran
 	env.adjustment_enabled = true
 	env.adjustment_contrast = p.contrast
 	env.adjustment_saturation = p.saturation
+	if GRADE.on:
+		env.adjustment_color_correction = _grade_lut()
 	var we := WorldEnvironment.new()
 	we.name = "LookEnvironment"
 	we.environment = env
 	world.add_child(we)
+	if GRADE.on and GRADE.vignette > 0.0 and not transparent:
+		world.add_child(_vignette_layer())
 	var rig := {"env": env}
 	var char_bits := 1 << (CHAR_LAYER - 1)
 	for k in ["key", "fill", "rim"]:
@@ -132,6 +147,57 @@ static func apply(world: Node, preset := "studio", bg := Color(0, 0, 0, 0), tran
 		world.add_child(l)
 		rig[k] = l
 	return rig
+
+
+## 色補正の表（3D の LUT）。色の値（sRGB）→ 仕上げた色
+static func _grade_lut() -> ImageTexture3D:
+	if _lut:
+		return _lut
+	var slices: Array[Image] = []
+	for bi in _LUT_N:
+		var img := Image.create(_LUT_N, _LUT_N, false, Image.FORMAT_RGB8)
+		for gi in _LUT_N:
+			for ri in _LUT_N:
+				var c := Color(ri, gi, bi) / (_LUT_N - 1.0)
+				img.set_pixel(ri, gi, _grade(Color(c, 1.0)))
+		slices.append(img)
+	_lut = ImageTexture3D.new()
+	_lut.create(Image.FORMAT_RGB8, _LUT_N, _LUT_N, _LUT_N, false, slices)
+	return _lut
+
+
+static func _grade(c: Color) -> Color:
+	var h := c.h * 360.0
+	var w := smoothstep(58.0, 80.0, h) * (1.0 - smoothstep(190.0, 215.0, h))
+	c = Color.from_hsv(c.h, c.s * (1.0 - GRADE.tame * w), c.v)
+	var l := c.get_luminance()
+	c.r += GRADE.warm * l
+	c.g += GRADE.warm * 0.35 * l
+	c.b += GRADE.warm * (0.5 * (1.0 - l) - l)
+	return c.clamp()
+
+
+## 周辺減光：SubViewport の中の 2D の層（3D の上、UI の下）
+static func _vignette_layer() -> CanvasLayer:
+	if _vignette == null:
+		_vignette = Shader.new()
+		_vignette.code = """shader_type canvas_item;
+uniform float strength = 0.2;
+void fragment() {
+	float d = length((UV - 0.5) * vec2(1.0, 0.9));
+	COLOR = vec4(0.08, 0.05, 0.14, smoothstep(0.38, 0.72, d) * strength);
+}"""
+	var layer := CanvasLayer.new()
+	layer.name = "LookVignette"
+	var r := ColorRect.new()
+	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m := ShaderMaterial.new()
+	m.shader = _vignette
+	m.set_shader_parameter("strength", GRADE.vignette)
+	r.material = m
+	layer.add_child(r)
+	return layer
 
 
 ## 島の画面用：フィルとリム（おばけの層だけに当てる）を足して返す。キーは画面の太陽をそのまま使う

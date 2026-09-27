@@ -95,6 +95,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 
@@ -1467,7 +1468,7 @@ func _gui_input(event: InputEvent) -> void:
 	var bd := 42.0
 	for w in walkers:
 		var ob: Obake3D = w.o
-		var sp := cam.unproject_position(ob.global_position + Vector3(0, 0.35, 0))
+		var sp := View3D.unproject(cam, ob.global_position + Vector3(0, 0.35, 0))
 		var d := sp.distance_to(pos)
 		if d < bd:
 			bd = d
@@ -2391,7 +2392,7 @@ func _edit_input(event: InputEvent) -> void:
 				return
 			# 岸の「＋」（島を広げる）
 			for mk in exp_markers:
-				if is_instance_valid(mk.node) and cam.unproject_position(mk.node.global_position).distance_to(pos) < 34.0:
+				if is_instance_valid(mk.node) and View3D.unproject(cam, mk.node.global_position).distance_to(pos) < 34.0:
 					_expand_card(mk.id)
 					return
 			var best := ""
@@ -2400,7 +2401,7 @@ func _edit_input(event: InputEvent) -> void:
 				var g: Node3D = items[k]
 				if not g.visible:
 					continue
-				var d := cam.unproject_position(g.global_position + Vector3(0, 0.3, 0)).distance_to(pos)
+				var d := View3D.unproject(cam, g.global_position + Vector3(0, 0.3, 0)).distance_to(pos)
 				if d < bd:
 					bd = d
 					best = k
@@ -2412,8 +2413,8 @@ func _edit_input(event: InputEvent) -> void:
 				dragging = false
 				_drop()
 	elif (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) and dragging and sel != "":
-		var from := cam.project_ray_origin(event.position)
-		var dir := cam.project_ray_normal(event.position)
+		var from := cam.project_ray_origin(View3D.to_vp(cam, event.position))
+		var dir := cam.project_ray_normal(View3D.to_vp(cam, event.position))
 		if absf(dir.y) < 1e-4:
 			return
 		var gp := from + dir * (-from.y / dir.y)
