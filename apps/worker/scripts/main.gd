@@ -25,10 +25,13 @@ const SCREENS := {
 	"practice": preload("res://scripts/screen_practice.gd"),
 	"skills": preload("res://scripts/screen_skills.gd"),
 	"chat": preload("res://scripts/screen_chat.gd"), # チャット（feature/cat-chat）。OBAKE_CHAT=me|list|shop:<id>
+	# マイページ（設定）。島などの上に重ねるときは SettingsScreen.open(parent)
+	"settings": preload("res://scripts/screen_settings.gd"),
 }
 
 var root: Control
 var current: Control
+var current_name := "" # いまの画面の名前（マイページで言語を変えたあと、同じ画面を作り直すため）
 var fade: ColorRect
 var busy := false
 var demo: Node
@@ -259,6 +262,7 @@ func go(screen_name: String, instant := false) -> void:
 	if current:
 		current.queue_free()
 	current = SCREENS[screen_name].new()
+	current_name = screen_name
 	if screen_name == "quiz":
 		current.set("next_screen", "garden")
 	current.set_anchors_preset(Control.PRESET_FULL_RECT)

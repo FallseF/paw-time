@@ -1,0 +1,373 @@
+class_name SettingsScreen
+extends Control
+## マイページ（設定）。相棒の名前・言語・チャットの「ふたりだけのひみつ」・匿名の利用データ（送る／送らない・ID・削除）・
+## プライバシーについて・はじめからやり直す。働く条件の画面から、利用データの項目はここへ移した。
+##
+## 開き方は 2 通り：
+##   SettingsScreen.open(parent)            … いまの画面の上に重ねる（島のボタン・チャットの「くわしく」から）。「‹」で閉じる
+##   SettingsScreen.open(parent, "privacy") … プライバシーの項目までスクロールして開く
+##   main.go("settings")                    … 画面として開く（閉じると島へ）
+## 言語を変えたら、閉じるときに下の画面を作り直す（その言語で出し直すため）。
+
+var main # main.go("settings") で開いたときだけ入る
+var screen_name := "settings"
+var focus := "" # "privacy" ならその項目まで
+
+const INK := Color("2a2233")
+const SUB := Color("6a5f70")
+const BG := Color("fbf3ea")
+const LILAC := Color("8b7bff")
+const PURPLE := Color("6a5bd6")
+const RED := Color("c0504a")
+## はじめからやり直しても残すもの：利用データの ID と送る設定、そのお知らせを見たこと（言語は settings.cfg で、これも残る）
+const KEEP_ON_RESET := ["telemetry.json", "telemetry_notice.json"]
+
+var scroll: ScrollContainer
+var list: VBoxContainer
+var privacy_box: Control
+var name_edit: LineEdit
+var name_status: Label
+var tm_status: Label
+var id_l: Label
+var chips := {} # "lang:en" / "chat:true" / "tm:false" … → Button
+var confirm: Control
+var lang_changed := false
+
+
+## いまの画面の上にマイページを重ねる。section = "privacy" でプライバシーの項目から
+static func open(parent: Node, section := "") -> SettingsScreen:
+	var s := SettingsScreen.new()
+	s.focus = section
+	parent.add_child(s)
+	return s
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	_build()
+
+
+func _build() -> void:
+	for c in get_children():
+		c.queue_free()
+	chips.clear()
+	var bg := ColorRect.new()
+	bg.color = BG
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+	# 見出し：もどる・マイページ
+	var head := PanelContainer.new()
+	head.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.94), 0, 0.08, Vector2(8, 6)))
+	head.position = Vector2(0, 0)
+	head.size = Vector2(360, 56)
+	var hh := HBoxContainer.new()
+	hh.add_theme_constant_override("separation", 6)
+	head.add_child(hh)
+	var back := _link("‹", close, INK, 28)
+	back.custom_minimum_size = Vector2(44, 44)
+	hh.add_child(back)
+	var title := Kit.text(tr("SETTINGS_TITLE"), 19, INK, true)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hh.add_child(title)
+
+	scroll = ScrollContainer.new()
+	scroll.position = Vector2(0, 56)
+	scroll.size = Vector2(360, 584)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
+	add_child(head)
+	var pad := MarginContainer.new()
+	pad.custom_minimum_size = Vector2(360, 0)
+	for k in ["left", "right"]:
+		pad.add_theme_constant_override("margin_" + k, 16)
+	pad.add_theme_constant_override("margin_top", 12)
+	pad.add_theme_constant_override("margin_bottom", 24)
+	scroll.add_child(pad)
+	list = VBoxContainer.new()
+	list.add_theme_constant_override("separation", 12)
+	pad.add_child(list)
+
+	_name_section()
+	_lang_section()
+	_chat_section()
+	_usage_section()
+	_privacy_section()
+	_reset_section()
+	_refresh()
+	if focus == "privacy":
+		_scroll_to_privacy.call_deferred()
+
+
+func _scroll_to_privacy() -> void:
+	# 折り返すラベルの高さが決まってから
+	for i in 3:
+		await get_tree().process_frame
+	if is_instance_valid(privacy_box):
+		scroll.scroll_vertical = int(privacy_box.position.y)
+
+
+# ---------------------------------------------------------------- 部品（働く条件の画面と同じ系統）
+
+func _section(title: String) -> VBoxContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 18, 0.06, Vector2(14, 12)))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	v.add_child(Kit.text(title, 14, SUB, true))
+	p.add_child(v)
+	list.add_child(p)
+	return v
+
+
+func _note(t: String, size := 12, color := SUB) -> Label:
+	var l := I18n.wrap(Kit.text(t, size, color))
+	l.custom_minimum_size = Vector2(290, 0)
+	return l
+
+
+func _chip(key: String, t: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.custom_minimum_size = Vector2(0, 40)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", Kit.black())
+	b.add_theme_font_size_override("font_size", 13)
+	b.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		cb.call())
+	chips[key] = b
+	return b
+
+
+func _chip_style(b: Button, on: bool) -> void:
+	var bg := LILAC if on else Color("f3ecff")
+	for k in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(k, Kit.pill(bg if k != "pressed" else bg.darkened(0.08), 18, 0.0, Vector2(10, 4)))
+	var fg := Color.WHITE if on else PURPLE
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(k, fg)
+
+
+func _row(items: Array) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 6)
+	for it in items:
+		h.add_child(it)
+	return h
+
+
+func _link(t: String, cb: Callable, color := PURPLE, fs := 14) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(0, 34)
+	b.add_theme_font_override("font", Kit.black())
+	b.add_theme_font_size_override("font_size", fs)
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(k, color)
+	b.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		cb.call())
+	return b
+
+
+# ---------------------------------------------------------------- 項目
+
+func _name_section() -> void:
+	if GameState.my_obake.is_empty():
+		return
+	var v := _section(tr("SETTINGS_NAME"))
+	name_edit = LineEdit.new()
+	name_edit.text = SpecialObake.pet_name()
+	name_edit.max_length = SpecialObake.NAME_MAX
+	name_edit.custom_minimum_size = Vector2(0, 42)
+	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var st := Kit.pill(Color.WHITE, 14, 0.0, Vector2(12, 8))
+	st.border_color = Color("e2d6c8")
+	st.set_border_width_all(2)
+	name_edit.add_theme_stylebox_override("normal", st)
+	var stf := st.duplicate() as StyleBoxFlat
+	stf.border_color = Color("ff8a5b")
+	name_edit.add_theme_stylebox_override("focus", stf)
+	name_edit.add_theme_font_override("font", Kit.black())
+	name_edit.add_theme_font_size_override("font_size", 16)
+	name_edit.add_theme_color_override("font_color", INK)
+	name_edit.text_submitted.connect(func(_t): save_name())
+	var save := Kit.button(tr("SETTINGS_NAME_SAVE"), Color("ff8a5b"), save_name, Color.WHITE, 42, 14)
+	save.custom_minimum_size.x = 84
+	v.add_child(_row([name_edit, save]))
+	name_status = _note("")
+	v.add_child(name_status)
+
+
+func save_name() -> void:
+	SpecialObake.set_partner_name(name_edit.text)
+	name_edit.text = SpecialObake.pet_name()
+	name_edit.release_focus()
+	name_status.text = tr("SETTINGS_SAVED")
+
+
+func _lang_section() -> void:
+	var v := _section(tr("SETTINGS_LANG"))
+	# 言語の名前は、その言語のまま書く（どちらの表示でも読めるように）
+	var en := _chip("lang:en", "English", func(): set_lang("en"))
+	var ja := _chip("lang:ja", "日本語", func(): set_lang("ja"))
+	for b in [en, ja]:
+		b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	v.add_child(_row([en, ja]))
+
+
+func set_lang(lang: String) -> void:
+	if Kit.is_en() == (lang == "en"):
+		return
+	Kit.save_lang(lang)
+	lang_changed = true
+	_build()
+
+
+func _chat_section() -> void:
+	var v := _section(tr("SETTINGS_CHAT"))
+	v.add_child(_row([
+		_chip("chat:false", tr("SETTINGS_CHAT_REMEMBER"), func(): set_chat_private(false)),
+		_chip("chat:true", tr("CHAT_CONSENT_PRIVATE"), func(): set_chat_private(true)),
+	]))
+	v.add_child(_note(tr("SETTINGS_CHAT_HINT")))
+
+
+func set_chat_private(on: bool) -> void:
+	ChatMe.set_private(on)
+	_refresh()
+
+
+func _usage_section() -> void:
+	var v := _section(tr("TELEMETRY_TOGGLE"))
+	v.add_child(_row([
+		_chip("tm:true", tr("PREFS_SUGGEST_ON"), func(): set_usage(true)),
+		_chip("tm:false", tr("PREFS_SUGGEST_OFF"), func(): set_usage(false)),
+	]))
+	v.add_child(_note(tr("TELEMETRY_TOGGLE_HINT")))
+	id_l = _note(tr("TELEMETRY_ID") % Telemetry.install_id(), 10)
+	v.add_child(id_l)
+	v.add_child(Kit.button(tr("TELEMETRY_DELETE"), Color("f3ecff"), delete_usage, PURPLE, 40, 14))
+	tm_status = _note("", 11)
+	v.add_child(tm_status)
+
+
+func set_usage(on: bool) -> void:
+	Telemetry.set_enabled(on)
+	_refresh()
+
+
+func delete_usage() -> void:
+	Telemetry.request_deletion()
+	tm_status.text = tr("TELEMETRY_DELETED")
+	id_l.text = tr("TELEMETRY_ID") % Telemetry.install_id()
+
+
+func _privacy_section() -> void:
+	var v := _section(tr("SETTINGS_PRIVACY"))
+	privacy_box = v.get_parent()
+	v.add_child(Kit.text(tr("SETTINGS_PRIVACY_CHAT"), 13, INK, true))
+	v.add_child(_note(tr("PRIVACY_CHAT"), 13))
+	v.add_child(Kit.text(tr("SETTINGS_PRIVACY_USAGE"), 13, INK, true))
+	v.add_child(_note(tr("TELEMETRY_NOTICE"), 13))
+	v.add_child(_link(tr("TELEMETRY_NOTICE_MORE") + " ›", func(): OS.shell_open(TelemetryNotice.PRIVACY_URL)))
+
+
+func _reset_section() -> void:
+	var v := _section(tr("SETTINGS_RESET"))
+	v.add_child(_note(tr("SETTINGS_RESET_BODY")))
+	v.add_child(Kit.button(tr("SETTINGS_RESET"), Color("fdecea"), ask_reset, RED, 40, 14))
+
+
+func _refresh() -> void:
+	var state := {"lang:en": Kit.is_en(), "lang:ja": not Kit.is_en(), "chat:true": ChatMe.is_private(), "chat:false": not ChatMe.is_private(),
+		"tm:true": Telemetry.is_enabled(), "tm:false": not Telemetry.is_enabled()}
+	for k in chips:
+		_chip_style(chips[k], state.get(k, false))
+
+
+# ---------------------------------------------------------------- はじめからやり直す
+
+func ask_reset() -> void:
+	if confirm and is_instance_valid(confirm):
+		return
+	confirm = ColorRect.new()
+	(confirm as ColorRect).color = Color(0.12, 0.1, 0.2, 0.55)
+	confirm.set_anchors_preset(Control.PRESET_FULL_RECT)
+	confirm.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(confirm)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color.WHITE, 22, 0.2, Vector2(18, 14)))
+	p.position = Vector2(24, 220)
+	p.size = Vector2(312, 0)
+	confirm.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 8)
+	p.add_child(v)
+	v.add_child(Kit.text(tr("SETTINGS_RESET_Q"), 18, INK, true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(_note(tr("SETTINGS_RESET_BODY"), 13))
+	v.add_child(Kit.button(tr("SETTINGS_RESET_YES"), RED, reset_game, Color.WHITE, 44, 15))
+	v.add_child(_link(tr("SETTINGS_CANCEL"), func():
+		confirm.queue_free()
+		confirm = null, SUB))
+	Kit.keep_fit(p, func():
+		p.size.y = 0
+		p.position.y = (640.0 - p.size.y) / 2.0)
+
+
+## この端末のゲームの記録を消して、はじめから（診断から）。利用データの ID・送る設定・言語は残す
+func reset_game() -> void:
+	SettingsScreen.erase_saves()
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("location.hash = ''; location.reload()")
+	else:
+		OS.set_restart_on_exit(true, OS.get_cmdline_args())
+		get_tree().quit()
+
+
+## user:// の記録（.json）を消す。dir はテスト用
+static func erase_saves(dir := "user://") -> Array:
+	var gone: Array = []
+	for f in DirAccess.get_files_at(dir):
+		if f.get_extension() == "json" and not KEEP_ON_RESET.has(f):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(f)))
+			gone.append(f)
+	return gone
+
+
+# ---------------------------------------------------------------- 閉じる
+
+func close() -> void:
+	if main:
+		main.go("garden")
+		return
+	var m := _find_main()
+	queue_free()
+	# 言語を変えたら、下の画面をその言語で作り直す
+	if lang_changed and m:
+		m.go(m.current_name, true)
+
+
+func _find_main() -> Node:
+	var n := get_parent()
+	while n:
+		if n.has_method("go") and "current_name" in n:
+			return n
+		n = n.get_parent()
+	return null
+
+
+# ---------------------------------------------------------------- 確認用
+
+func demo_privacy() -> void:
+	focus = "privacy"
+	_scroll_to_privacy()
+
+
+func demo_reset() -> void:
+	ask_reset()

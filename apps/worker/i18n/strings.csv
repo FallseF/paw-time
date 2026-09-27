@@ -1740,7 +1740,7 @@ DEMO3_FINAL_TITLE,That's a day with Paw Time,これが Paw Time の一日
 DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.","仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。"
 DEMO3_RECRUIT,See the Recruit view,Recruit の見え方を見る
 DEMO3_KEEP,Keep playing,このまま遊ぶ
-TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in Work conditions.","Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。「働く条件」でいつでもオフにできます。"
+TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in My page.",Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。マイページでいつでもオフにできます。
 TELEMETRY_NOTICE_OK,OK,OK
 TELEMETRY_NOTICE_MORE,Privacy notice,プライバシーについて
 TELEMETRY_TOGGLE,Share anonymous usage,匿名の利用データを送る
@@ -1748,5 +1748,22 @@ TELEMETRY_TOGGLE_HINT,Helps us improve Paw Time. No names or location.,Paw Time 
 TELEMETRY_ID,Your usage ID: %s,利用データのID: %s
 TELEMETRY_DELETE,Delete my usage data,利用データを削除
 TELEMETRY_DELETED,Deleted. A new ID was created.,削除しました。新しいIDを作りました。
+SETTINGS_TITLE,My page,マイページ
+SETTINGS_NAME,Your partner's name,相棒の名前
+SETTINGS_NAME_SAVE,Save,保存
+SETTINGS_SAVED,Saved.,保存しました。
+SETTINGS_LANG,Language,言語
+SETTINGS_CHAT,Chat with your cat,相棒とのチャット
+SETTINGS_CHAT_REMEMBER,Remember,覚えてOK
+SETTINGS_CHAT_HINT,Remember: your cat uses what you share to find better jobs. Just between us: it remembers nothing and sends nothing.,覚えてOK：話したことを、合う仕事さがしに使います。ふたりだけのひみつ：何も覚えず、どこにも送りません。
+SETTINGS_PRIVACY,Privacy,プライバシー
+SETTINGS_PRIVACY_CHAT,Chat,チャット
+SETTINGS_PRIVACY_USAGE,Usage data,利用データ
+PRIVACY_CHAT,"Your cat remembers what you share to find jobs that fit you. Shops never see your words — only anonymous totals when 5+ workers say the same, or things you choose to tell them.",相棒は、あなたに合う仕事をさがすために、話してくれたことを覚えておきます。お店にあなたの言葉が見えることはありません。見えるのは、同じ声が5人以上そろったときの名前のない合計か、あなたが伝えると決めたことだけです。
+SETTINGS_RESET,Start over,はじめからやり直す
+SETTINGS_RESET_Q,Start over?,はじめからにする？
+SETTINGS_RESET_BODY,"Erases your partner, island, obake, shifts and chats on this device. Your language and usage-data choice stay.",この端末の相棒・島・おばけ・シフト・チャットを消します。言語と利用データの設定は残ります。
+SETTINGS_RESET_YES,Erase and start over,消してやり直す
+SETTINGS_CANCEL,Cancel,やめる
 DEMO3_CONFIRM_TITLE,Start the 3-minute demo?,3分デモをはじめる？
 DEMO3_CONFIRM_BODY,Your garden and Book will be replaced by the demo's.,いまの庭と図鑑は、デモのものに置きかわります

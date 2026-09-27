@@ -1,7 +1,7 @@
 class_name TelemetryNotice
 extends CanvasLayer
 ## 匿名の利用データ（Telemetry）のお知らせ。はじめて開いたときに一度だけ、下からの小さなカード。
-## 「OK」で閉じる。「プライバシーについて」は insights の /privacy。送る／送らないは「働く条件」の画面（screen_job_prefs）。
+## 「OK」で閉じる。「プライバシーについて」は insights の /privacy。送る／送らない・削除はマイページ（screen_settings）。
 ## 送らない設定（OBAKE_NOSAVE・OBAKE_NOTELEMETRY、またはオフ）のときは出さない。見たことは user://telemetry_notice.json に
 
 const PATH := "user://telemetry_notice.json"
