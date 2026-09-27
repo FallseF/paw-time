@@ -1,13 +1,14 @@
 class_name JobPrefs
 ## 働く条件（プレイヤーが入力する希望）。user://job_prefs.json に置く（ゲーム本体のセーブとは別）。
 ## 口座・カード番号など、お金の受け取りの本物の情報は、聞かないし持たない。受け取り方の「希望」（日払い・週払い・月払い）だけ。
-## 形: {area, slots: ["<曜日>:<時間帯>", …]（週のマス。曜日 0=月、時間帯 morning|day|evening|night）, days, windows, min_wage: 円/時, pay: "daily"|"weekly"|"monthly"|"any", suggest: bool}
+## 形: {area, slots: ["<曜日>:<時間帯>", …]（週のマス。曜日 0=月、時間帯 morning|day|evening|night）, days, windows, min_wage: 円/時, min_wage_usd: ドル/時（英語＝SF の見本）, pay: "daily"|"weekly"|"monthly"|"any", suggest: bool}
+## 受け取り方の id は日本も SF も同じ。英語の画面では daily＝Instant pay、monthly＝Biweekly と読む（JOB_PAY_*）
 ## days と windows は slots から作る（どの曜日・どの時間帯が一つでもあるか）。slots の無い古い保存は days × windows を slots にする
 ## suggest＝相棒が毎日の求人を知らせるか（Off なら毎日の求人カードは出さない。自分で入れたシフトと評価はそのまま）
 
 const PATH := "user://job_prefs.json"
 
-## 時間帯（JST の時。night は 22 時〜翌 5 時 = 29 時）
+## 時間帯（見本の町の時刻。night は 22 時〜翌 5 時 = 29 時）
 const WINDOWS := {
 	"morning": [6, 12],
 	"day": [11, 17],
@@ -18,15 +19,21 @@ const WINDOW_ORDER := ["morning", "day", "evening", "night"]
 const PAYS := ["daily", "weekly", "monthly"]
 ## 候補の地域（自由入力もできる）。表示名は JOB_AREA_<ID>
 const AREAS := ["shibuya", "shinjuku", "ikebukuro", "kichijoji", "yokohama", "umeda"]
+## 英語（サンフランシスコ）の地区。表示名は JOB_AREA_<ID>。はじめの 6 つを候補のチップに出す
+const AREAS_SF := ["mission", "soma", "north_beach", "sunset", "richmond", "hayes_valley", "castro", "chinatown", "dogpatch",
+	"bayview", "noe_valley", "haight", "marina", "japantown"]
 const WAGE_MIN := 1000
 const WAGE_MAX := 2000
+const WAGE_MIN_USD := 20.0
+const WAGE_MAX_USD := 28.0
+const WAGE_STEP_USD := 0.5
 
 ## テストで本物に触れないよう差し替えられる
 static var path := PATH
 
 
 static func defaults() -> Dictionary:
-	var d := {"area": "", "days": [0, 1, 2, 3, 4, 5, 6], "windows": ["day", "evening"], "min_wage": 1200, "pay": "any", "suggest": true}
+	var d := {"area": "", "days": [0, 1, 2, 3, 4, 5, 6], "windows": ["day", "evening"], "min_wage": 1200, "min_wage_usd": 21.0, "pay": "any", "suggest": true}
 	d["slots"] = grid(d.days, d.windows)
 	return d
 
@@ -113,10 +120,23 @@ static func normalize(p: Dictionary) -> Dictionary:
 	d.days = days
 	d.windows = WINDOW_ORDER.filter(func(w): return wins.has(w))
 	d.min_wage = clampi(int(p.get("min_wage", 1200)), WAGE_MIN, WAGE_MAX)
+	d.min_wage_usd = clampf(snappedf(float(p.get("min_wage_usd", 21.0)), 0.25), WAGE_MIN_USD, WAGE_MAX_USD)
 	var pay := String(p.get("pay", "any"))
 	d.pay = pay if pay in PAYS else "any"
 	d.suggest = bool(p.get("suggest", true))
 	return d
+
+
+## その通貨での最低時給（JPY＝min_wage、USD＝min_wage_usd）
+static func min_wage_in(p: Dictionary, currency: String) -> float:
+	if currency == Money.USD:
+		return float(p.get("min_wage_usd", 21.0))
+	return float(p.get("min_wage", 1200))
+
+
+## 今の言語の町の地区の候補
+static func areas() -> Array:
+	return AREAS_SF if Kit.is_en() else AREAS
 
 
 ## 毎日の求人の知らせを出すか
@@ -128,6 +148,6 @@ static func suggest_on() -> bool:
 static func area_label(area: String) -> String:
 	if area == "":
 		return I18n.t("JOB_AREA_NEARBY")
-	if area in AREAS:
+	if area in AREAS or area in AREAS_SF:
 		return I18n.t("JOB_AREA_" + area.to_upper())
 	return area

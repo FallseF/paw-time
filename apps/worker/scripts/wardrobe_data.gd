@@ -143,5 +143,5 @@ static func how_to_get(it: Dictionary) -> String:
 		"shop":
 			return TranslationServer.translate("%s Paw Coins") % p[1]
 		"premium":
-			return "$%s / ¥%s" % [p[1], p[2]]
+			return Money.fmt(float(p[1]), Money.USD) if Money.current() == Money.USD else Money.fmt(float(p[2]), Money.JPY)
 	return ""

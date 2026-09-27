@@ -58,6 +58,7 @@ func _pay() -> void:
 
 func _days() -> void:
 	var JD = load("res://scripts/job_desk.gd") # JobDesk は GameState（autoload）を使うので、読み込みは実行時に（test_jobs と同じ）
+	TranslationServer.set_locale("ja") # 日本語＝日本の見本（日本時間）。英語＝SF の時刻は test_jobs で
 	var jst := JobListings.JST
 	var d0 := 1790035200 - jst # 日本時間のある日の 0 時
 	_check(JD.day0_of(d0 + 23.5 * 3600) == d0 and JD.day0_of(d0 + 24 * 3600) == d0 + 86400, "day0_of splits at JST midnight")
@@ -87,6 +88,7 @@ func _days() -> void:
 	_check(JD.clock_range(j.call("x", 0, 9.5)) == "09:30–13:30", "clock range %s" % JD.clock_range(j.call("x", 0, 9.5)))
 	var lbl: String = JD.day_label(d0)
 	_check(lbl.begins_with(TranslationServer.translate("JOB_WD_%d" % JobListings.weekday_mon(d0))) and lbl.contains("/"), "day label %s" % lbl)
+	TranslationServer.set_locale("en")
 
 
 # ---------------------------------------------------------------- 3. 友だちの島

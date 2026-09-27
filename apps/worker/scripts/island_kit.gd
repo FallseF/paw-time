@@ -231,7 +231,9 @@ static func spend(coins: int, need: Dictionary, why := "") -> bool:
 
 # ---------------------------------------------------------------- 島を広げる（プレイヤーが選ぶ）
 # 岸の「＋」をタップ → 値段のカード → 決める → 海から陸がせり上がる。
-# 場所は決まった 7 か所（向き・陸か小島か）。広げた順に保存し、シェアのコード（版4）にも入る。
+# 場所は決まった 20 か所。内側の 7 か所（はじめからの場所）の外に、輪のように外へ外へ広がる。
+# 外側の場所は、つながる内側の場所（needs）を広げてから。dist は島の岸（段の半径）から中心までの距離。
+# 広げた順に保存し、シェアのコード（版4）にも入る（EXPANSIONS の並び順が番号。並びは変えず、足すのは後ろへ）。
 
 const EXPANSIONS := [
 	{"id": "plot_front_right", "kind": "plot", "angle": 55.0},
@@ -241,8 +243,23 @@ const EXPANSIONS := [
 	{"id": "plot_back_right", "kind": "plot", "angle": -30.0},
 	{"id": "islet_front", "kind": "islet", "angle": 92.0},
 	{"id": "islet_left", "kind": "islet", "angle": 196.0},
+	# 2 つめの輪
+	{"id": "plot_far_right", "kind": "plot", "angle": 30.0, "dist": 1.7, "needs": "plot_front_right"},
+	{"id": "plot_far_front_right", "kind": "plot", "angle": 64.0, "dist": 2.5, "needs": "plot_front_right"},
+	{"id": "plot_far_front_left", "kind": "plot", "angle": 118.0, "dist": 2.5, "needs": "plot_front_left"},
+	{"id": "plot_far_left", "kind": "plot", "angle": 158.0, "dist": 2.4, "needs": "plot_left"},
+	{"id": "plot_far_back_left", "kind": "plot", "angle": 222.0, "dist": 2.3, "needs": "plot_back_left"},
+	{"id": "plot_far_back_right", "kind": "plot", "angle": -12.0, "dist": 2.3, "needs": "plot_back_right"},
+	{"id": "islet_front_far", "kind": "islet", "angle": 96.0, "dist": 5.8, "needs": "islet_front"},
+	{"id": "islet_left_far", "kind": "islet", "angle": 208.0, "dist": 5.5, "needs": "islet_left"},
+	# 3 つめの輪
+	{"id": "plot_rim_right", "kind": "plot", "angle": 44.0, "dist": 3.9, "needs": "plot_far_right"},
+	{"id": "plot_rim_front_right", "kind": "plot", "angle": 74.0, "dist": 4.5, "needs": "plot_far_front_right"},
+	{"id": "plot_rim_front_left", "kind": "plot", "angle": 113.0, "dist": 4.5, "needs": "plot_far_front_left"},
+	{"id": "plot_rim_left", "kind": "plot", "angle": 145.0, "dist": 4.3, "needs": "plot_far_left"},
+	{"id": "islet_far_right", "kind": "islet", "angle": 6.0, "dist": 4.9, "needs": "plot_far_right"},
 ]
-const MAX_EXPANSIONS := 7
+const MAX_EXPANSIONS := 20
 const PLOT_R := 1.45
 const ISLET_R := 1.15
 
@@ -262,12 +279,15 @@ static func expansion(id: String) -> Dictionary:
 	return {}
 
 
-## n 回目（0 から）の広げる値段。小島は貝がらと木材が多め。はじめの 1〜2 回はやさしく
+## n 回目（0 から）の広げる値段。小島は貝がらと木材が多め。はじめの 1〜2 回はやさしく。
+## 7 回目より先（外の輪）は、上がり方をゆるやかに（コイン +18・材料は 2 回に 1 つずつ）
 static func expansion_cost(id: String, n := -1) -> Dictionary:
 	if n < 0:
 		n = expanded.size()
 	var e := expansion(id)
-	var c := {"coins": 30 + 25 * n, "mats": {"wood": 2 + n, "stone": 2 + n}}
+	var inner := mini(n, 6)
+	var outer := maxi(n - 6, 0)
+	var c := {"coins": 30 + 25 * inner + 18 * outer, "mats": {"wood": 2 + inner + outer / 2, "stone": 2 + inner + (outer + 1) / 2}}
 	if e.get("kind", "") == "islet":
 		c.coins += 30
 		c.mats.wood += 3
@@ -288,7 +308,10 @@ static func expansion_missing(id: String) -> Dictionary:
 
 static func can_expand(id: String) -> bool:
 	_ensure()
-	return not expansion(id).is_empty() and not expanded.has(id) and expanded.size() < MAX_EXPANSIONS
+	var e := expansion(id)
+	if e.is_empty() or expanded.has(id) or expanded.size() >= MAX_EXPANSIONS:
+		return false
+	return String(e.get("needs", "")) == "" or expanded.has(e.needs)
 
 
 static func expand(id: String) -> bool:
@@ -305,12 +328,19 @@ static func expand(id: String) -> bool:
 ## 広げた陸の円（中心 x, z と半径）。島の半径 R（地形の段）に合わせて外へ置く。小島は橋の両端も返す
 static func expansion_shape(id: String, R: float) -> Dictionary:
 	var e := expansion(id)
+	if e.is_empty():
+		return {}
 	var a := deg_to_rad(float(e.angle))
 	var dir := Vector3(cos(a), 0, sin(a))
 	if e.kind == "islet":
-		var c := dir * (R + 2.9)
+		var c := dir * (R + float(e.get("dist", 2.9)))
+		if String(e.get("needs", "")) != "":
+			# 外の小島：つながる陸（needs）から橋をかける
+			var p := expansion_shape(e.needs, R)
+			var bd: Vector3 = (c - p.center).normalized()
+			return {"center": c, "r": ISLET_R, "dir": dir, "bridge_from": p.center + bd * (float(p.r) - 0.25), "bridge_to": c - bd * (ISLET_R - 0.25)}
 		return {"center": c, "r": ISLET_R, "dir": dir, "bridge_from": dir * (R - 0.25), "bridge_to": c - dir * (ISLET_R - 0.25)}
-	return {"center": dir * (R + 0.55), "r": PLOT_R, "dir": dir}
+	return {"center": dir * (R + float(e.get("dist", 0.55))), "r": PLOT_R, "dir": dir}
 
 
 ## 陸の円の一覧 [Vector3(x, z, r)]：段 2 の小島と、広げた陸・小島（list を渡すと、その並び）

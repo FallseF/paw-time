@@ -2,10 +2,14 @@ class_name JobListings
 ## 仕事さがしの見本の求人（MOCK）。本物の求人ではない。画面には「見本の求人」と小さく出す。
 ## 64 件の店（カフェ・居酒屋・コンビニ・倉庫・パン屋・スーパー・飲食店・そのほか）から、
 ## プレイヤーの条件（JobPrefs：地域・曜日・時間帯・最低時給・受け取り方）に合うものだけを選んで、日付と時刻を付ける。
-## 1 件: {id, listing, role, title, place, area, start, end（unix 秒）, wage（円/時）, pay, line, sample: true}
-## 時刻は日本時間（JST, UTC+9）で決める（見本の求人は日本の店なので、端末のタイムゾーンに左右されない）。
+## 1 件: {id, listing, role, title, place, area, start, end（unix 秒）, wage, currency, tz, pay, line, sample: true}
+## 言語で見本の町が変わる：日本語＝日本（円・日本時間 Asia/Tokyo）、英語＝サンフランシスコ（US ドル・America/Los_Angeles）。
+## 店の id は同じ（テレメトリーの shop_id・保存・お店の島がそのまま使える）。名前・地区・時給・受け取り方の呼び名だけが変わる。
+## 時刻はその町の時刻で決める（端末のタイムゾーンに左右されない）。currency / tz の無い古い保存は JPY・日本時間。
 
 const JST := 9 * 3600
+const TZ_JP := "Asia/Tokyo"
+const TZ_SF := "America/Los_Angeles"
 const ROLES := ["register", "dish", "hall", "kitchen", "stock"]
 
 ## 店の名前は i18n/strings.csv の JOB_STORE_<ID>（store_name）。
@@ -85,12 +89,159 @@ const LIST := [
 	["ot_awa", "shop", ["register", "dish"], 1170, 1380, "dwm", "MDE", 4],
 ]
 
+## 英語＝サンフランシスコの見本（同じ店の id に、SF の店名・地区・US ドルの時給・受け取り方をあてる）。
+## 店名は i18n/strings.csv の JOB_STORE_<ID> の英語。Recruit の見え方（insights の SF_SHOPS）と同じ 10 店を含む。
+## [地区, 昼の時給の下, 上（USD/時）, 受け取り方（d 即日払い Instant pay / w 週払い / m 隔週払い Biweekly。英語の画面では JOB_PAY_* がそう読める）]。夕方・夜は +SF_EVENING_PLUS。
+## SF の最低賃金は $19.61/時（2026-07-01 から、sf.gov。insights 側で確認済み）。どの求人もこれを下回らない。
+const SF_MIN_WAGE := 19.61
+const SF_EVENING_PLUS := 1.5
+const SF := {
+	# カフェ
+	"cafe_komorebi": ["soma", 21.0, 23.0, "wm"], # Sunlit Pages Bookstore Café
+	"cafe_sunnyside": ["mission", 21.0, 22.5, "dm"], # Sunnyside Boba
+	"cafe_mori": ["sunset", 21.0, 22.75, "wm"],
+	"cafe_tsuki": ["hayes_valley", 21.5, 23.5, "m"],
+	"cafe_nekomimi": ["haight", 21.0, 22.5, "dwm"],
+	"cafe_harbor": ["marina", 21.5, 23.25, "m"],
+	"cafe_hoshizora": ["castro", 21.0, 22.75, "wm"],
+	"cafe_matcha": ["richmond", 21.25, 23.0, "dw"],
+	"cafe_beanbag": ["dogpatch", 21.75, 23.75, "m"],
+	"cafe_fuwari": ["noe_valley", 21.0, 23.0, "wm"],
+	# 居酒屋 → SF の居酒屋・タケリア・パブ
+	"izk_torimaru": ["mission", 21.5, 24.0, "dwm"], # La Brasita Taqueria
+	"izk_chochin": ["north_beach", 21.5, 23.75, "wm"], # Paper Lantern Izakaya Bar
+	"izk_kemuri": ["soma", 22.0, 24.5, "m"], # Ember Izakaya
+	"izk_hanabi": ["richmond", 21.5, 23.5, "d"],
+	"izk_daruma": ["japantown", 21.5, 23.75, "wm"],
+	"izk_minato": ["dogpatch", 21.75, 24.0, "dw"],
+	"izk_hinoki": ["hayes_valley", 22.0, 24.5, "m"],
+	"izk_tanuki": ["castro", 21.5, 23.5, "wm"],
+	# コンビニ → コーナーマーケット
+	"cvs_hoshi": ["soma", 21.0, 23.5, "wm"], # Starlight Corner Market
+	"cvs_machikado": ["mission", 21.0, 23.25, "m"], # 24th Street Market
+	"cvs_kurumi": ["noe_valley", 21.0, 22.75, "wm"],
+	"cvs_tsuki24": ["soma", 21.5, 24.0, "dw"],
+	"cvs_asahi": ["sunset", 21.0, 22.75, "m"],
+	"cvs_pocket": ["haight", 21.5, 23.75, "dwm"],
+	"cvs_sakura": ["japantown", 21.0, 22.5, "wm"],
+	# 倉庫・物流
+	"wh_kita": ["bayview", 22.5, 24.5, "dw"],
+	"wh_minato": ["dogpatch", 22.75, 24.5, "dwm"],
+	"wh_shiori": ["soma", 22.0, 23.5, "wm"],
+	"wh_hayate": ["bayview", 23.0, 24.5, "d"],
+	"wh_tsubame": ["dogpatch", 22.5, 24.25, "dw"],
+	"wh_nuno": ["soma", 22.0, 23.25, "wm"],
+	"wh_omocha": ["bayview", 22.0, 23.5, "dwm"],
+	# パン屋
+	"bk_komugi": ["north_beach", 21.0, 23.0, "wm"], # Wheatfield Bakery
+	"bk_mori": ["richmond", 21.0, 22.75, "m"],
+	"bk_melon": ["chinatown", 21.25, 23.0, "dw"],
+	"bk_tsukiakari": ["hayes_valley", 21.0, 23.0, "wm"],
+	"bk_koguma": ["sunset", 21.0, 22.5, "m"],
+	"bk_tomato": ["marina", 21.0, 23.0, "dwm"],
+	# スーパー・ドラッグストア
+	"sm_maruya": ["north_beach", 21.0, 23.5, "wm"], # Columbus Avenue Grocery
+	"sm_midori": ["mission", 21.0, 22.75, "d"],
+	"sm_kaede": ["richmond", 21.25, 23.75, "m"],
+	"sm_tane": ["haight", 21.5, 23.25, "wm"],
+	"sm_hakka": ["castro", 21.5, 24.0, "m"],
+	# 飲食店
+	"rs_nikoniko": ["mission", 21.0, 23.75, "wm"], # Smiley's Diner
+	"rs_yuge": ["japantown", 21.5, 23.75, "dw"],
+	"rs_tsurutsuru": ["sunset", 21.0, 22.75, "wm"],
+	"rs_umi": ["marina", 21.25, 23.5, "m"],
+	"rs_hoshi": ["soma", 21.0, 23.0, "dwm"],
+	"rs_hanamaru": ["chinatown", 21.25, 23.25, "wm"],
+	"rs_teppan": ["north_beach", 21.0, 23.25, "m"],
+	"rs_kiri": ["hayes_valley", 21.0, 22.75, "wm"],
+	"rs_tamago": ["noe_valley", 21.0, 23.0, "d"],
+	# そのほか
+	"ot_shioridou": ["mission", 21.0, 22.75, "m"],
+	"ot_tsukikage": ["castro", 21.0, 23.25, "wm"],
+	"ot_utaya": ["japantown", 21.5, 24.0, "dwm"],
+	"ot_hotel": ["soma", 21.5, 23.5, "wm"],
+	"ot_ohisama": ["richmond", 21.0, 22.75, "d"],
+	"ot_yuki": ["north_beach", 21.0, 22.5, "dw"],
+	"ot_hanahana": ["noe_valley", 21.0, 22.75, "m"],
+	"ot_mimi": ["haight", 21.0, 23.0, "wm"],
+	"ot_pon": ["sunset", 21.0, 22.75, "dw"],
+	"ot_wa": ["richmond", 21.0, 23.0, "m"],
+	"ot_enpitsu": ["chinatown", 21.0, 22.5, "wm"],
+	"ot_awa": ["mission", 21.0, 22.75, "dwm"],
+}
+
 const PAY_CODE := {"d": "daily", "w": "weekly", "m": "monthly"}
 const WIN_CODE := {"M": "morning", "D": "day", "E": "evening", "N": "night"}
 
 
 static func count() -> int:
 	return LIST.size()
+
+
+# ---------------------------------------------------------------- 町（言語で決まる）と時刻
+
+## "sf"（英語）か "jp"（日本語）
+static func region() -> String:
+	return "sf" if Kit.is_en() else "jp"
+
+
+static func _reg(r: String) -> String:
+	return r if r in ["sf", "jp"] else region()
+
+
+static func tz_of_region(r := "") -> String:
+	return TZ_SF if _reg(r) == "sf" else TZ_JP
+
+
+static func currency_of_region(r := "") -> String:
+	return Money.USD if _reg(r) == "sf" else Money.JPY
+
+
+## シフト・求人の時刻の町（無ければ日本時間：この欄ができる前の保存）
+static func tz_of(d: Dictionary) -> String:
+	return TZ_SF if String(d.get("tz", TZ_JP)) == TZ_SF else TZ_JP
+
+
+## その時刻の UTC からのずれ（秒）。tz が空なら今の言語の町。
+## America/Los_Angeles：3 月の第 2 日曜 2:00（PST）〜 11 月の第 1 日曜 2:00（PDT）は夏時間（UTC-7）、ほかは UTC-8
+static func tz_offset(unix: float, tz := "") -> int:
+	var z := tz if tz != "" else tz_of_region()
+	if z != TZ_SF:
+		return JST
+	var y: int = Time.get_datetime_dict_from_unix_time(int(unix) - 8 * 3600).year
+	var start := _nth_sunday(y, 3, 2) + 2 * 3600 + 8 * 3600 # 2:00 PST
+	var end := _nth_sunday(y, 11, 1) + 2 * 3600 + 7 * 3600 # 2:00 PDT
+	return -7 * 3600 if unix >= start and unix < end else -8 * 3600
+
+
+## その年・月の第 n 日曜の 0 時（UTC の暦で。unix 秒）
+static func _nth_sunday(y: int, month: int, n: int) -> int:
+	var first := int(Time.get_unix_time_from_datetime_dict({"year": y, "month": month, "day": 1, "hour": 0, "minute": 0, "second": 0}))
+	var wd: int = Time.get_datetime_dict_from_unix_time(first).weekday # 0 = 日曜
+	return first + ((7 - wd) % 7 + (n - 1) * 7) * 86400
+
+
+## その町の暦・時刻（year, month, day, hour, minute, weekday…）
+static func local(unix: float, tz := "") -> Dictionary:
+	return Time.get_datetime_dict_from_unix_time(int(unix) + tz_offset(unix, tz))
+
+
+## その町の、その日の 0 時（unix 秒）
+static func day0(unix: float, tz := "") -> int:
+	var o := tz_offset(unix, tz)
+	var d := int(floor((unix + o) / 86400.0)) * 86400 - o
+	return d + (o - tz_offset(d, tz)) # 夏時間の切りかわる日も、その日の 0 時に
+
+
+## d0 から n 日あとの 0 時（夏時間の切りかわりをまたいでも暦の 0 時）
+static func next_day0(d0: int, n: int, tz := "") -> int:
+	return day0(d0 + n * 86400 + 12 * 3600, tz)
+
+
+## その日（d0）の h 時（24 時以上は翌日）
+static func at_hour(d0: int, h: float, tz := "") -> int:
+	var t := d0 + int(h * 3600)
+	return t + (tz_offset(d0, tz) - tz_offset(t, tz))
 
 
 ## テレメトリーの props に足す shop_id（見本の店の id だけ。自分で入れた場所などは付けない）
@@ -108,9 +259,12 @@ static func entry(listing_id: String) -> Array:
 	return []
 
 
-static func pays_of(e: Array) -> Array:
+static func pays_of(e: Array, r := "") -> Array:
 	var out: Array = []
-	for c in String(e[5]):
+	var codes := String(e[5])
+	if _reg(r) == "sf" and SF.has(e[0]):
+		codes = String(SF[e[0]][3])
+	for c in codes:
 		out.append(PAY_CODE[c])
 	return out
 
@@ -122,11 +276,18 @@ static func windows_of(e: Array) -> Array:
 	return out
 
 
+## その町での昼の時給の [下, 上]（円なら int、ドルなら float）
+static func wage_range(e: Array, r := "") -> Array:
+	if _reg(r) == "sf" and SF.has(e[0]):
+		return [float(SF[e[0]][1]), float(SF[e[0]][2])]
+	return [int(e[3]), int(e[4])]
+
+
 ## その店が条件に合うか（日付を付ける前の、店そのものの条件：時給・受け取り方・時間帯）
-static func listing_fits(e: Array, prefs: Dictionary) -> bool:
-	if int(e[4]) < int(prefs.min_wage):
+static func listing_fits(e: Array, prefs: Dictionary, r := "") -> bool:
+	if float(wage_range(e, r)[1]) < JobPrefs.min_wage_in(prefs, currency_of_region(r)):
 		return false
-	if prefs.pay != "any" and not pays_of(e).has(prefs.pay):
+	if prefs.pay != "any" and not pays_of(e, r).has(prefs.pay):
 		return false
 	if prefs.windows.is_empty():
 		return true
@@ -138,19 +299,25 @@ static func listing_fits(e: Array, prefs: Dictionary) -> bool:
 
 ## 条件に合う仕事を count 件つくる（足りなければ、ある分だけ）。
 ## base は「いま」の unix 秒（翌日から 7 日のうちの、選べる曜日に入れる）。seed で毎日の顔ぶれを変える。
-static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1.0) -> Array:
+## region：""（今の言語の町）/ "jp" / "sf"
+static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1.0, r := "") -> Array:
+	var reg := _reg(r)
+	var tz := tz_of_region(reg)
 	var prefs := JobPrefs.normalize(prefs_in)
 	var now := base if base >= 0 else Time.get_unix_time_from_system()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_n
-	var pool: Array = LIST.filter(func(e): return listing_fits(e, prefs))
+	var pool: Array = LIST.filter(func(e): return listing_fits(e, prefs, reg))
 	# 並びを seed で混ぜる
 	for i in range(pool.size() - 1, 0, -1):
 		var j := rng.randi_range(0, i)
 		var tmp = pool[i]
 		pool[i] = pool[j]
 		pool[j] = tmp
-	var dates := _open_dates(now, prefs.days)
+	# SF：選んだ地区の店を先に（ほかの地区の店も出す）
+	if reg == "sf" and prefs.area in JobPrefs.AREAS_SF:
+		pool = pool.filter(func(e): return SF[e[0]][0] == prefs.area) + pool.filter(func(e): return SF[e[0]][0] != prefs.area)
+	var dates := _open_dates(now, prefs.days, tz)
 	var out: Array = []
 	if dates.is_empty():
 		return out
@@ -158,33 +325,35 @@ static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1
 		if out.size() >= count_n:
 			break
 		# 週のマス：その店の時間帯が、その曜日に選んだ時間帯と重なる日だけ
-		var ok_dates: Array = dates.filter(func(d0): return windows_of(e).any(func(w): return w in JobPrefs.windows_on(prefs, weekday_mon(d0))))
+		var ok_dates: Array = dates.filter(func(d0): return windows_of(e).any(func(w): return w in JobPrefs.windows_on(prefs, weekday_mon(d0, tz))))
 		if ok_dates.is_empty():
 			continue
-		out.append(_make_job(e, prefs, ok_dates[rng.randi_range(0, ok_dates.size() - 1)], rng))
+		out.append(_make_job(e, prefs, ok_dates[rng.randi_range(0, ok_dates.size() - 1)], rng, reg))
 	out.sort_custom(func(a, b): return a.start < b.start)
 	return out
 
 
-## 翌日から 7 日のうち、選んだ曜日の日付（JST のその日の 0 時の unix 秒）
-static func _open_dates(now: float, days: Array) -> Array:
-	var today0 := int(floor((now + JST) / 86400.0)) * 86400 - JST
+## 翌日から 7 日のうち、選んだ曜日の日付（その町のその日の 0 時の unix 秒）
+static func _open_dates(now: float, days: Array, tz := "") -> Array:
+	var today0 := day0(now, tz)
 	var out: Array = []
 	for i in range(1, 8):
-		var d0 := today0 + i * 86400
-		if days.is_empty() or days.has(weekday_mon(d0)):
+		var d0 := next_day0(today0, i, tz)
+		if days.is_empty() or days.has(weekday_mon(d0, tz)):
 			out.append(d0)
 	return out
 
 
-## 月曜 = 0 … 日曜 = 6（JST）
-static func weekday_mon(unix: float) -> int:
-	var wd: int = Time.get_datetime_dict_from_unix_time(int(unix) + JST).weekday # 0 = 日曜
+## 月曜 = 0 … 日曜 = 6（その町の暦。tz が空なら今の言語の町）
+static func weekday_mon(unix: float, tz := "") -> int:
+	var wd: int = local(unix, tz).weekday # 0 = 日曜
 	return (wd + 6) % 7
 
 
-static func _make_job(e: Array, prefs: Dictionary, day0: int, rng: RandomNumberGenerator) -> Dictionary:
-	var allowed: Array = JobPrefs.windows_on(prefs, weekday_mon(day0))
+static func _make_job(e: Array, prefs: Dictionary, day0_t: int, rng: RandomNumberGenerator, r := "") -> Dictionary:
+	var reg := _reg(r)
+	var tz := tz_of_region(reg)
+	var allowed: Array = JobPrefs.windows_on(prefs, weekday_mon(day0_t, tz))
 	var wins: Array = windows_of(e).filter(func(w): return allowed.is_empty() or w in allowed)
 	var win: String = wins[rng.randi_range(0, wins.size() - 1)]
 	var span: Array = JobPrefs.WINDOWS[win]
@@ -193,24 +362,39 @@ static func _make_job(e: Array, prefs: Dictionary, day0: int, rng: RandomNumberG
 	var start_h: int = rng.randi_range(span[0], mini(span[1] - hours, 23))
 	var roles: Array = e[2]
 	var role: String = roles[rng.randi_range(0, roles.size() - 1)]
-	var lo: int = maxi(int(e[3]), int(prefs.min_wage))
-	var wage: int = int(round(rng.randi_range(lo, int(e[4])) / 10.0)) * 10
-	wage = clampi(wage, lo, int(e[4]))
-	# 夜（22 時〜）は深夜の割増つき（25%）。表示の時給にそのまま入れる
-	if win == "night":
-		wage = int(round(wage * 1.25 / 10.0)) * 10
-	var pays: Array = pays_of(e)
+	var wage = 0
+	if reg == "sf":
+		# SF：昼の時給＋夕方・夜は SF_EVENING_PLUS。25 セント刻み。最低賃金（SF_MIN_WAGE）を下回らない
+		var plus := SF_EVENING_PLUS if win in ["evening", "night"] else 0.0
+		var rg := wage_range(e, reg)
+		var hi: float = rg[1] + plus
+		var lo_f := maxf(maxf(rg[0] + plus, JobPrefs.min_wage_in(prefs, Money.USD)), SF_MIN_WAGE)
+		var w := snappedf(rng.randf_range(lo_f, hi), 0.25)
+		if w < lo_f:
+			w = ceilf(lo_f * 4.0) / 4.0
+		wage = clampf(w, lo_f, maxf(lo_f, hi))
+	else:
+		var lo: int = maxi(int(e[3]), int(prefs.min_wage))
+		var wj: int = int(round(rng.randi_range(lo, int(e[4])) / 10.0)) * 10
+		wj = clampi(wj, lo, int(e[4]))
+		# 夜（22 時〜）は深夜の割増つき（25%）。表示の時給にそのまま入れる
+		if win == "night":
+			wj = int(round(wj * 1.25 / 10.0)) * 10
+		wage = wj
+	var pays: Array = pays_of(e, reg)
 	var pay: String = prefs.pay if prefs.pay != "any" else pays[rng.randi_range(0, pays.size() - 1)]
-	var start := day0 + start_h * 3600
+	var start := at_hour(day0_t, start_h, tz)
 	var job := {
 		"id": "%s_%d_%d" % [e[0], start, rng.randi() % 1000],
 		"listing": e[0],
 		"role": role,
-		"area": prefs.area,
+		"area": String(SF[e[0]][0]) if reg == "sf" and SF.has(e[0]) else prefs.area,
 		"window": win,
 		"start": start,
 		"end": start + hours * 3600,
 		"wage": wage,
+		"currency": currency_of_region(reg),
+		"tz": tz,
 		"pay": pay,
 		"line_n": rng.randi_range(1, 3),
 		"sample": true,
@@ -236,6 +420,8 @@ static func maps_url(job: Dictionary) -> String:
 	var area := String(job.get("area", ""))
 	if area != "" or job.has("listing"):
 		q += " " + JobPrefs.area_label(area)
+	if tz_of(job) == TZ_SF:
+		q += " San Francisco"
 	return "https://www.google.com/maps/search/?api=1&query=" + q.strip_edges().uri_encode()
 
 
@@ -243,22 +429,37 @@ static func store_name(listing_id: String) -> String:
 	return I18n.t("JOB_STORE_" + listing_id.to_upper())
 
 
-## 表示用：「Tue 9/30 · 17:00–21:00」
+## 表示用：「Tue 9/30 · 17:00–21:00」（そのシフトの町の時刻）
 static func when_text(job: Dictionary) -> String:
-	var s := Time.get_datetime_dict_from_unix_time(int(job.start) + JST)
-	var e := Time.get_datetime_dict_from_unix_time(int(job.end) + JST)
-	var wd := I18n.t("JOB_WD_%d" % weekday_mon(job.start))
+	var tz := tz_of(job)
+	var s := local(job.start, tz)
+	var e := local(job.end, tz)
+	var wd := I18n.t("JOB_WD_%d" % weekday_mon(job.start, tz))
 	return I18n.t("JOB_WHEN") % [wd, s.month, s.day, s.hour, s.minute, e.hour, e.minute]
 
 
+## 時給の表示（そのシフトの通貨で。Money を通す）
 static func wage_text(job: Dictionary) -> String:
-	return I18n.t("JOB_WAGE") % _commas(int(job.wage))
+	return Money.wage_of(job)
+
+
+## 見本のシフトを Shifts の形に（通貨と町の時刻も持たせる）
+static func as_shift(j: Dictionary) -> Dictionary:
+	return {"id": j.id, "title": j.get("title", ""), "place": j.get("place", ""), "store": j.get("store", ""), "role": j.get("role", "hall"),
+		"start": j.start, "end": j.end, "wage": j.get("wage", 0), "pay": j.get("pay", "weekly"), "listing": j.get("listing", ""),
+		"sample": true, "currency": Money.of(j), "tz": tz_of(j)}
+
+
+## 確認用・デモの見本のシフトに入れる時給と、通貨・町・地区（今の言語の町）
+static func demo_pay(job: Dictionary, r := "") -> Dictionary:
+	var reg := _reg(r)
+	job["wage"] = 22.5 if reg == "sf" else 1250
+	job["currency"] = currency_of_region(reg)
+	job["tz"] = tz_of_region(reg)
+	if reg == "sf" and SF.has(String(job.get("listing", ""))):
+		job["area"] = SF[job.listing][0]
+	return job
 
 
 static func _commas(n: int) -> String:
-	var s := str(n)
-	var out := ""
-	while s.length() > 3:
-		out = "," + s.right(3) + out
-		s = s.left(s.length() - 3)
-	return s + out
+	return Money.commas(n)

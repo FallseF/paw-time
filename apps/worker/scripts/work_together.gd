@@ -300,24 +300,30 @@ static func stop(t := -1.0) -> Dictionary:
 
 ## 今日のお給料の目安（ゲームはお給料そのものにはふれない）＝ 登録したシフトの時間 × そのシフトの時給。
 ## 終わった勤務のシフト（shift_id）、無ければ同じ日の時給の入った登録シフト。見つからなければ空（自分で入れたシフトには時給が無い）
-## 返り値 {hours, wage, yen, shift_id}
+## 返り値 {hours, wage, currency, amount, shift_id}（円のシフトは yen も。表示は Money.fmt(amount, currency)）
 static func pay_estimate(summary: Dictionary, shifts: Array) -> Dictionary:
 	var pick := {}
 	var sid := String(summary.get("shift_id", ""))
 	if sid != "":
 		for s in shifts:
-			if String(s.get("id", "")) == sid and int(s.get("wage", 0)) > 0:
+			if String(s.get("id", "")) == sid and float(s.get("wage", 0)) > 0:
 				pick = s
 	if pick.is_empty():
 		var key := day_key(float(summary.get("start", 0.0)))
 		for s in shifts:
-			if int(s.get("wage", 0)) > 0 and day_key(float(s.get("start", 0.0))) == key:
+			if float(s.get("wage", 0)) > 0 and day_key(float(s.get("start", 0.0))) == key:
 				pick = s
 				break
 	if pick.is_empty():
 		return {}
-	var hours := maxf(0.0, (float(pick.end) - float(pick.start)) / 3600.0)
-	return {"hours": hours, "wage": int(pick.wage), "yen": int(round(hours * int(pick.wage))), "shift_id": String(pick.get("id", ""))}
+	# hours があればそれ（3 分デモは早送りのため、実時間の start / end が数十秒しかない）
+	var hours := maxf(0.0, float(pick.get("hours", (float(pick.end) - float(pick.start)) / 3600.0)))
+	var cur := Money.of(pick)
+	if cur == Money.USD:
+		var w := float(pick.wage)
+		return {"hours": hours, "wage": w, "currency": cur, "amount": snappedf(hours * w, 0.01), "shift_id": String(pick.get("id", ""))}
+	var yen := int(round(hours * int(pick.wage)))
+	return {"hours": hours, "wage": int(pick.wage), "currency": cur, "amount": yen, "yen": yen, "shift_id": String(pick.get("id", ""))}
 
 
 ## 2 nets of the job's type, once per day, same amount for any length (the variant-B rule)
