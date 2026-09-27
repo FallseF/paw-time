@@ -26,8 +26,8 @@ var jobs: Array = []
 var index := 0
 var accepted := 0
 var busy := false
-var note_top := 140 # 知らせのカードの一段目（上の段の札・キセカエ・しごと・その下のマイスキルの下から）
-var work_btn: Button
+var note_top := 62 # 知らせのカードの段（島の上の段・状態の札と丸いボタンの下）
+var note_queue: Array = [] # まだ出していない知らせ（知らせは一度に 1 枚。押すか、重ね画面が閉じたら次）
 var onboard_end := false # はじめての流れの最後（見つけた仕事）を見ているところ
 
 
@@ -246,8 +246,12 @@ func _partner_screen_pos() -> Vector2:
 	return Vector2(180, 300)
 
 
-## 相棒のところから、知らせのカードがすべり出る
+## 相棒のところから、知らせのカードがすべり出る。出ているカードがあれば、順番を待つ（一度に 1 枚）
 func _notify(i: int, title: String, sub: String, col: Color, cb: Callable) -> Button:
+	if _live_notes() > 0 or i > 0:
+		note_queue.append([title, sub, col, cb])
+		_sync_note_count()
+		return null
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(328, 54)
 	b.size = Vector2(328, 54)
@@ -255,6 +259,8 @@ func _notify(i: int, title: String, sub: String, col: Color, cb: Callable) -> Bu
 		b.add_theme_stylebox_override(k, Kit.pill(Color(1, 1, 1, 0.97) if k != "pressed" else Color("fff1e0"), 18, 0.18, Vector2(10, 6)))
 	b.pressed.connect(func():
 		Kit.play(self, "tap", 1.1)
+		notes.erase(b)
+		b.queue_free()
 		cb.call())
 	add_child(b)
 	var h := HBoxContainer.new()
@@ -287,9 +293,14 @@ func _notify(i: int, title: String, sub: String, col: Color, cb: Callable) -> Bu
 	sl.clip_text = true
 	v.add_child(sl)
 	h.add_child(v)
+	# あと何枚待っているか（+2 など）
+	var more := _text("", 11, Color("8a5bd6"), true)
+	more.name = "More"
+	more.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(more)
 	# 相棒の位置から、小さく出て、上の段へ
 	var from := _partner_screen_pos() - Vector2(164, 27)
-	var to := Vector2(16, note_top + i * 62)
+	var to := Vector2(16, note_top)
 	b.position = from
 	b.pivot_offset = Vector2(164, 27)
 	b.scale = Vector2(0.2, 0.2)
@@ -300,7 +311,34 @@ func _notify(i: int, title: String, sub: String, col: Color, cb: Callable) -> Bu
 	tw.tween_property(b, "modulate:a", 1.0, 0.2).set_delay(i * 0.35)
 	tw.tween_callback(func(): Kit.play(self, "pop", 1.0 + i * 0.1, -4)).set_delay(i * 0.35)
 	notes.append(b)
+	_sync_note_count.call_deferred()
 	return b
+
+
+func _live_notes() -> int:
+	notes = notes.filter(func(n): return is_instance_valid(n) and not n.is_queued_for_deletion())
+	return notes.size()
+
+
+func _sync_note_count() -> void:
+	for n in notes:
+		if is_instance_valid(n):
+			var m := n.find_child("More", true, false) as Label
+			if m:
+				m.text = "+%d" % note_queue.size() if not note_queue.is_empty() else ""
+
+
+## 待っている知らせを、1 枚ずつ（島の上に何も開いていないとき）。何か開いている間（シート・チャット・くわしく・めあて・島づくり）は、出ている知らせも隠す
+func _process(_delta: float) -> void:
+	var covered: bool = overlay_open() or garden.overlay_open() or garden.get("editing") or garden.get("cam_hold") \
+		or (garden.get("meters") != null and garden.meters.visible) or garden.get("goals_panel") != null
+	for n in notes:
+		if is_instance_valid(n) and n.visible == covered:
+			n.visible = not covered
+	if note_queue.is_empty() or _live_notes() > 0 or overlay_open() or garden.get("editing") or garden.get("cam_hold"):
+		return
+	var n: Array = note_queue.pop_front()
+	_notify(0, n[0], n[1], n[2], n[3])
 
 
 func _clear_notes() -> void:
@@ -308,6 +346,7 @@ func _clear_notes() -> void:
 		if is_instance_valid(n):
 			n.queue_free()
 	notes.clear()
+	note_queue.clear()
 
 
 static func role_color(role: String) -> Color:
@@ -415,8 +454,7 @@ func _speech(title: String, body: String, btn: String, cb: Callable) -> void:
 # ---------------------------------------------------------------- 毎日
 
 func _daily() -> void:
-	_work_pill()
-	note_top = 140
+	note_top = 62
 	# 一緒に働いた勤務（WorkTogether）が終わったら、その場でひとこと評価を開く（受け渡しは pop_ended の一度だけ）
 	WorkTogether.sync()
 	var just := Reviews.target_for_ended(WorkTogether.pop_ended())
@@ -463,25 +501,6 @@ func _reminder_sheet(tx: Array, eve: bool) -> void:
 	_sheet(SpecialObake.pet_name(), tx[0], "%s\n%s" % [tx[1], tr("REMIND_EVE_BODY" if eve else "REMIND_AM_BODY")], tr("REMIND_OK"), _close_sheet)
 
 
-## 島の右上（図鑑の下）の小さな「しごと」ボタン：自分でシフトを入れる・働く条件（求人の知らせの On/Off）
-func _work_pill() -> void:
-	if work_btn and is_instance_valid(work_btn):
-		return
-	work_btn = Kit.button(tr("WORK_PILL"), Color(1, 0.99, 0.97, 0.94), open_work_menu, Color("6a5bd6"), 32, 13)
-	work_btn.size = Vector2(0, 32)
-	add_child(work_btn)
-	if garden.has_method("hud_pill"):
-		garden.hud_pill(work_btn)
-	# 右上（図鑑の下）。左上はキセカエの札
-	await get_tree().process_frame
-	if is_instance_valid(work_btn):
-		work_btn.position = Vector2(348 - work_btn.size.x, 58)
-		# 2 日目からの「めあて」（庭の右上）は、しごとの左どなりへ（重ならないように）
-		var goals = garden.get("goals_btn")
-		if goals and is_instance_valid(goals):
-			goals.position.x = work_btn.position.x - 6 - goals.size.x
-
-
 ## しごと：まず今日からの自分のシフトを曜日のカードで。下に、ほかの選択肢
 ## （自分でシフトを入れる・働く条件・お店の島・シフトのチャット・求人を見る）
 ## at：はじめに見せる日（その時刻の日。-1 なら今日から）
@@ -503,7 +522,8 @@ func open_work_menu(at := -1.0) -> void:
 	opts.alignment = FlowContainer.ALIGNMENT_CENTER
 	opts.add_theme_constant_override("h_separation", 6)
 	opts.add_theme_constant_override("v_separation", 6)
-	for o in [[tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("CHAT_MENU_SHOPS"), func(): ChatHub.open(self, "list")], [tr("R2_WORK_MENU_JOBS"), _jobs_from_menu]]:
+	# 島にあった札（マイスキル・仕事に行ってくる）も、ここに（下のタブの「しごと」から開く）
+	for o in [[tr("R2_WORK_MENU_JOBS"), _jobs_from_menu], [tr("I'm going to work"), func(): _go("work")], [tr("SK_PILL"), func(): _go("skills")], [tr("WORK_MENU_PREFS"), func(): _go("prefs")], [tr("WORK_MENU_SHOPS"), open_shops], [tr("CHAT_MENU_SHOPS"), func(): ChatHub.open(self, "list")]]:
 		opts.add_child(Kit.button(o[0], Color("f3ecff"), o[1], Color("6a5bd6"), 34, 13))
 	# 説明の文は出さない（シートが上の札にかからない高さに）
 	_sheet(pet, tr("WORK_MENU_TITLE"), "", tr("SHIFT_FORM_OPEN"), open_shift_form, -1, 0,
@@ -1216,9 +1236,8 @@ func _to_my_shifts(at: float) -> void:
 	if viewer:
 		viewer.queue_free()
 		viewer = null
-	if onboard_end: # はじめての流れの終わり：しごとボタンだけ先に出す（知らせは次に島を開いたとき）
+	if onboard_end: # はじめての流れの終わり（知らせは次に島を開いたとき。しごとは下のタブから）
 		onboard_end = false
-		_work_pill()
 	open_work_menu(at)
 
 
