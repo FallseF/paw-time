@@ -1881,6 +1881,8 @@ func _line_for(id: String) -> String:
 
 func _build_ui() -> void:
 	# 島の HUD（下のタブ・状態の札・丸いボタン・✎）。おでかけ中は、上の「〇〇の島／かえる」だけ（_start_visit）
+	# 重なりの順：島（3D）→ HUD → 今日のカード・くわしく → 仕事の知らせ・シート（JobDesk）→ チャット・カタログ…
+	# HUD はどの重ね画面よりも下。重ね画面が開いている間は、下へ引っこむ（hud_wanted）
 	if not _vis():
 		hud = IslandHud.new(self)
 		add_child(hud)
