@@ -1,6 +1,6 @@
 extends Node
 ## はじめての流れ（scripts/onboarding.gd）を本物の画面で通す：
-##   診断 → 相棒の名前（保存して、あちこちで同じ名前）→ シフトへ → 早送りの見本のシフト（猫の仕事場）→ いっしょにがんばったね（コインとポイ）
+##   診断 → 診断の結果（相棒に会う）→ 相棒の名前（候補から選ぶ・打つ。保存して、あちこちで同じ名前）→ シフトへ → 早送りの見本のシフト（猫の仕事場）→ いっしょにがんばったね（コインとポイ）
 ##   → はじめてのすくい（玉 3 つ・説明は消える）→ 夜の場面を挟まず朝の孵化 → 島の説明の段
 ## 体験バイト（カフェ）と「川べりの夜」が出ないこと、見本のシフトが本物の仕事の記録に残らないことも確かめる。
 ## OBAKE_NOSAVE=1 godot --headless --path . res://tests/test_onboarding.tscn
@@ -55,22 +55,41 @@ func _run() -> void:
 	_check(SpecialObake.clean_name("abcdefghijklmnop").length() == SpecialObake.NAME_MAX, "caps the name length")
 	_check(not Main_has_screen("onboard_night"), "the riverside night screen is gone")
 
-	# 1 診断
+	# 名前の候補：英語版は英語（ASCII）の名前、日本語版は日本語の名前。同じ相棒なら同じ並び
+	var my_d := SpecialObake.apply(QuizData.score(QuizData.answers_for("IFHY")))
+	TranslationServer.set_locale("ja")
+	var ideas_ja := SpecialObake.name_ideas(3, my_d)
+	_check(ideas_ja.size() == 3 and ideas_ja.all(func(n): return SpecialObake.NAME_IDEAS.ja.has(n)), "Japanese name ideas in Japanese (%s)" % [ideas_ja])
+	TranslationServer.set_locale("en")
+	var ideas := SpecialObake.name_ideas(3, my_d)
+	_check(ideas.size() == 3 and ideas.all(func(n): return SpecialObake.NAME_IDEAS.en.has(n) and _ascii(n)), "English name ideas are English (%s)" % [ideas])
+	_check(ideas == SpecialObake.name_ideas(3, my_d), "the ideas are stable for the same cat")
+
+	# 1 診断（名前はまだ聞かない）
 	await _until(func(): return _screen() == "screen_quiz.gd", 5.0, "first launch opens the quiz")
 	var q = main.current
-	q.result = SpecialObake.apply(QuizData.score(QuizData.answers_for("IFHY")))
+	await get_tree().create_timer(0.3).timeout
+	_check(q.find_children("*", "LineEdit", true, false).is_empty(), "no name input during the quiz")
+	_check(GameState.my_obake.is_empty() and not SpecialObake.has_custom_name(), "no partner and no name before the quiz is done")
+	q.result = my_d
 	q._begin()
 	await _until(func(): return _screen() == "screen_onboard.gd", 5.0, "quiz → the onboarding screen")
+	_check(not GameState.my_obake.is_empty(), "the name step comes after the quiz result (the partner exists)")
 	_check(Onboarding.at("shift"), "step is shift (%s)" % Onboarding.step())
 	var ob = main.current
 	await get_tree().create_timer(0.3).timeout
 
-	# 2 名前（いまの呼び名が入っている → 自分の名前にする）
+	# 2 名前（英語版は英語の候補のはじめが入っている → 候補をタップ／打って、自分の名前にする）
 	_check(ob.phase == "name", "starts with the name input (%s)" % ob.phase)
-	var auto_name := SpecialObake.pet_name()
-	_check(ob.name_edit.text == auto_name and auto_name != "", "prefilled with the current name (%s)" % ob.name_edit.text)
+	var shown := SpecialObake.pet_name(SpecialObake._without_name(GameState.my_obake))
+	_check(ob.name_edit.text == shown and shown != "", "prefilled with the name the quiz result showed (%s / %s)" % [ob.name_edit.text, shown])
+	var chips: Array = ob.chip_names()
+	_check(chips[0] == shown and chips.size() == 4, "the quiz's name is the first chip (%s)" % [chips])
 	_check(ob.name_edit.max_length == SpecialObake.NAME_MAX, "max length")
-	ob.demo_name("Mochi")
+	_check(ob.main_btn != null and ob.main_btn.text == tr("ONB_NAME_OK"), "a clear confirm button")
+	ob.demo_pick(1)
+	_check(ob.name_edit.text == chips[1] and SpecialObake.NAME_IDEAS.en.has(chips[1]), "tapping an English idea fills it in (%s)" % ob.name_edit.text)
+	ob.demo_name("  Mochi  ")
 	_check(GameState.my_obake.get("name", "") == "Mochi", "the name is stored in my_obake")
 	_check(QuizResult.load_result().get("name", "") == "Mochi", "the name is saved in my_obake.json")
 	_check(SpecialObake.pet_name() == "Mochi", "pet_name uses it")
@@ -79,6 +98,13 @@ func _run() -> void:
 	GameState.my_obake = QuizResult.load_result()
 	_check(SpecialObake.pet_name() == "Mochi", "the name survives a reload")
 	_check(ob.phase == "go", "then: go to your shift (%s)" % ob.phase)
+	_check(ob.bubble_l.text.begins_with("Mochi"), "the cat answers with its new name (%s)" % ob.bubble_l.text)
+	# 英語の長い名前は NAME_MAX で切る。空なら自動の呼び名へ
+	SpecialObake.set_partner_name("Maximilian the Great")
+	_check(SpecialObake.pet_name() == "Maximilian", "long ASCII names are cut to %d (%s)" % [SpecialObake.NAME_MAX, SpecialObake.pet_name()])
+	SpecialObake.set_partner_name("   ")
+	_check(not SpecialObake.has_custom_name(), "an empty name falls back to the automatic one")
+	SpecialObake.set_partner_name("Mochi")
 
 	# 3 早送りの見本のシフト（猫の仕事場）
 	var coins0 := Wallet.balance()
@@ -130,9 +156,26 @@ func _run() -> void:
 	WorkTogether.start("hall", Onboarding.MOCK_PLACE)
 	_check(Onboarding.resume_screen() == "onboard" and not WorkTogether.active(), "resume clears a half-done mock shift")
 
+	# 8 相棒がまだいないのに名前の段にいる（古い保存など）：名前より先に診断へ。診断のあとは名前へ
+	var keep: Dictionary = GameState.my_obake
+	GameState.my_obake = {}
+	_check(Onboarding.resume_screen() == "quiz", "no partner yet → the quiz first, not the name")
+	await _until(func(): return not main.busy, 3.0, "the previous screen change finishes")
+	main.go("onboard", true)
+	await _until(func(): return _screen() == "screen_quiz.gd", 5.0, "the name screen without a partner sends you to the quiz")
+	_check(Onboarding.next_after("quiz", "garden") == "onboard", "after the quiz → the name step")
+	GameState.my_obake = keep
+
 	QuizResult.clear()
 	print("ONBOARDING TEST ", "OK" if fails == 0 else "FAILED (%d)" % fails)
 	get_tree().quit(1 if fails else 0)
+
+
+func _ascii(s: String) -> bool:
+	for i in s.length():
+		if s.unicode_at(i) > 127:
+			return false
+	return true
 
 
 func Main_has_screen(s: String) -> bool:

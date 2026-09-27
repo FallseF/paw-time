@@ -66,6 +66,24 @@ static func set_partner_name(n: String) -> void:
 
 const NAME_MAX := 10
 
+## 名前の候補（はじめての流れの名前の入力で、タップで選べる）。英語版は英語の、日本語版は日本語の名前
+const NAME_IDEAS := {
+	"en": ["Mochi", "Biscuit", "Poppy", "Maple", "Pudding", "Clover", "Waffles", "Peanut"],
+	"ja": ["もち", "きなこ", "おはぎ", "こむぎ", "みかん", "あずき", "だいふく", "ぽてと"],
+}
+
+
+## 名前の候補を n 個。同じ相棒なら同じ並び（開き直しても変わらない）。はじめの 1 つを入力欄に入れておく
+static func name_ideas(n := 3, my: Dictionary = {}) -> Array:
+	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
+	var d: Dictionary = my if not my.is_empty() or gs == null else gs.my_obake
+	var list: Array = NAME_IDEAS["en" if Kit.is_en() else "ja"]
+	var start := absi(hash(String(d.get("type_id", "")) + String(d.get("special", "")))) % list.size()
+	var out: Array = []
+	for i in mini(n, list.size()):
+		out.append(list[(start + i) % list.size()])
+	return out
+
 
 ## 名前の入力をととのえる（前後の空白と改行を取り、NAME_MAX 文字まで）
 static func clean_name(n: String) -> String:
