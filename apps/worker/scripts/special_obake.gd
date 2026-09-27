@@ -26,17 +26,55 @@ static func name_of(kind: String) -> String:
 	return I18n.t("SPECIAL_%s_NAME" % kind.to_upper())
 
 
-## 相棒の呼び名（チュートリアルや仕事の知らせで使う）。印が無ければ一般名
+## 相棒の呼び名（チュートリアルや仕事の知らせで使う）。自分でつけた名前があればそれ、無ければ印の呼び名、印も無ければ一般名
 static func pet_name(my: Dictionary = {}) -> String:
 	# GameState は名前で引く（tests の -s 実行では、自動読み込みより先にこのスクリプトが読まれるため）
 	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
 	var d: Dictionary = my if not my.is_empty() or gs == null else gs.my_obake
+	var custom := String(d.get("name", "")).strip_edges()
+	if custom != "":
+		return custom
 	var kind: String = d.get("special", "")
 	if kind == "":
 		# ふつうの子は、診断のタイプ名（「あいぼう」は、まだ診断を受けていないときだけ）
 		var tid: String = d.get("type_id", "")
 		return QuizData.type_name(tid) if QuizData.TYPES.has(tid) else I18n.t("ONB_PARTNER")
 	return I18n.t("SPECIAL_%s_PET" % kind.to_upper())
+
+
+## 自分でつけた名前があるか（無ければ pet_name() は自動の呼び名）
+static func has_custom_name() -> bool:
+	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
+	return gs != null and String(gs.my_obake.get("name", "")).strip_edges() != ""
+
+
+## 相棒に名前をつける（はじめての流れの名前の入力・マイページ）。空なら自動の呼び名にもどす。
+## my_obake.json（QuizResult）に入るので、名前を出すところは全部 pet_name() を通せば同じ名前になる
+static func set_name(n: String) -> void:
+	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
+	if gs == null or gs.my_obake.is_empty():
+		return
+	var d: Dictionary = gs.my_obake.duplicate(true)
+	n = clean_name(n)
+	if n == "" or n == pet_name(_without_name(d)):
+		d.erase("name")
+	else:
+		d["name"] = n
+	gs.set_my_obake(d)
+
+
+const NAME_MAX := 10
+
+
+## 名前の入力をととのえる（前後の空白と改行を取り、NAME_MAX 文字まで）
+static func clean_name(n: String) -> String:
+	return n.replace("\n", " ").strip_edges().left(NAME_MAX)
+
+
+static func _without_name(d: Dictionary) -> Dictionary:
+	var c := d.duplicate()
+	c.erase("name")
+	return c
 
 
 static func glow(kind: String) -> Color:

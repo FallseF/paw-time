@@ -67,7 +67,7 @@ static func seed_demo_shifts() -> void:
 
 static func cat_name() -> String:
 	var gs := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("GameState")
-	if gs and gs.my_obake.get("special", "") == "":
+	if gs and gs.my_obake.get("special", "") == "" and not SpecialObake.has_custom_name():
 		var tid: String = gs.my_obake.get("type_id", "")
 		if QuizData.TYPES.has(tid):
 			return QuizData.type_name(tid)
