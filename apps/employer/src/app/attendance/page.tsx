@@ -1,5 +1,11 @@
-import { AttendancePanel } from "../../features/attendance/AttendancePanel";
+import { Suspense } from "react";
+import { Skeleton } from "../../components/ui";
+import { ShiftsPage } from "../../features/attendance/ShiftsPage";
 
-export default function AttendancePage() {
-  return <><header className="pageHeader"><div><p className="eyebrow">ATTENDANCE</p><h1>勤怠</h1><p>予定と実際の出退勤を確認します。</p></div></header><AttendancePanel /></>;
+export default function Page() {
+  return (
+    <Suspense fallback={<Skeleton />}>
+      <ShiftsPage />
+    </Suspense>
+  );
 }
