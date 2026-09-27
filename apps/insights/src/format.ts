@@ -23,6 +23,8 @@ export function feedText(t: Dict, type: string, props: Record<string, unknown>):
     if (k === "hours_bucket") return labelOf(t.hours, String(v));
     if (k === "shop_id") return labelOf(t.shops, String(v));
     if (k === "day_type") return labelOf(t.dayType, String(v));
+    if (k === "tag") return labelOf(t.tags, String(v));
+    if (k === "reaction") return labelOf(t.reactions, String(v));
     if (k === "on") return t.onOff[v ? 1 : 0] ?? "";
     if (k === "kind" && type === "hatch") return labelOf(t.hatchKind, String(v));
     if (k === "kind") return v === "google" ? "Google" : ".ics";

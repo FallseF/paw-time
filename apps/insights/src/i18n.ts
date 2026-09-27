@@ -137,7 +137,7 @@ const en = {
     hours: { lt4: "< 4 h", "4to6": "4–6 h", "6to7_5": "6–7.5 h", "7_5to8": "7.5–8 h", "8to10": "8–10 h", gt10: "> 10 h" },
     roles: { register: "Register", dish: "Dishwashing", hall: "Hall", kitchen: "Kitchen", stock: "Stock" },
     tags: { breaks: "Breaks respected", instructions: "Clear instructions", on_time: "Left on time", paid: "Paid on time", friendly: "Friendly team", fair: "Busy but fair", again: "Would work again" },
-    shops: { cafe_komorebi: "Café Komorebi", izk_torimaru: "Izakaya Torimaru", cvs_machikado: "Machikado Mart", bk_komugi: "Bakery Komugi" },
+    shops: { cafe_komorebi: "Café Komorebi", izk_torimaru: "Izakaya Torimaru", cvs_machikado: "Machikado Mart", bk_komugi: "Bakery Komugi", cafe_sunnyside: "Café Sunnyside", izk_chochin: "Izakaya Chochin", cvs_hoshi: "Hoshi Mart", rs_nikoniko: "Niko Niko Diner", sm_maruya: "Maruya Market", izk_kemuri: "Izakaya Kemuri" } as Record<string, string>,
     dayType: { work: "work day", off: "day off", no_shift: "no shift booked" },
     hatchKind: { cat: "cat", material: "material", clothes: "clothes" },
     events: {
@@ -165,8 +165,12 @@ const en = {
       anon_issue_sent: "Anonymous issue sent to a shop (withheld)",
       faq_auto_answered: "Shop cat answered · {topic}",
       shop_message_sent: "Message to shop · {kind}",
+      landmark_tap: "Island landmark tapped · {tag}",
+      availability_set: "Weekly availability set · max {max_per_week}/week",
+      reminder_reaction: "Reply to the cat's reminder · {reaction}",
     },
     invitedTag: "invite", onOff: ["off", "on"],
+    reactions: { ok: "OK", swap: "asked to swap", dismissed: "dismissed" } as Record<string, string>,
     offDayEvents: {
       job_cards_shown: "Looked at job cards", job_card_open: "Opened a job card", job_accept: "Accepted a job", job_pass: "Passed a job",
       scoop_night: "Night scoop", hatch: "Hatched", shop_island_visit: "Visited a shop island", practice_done: "Practised a skill",
@@ -174,6 +178,7 @@ const en = {
       review_submitted: "Sent a review", skill_badge_share_toggled: "Badge setting", suggestions_toggled: "Suggestion setting",
       chat_open: "Chatted with a cat", chat_signal: "Shared a chat tag", anon_issue_sent: "Told a shop anonymously",
       faq_auto_answered: "Shop cat answered", shop_message_sent: "Messaged a shop",
+      landmark_tap: "Tapped an island landmark", availability_set: "Set availability", reminder_reaction: "Replied to a reminder",
     },
   };
 
@@ -316,7 +321,7 @@ const ja: Dict = {
     hours: { lt4: "4時間未満", "4to6": "4〜6時間", "6to7_5": "6〜7.5時間", "7_5to8": "7.5〜8時間", "8to10": "8〜10時間", gt10: "10時間超" },
     roles: { register: "レジ", dish: "皿洗い", hall: "ホール", kitchen: "キッチン", stock: "品出し" },
     tags: { breaks: "休憩がとれる", instructions: "説明がわかりやすい", on_time: "時間どおりに帰れる", paid: "給料が遅れない", friendly: "人がやさしい", fair: "忙しいけど公平", again: "また働きたい" },
-    shops: { cafe_komorebi: "カフェ こもれび", izk_torimaru: "居酒屋 とりまる", cvs_machikado: "まちかどマート", bk_komugi: "ベーカリー こむぎ" },
+    shops: { cafe_komorebi: "カフェ こもれび", izk_torimaru: "居酒屋 とりまる", cvs_machikado: "まちかどマート", bk_komugi: "ベーカリー こむぎ", cafe_sunnyside: "カフェ サニーサイド", izk_chochin: "居酒屋 ちょうちん", cvs_hoshi: "ほしマート", rs_nikoniko: "食堂 にこにこ", sm_maruya: "スーパー まるや", izk_kemuri: "居酒屋 けむり" },
     dayType: { work: "勤務日", off: "休み", no_shift: "シフト予約なし" },
     hatchKind: { cat: "猫", material: "素材", clothes: "服" },
     events: {
@@ -344,8 +349,12 @@ const ja: Dict = {
       anon_issue_sent: "お店に匿名で困りごとを伝えた（内容は非表示）",
       faq_auto_answered: "お店の猫が回答 · {topic}",
       shop_message_sent: "お店にメッセージ · {kind}",
+      landmark_tap: "島の目印をタップ · {tag}",
+      availability_set: "週の空き時間を設定 · 週{max_per_week}回まで",
+      reminder_reaction: "猫の前日の声かけに返事 · {reaction}",
     },
     invitedTag: "おさそい", onOff: ["オフ", "オン"],
+    reactions: { ok: "OK", swap: "交代の相談", dismissed: "閉じた" },
     offDayEvents: {
       job_cards_shown: "求人カードを見た", job_card_open: "求人カードを開いた", job_accept: "仕事を受けた", job_pass: "仕事を見送った",
       scoop_night: "夜のすくい", hatch: "孵化", shop_island_visit: "お店の島を訪問", practice_done: "スキル練習",
@@ -353,6 +362,7 @@ const ja: Dict = {
       review_submitted: "レビュー", skill_badge_share_toggled: "バッジ設定", suggestions_toggled: "提案の設定",
       chat_open: "猫と会話", chat_signal: "会話のタグを共有", anon_issue_sent: "お店に匿名で伝えた",
       faq_auto_answered: "お店の猫が回答", shop_message_sent: "お店にメッセージ",
+      landmark_tap: "島の目印をタップ", availability_set: "空き時間を設定", reminder_reaction: "声かけに返事",
     },
   };
 

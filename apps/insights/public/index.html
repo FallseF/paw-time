@@ -4,36 +4,42 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Paw Time Insights</title>
-  <meta name="description" content="Recruit view of Paw Time: aggregate daily use beyond job search, job funnel, wellbeing, reviews, post-shift signals, chat tags, what a shop would see and a pilot proposal." />
+  <meta name="description" content="Paw Time Insights: aggregated work-cycle signals by shop, listing, supply slot and week. Aggregates only; no individual workers." />
   <!-- API origin; empty = same origin (vercel.json rewrites /v1 to the API). -->
   <meta name="paw-time-api" content="" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="/style.css" />
   <script src="/assets/app.global.js" defer></script>
 </head>
 <body>
-  <header class="appbar">
-    <div class="appbar-in">
-      <div class="brand"><h1>Paw Time</h1><span data-i18n="subtitle">Recruit view</span></div>
-      <div class="seg" role="group" aria-label="Data mode">
-        <button type="button" data-mode="simulated" aria-pressed="true" data-i18n="modeSim">Simulated pilot</button>
-        <button type="button" data-mode="live" aria-pressed="false" data-i18n="modeLive">Live — demo players</button>
-      </div>
-      <div class="seg" role="group" aria-label="Language">
-        <button type="button" data-lang="en" aria-pressed="true">EN</button>
-        <button type="button" data-lang="ja" aria-pressed="false">JA</button>
-      </div>
+  <a class="skip" href="#content">Skip to content</a>
+  <div class="app">
+    <aside class="nav" id="nav" aria-label="Navigation"></aside>
+    <div class="scrim" data-act="nav" aria-hidden="true"></div>
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="icon-btn menu-btn" data-act="nav" aria-label="Menu"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+        <div class="seg" role="group" aria-label="Data mode">
+          <button type="button" data-mode="simulated" aria-pressed="true" data-i18n="modeSim">Simulated pilot</button>
+          <button type="button" data-mode="live" aria-pressed="false" data-i18n="modeLive">Live — demo players</button>
+        </div>
+        <span class="spacer"></span>
+        <div class="seg" role="group" aria-label="Language">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="ja" aria-pressed="false">JA</button>
+        </div>
+        <button type="button" class="btn live-btn" id="live-btn" data-act="toggle-live" aria-controls="live" aria-expanded="false">Live</button>
+      </header>
+      <div id="banner"></div>
+      <div class="kpis" id="kpis" aria-label="Summary"></div>
+      <main id="content" tabindex="-1"></main>
+      <footer class="foot"><span data-ui="footer">Aggregates only · ≥5 rule · no individual scores to shops · chat text never leaves the device</span> · <a href="/privacy" data-ui="privacy">Privacy notice</a></footer>
     </div>
-  </header>
-  <main>
-    <div id="banner"></div>
-    <div class="grid" id="grid"></div>
-  </main>
-  <footer>
-    <p><span data-i18n="footer">Aggregates only. Any cell backed by fewer than 5 installs is hidden (—).</span>
-      <a href="/privacy" data-i18n="privacy">Privacy notice</a></p>
-  </footer>
+    <aside class="detail sheet" id="detail" hidden aria-label="Details"></aside>
+    <aside class="drawer sheet" id="live" hidden aria-label="Live activity"></aside>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
 </body>
 </html>

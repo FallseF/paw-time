@@ -12,17 +12,8 @@ export const TELEMETRY_PAY_STYLES = ["daily", "weekly", "monthly"] as const;
 export const TELEMETRY_REVIEW_TAGS = ["breaks", "instructions", "on_time", "paid", "friendly", "fair", "again"] as const;
 export const TELEMETRY_HOURS_BUCKETS = ["lt4", "4to6", "6to7_5", "7_5to8", "8to10", "gt10"] as const;
 export const TELEMETRY_SINCE_SHIFT = ["none", "lt24", "24to72", "gt72"] as const;
-/** JobListings.LIST ids (sample shops in the game). */
-export const TELEMETRY_SHOP_IDS = [
-  "cafe_komorebi", "cafe_sunnyside", "cafe_mori", "cafe_tsuki", "cafe_nekomimi", "cafe_harbor", "cafe_hoshizora", "cafe_matcha",
-  "cafe_beanbag", "cafe_fuwari", "izk_torimaru", "izk_chochin", "izk_kemuri", "izk_hanabi", "izk_daruma", "izk_minato",
-  "izk_hinoki", "izk_tanuki", "cvs_hoshi", "cvs_machikado", "cvs_kurumi", "cvs_tsuki24", "cvs_asahi", "cvs_pocket", "cvs_sakura",
-  "wh_kita", "wh_minato", "wh_shiori", "wh_hayate", "wh_tsubame", "wh_nuno", "wh_omocha", "bk_komugi", "bk_mori", "bk_melon",
-  "bk_tsukiakari", "bk_koguma", "bk_tomato", "sm_maruya", "sm_midori", "sm_kaede", "sm_tane", "sm_hakka", "rs_nikoniko",
-  "rs_yuge", "rs_tsurutsuru", "rs_umi", "rs_hoshi", "rs_hanamaru", "rs_teppan", "rs_kiri", "rs_tamago", "ot_shioridou",
-  "ot_tsukikage", "ot_utaya", "ot_hotel", "ot_ohisama", "ot_yuki", "ot_hanahana", "ot_mimi", "ot_pon", "ot_wa", "ot_enpitsu",
-  "ot_awa",
-] as const;
+export { TELEMETRY_SHOP_IDS } from "./areas";
+import { TELEMETRY_SHOP_IDS } from "./areas";
 
 /**
  * Chat with the cat-obake. Raw text never leaves the device: the game maps a chat
@@ -40,6 +31,15 @@ export const TELEMETRY_CHAT_TOPICS = [
 ] as const;
 export const TELEMETRY_FAQ_TOPICS = ["dress", "entrance", "break"] as const;
 export const TELEMETRY_SHOP_MESSAGE_KINDS = ["late", "swap", "thanks", "question"] as const;
+/**
+ * When a shift or a listing happens: weekday x time band (e.g. "sat_evening").
+ * Bands: morning 6-11, day 11-17, evening 17-22, night 22-6 (JST).
+ */
+export const TELEMETRY_WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+export const TELEMETRY_TIME_BANDS = ["morning", "day", "evening", "night"] as const;
+export const TELEMETRY_SLOTS = TELEMETRY_WEEKDAYS.flatMap((d) => TELEMETRY_TIME_BANDS.map((b) => `${d}_${b}` as const));
+/** Reaction to the cat's reminder the night before / the morning of a shift. */
+export const TELEMETRY_REMINDER_REACTIONS = ["ok", "swap", "dismissed"] as const;
 /** Roles counted as "backstage" for prefer_backstage; the rest are customer-facing. */
 export const TELEMETRY_BACKSTAGE_ROLES: readonly string[] = ["dish", "kitchen", "stock"];
 
@@ -54,6 +54,7 @@ const role = z.enum(TELEMETRY_ROLES);
 const shop = z.enum(TELEMETRY_SHOP_IDS);
 const hours = z.enum(TELEMETRY_HOURS_BUCKETS);
 const bool = z.boolean();
+const slot = z.enum(TELEMETRY_SLOTS as unknown as [string, ...string[]]);
 
 /** props shared by every event. demo_session marks the short judge-demo route. */
 const common = { demo_session: bool.optional() };
@@ -62,11 +63,11 @@ const props = <T extends z.ZodRawShape>(shape: T) => z.strictObject({ ...common,
 export const TelemetryPropSchemas = {
   app_open: props({ day_type: z.enum(["work", "off", "no_shift"]), hours_since_last_shift_end: z.enum(TELEMETRY_SINCE_SHIFT) }),
   job_cards_shown: props({ n: z.number().int().min(0).max(50) }),
-  job_card_open: props({ invited: bool, shop_id: shop }),
-  job_accept: props({ role, pay_style: z.enum(TELEMETRY_PAY_STYLES), invited: bool, shop_id: shop }),
-  job_pass: props({ role, invited: bool, shop_id: shop }),
-  shift_start: props({ role, shop_id: shop }),
-  shift_end: props({ role, hours_bucket: hours, shop_id: shop }),
+  job_card_open: props({ invited: bool, shop_id: shop, slot }),
+  job_accept: props({ role, pay_style: z.enum(TELEMETRY_PAY_STYLES), invited: bool, shop_id: shop, slot }),
+  job_pass: props({ role, invited: bool, shop_id: shop, slot }),
+  shift_start: props({ role, shop_id: shop, slot }),
+  shift_end: props({ role, hours_bucket: hours, shop_id: shop, slot }),
   cat_tired_stop: props({ hours_bucket: hours }),
   review_submitted: props({
     tag_count: z.number().int().min(0).max(10),
@@ -97,6 +98,17 @@ export const TelemetryPropSchemas = {
   anon_issue_sent: z.strictObject({ ...common, tag: z.enum(TELEMETRY_CHAT_ISSUE_TOPICS), shop_id: shop }),
   faq_auto_answered: props({ topic: z.enum(TELEMETRY_FAQ_TOPICS) }),
   shop_message_sent: props({ kind: z.enum(TELEMETRY_SHOP_MESSAGE_KINDS) }),
+  // Tapped a landmark on a shop's island ("Left on time" clock tower = review tag on_time).
+  landmark_tap: props({ shop_id: shop, tag: z.enum(TELEMETRY_REVIEW_TAGS) }),
+  // Weekly availability the worker set for the cat ("when can you work?"), plus a weekly cap.
+  availability_set: props({ slots: z.array(slot).max(28), max_per_week: z.number().int().min(0).max(7) }),
+  // How the worker reacted to the cat's reminder before a booked shift. In-game only.
+  reminder_reaction: props({
+    when: z.enum(["night_before", "morning"]),
+    reaction: z.enum(TELEMETRY_REMINDER_REACTIONS),
+    shop_id: shop,
+    slot,
+  }),
 } as const;
 
 export type TelemetryEventType = keyof typeof TelemetryPropSchemas;
@@ -180,6 +192,130 @@ export const InsightsShopViewRowSchema = z.object({
   positives: z.array(shopViewItem),
 });
 
+export { INSIGHTS_AREAS, insightsAreaOf, type InsightsArea } from "./areas";
+
+const count = z.number().int().nonnegative();
+
+/** Shop-side shift postings (Air Shift / Townwork style). Not telemetry: supplied by shops in a pilot. */
+export const InsightsPostingSchema = z.object({
+  shop: z.string(),
+  day: z.number().int(), // day index (JST) of the shift
+  slot: z.string(),
+  openings: count,
+  filled: count,
+  no_shows: count,
+});
+export type InsightsPosting = z.infer<typeof InsightsPostingSchema>;
+
+/** At-risk score components, each 0..1 before weighting. */
+export const InsightsRiskRowSchema = z.object({
+  shop: z.string(),
+  area: z.string(),
+  workers: count,
+  score: z.number(), // 0..100
+  components: z.object({
+    return_drop: z.number(),
+    repeat_pass: z.number(),
+    issue_tags: z.number(),
+    review_trend: z.number(),
+  }),
+  /** Raw values behind the components (null = not enough data). */
+  raw: z.object({
+    return_delta: cell, // next-day return minus the same workers' own baseline
+    repeat_pass: cell, // share of invite openers who passed 2+ times
+    issue_workers: count, // distinct workers across issue tags that reached 5+ workers
+    stars_change: cell, // avg stars, last 4 weeks minus the 4 weeks before
+  }),
+  /** Signal keys that drive the score, strongest first. */
+  reasons: z.array(z.string()),
+  issue_tags: z.array(z.object({ key: z.string(), workers: count })),
+});
+
+export const InsightsFillRowSchema = z.object({
+  shop: z.string(),
+  band: z.string(),
+  openings_per_week: z.number(),
+  predicted_fill: z.number(), // 0..1 for the next week
+  backtest_predicted: cell, // model trained on weeks before the holdout
+  backtest_actual: cell, // actual fill in the holdout weeks
+  no_show_risk: cell,
+  /** Weekly fill rate of this listing (null = nothing posted that week). */
+  history: z.array(cell),
+  fill_rate: cell, // whole window
+  no_show_rate: cell, // whole window, per filled opening
+});
+
+const kpi = z.object({ now: cell, prev: cell });
+
+/** One shop x one week of aggregated signals. Cells under K_MIN distinct workers are null. */
+export const InsightsSignalWeekSchema = z.object({
+  shop: z.string(),
+  week: z.string(),
+  workers: cell, // distinct workers who finished a shift there that week
+  next_day_return: cell,
+  baseline: cell,
+  invite_pass_share: cell,
+  issue_workers: cell,
+  stars_avg: cell,
+  island_visitors: cell,
+  openings: z.number().int().nullable(),
+  filled: z.number().int().nullable(),
+  no_shows: z.number().int().nullable(),
+});
+
+export const InsightsRecruitSchema = z.object({
+  weeks: z.array(z.string()),
+  /** Last 4 weeks vs the 4 before. */
+  kpis: z.object({
+    dau_mau: kpi,
+    off_day_share: kpi,
+    fill_rate: kpi,
+    next_day_return: kpi,
+    active_shops: kpi,
+  }),
+  signals: z.array(InsightsSignalWeekSchema),
+  stages: z.object({
+    before: z.object({ off_day_open_share: cell, island_visitors: cell, practice_workers: cell }),
+    during: z.object({ shifts: cell, cat_stops_per_100: cell, shift_day_chat_share: cell }),
+    after: z.object({ next_day_return: cell, island_revisit_3d: cell, invite_accept_rate: cell, anon_issue_workers: cell }),
+  }),
+  at_risk: z.object({ rows: z.array(InsightsRiskRowSchema), hidden_shops: count }),
+  fill: z.object({
+    has_postings: z.boolean(),
+    rows: z.array(InsightsFillRowSchema),
+    backtest: z.object({ mae: cell, listings: count, holdout_weeks: count }),
+    reminders: z.array(z.object({ reaction: z.string(), shifts: cell, no_show_rate: cell })),
+    willing_excluded_share: cell, // share of available workers excluded as tired / at their weekly cap
+  }),
+  supply: z.object({
+    has_availability: z.boolean(),
+    has_postings: z.boolean(),
+    focus_slot: z.string(),
+    cells: z.array(z.object({ slot: z.string(), available: cell, open_shifts: cell })),
+    areas: z.array(z.object({ area: z.string(), available: cell, open_shifts: cell })),
+    /** Area x weekday x time band. */
+    grid: z.array(z.object({ area: z.string(), slot: z.string(), available: cell, open_shifts: cell })),
+  }),
+  interest: z.object({
+    visitors: cell,
+    visitor_apply_rate: cell,
+    non_visitor_apply_rate: cell,
+    rows: z.array(z.object({ shop: z.string(), visitors: count, applied: count, apply_rate: cell, top_landmark: z.string().nullable() })),
+    landmarks: z.array(z.object({ key: z.string(), taps: count, workers: count })),
+  }),
+  fit: z.object({
+    bins: z.array(z.object({ signals: count, pairs: cell, repeat_rate: cell })),
+    base_repeat_rate: cell,
+    self_report: z.object({ pairs: cell, repeat_rate: cell }),
+    behavior: z.object({ pairs: cell, repeat_rate: cell }),
+    shops: z.array(z.object({ shop: z.string(), pairs: count, repeat_rate: cell, strong_signal_share: cell, strong_repeat_rate: cell })),
+  }),
+});
+export type InsightsRecruit = z.infer<typeof InsightsRecruitSchema>;
+export type InsightsRiskRow = z.infer<typeof InsightsRiskRowSchema>;
+export type InsightsFillRow = z.infer<typeof InsightsFillRowSchema>;
+export type InsightsSignalWeek = z.infer<typeof InsightsSignalWeekSchema>;
+
 export const InsightsAggregateSchema = z.object({
   installs: cell,
   window: z.object({ start: z.string(), end: z.string(), weeks: z.number().int() }),
@@ -235,6 +371,8 @@ export const InsightsAggregateSchema = z.object({
     period: z.object({ start: z.string(), end: z.string() }),
     shops: z.array(InsightsShopViewRowSchema),
   }),
+  /** Recruit-facing answers (added in v2; optional so older payloads still parse). */
+  recruit: InsightsRecruitSchema.optional(),
 });
 
 export const InsightsMetricsResponseSchema = z.object({
