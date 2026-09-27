@@ -1794,7 +1794,15 @@ func _show_card() -> void:
 	if GameState.phase == "day" and _work_card():
 		pass
 	elif GameState.phase == "day":
-		if s.get("chore", false):
+		var reg := Reminders.morning()
+		if not reg.is_empty():
+			# 今日の登録シフト（まだ始まっていない）：時刻と場所と地図。行ったら「仕事に行ってくる」
+			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
+			card_box.add_child(Kit.wrap(Kit.text("%s–%s ・ %s" % [Reminders.clock(reg.start), Reminders.clock(reg.end), String(reg.get("place", reg.get("store", "")))], 14, Color("6a5f70"), true)))
+			card_box.add_child(_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(reg))))
+			card_box.add_child(Kit.button(tr("I'm going to work"), Color("ff8a5b"), func(): main.go("work")))
+			card_box.add_child(_link("今日は休む", _rest))
+		elif s.get("chore", false):
 			card_box.add_child(Kit.text("今日のおてつだい", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(GameState.CHORE_TEXT[s.role], 14, Color("6a5f70")))
 			card_box.add_child(Kit.button("おてつだいする", Color("ff8a5b"), _do_shift))
@@ -1806,6 +1814,9 @@ func _show_card() -> void:
 		elif s.role != "":
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
 			card_box.add_child(Kit.text(tr("%s・%s") % [tr(s.store), tr(GameState.ROLE_LABEL[s.role])], 14, Color("6a5f70")))
+			card_box.add_child(Kit.text(tr("%sのシフト・%d時間") % [tr(s.band), int(s.hours)], 13, Color("6a5f70")))
+			var sname: String = tr(s.store)
+			card_box.add_child(_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url({"store": sname}))))
 			if not GameState.tut.has("shift"):
 				_guide("働くと、庭に飾りが届く")
 			var b := Kit.button("シフトに行く", Color("ff8a5b"), _do_shift)

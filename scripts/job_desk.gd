@@ -576,8 +576,73 @@ func _open_viewer() -> void:
 	jobs = Invites.pending() + undecided()
 	index = 0
 	accepted = 0
+	done_ids = {}
 	_build_viewer()
-	_show_job()
+	_show_list()
+
+
+var done_ids := {} # この知らせの中で、受けた・見送った仕事
+
+
+## 並べて比べる：残りの仕事を一覧に（仕事・店・日時・時給・働いた人の声）。タップで詳しく、受けるのは詳しい方から
+func _show_list() -> void:
+	_clear_card()
+	var left: Array = jobs.filter(func(j): return not done_ids.has(j.id))
+	if left.is_empty():
+		_show_end()
+		return
+	_say(tr("JOB_LIST_SAY"))
+	stage.talk()
+	card_box.add_child(_text(tr("JOB_LIST_TITLE") % left.size(), 17, INK, true))
+	for j in left:
+		card_box.add_child(_list_row(j))
+	card_box.add_child(_link(tr("JOB_LIST_LATER"), _close_viewer))
+	_pop_card()
+
+
+func _list_row(j: Dictionary) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(0, 56)
+	for k in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k == "pressed" else Color.WHITE, 14, 0.08, Vector2(10, 6)))
+	var jid: String = j.id
+	b.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		index = jobs.find(j)
+		_show_job())
+	var h := HBoxContainer.new()
+	h.set_anchors_preset(Control.PRESET_FULL_RECT)
+	h.offset_left = 10
+	h.offset_right = -8
+	h.add_theme_constant_override("separation", 8)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(h)
+	var dot := Panel.new()
+	dot.custom_minimum_size = Vector2(12, 36)
+	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ds := StyleBoxFlat.new()
+	ds.bg_color = Color("ff8fb1") if Invites.is_invite(j) else role_color(j.role)
+	ds.set_corner_radius_all(6)
+	dot.add_theme_stylebox_override("panel", ds)
+	h.add_child(dot)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var t1 := _text(("%s  " % tr("INVITE_CHIP") if Invites.is_invite(j) else "") + "%s · %s" % [j.title, j.store], 14, INK, true)
+	t1.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	t1.clip_text = true
+	v.add_child(t1)
+	var sm := Reviews.summary(j.listing)
+	var t2 := _text("%s · %s · ★%.1f" % [JobListings.when_text(j), JobListings.wage_text(j), sm.stars], 12, SUB, true)
+	t2.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	t2.clip_text = true
+	v.add_child(t2)
+	h.add_child(v)
+	h.add_child(_text("›", 18, SUB, true))
+	return b
 
 
 func _clear_card() -> void:
@@ -611,8 +676,8 @@ func _pop_card() -> void:
 
 func _show_job() -> void:
 	_clear_card()
-	if index >= jobs.size():
-		_show_end()
+	if index < 0 or index >= jobs.size() or done_ids.has(jobs[index].id):
+		_show_list()
 		return
 	var j: Dictionary = jobs[index]
 	_say(tr("INVITE_SAY") % j.store if Invites.is_invite(j) else j.line)
@@ -625,10 +690,17 @@ func _show_job() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(sp)
-	top.add_child(_text(tr("JOB_COUNT") % [index + 1, jobs.size()], 12, SUB, true))
 	card_box.add_child(top)
 	card_box.add_child(I18n.wrap(_text(j.title, 21, INK, true)))
-	card_box.add_child(I18n.wrap(_text(j.place, 14, SUB)))
+	var pr := HBoxContainer.new()
+	pr.add_theme_constant_override("separation", 6)
+	var pl := I18n.wrap(_text(j.place, 14, SUB))
+	pr.add_child(pl)
+	var mp := _small_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(j)), Color("3b5ba5"))
+	mp.autowrap_mode = TextServer.AUTOWRAP_OFF
+	mp.size_flags_horizontal = Control.SIZE_SHRINK_END
+	pr.add_child(mp)
+	card_box.add_child(pr)
 	var when_t := JobListings.when_text(j)
 	var wage_t := JobListings.wage_text(j)
 	var row := HBoxContainer.new()
@@ -652,7 +724,12 @@ func _show_job() -> void:
 	_visit_island_link(j)
 	var acc := Kit.button(tr("JOB_ACCEPT"), ORANGE, _accept)
 	card_box.add_child(acc)
-	card_box.add_child(_link(tr("JOB_PASS"), _pass))
+	var bot := HBoxContainer.new()
+	bot.alignment = BoxContainer.ALIGNMENT_CENTER
+	bot.add_theme_constant_override("separation", 18)
+	bot.add_child(_link("‹ " + tr("JOB_BACK_LIST"), _show_list))
+	bot.add_child(_link(tr("JOB_PASS"), _pass))
+	card_box.add_child(bot)
 	_pop_card()
 
 
@@ -707,6 +784,7 @@ func _accept() -> void:
 		Shifts.add(s)
 		decide(j.id, "accept")
 	accepted += 1
+	done_ids[j.id] = true
 	stage.joy()
 	Kit.play(self, "sparkle")
 	Kit.play(self, "chime", 1.1, -4)
@@ -715,14 +793,15 @@ func _accept() -> void:
 	card_box.add_child(_text(tr("JOB_ADDED"), 18, GREEN, true))
 	card_box.add_child(I18n.wrap(_text("%s · %s" % [j.title, j.store], 14, INK, true)))
 	card_box.add_child(_text(JobListings.when_text(j), 14, SUB))
+	card_box.add_child(_small_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(j)), Color("3b5ba5")))
 	var cal := Kit.button(tr("CAL_GOOGLE"), Color("eef3ff"), func(): CalendarLink.open_google(s), Color("3b5ba5"), 44, 15)
 	card_box.add_child(cal)
 	var status := I18n.wrap(_text("", 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
 	card_box.add_child(_link(tr("CAL_ICS"), func(): status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
 	card_box.add_child(status)
 	card_box.add_child(_link(tr("CHAT_ASK_SHOP"), func(): ChatHub.open(self, ChatShops.thread_id_for(s)), Color("6a5bd6"))) # お店の猫に聞く（feature/cat-chat）
-	index += 1
-	card_box.add_child(Kit.button(tr("JOB_NEXT") if index < jobs.size() else tr("JOB_DONE"), ORANGE, _next))
+	var more := jobs.any(func(x): return not done_ids.has(x.id))
+	card_box.add_child(Kit.button(tr("JOB_BACK_LIST") if more else tr("JOB_DONE"), ORANGE, _next))
 	_pop_card()
 	busy = false
 
@@ -736,19 +815,19 @@ func _pass() -> void:
 		Invites.decline(j)
 	else:
 		decide(j.id, "pass")
+	done_ids[j.id] = true
 	stage.shrug()
 	_say(tr("SHRUG_%d" % (index % 2 + 1)))
 	var tw := create_tween().set_parallel()
 	tw.tween_property(card, "position:x", -360.0, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	await tw.finished
 	card.position.x = 16
-	index += 1
 	busy = false
-	_show_job()
+	_show_list()
 
 
 func _next() -> void:
-	_show_job()
+	_show_list()
 
 
 func _show_end() -> void:
@@ -927,6 +1006,12 @@ func demo_shops() -> void:
 func demo_remind() -> void:
 	if not notes.is_empty() and is_instance_valid(notes[0]):
 		notes[0].pressed.emit()
+
+
+## 一覧の先頭の仕事をくわしく
+func demo_detail() -> void:
+	index = 0
+	_show_job()
 
 
 func demo_accept() -> void:

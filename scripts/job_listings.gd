@@ -222,6 +222,15 @@ static func localize(job: Dictionary) -> Dictionary:
 	return job
 
 
+## Google マップの検索 URL（お店の名前と地域）。住所は見本なので、名前で探す
+static func maps_url(job: Dictionary) -> String:
+	var q := String(job.get("store", job.get("place", "")))
+	var area := String(job.get("area", ""))
+	if area != "" or job.has("listing"):
+		q += " " + JobPrefs.area_label(area)
+	return "https://www.google.com/maps/search/?api=1&query=" + q.strip_edges().uri_encode()
+
+
 static func store_name(listing_id: String) -> String:
 	return I18n.t("JOB_STORE_" + listing_id.to_upper())
 

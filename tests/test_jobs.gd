@@ -109,6 +109,9 @@ func _run() -> void:
 	# 条件のそろえ方（型・範囲・知らない値）。お金の本物の情報は、渡されても持たない
 	var lp := JobPrefs.normalize({"area": " 中野 ", "days": [5.0, 1.0, 1.0], "windows": ["night", "morning", "x"], "min_wage": 99999, "pay": "weird", "bank_account": "1234567", "card": "4111"})
 	_check(lp.area == "中野" and lp.days == [1, 5] and lp.windows == ["morning", "night"] and lp.min_wage == JobPrefs.WAGE_MAX and lp.pay == "any", "prefs normalize %s" % lp)
+	# Google マップの検索 URL（お店の名前と地域。空白や日本語はエンコード）
+	var mu := JobListings.maps_url({"store": "Café Komorebi", "area": "shibuya", "listing": "cafe_komorebi"})
+	_check(mu.begins_with("https://www.google.com/maps/search/?api=1&query=") and mu.contains("Caf%C3%A9%20Komorebi") and not mu.contains(" "), "maps url %s" % mu)
 	# 週のマス（曜日×時間帯）：古い形（days × windows）は全部のマスに。マスは曜日ごとに違ってよい
 	_check(lp.slots == ["1:morning", "1:night", "5:morning", "5:night"], "old prefs become slots %s" % [lp.slots])
 	var gp := JobPrefs.normalize({"slots": ["0:morning", "2:evening", "2:evening", "9:day", "3:x"], "min_wage": 1000, "pay": "any"})

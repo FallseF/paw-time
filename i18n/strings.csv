@@ -1736,3 +1736,9 @@ PREFS_WIN_S_DAY,Day,昼
 PREFS_WIN_S_EVENING,Eve,夕方
 PREFS_WIN_S_NIGHT,Night,深夜
 PREFS_WIN_HOURS,Morning 6–12 · Day 11–17 · Evening 17–22 · Night 22–5,朝 6〜12時・昼 11〜17時・夕方 17〜22時・深夜 22〜5時
+JOB_LIST_TITLE,%d jobs — tap one to see more,%d 件。タップでくわしく
+JOB_LIST_SAY,Which one looks good?,どれがよさそう？
+JOB_LIST_LATER,Decide later,あとで決める
+JOB_BACK_LIST,All jobs,一覧へ
+JOB_MAP,Map,地図
+%sのシフト・%d時間,%s shift · %d hours,%sのシフト・%d時間
