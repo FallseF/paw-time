@@ -664,6 +664,11 @@ SCOOP_NICE,Nice!,いいね！
 SCOOP_TAP_HINT,Or just tap an orb,玉をタップするだけでもOK
 SCOOP_NOW,Now!,いま！
 ONB_NIGHT_SLEEP,Until morning,朝まで待つ
+ONB_NIGHT_OPEN,Open the orbs,玉をあける
+ONB_NIGHT_OPEN_NOW,No need to wait for morning. Open them now!,朝を待たずに、いまあけてみよう
+ポイがくたくた。つぎのポイへ,This scoop is worn out. Next one!,ポイがくたくた。つぎのポイへ
+ポイがくたくた,This scoop is worn out,ポイがくたくた
+のこりの玉は、川へ流れていった,The other orbs drifted down the river,のこりの玉は、川へ流れていった
 TOUR_1_TITLE,This is your island!,ここが、きみの島！
 TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。
 TOUR_2_TITLE,Rest grows the island,休むと、島が育つ

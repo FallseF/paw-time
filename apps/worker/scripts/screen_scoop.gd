@@ -16,6 +16,15 @@ const MIN_ON_SCREEN := 3
 const ORB_PX := 18.0 # 玉の画面の上の大きさ（半径くらい）
 const THUMB_PX := 110.0 # 指（スマホ）は、ポイの水面の点から下へ、これくらいをかくす
 const THUMB_R := 34.0
+## ポイが動ける画面の水面（上は岸の石の手前、下はポイの選択バーの上）。池の奥は石と木にかくれるので、そこへは行かない
+const POI_AREA := Rect2(50, 330, 260, 190)
+## 今夜は、いつも終わる：
+##   今夜の玉の数（はじめの玉 + 足す玉。ポイの本数 × NET_SCOOPS まで）に届いたら、玉は足さない
+##   1 本のポイですくえるのは NET_SCOOPS 個まで（破れなくても、くたくたになる）
+##   NIGHT_SEC 秒（すくっている時間）を過ぎたら、残りの玉は川へ流れていって、まとめへ
+const NET_SCOOPS := 3
+const BUDGET_EXTRA := 4
+const NIGHT_SEC := 90.0
 
 var vp: SubViewport
 var cam: Camera3D
@@ -56,6 +65,10 @@ var peek_mat: StandardMaterial3D
 var touch_input := false # 指で遊んでいる（指の下にも玉を浮かべない）
 var busy := false
 var ripple_t := 10.0
+var night_budget := 0 # 今夜、水面に出る玉の数の上限
+var net_scoops := {} # ポイの種類ごとの、今夜すくった数
+var night_t := 0.0 # すくっている時間（まとめ・演出の間は数えない）
+var want_home := false # すくっている途中に「帰る」を押した（終わったら帰る）
 
 var font_bold: FontFile
 var font_black: FontFile
@@ -63,6 +76,7 @@ var jar_row: HBoxContainer
 var poi_label: Label
 var dura_bar: ProgressBar
 var hint: Label
+var tip: Label
 var banner: Label
 var net_bar: HBoxContainer
 var flash: ColorRect
@@ -87,14 +101,13 @@ func _ready() -> void:
 	if DemoRoute.active:
 		list = DemoRoute.scoop_orbs() # 3 分デモ：おばネコの玉がひとつ（中身は特別なレア）
 	total_tonight = list.size()
+	night_budget = list.size() if _fixed_night() else maxi(list.size(), mini(list.size() + BUDGET_EXTRA, _nets_left() * NET_SCOOPS))
 	touch_input = DisplayServer.is_touchscreen_available()
 	for d in list:
 		_spawn_orb(d)
 	_pick_poi()
 	_clear_hand_path()
 	_refresh_ui()
-	if Onboarding.at("scoop"):
-		_tutorial_coach()
 	_show_hand()
 	# 今夜の川の様子を、はじめに知らせる
 	var kind := GameState.night_kind()
@@ -634,7 +647,7 @@ func _build_ui() -> void:
 	top.add_child(pp)
 
 	hint = _text("押して、玉の下へ → 離す", 14, Color(1, 1, 1, 0.85))
-	var tip := _text("縁が金色で離すと、ぴったり", 12, Color("c9bdf5"))
+	tip = _text("縁が金色で離すと、ぴったり", 12, Color("c9bdf5"))
 	tip.position = Vector2(0, 116)
 	tip.size = Vector2(360, 20)
 	add_child(tip)
@@ -800,6 +813,7 @@ func _refresh_net_bar() -> void:
 # ---------- 入力 ----------
 
 func _ground(p: Vector2) -> Vector3:
+	p = p.clamp(POI_AREA.position, POI_AREA.end) # 池の奥（石と木の陰）・下のバーの陰へは行かない
 	var from := cam.project_ray_origin(View3D.to_vp(cam, p))
 	var dir := cam.project_ray_normal(View3D.to_vp(cam, p))
 	if absf(dir.y) < 1e-4:
@@ -832,7 +846,9 @@ func _gui_input(event: InputEvent) -> void:
 	else:
 		return
 	if up:
-		if pressed:
+		if pressed and event.is_canceled():
+			_let_go() # 指の取り消し（電話・ジェスチャー）：タップとみなさず、そのまま持ち上げる
+		elif pressed:
 			pressed = false
 			_release(pos)
 		return
@@ -847,7 +863,6 @@ func _gui_input(event: InputEvent) -> void:
 		pressed = true
 		press_ms = Time.get_ticks_msec()
 		press_at = pos
-		_hide_coach() # はじめての夜の説明は、水に入れたら消す（読みながら待たせない）
 		_hide_hand()
 		last_ground = g
 		aim = g
@@ -860,6 +875,18 @@ func _gui_input(event: InputEvent) -> void:
 	else:
 		aim = g
 		last_ground = g
+
+
+## 指（マウス）がゲームの外へ出た・ウィンドウから離れた：押したままにしない（ポイを持ち上げる）
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_WM_MOUSE_EXIT, NOTIFICATION_WM_WINDOW_FOCUS_OUT, NOTIFICATION_APPLICATION_FOCUS_OUT]:
+		_let_go()
+
+
+func _let_go() -> void:
+	if pressed and not busy and auto_orb == null:
+		pressed = false
+		_lift()
 
 
 ## 離した：タップで、近くに玉があり、まだ輪の中に入っていなければ、玉まですべらせる。それ以外は、すくい上げる
@@ -991,8 +1018,7 @@ func _lift() -> void:
 	if GameState.NETS[poi_type].type == target.data.type:
 		GameState.goal("match")
 	caught_count += 1
-	if coach:
-		coach.visible = false # はじめての夜の説明は、すくえたら消す（まん中の「ぴったり」と重ならないように）
+	net_scoops[poi_type] = int(net_scoops.get(poi_type, 0)) + 1
 	_first_catch_cheer()
 	if perfect:
 		perfect_streak += 1
@@ -1013,13 +1039,65 @@ func _lift() -> void:
 	await tw2.finished
 	target.queue_free()
 	poi.position.y = 0.45
+	_wear_out()
 	_top_up()
 	_refresh_ui()
-	busy = false
 	hint.text = "押して、玉の下へ → 離す"
-	if orbs.is_empty():
+	if orbs.is_empty() or poi_type == "" or caught_count >= night_budget:
+		# 今夜はおしまい（待つ間も、もうすくわない）
 		await get_tree().create_timer(0.6).timeout
-		_finish()
+		busy = false
+		_drift_away()
+		return
+	busy = false
+
+
+## 1 本のポイで NET_SCOOPS 個すくったら、そのポイはくたくた（破れなくても）。つぎのポイへ
+func _wear_out() -> void:
+	if _fixed_night() or poi_type == "" or int(net_scoops.get(poi_type, 0)) < NET_SCOOPS:
+		return
+	GameState.use_net(poi_type)
+	net_scoops.erase(poi_type)
+	dura_by.erase(poi_type)
+	_pick_poi()
+	_banner("ポイがくたくた。つぎのポイへ" if poi_type != "" else "ポイがくたくた", Color("ffe2b8"))
+
+
+## 決まった玉だけの夜（はじめての夜・3 分デモ）。玉は足さず、ポイも時間も数えない
+func _fixed_night() -> bool:
+	return Onboarding.at("scoop") or DemoRoute.active
+
+
+func _nets_left() -> int:
+	var n := 0
+	for id in GameState.nets:
+		n += int(GameState.nets[id])
+	return n
+
+
+## 今夜はおしまい：残りの玉は、川へ流れていく。それから、まとめ
+func _drift_away() -> void:
+	if GameState.scooped_tonight:
+		return
+	pressed = false
+	auto_orb = null
+	_hide_hand()
+	if not orbs.is_empty():
+		busy = true
+		_banner("のこりの玉は、川へ流れていった", Color("c9d2ff"))
+		var tw := create_tween().set_parallel()
+		for o: Orb3D in orbs:
+			var away := Vector3(o.position.x, 0.0, o.position.z).normalized()
+			if away == Vector3.ZERO:
+				away = Vector3.RIGHT
+			tw.tween_property(o, "position", o.position + away * 1.4, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+			tw.tween_property(o, "scale", Vector3.ONE * 0.05, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		await tw.finished
+		for o in orbs:
+			o.queue_free()
+		orbs.clear()
+		busy = false
+	_finish()
 
 
 func _tear(target: Orb3D) -> void:
@@ -1050,7 +1128,7 @@ func _tear(target: Orb3D) -> void:
 	if poi_type == "":
 		hint.text = "ポイを使い切った"
 		await get_tree().create_timer(0.8).timeout
-		_finish()
+		_drift_away()
 	else:
 		hint.text = "新しいポイ。こんどはそっと"
 
@@ -1060,6 +1138,15 @@ func _tear(target: Orb3D) -> void:
 ## ポイの動き・目じるし・玉の動き（毎フレーム）
 func _process(delta: float) -> void:
 	ripple_t += delta
+	# 「帰る」をすくっている途中に押していたら、終わったところで帰る。時間の目安を過ぎたら、今夜はおしまい
+	if not busy and not GameState.scooped_tonight:
+		if want_home:
+			want_home = false
+			_finish()
+		elif not _fixed_night():
+			night_t += delta
+			if night_t >= NIGHT_SEC and auto_orb == null:
+				_drift_away()
 	if not busy:
 		_move_poi(delta)
 	_sync_guides(delta)
@@ -1258,11 +1345,12 @@ func _keep_visible(o: Orb3D) -> void:
 	o.vel = (home - o.position).normalized() * 0.1
 
 
-## 水面の玉が少なくなったら、今夜の玉を足す（空の水面を待たせない。ポイがある間）
+## 水面の玉が少なくなったら、今夜の玉を足す（空の水面を待たせない。ポイがあって、今夜の玉の数に届くまで）
 func _top_up() -> void:
 	if Onboarding.at("scoop") or poi_type == "" or DemoRoute.active:
 		return
-	while orbs.size() < MIN_ON_SCREEN:
+	# 今夜の玉の数（night_budget）に届いたら、もう足さない（あとは水面の玉をすくったら、おしまい）
+	while orbs.size() < MIN_ON_SCREEN and total_tonight < night_budget:
 		var more: Array = GameState.tonight_orbs()
 		if more.is_empty():
 			return
@@ -1289,12 +1377,13 @@ func _flash(a: float) -> void:
 
 
 func _finish() -> void:
-	if GameState.scooped_tonight or busy:
+	if GameState.scooped_tonight:
+		return
+	if busy:
+		want_home = true # すくっている途中なら、終わったところで（_process）
 		return
 	GameState.scooped_tonight = true
 	Telemetry.track("scoop_night", {"orbs": mini(caught_count, 500)})
-	if coach:
-		coach.visible = false
 	if GameState.total_scooped > 0:
 		GameState.tut["scoop"] = true
 	Engine.time_scale = 1.0
@@ -1323,9 +1412,10 @@ func _finish() -> void:
 		dot.add_theme_stylebox_override("panel", sb)
 		row.add_child(dot)
 	v.add_child(row)
-	v.add_child(_text("玉は、朝になったらかえる" if caught_count > 0 else "今夜は、水の音だけ", 13, Color(1, 1, 1, 0.7)))
-	# はじめての夜は、ここからそのまま朝の孵化へ（夜の場面は挟まない。Onboarding.next_after）
-	var b := Kit.button(tr("ONB_NIGHT_SLEEP") if Onboarding.at("scoop") else "島へもどる", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "garden")), Color.WHITE, 46, 16)
+	# はじめての夜は、朝を待たずに、ここからそのまま玉をあける（夜の場面は挟まない。Onboarding.next_after）
+	var first := Onboarding.at("scoop")
+	v.add_child(_text(tr("ONB_NIGHT_OPEN_NOW") if first else ("玉は、朝になったらかえる" if caught_count > 0 else "今夜は、水の音だけ"), 13, Color(1, 1, 1, 0.7)))
+	var b := Kit.button(tr("ONB_NIGHT_OPEN") if first else "島へもどる", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "garden")), Color.WHITE, 46, 16)
 	v.add_child(b)
 	p.pivot_offset = Vector2(140, 100)
 	p.scale = Vector2(0.8, 0.8)
@@ -1333,39 +1423,6 @@ func _finish() -> void:
 	var tw := create_tween().set_parallel()
 	tw.tween_property(p, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(p, "modulate:a", 1.0, 0.25)
-
-
-## はじめての夜の説明（相棒のひとこと）。玉の中身は、おばけ・島の材料・服のどれか
-var coach: PanelContainer
-
-
-func _tutorial_coach() -> void:
-	coach = PanelContainer.new()
-	coach.add_theme_stylebox_override("panel", _pill(Color(1, 0.99, 0.97, 0.95), 18))
-	coach.position = Vector2(16, 128)
-	coach.size = Vector2(328, 0)
-	coach.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(coach)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
-	coach.add_child(v)
-	var who := Kit.text(SpecialObake.pet_name(), 12, Color("8a5bd6"), true)
-	v.add_child(who)
-	var l := I18n.wrap(Kit.text(tr("ONB_SCOOP_COACH"), 14, Color("2a2233"), true))
-	v.add_child(l)
-	# 触らなくても、少ししたら消える
-	get_tree().create_timer(COACH_SEC).timeout.connect(_hide_coach)
-
-
-const COACH_SEC := 6.0
-
-
-func _hide_coach() -> void:
-	if coach == null or not is_instance_valid(coach) or not coach.visible:
-		return
-	var tw := create_tween()
-	tw.tween_property(coach, "modulate:a", 0.0, 0.3)
-	tw.tween_callback(func(): coach.visible = false)
 
 
 ## はじめてのすくい：指の動かし方を、半透明の手が 3 拍で見せる（おさえて → すべりこませて → はなす！）。
@@ -1420,6 +1477,10 @@ func _hide_hand() -> void:
 
 ## 手の拍（毎フレーム）。はじめの玉の画面の位置へ向かう。すくう前に手を離して何もしないでいたら、また見せる
 func _sync_hand(delta: float) -> void:
+	# はじめてのすくいは、手の見本だけ（文字の説明は出さない）
+	var show_text := not _want_hand()
+	hint.visible = show_text
+	tip.visible = show_text
 	if hand == null:
 		if not pressed and not busy and auto_orb == null and _want_hand():
 			hand_idle += delta

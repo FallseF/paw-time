@@ -47,6 +47,11 @@ func _ready() -> void:
 	GameState.hatched = featured + quick
 	var only_cat_dupe: bool = quick.size() == 1 and not quick[0].has("kind")
 	batch_from = featured.size() if not quick.is_empty() and not only_cat_dupe else GameState.hatched.size()
+	# 特別な子（はじめての夜・3 分デモ）がいる朝は、材料からひとつずつあけて、特別な子をいちばん最後に（大きな見せ場に）
+	if GameState.hatched.any(func(x): return x.get("special", false)):
+		var sp: Array = GameState.hatched.filter(func(x): return x.get("special", false))
+		GameState.hatched = GameState.hatched.filter(func(x): return not x.get("special", false)) + sp
+		batch_from = GameState.hatched.size()
 	var n_orbs: int = GameState.hatched.size()
 	for i in n_orbs:
 		var h: Dictionary = GameState.hatched[i]
@@ -335,7 +340,9 @@ func _build_ui() -> void:
 
 func _refresh_buttons() -> void:
 	var left := orbs.size() - index
-	all_btn.visible = left >= 2 and index < batch_from
+	# 特別な子がまだ残っている朝は「ぜんぶ」を出さない（特別な子は、ひとつだけで大きく見せる）
+	var special_left: bool = GameState.hatched.slice(index).any(func(x): return x.get("special", false))
+	all_btn.visible = left >= 2 and index < batch_from and not special_left
 	# 真ん中の主ボタンは、「ぜんぶ」があるときは少し左へ
 	next_btn.position.x = 30 if all_btn.visible else 80
 
