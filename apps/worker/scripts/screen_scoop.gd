@@ -61,7 +61,7 @@ func _ready() -> void:
 	# 休みの日のポイ 1 本（島の夜のカードを通らずに来たときも）
 	if not Onboarding.at("scoop"):
 		GameState.grant_rest_net()
-	# はじめての夜（Onboarding）は、ゆっくりで逃げない玉がひとつだけ
+	# はじめての夜（Onboarding）は、ゆっくりで逃げない玉が 3 つ（はじめの 1 つは必ずおばネコ）
 	var list := Onboarding.tutorial_orbs() if Onboarding.at("scoop") else GameState.tonight_orbs()
 	if DemoRoute.active:
 		list = DemoRoute.scoop_orbs() # 3 分デモ：おばネコの玉がひとつ（中身は特別なレア）
@@ -719,6 +719,7 @@ func _gui_input(event: InputEvent) -> void:
 			_banner("ポイがない。今夜はおしまい", Color("ffb3a8"))
 			return
 		pressed = true
+		_hide_coach() # はじめての夜の説明は、水に入れたら消す（読みながら待たせない）
 		last_ground = g
 		poi.position = Vector3(g.x, -0.04, g.z)
 		_ripple(g)
@@ -1088,6 +1089,19 @@ func _tutorial_coach() -> void:
 	v.add_child(who)
 	var l := I18n.wrap(Kit.text(tr("ONB_SCOOP_COACH"), 14, Color("2a2233"), true))
 	v.add_child(l)
+	# 触らなくても、少ししたら消える
+	get_tree().create_timer(COACH_SEC).timeout.connect(_hide_coach)
+
+
+const COACH_SEC := 6.0
+
+
+func _hide_coach() -> void:
+	if coach == null or not is_instance_valid(coach) or not coach.visible:
+		return
+	var tw := create_tween()
+	tw.tween_property(coach, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(func(): coach.visible = false)
 
 
 # ---------- 確認用 ----------

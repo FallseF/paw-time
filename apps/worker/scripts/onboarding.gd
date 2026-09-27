@@ -92,10 +92,17 @@ static func resume_screen() -> String:
 	return "garden"
 
 
-## はじめての夜は、ふわふわ逃げない泡の玉がひとつだけ（ゆっくり・軽い・まだ会ったことのない子）
+## はじめての夜は、ふわふわ逃げない泡の玉が 3 つ（ゆっくり・軽い）。待たせないよう、すぐすくえる数だけ
 static func tutorial_orbs() -> Array:
-	# はじめての玉は必ずおばネコで、中身は特別なレア 6 匹のどれか（インストールごとに決まる。SpecialReveal.pick）
-	return [{"type": "dish", "rare": false, "weight": 0.15, "easy": true, "content": {"kind": "obake", "special": SpecialReveal.pick()}}]
+	# はじめの玉は必ずおばネコで、中身は特別なレア 6 匹のどれか（インストールごとに決まる。SpecialReveal.pick）。
+	# のこりの 2 つは島の材料（朝に島の説明へつながる）
+	var easy := {"type": "dish", "rare": false, "weight": 0.15, "easy": true}
+	var out: Array = []
+	for c in [{"kind": "obake", "special": SpecialReveal.pick()}, {"kind": "material", "id": "wood"}, {"kind": "material", "id": "shell"}]:
+		var o := easy.duplicate()
+		o["content"] = c
+		out.append(o)
+	return out
 
 
 # ---------------------------------------------------------------- はじめての朝
