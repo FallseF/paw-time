@@ -1737,6 +1737,16 @@ JOB_MAP,Map,地図
 ぜんぶひらく,Open all,ぜんぶひらく
 スキップ ›,Skip ›,スキップ ›
 EXPAND_PILL,+ Expand,＋ ひろげる
+R2_WT_HOURS,%dh %02dm together,%d時間%02d分、いっしょに
+R2_WT_COINS,+%d Paw Coins,肉球コイン +%d
+R2_WT_POI,+%d poi,ポイ +%d
+R2_WT_POI_DONE,Poi: today's already given,ポイ：今日の分はもらった
+R2_WT_COINS_ZERO,Short shift: coins grow as you work.,短い勤務：コインは働くほどたまる
+R2_WT_PAY_TITLE,Today's pay (estimate),今日のお給料（目安）
+R2_WT_PAY_HOW,%s × %s · your registered wage,%s × %s・登録した時給から
+R2_WT_PAY_NOTE,The game never handles your pay.,お給料そのものは、ゲームでは扱いません
+R2_WT_PAY_NONE,No hourly wage on this shift,このシフトには時給の登録がありません
+R2_WT_H,%dh %02dm,%d時間%02d分
 EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
 川べりは、夕方 5 時から,The river opens at 5 p.m.,川べりは、夕方 5 時から
 今日の仕事は、おしまい,Work's done for today,今日の仕事は、おしまい
