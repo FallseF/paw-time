@@ -36,7 +36,7 @@ func _ready() -> void:
 	font_black = load("res://assets/fonts/ZenMaruGothic-Black.ttf")
 	_build_world()
 	_build_ui()
-	for n in ["hatch", "sparkle", "chime"]:
+	for n in ["sparkle"]:
 		var p := AudioStreamPlayer.new()
 		p.stream = load("res://assets/sfx/%s.wav" % n)
 		add_child(p)
@@ -393,6 +393,9 @@ func _next() -> void:
 	# おばネコはいまレアなので、ひと震え多く（震えるたびに光が強くなる）。材料と服は、ぽんと。待たせないよう短く
 	var is_cat: bool = not h.has("kind")
 	var shakes := 2 if is_cat else 1
+	# 音：震えてから割れるまで「ためる」音をのせ、割れる瞬間に頂点がくるように（いつもの 0・レア 1・特別なレア 2）
+	var tier := 0 if not is_cat else (2 if SpecialReveal.has_clip(h.id) and h.is_new else (1 if Rares.is_rare(h.id) or h.get("big", false) else 0))
+	Sfx.hatch_build(self, shakes * 0.2 + (0.34 if is_cat else 0.12), tier)
 	for i in shakes:
 		var amp := 0.03 + i * 0.035
 		var tw2 := create_tween()
@@ -410,7 +413,7 @@ func _next() -> void:
 	_flash(0.18 if is_cat else 0.1)
 	if is_cat:
 		_light_burst(orb.position)
-	sfx["hatch"].play()
+	Sfx.hatch_release(self, tier)
 	if h.id == "kirari":
 		sfx["sparkle"].play()
 	Input.vibrate_handheld(60)
@@ -433,10 +436,9 @@ func _next() -> void:
 	var tw3 := create_tween()
 	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	await tw3.finished
-	sfx["chime"].play()
+	Sfx.reveal(self, tier)
 	if Rares.is_rare(h.id):
 		Kit.shake(cam, 0.07, 0.4)
-		sfx["sparkle"].play()
 	var sp: Dictionary = GameState.info(h.id)
 	card_title.text = sp.name
 	badge.get_parent().visible = h.is_new
@@ -475,7 +477,7 @@ func _open_batch() -> void:
 		await tw2.finished
 		await get_tree().create_timer(0.04).timeout
 	_flash(0.3)
-	sfx["hatch"].play()
+	Sfx.pops(self, orbs.size() - index)
 	var counts := {}
 	var levels := {}
 	var n_items := 0
@@ -500,7 +502,7 @@ func _open_batch() -> void:
 	burst.restart()
 	burst.emitting = true
 	await get_tree().create_timer(0.5).timeout
-	sfx["chime"].play()
+	Sfx.reveal(self)
 	var lines: Array = []
 	var names := {}
 	for i in rest.size():
@@ -617,7 +619,7 @@ func _reveal_item(h: Dictionary) -> void:
 	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.55, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tw3.tween_property(current_obake, "rotation:y", TAU, 0.7).set_trans(Tween.TRANS_SINE)
 	await tw3.finished
-	sfx["chime"].play()
+	Sfx.reveal(self)
 	card_title.text = tr(Drops.info(c).get("name", ""))
 	badge.get_parent().visible = h.is_new
 	card_sub.text = tr({"material": "島の材料", "cloth": "服", "vehicle": "乗り物"}.get(c.kind, "島の材料"))

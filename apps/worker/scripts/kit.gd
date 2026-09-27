@@ -3,7 +3,6 @@ class_name Kit
 
 static var _bold: FontFile
 static var _black: FontFile
-static var _sfx := {}
 const SETTINGS := "user://settings.cfg"
 
 
@@ -99,6 +98,7 @@ static func button(t: String, bg: Color, cb: Callable, fg := Color.WHITE, h := 5
 	b.add_theme_color_override("font_hover_color", fg)
 	b.add_theme_color_override("font_pressed_color", fg)
 	b.add_theme_color_override("font_focus_color", fg)
+	b.button_down.connect(func(): Sfx.press(b))
 	b.pressed.connect(func():
 		play(b, Sfx.for_label(t))
 		cb.call())
@@ -133,26 +133,16 @@ static func bar(value: float, color: Color, w := 120, h := 10, back := Color(0, 
 	return p
 
 
-## 効果音。root の子に AudioStreamPlayer を作り、SFX のバスで鳴らす（scripts/sfx.gd）。同じ音の連打は間引く
+## 効果音。root の子に AudioStreamPlayer を作り、SFX のバスで鳴らす（scripts/sfx.gd）。同じ音の連打は間引く。
+## くり返す UI の音は高さを少しゆらし、大きな見せ場の音では BGM を少し下げる（Sfx.vary・Sfx.duck_for）
 static func play(node: Node, name: String, pitch := 1.0, db := 0.0) -> void:
 	if node == null or not node.is_inside_tree():
 		return
 	Sfx.install(node.get_tree())
 	if not Sfx.allow(name):
 		return
-	if not _sfx.has(name):
-		var path := "res://assets/sfx/%s.wav" % name
-		if not ResourceLoader.exists(path):
-			return
-		_sfx[name] = load(path)
-	var p := AudioStreamPlayer.new()
-	p.stream = _sfx[name]
-	p.pitch_scale = pitch
-	p.volume_db = db
-	p.bus = Sfx.BUS
-	p.autoplay = true
-	p.finished.connect(p.queue_free)
-	node.get_tree().root.add_child.call_deferred(p)
+	Sfx.emit(node, name, pitch * Sfx.vary(name), db)
+	Sfx.duck_for(name)
 
 
 static func glow(c: Color, e: float) -> StandardMaterial3D:

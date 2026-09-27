@@ -975,7 +975,7 @@ func _lift() -> void:
 	durability -= cost
 	# 決まった瞬間
 	_flash(0.5)
-	_play("chime")
+	Sfx.catch(self, perfect)
 	if target.data.rare:
 		_play("sparkle")
 	Input.vibrate_handheld(40)
@@ -1026,6 +1026,7 @@ func _tear(target: Orb3D) -> void:
 	busy = true
 	pressed = false
 	perfect_streak = 0
+	Sfx.catch_break()
 	_play("tear")
 	Input.vibrate_handheld(80)
 	_banner("やぶれた…", Color("ffb3a8"))

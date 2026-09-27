@@ -373,6 +373,7 @@ func _end_mock(coins: int) -> void:
 	GameState.nets["bubble"] = GameState.nets.get("bubble", 0) + MOCK_NETS
 	GameState.save()
 	Kit.play(self, "sparkle")
+	Sfx.coins(self, coins_earned, 0.2)
 	var dim := ColorRect.new()
 	dim.color = Color(0.1, 0.08, 0.15, 0.4)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
