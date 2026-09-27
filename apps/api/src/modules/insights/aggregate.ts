@@ -10,8 +10,10 @@ import {
   TELEMETRY_CHAT_POSITIVE_TOPICS as POSITIVE_TOPICS,
   TELEMETRY_CHAT_PREFERENCE_TOPICS as PREFERENCE_TOPICS,
   type InsightsAggregate,
+  type InsightsPosting,
   type TelemetryEvent,
 } from "@paw-time/api-contracts";
+import { recruitAnswers } from "./recruit.js";
 
 export type FlatEvent = TelemetryEvent & { install_id: string };
 
@@ -61,6 +63,7 @@ export interface AggregateOptions {
   now: number; // unix seconds; "today" for the window
   weekLabel: "date" | "index"; // live uses ISO dates, simulated uses W1..W12
   startDay?: number; // first day of week 1 (defaults to first event day)
+  postings?: InsightsPosting[]; // shop-side shift postings, when a shop system is connected
 }
 
 export function aggregate(events: FlatEvent[], opts: AggregateOptions): InsightsAggregate {
@@ -529,6 +532,15 @@ export function aggregate(events: FlatEvent[], opts: AggregateOptions): Insights
       anon_issues: anonIssues.cell(),
     },
     shop_view: shopView(),
+    recruit: recruitAnswers({
+      events,
+      postings: opts.postings ?? [],
+      nowDay,
+      startDay,
+      offDayOpenShare: rate(offDays, installDays, allInstalls),
+      inviteAcceptRate: rate(invAccepted.n, invAccepted.n + invPassed.n, new Set([...invAccepted.who, ...invPassed.who]).size),
+      weekLabels: Array.from({ length: nWeeks }, (_, w) => weekName(w)),
+    }),
   };
 }
 

@@ -8,7 +8,7 @@ import type {
 } from "@paw-time/api-contracts";
 import type { StoredBatch, TelemetryStore } from "../telemetry/store.js";
 import { aggregate, dayOf, type FlatEvent } from "./aggregate.js";
-import { SIM_NOW, SIM_START, generateSimulated } from "./synthetic.js";
+import { SIM_NOW, SIM_START, generateSimulatedPilot } from "./synthetic.js";
 
 export function storageStatus(store: TelemetryStore, env: NodeJS.ProcessEnv = process.env): InsightsStorageStatus {
   if (store.kind !== "memory") return "connected";
@@ -22,13 +22,16 @@ const flatten = (batches: StoredBatch[]): FlatEvent[] =>
 let simCache: InsightsMetricsResponse | null = null;
 
 export function simulatedMetrics(): InsightsMetricsResponse {
-  simCache ??= {
-    mode: "simulated",
-    synthetic: true,
-    label: "Simulated 12-week pilot — synthetic data",
-    storage: "connected",
-    data: aggregate(generateSimulated(), { now: SIM_NOW, weekLabel: "index", startDay: dayOf(SIM_START) }),
-  };
+  if (!simCache) {
+    const sim = generateSimulatedPilot();
+    simCache = {
+      mode: "simulated",
+      synthetic: true,
+      label: "Simulated 12-week pilot — synthetic data",
+      storage: "connected",
+      data: aggregate(sim.events, { now: SIM_NOW, weekLabel: "index", startDay: dayOf(SIM_START), postings: sim.postings }),
+    };
+  }
   return simCache;
 }
 
@@ -60,7 +63,7 @@ export async function liveMetrics(store: TelemetryStore, demoOnly: boolean, now 
 }
 
 // Props safe and useful to show in the anonymous feed (all are enums/small numbers).
-const FEED_PROPS = ["day_type", "n", "role", "pay_style", "invited", "hours_bucket", "stars", "tag_count", "level", "on", "shop_id", "orbs", "kind", "topic"];
+const FEED_PROPS = ["day_type", "n", "role", "pay_style", "invited", "hours_bucket", "stars", "tag_count", "level", "on", "shop_id", "orbs", "kind", "topic", "tag", "reaction", "when", "max_per_week", "slot"];
 // Chat topics and anonymous issues are internal-only and never shown per event, not even
 // anonymously: the feed shows that one happened, without topic, tag or shop.
 const FEED_REDACTED_TYPES = new Set(["chat_signal", "anon_issue_sent"]);
