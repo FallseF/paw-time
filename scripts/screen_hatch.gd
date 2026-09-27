@@ -1,5 +1,6 @@
 extends Control
 ## 朝、光る玉が割れる。1個ずつ震えて、光があふれて、おばけが現れる。
+## 待たせない：ぽんと早く割れる。「ぜんぶひらく」で残りをまとめて、「スキップ」ですぐ庭へ（中身はもう手もとにある）。
 
 var main
 
@@ -17,6 +18,8 @@ var card_sub: Label
 var card_desc: Label
 var badge: Label
 var next_btn: Button
+var all_btn: Button
+var skip_btn: Button
 var header: Label
 var flash: ColorRect
 var burst: CPUParticles3D
@@ -61,8 +64,9 @@ func _ready() -> void:
 		orbs.append(o)
 	header.text = tr("朝だ。光る玉が 1 個") if n_orbs == 1 else tr("朝だ。光る玉が %d 個") % n_orbs
 	next_btn.text = "玉をひらく"
+	_refresh_buttons()
 	# 最初の玉は、待たずにひらく
-	await get_tree().create_timer(0.7).timeout
+	await get_tree().create_timer(0.4).timeout
 	if index == 0 and not busy and is_inside_tree():
 		_next()
 
@@ -252,6 +256,30 @@ func _build_ui() -> void:
 	next_btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	next_btn.pressed.connect(_next)
 	add_child(next_btn)
+	# 残りをまとめてひらく（2 個以上残っているとき）
+	all_btn = Button.new()
+	all_btn.text = tr("ぜんぶひらく")
+	all_btn.flat = true
+	all_btn.position = Vector2(230, 582)
+	all_btn.size = Vector2(110, 40)
+	all_btn.add_theme_font_override("font", font_bold)
+	all_btn.add_theme_font_size_override("font_size", 14)
+	all_btn.add_theme_color_override("font_color", Color("fff6e8"))
+	all_btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	all_btn.pressed.connect(_open_all)
+	all_btn.visible = false
+	add_child(all_btn)
+	# すぐ庭へ（割れる演出を飛ばす）
+	skip_btn = Button.new()
+	skip_btn.text = tr("スキップ ›")
+	skip_btn.flat = true
+	skip_btn.position = Vector2(266, 72)
+	skip_btn.size = Vector2(90, 36)
+	skip_btn.add_theme_font_override("font", font_bold)
+	skip_btn.add_theme_font_size_override("font_size", 14)
+	skip_btn.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	skip_btn.pressed.connect(_to_garden)
+	add_child(skip_btn)
 
 	flash = ColorRect.new()
 	flash.color = Color("fff6d8")
@@ -259,6 +287,31 @@ func _build_ui() -> void:
 	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flash.modulate.a = 0.0
 	add_child(flash)
+
+
+func _refresh_buttons() -> void:
+	var left := orbs.size() - index
+	all_btn.visible = left >= 2 and index < batch_from
+	# 真ん中の主ボタンは、「ぜんぶ」があるときは少し左へ
+	next_btn.position.x = 30 if all_btn.visible else 80
+
+
+## のこりの玉を、まとめて一度にひらく
+func _open_all() -> void:
+	if busy or index >= orbs.size():
+		return
+	batch_from = index
+	busy = true
+	next_btn.disabled = true
+	all_btn.visible = false
+	await _open_batch()
+
+
+## すぐ庭へ。中身は夜が明けたときに、もう手もとに入っている
+func _to_garden() -> void:
+	index = orbs.size()
+	busy = false
+	_next()
 
 
 func _next() -> void:
@@ -290,11 +343,11 @@ func _next() -> void:
 	var h: Dictionary = GameState.hatched[index]
 	# 玉が前に出て、震える
 	var tw := create_tween()
-	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tw.finished
-	# おばネコはいまレアなので、ひびが入るまで長めに（震えるたびに光が強くなる）
+	# おばネコはいまレアなので、少しだけ長めに（震えるたびに光が強くなる）。材料と服は、ぽんと
 	var is_cat: bool = not h.has("kind")
-	var shakes := 5 if is_cat else 2
+	var shakes := 3 if is_cat else 1
 	for i in shakes:
 		var amp := 0.03 + i * 0.025
 		var tw2 := create_tween()
@@ -306,7 +359,7 @@ func _next() -> void:
 			orb.energy_scale = 0.8 + i * 0.35
 			orb.light_scale = 0.3 + i * 0.3
 		await tw2.finished
-		await get_tree().create_timer(0.3 - i * 0.04).timeout
+		await get_tree().create_timer(0.12).timeout
 	# 割れる
 	_flash(1.0 if is_cat else 0.9)
 	if is_cat:
@@ -327,7 +380,7 @@ func _next() -> void:
 	current_obake.scale = Vector3.ONE * 0.05
 	world.add_child(current_obake)
 	var tw3 := create_tween()
-	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.5, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	await tw3.finished
 	sfx["chime"].play()
 	if Rares.is_rare(h.id):
@@ -346,6 +399,7 @@ func _next() -> void:
 	next_btn.text = "つぎの玉" if index < orbs.size() else "庭へ"
 	next_btn.disabled = false
 	busy = false
+	_refresh_buttons()
 
 
 ## いつもの子たちの玉は、まとめて一度にひらく
@@ -420,6 +474,7 @@ func _open_batch() -> void:
 	next_btn.text = "庭へ"
 	next_btn.disabled = false
 	busy = false
+	_refresh_buttons()
 
 
 ## おばネコが出る瞬間の光（まわりを一度だけ強く照らす）
@@ -466,8 +521,8 @@ func _reveal_item(h: Dictionary) -> void:
 	current_obake.scale = Vector3.ONE * 0.05
 	world.add_child(current_obake)
 	var tw3 := create_tween().set_parallel()
-	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.55, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tw3.tween_property(current_obake, "rotation:y", TAU, 1.2).set_trans(Tween.TRANS_SINE)
+	tw3.tween_property(current_obake, "scale", Vector3.ONE * 0.55, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw3.tween_property(current_obake, "rotation:y", TAU, 0.7).set_trans(Tween.TRANS_SINE)
 	await tw3.finished
 	sfx["chime"].play()
 	card_title.text = tr(Drops.info(c).get("name", ""))
@@ -482,3 +537,4 @@ func _reveal_item(h: Dictionary) -> void:
 	next_btn.text = "つぎの玉" if index < orbs.size() else "庭へ"
 	next_btn.disabled = false
 	busy = false
+	_refresh_buttons()
