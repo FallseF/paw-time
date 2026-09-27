@@ -1756,6 +1756,14 @@ R2_TOUR_3_TITLE,Poi gets materials & clothes,ポイで、材料と服を
 R2_TOUR_3_BODY,"At night, scoop glowing orbs with your poi. Out come new obake, materials and clothes. Paw Coins buy decorations.",夜、ポイで光る玉をすくう。おばけ・材料・服が出てくる。肉球コインでは飾りが買える。
 R2_TOUR_4_TITLE,Grow your island,島を育てよう
 R2_TOUR_4_BODY,Use materials and coins to widen the shore and decorate it. Work days and rest days both help it grow.,材料とコインで、岸をひろげて飾る。働いた日も休んだ日も、島は育つよ。
+R2_DAY,%s %d/%d,%s %d/%d
+R2_TODAY,Today,今日
+R2_DAY_JOBS,%d jobs,%d 件
+R2_DAY_NONE,No jobs this day. Swipe or tap › for the next day.,この日の仕事はありません。スワイプか › で次の日へ
+R2_DAY_SWIPE,Swipe or tap ‹ › to change the day,スワイプか ‹ › で、曜日を送る
+R2_SHIFT_NONE,No shift this day,この日のシフトはありません
+R2_WORK_MENU_JOBS,Job suggestions,求人を見る
+R2_DAY_JOBS_1,1 job,1 件
 EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
 川べりは、夕方 5 時から,The river opens at 5 p.m.,川べりは、夕方 5 時から
 今日の仕事は、おしまい,Work's done for today,今日の仕事は、おしまい
