@@ -122,7 +122,7 @@ func _app_open() -> void:
 	Telemetry.track("app_open", {"day_type": day_type, "hours_since_last_shift_end": Telemetry.since_shift_bucket(since)})
 
 
-var music: AudioStreamPlayer
+var music: Music
 
 
 ## めあて達成の知らせ（どの画面でも上から降りてくる）
@@ -136,25 +136,20 @@ func _on_goal(text: String, all_done: bool) -> void:
 	# ほかの知らせと重ならないよう、順番に（Toasts）
 	Toasts.push(tr("めあて達成　めぐみ +3"), tr(text) + ("\n" + tr("3つそろった！ 肉球コイン +10") if all_done else ""), "goal")
 	Kit.play(self, "bell", 1.3, -6)
+	Music.duck("jingle", -6.0, 1.6)
 
 
 func _music() -> void:
-	music = AudioStreamPlayer.new()
-	var loop: AudioStreamWAV = load("res://assets/sfx/lullaby.wav")
-	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	loop.loop_end = loop.data.size() / 2
-	music.stream = loop
-	music.volume_db = -13
+	music = Music.new()
 	add_child(music)
-	music.play()
+	music.play_for(current_name)
 
 
-## 画面ごとに音楽の大きさを変える（すくいと夢では控えめ）
+## 画面ごとの曲（scripts/music.gd の SCREEN_TRACK）。同じ曲の画面どうしでは鳴らしなおさない
 func _music_for(screen_name: String) -> void:
 	if music == null:
 		return
-	var db: float = {"catch": -30.0, "night": -20.0, "moon": -16.0}.get(screen_name, -13.0)
-	create_tween().tween_property(music, "volume_db", db, 0.6)
+	music.play_for(screen_name)
 
 
 ## 確認用：途中の画面から始めるときの下ごしらえ
