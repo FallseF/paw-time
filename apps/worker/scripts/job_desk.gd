@@ -758,51 +758,61 @@ func _show_list() -> void:
 var job_day := -1 # 求人の曜日のカードの、いま見ている日
 
 
-## 求人の 1 行：色の印・仕事と店・時間と評判、右に時給（大きく太く）
+## 求人の 1 行（レビュー3：背の高いカードの形）：左に色の帯、仕事・店と場所・時間と評判の 3 段、右に時給（大きく太く）と受け取り方
 func _list_row(j: Dictionary) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(0, 58)
+	b.custom_minimum_size = Vector2(0, 80)
 	for k in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k == "pressed" else Color.WHITE, 14, 0.08, Vector2(10, 6)))
+		b.add_theme_stylebox_override(k, Kit.pill(Color("fff1e0") if k == "pressed" else Color.WHITE, 16, 0.14, Vector2(10, 8)))
 	b.pressed.connect(func():
 		Kit.play(self, "tap", 1.1)
 		index = jobs.find(j)
 		_show_job())
 	var h := HBoxContainer.new()
 	h.set_anchors_preset(Control.PRESET_FULL_RECT)
-	h.offset_left = 10
-	h.offset_right = -8
-	h.add_theme_constant_override("separation", 8)
+	h.offset_left = 8
+	h.offset_right = -10
+	h.offset_top = 8
+	h.offset_bottom = -8
+	h.add_theme_constant_override("separation", 10)
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(h)
 	var dot := Panel.new()
-	dot.custom_minimum_size = Vector2(10, 36)
-	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	dot.custom_minimum_size = Vector2(6, 0)
+	dot.size_flags_vertical = Control.SIZE_FILL
 	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ds := StyleBoxFlat.new()
 	ds.bg_color = Color("ff8fb1") if Invites.is_invite(j) else role_color(j.role)
-	ds.set_corner_radius_all(5)
+	ds.set_corner_radius_all(3)
 	dot.add_theme_stylebox_override("panel", ds)
 	h.add_child(dot)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 0)
+	v.add_theme_constant_override("separation", 1)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var t1 := _text(("%s  " % tr("INVITE_CHIP") if Invites.is_invite(j) else "") + "%s · %s" % [j.title, j.store], 13, INK, true)
-	t1.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	t1.clip_text = true
-	v.add_child(t1)
 	var sm := Reviews.summary(j.listing)
-	var t2 := _text("%s · ★%.1f" % [clock_range(j), sm.stars], 12, SUB, true)
-	t2.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	t2.clip_text = true
-	v.add_child(t2)
+	var lines := [
+		[("%s  " % tr("INVITE_CHIP") if Invites.is_invite(j) else "") + String(j.title), 15, INK, true],
+		[String(j.place), 12, SUB, false],
+		["%s · ★%.1f" % [clock_range(j), sm.stars], 13, INK, true],
+	]
+	for ln in lines:
+		var l := _text(ln[0], ln[1], ln[2], ln[3])
+		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		l.clip_text = true
+		v.add_child(l)
 	h.add_child(v)
-	var wl := _text(JobListings.wage_text(j), 18, Color("e0663a"), true, HORIZONTAL_ALIGNMENT_RIGHT)
+	var rv := VBoxContainer.new()
+	rv.alignment = BoxContainer.ALIGNMENT_CENTER
+	rv.add_theme_constant_override("separation", 0)
+	rv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var wl := _text(JobListings.wage_text(j), 20, Color("e0663a"), true, HORIZONTAL_ALIGNMENT_RIGHT)
 	wl.add_theme_font_override("font", Kit.black())
-	wl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	h.add_child(wl)
+	rv.add_child(wl)
+	if String(j.get("pay", "")) in JobPrefs.PAYS:
+		rv.add_child(_text(tr("JOB_PAY_" + String(j.pay).to_upper()), 11, GREEN, true, HORIZONTAL_ALIGNMENT_RIGHT))
+	h.add_child(rv)
 	return b
 
 
