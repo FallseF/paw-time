@@ -13,6 +13,8 @@ import {
   urgentReach,
   validateJob,
 } from "./rules";
+import { monthPayroll as buildMonthPayroll } from "./payroll";
+import type { MonthPayroll } from "./payroll";
 import { createSample } from "./sample";
 import type { ApplicationRecord, SampleData, ThreadRecord, WorkerRecord } from "./sample";
 import { addDays, minutesOf, weekStart, zonedParts, zonedToUtc } from "./time";
@@ -435,6 +437,12 @@ export class ShopConsoleStore {
       reason: reason.trim(),
     });
     return { ok: true, data: this.shift(shiftId) as ShiftView };
+  }
+
+  /** Labor cost for a month ("YYYY-MM"), priced from each job's hourly wage. */
+  monthPayroll(month: string): MonthPayroll {
+    const wages = new Map(this.data.jobs.map((j) => [j.id, j.wage]));
+    return buildMonthPayroll(month, this.shifts(`${month}-01`, `${month}-31`), (id) => wages.get(id) ?? 0, REGIONS[this.region].currency, this.now());
   }
 
   // ------------------------------------------------------------ chat

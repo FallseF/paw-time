@@ -27,6 +27,7 @@ export function Shell({ children }: { children: ReactNode }) {
     { href: "/jobs", key: "jobs", icon: "briefcase" },
     { href: "/applications", key: "applicants", icon: "users", count: newApplicants },
     { href: "/attendance", key: "shifts", icon: "calendar" },
+    { href: "/payroll", key: "payroll", icon: "chart" },
     { href: "/chat", key: "chat", icon: "chat", count: waiting },
   ];
   const people: NavItem[] = [

@@ -575,3 +575,40 @@ a.list-link:hover { text-decoration: none; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 .card-row > .status { justify-self: start; }
+
+/* Labor cost */
+.pay-chart { margin: 0; display: grid; gap: 12px; }
+.pay-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); }
+.pay-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.swatch.confirmed, .seg-bar.confirmed { background: var(--accent); }
+.swatch.projected, .seg-bar.projected { background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--accent) 45%, var(--surface)) 0 3px, color-mix(in oklab, var(--accent) 25%, var(--surface)) 3px 6px); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 55%, var(--surface)); }
+.pay-plot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; height: 220px; }
+.pay-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; padding-bottom: 18px; margin-top: -6px; }
+.pay-area { position: relative; min-width: 0; }
+.pay-grid { position: absolute; inset: 0 0 18px 0; display: flex; flex-direction: column-reverse; justify-content: space-between; pointer-events: none; }
+.pay-grid span { border-top: 1px solid var(--line); }
+.pay-grid span:first-child { border-top-color: var(--line-strong); }
+.pay-cols { list-style: none; margin: 0; padding: 0; position: relative; display: flex; gap: 2px; height: 100%; }
+.pay-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.pay-hit { flex: 1; position: relative; border: 0; background: none; padding: 0; cursor: default; display: flex; align-items: flex-end; border-radius: 3px 3px 0 0; }
+.pay-hit:hover, .pay-hit:focus-visible { background: color-mix(in oklab, var(--accent) 8%, transparent); }
+.pay-stack { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.seg-bar { display: block; width: 100%; }
+.seg-bar:first-child { border-radius: 2px 2px 0 0; }
+.pay-tip { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); display: none; gap: 2px; white-space: nowrap; background: var(--text); color: var(--bg); padding: 4px 8px; border-radius: 6px; font-size: 11.5px; z-index: 5; }
+.pay-hit:hover .pay-tip, .pay-hit:focus-visible .pay-tip { display: grid; }
+.pay-day { height: 18px; font-size: 10px; color: var(--text-3); text-align: center; line-height: 18px; font-variant-numeric: tabular-nums; }
+.pay-col-empty .pay-day { opacity: 0.6; }
+.dt tfoot td { padding: 10px 12px; border-top: 1px solid var(--line-strong); background: var(--surface-2); }
+.close-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.close-item { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; font-size: 13px; color: var(--text-2); }
+.close-item svg { width: 16px; height: 16px; margin-top: 2px; }
+.close-item svg.ok { color: var(--good); }
+.close-item svg.todo { color: var(--warn); }
+@media (max-width: 720px) {
+  .pay-plot { height: 180px; }
+  .pay-cols { gap: 1px; }
+  .pay-day { font-size: 8.5px; }
+  .pay-col:nth-child(even) .pay-day { visibility: hidden; }
+}
