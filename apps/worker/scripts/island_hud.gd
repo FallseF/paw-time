@@ -246,11 +246,11 @@ func _select(id: String, anim := true) -> void:
 func _on_tab(id: String) -> void:
 	if not shown or garden == null:
 		return
-	Kit.play(self, "tap", 1.1)
 	if id == "island":
 		_select("island")
-		garden.recenter()
+		garden.recenter() # 島にいるときは、家の前へ（音も recenter が鳴らす）
 		return
+	Kit.play(self, "tap", 1.1)
 	_select(id)
 	await get_tree().create_timer(0.14).timeout
 	if not is_inside_tree():

@@ -314,7 +314,7 @@ func _fit_root() -> void:
 
 ## 上下の帯：画面のいちばん上と下の 1 行でいちばん多い色で塗る（ボタンの影などが縞にならないように）。出てから 2 回：組み立て直後と、少しあと
 func _sample_bars() -> void:
-	for wait in [0.3, 1.6]:
+	for wait in [0.3, 1.6, 4.0]:
 		await get_tree().create_timer(wait).timeout
 		var off := root.position.y
 		if off < 1.0 or busy or fade.modulate.a > 0.01:
@@ -325,9 +325,25 @@ func _sample_bars() -> void:
 			continue
 		var k := img.get_height() / get_viewport().get_visible_rect().size.y
 		for i in 2:
-			var y := int((off + 1.0) * k) if i == 0 else int((off + 639.0) * k)
+			var cy := off + 1.0 if i == 0 else off + 639.0
+			if _covered(cy):
+				continue # 知らせ（CanvasLayer）が上にかかっている行は写さない
+			var y := int(cy * k)
 			bars[i].texture = ImageTexture.create_from_image(Image.create_from_data(1, 1, false, Image.FORMAT_RGB8, _row_mode(img, clampi(y, 0, img.get_height() - 1))))
 		_fit_root()
+
+
+## 画面の y の行に、重ねの層（知らせ・デモの札など、この画面の CanvasLayer）の部品がかかっているか
+func _covered(y: float) -> bool:
+	for l in get_tree().root.find_children("*", "CanvasLayer", true, false):
+		if l.get_viewport() != get_viewport() or not l.visible:
+			continue
+		for c in l.find_children("*", "Control", true, false):
+			if c.is_visible_in_tree() and c.get_global_rect().size.x > 60.0:
+				var r: Rect2 = c.get_global_rect()
+				if y >= r.position.y and y <= r.end.y:
+					return true
+	return false
 
 
 ## 1 行の中で、いちばん多い色（16 段に丸めて数え、その段の平均）
