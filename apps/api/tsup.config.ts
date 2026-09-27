@@ -7,5 +7,5 @@ export default defineConfig({
   dts: true,
   outDir: "dist",
   clean: true,
-  noExternal: ["@paw-time/api-contracts"],
+  noExternal: ["@paw-time/api-contracts", "@paw-time/shop-console"],
 });

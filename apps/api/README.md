@@ -27,5 +27,6 @@ x-actor-id: member-demo
 - `GET /v1/business/shifts/:id/attendance-summary`
 - `POST /v1/business/evaluations`
 - `GET /v1/business/world`
+- `/v1/business/console/*`: 店舗管理画面（apps/employer）用。`org-sunnyside`（SF・USD）と `org-komorebi`（日本・円）の見本データ。today, jobs, wage-check, urgent-reach, applicants, shifts, attendance-log, corrections, threads, faq, reviews, invites, settings。規則（最低賃金、5人未満の非表示、8:00〜21:00 の配信、個人スコアを返さない）は `packages/shop-console` にあり、テストは `test/shop-console.test.ts` と `packages/shop-console/test`。
 
 通信仕様の正本は `packages/api-contracts`、永続化スキーマは `infra/database/migrations` です。
