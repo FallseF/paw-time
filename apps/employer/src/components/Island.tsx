@@ -1,4 +1,6 @@
-import type { IslandView, LandmarkId, LandmarkView } from "@paw-time/shop-console";
+import Image from "next/image";
+import type { IslandView, LandmarkId, LandmarkView, PositiveTag } from "@paw-time/shop-console";
+import renders from "../../public/island/island.json";
 
 /** Landmark drawings in a 40×40 box, feet at y=36, centered on x=20. */
 export function LandmarkGlyph({ id, dim }: { id: LandmarkId; dim?: boolean | undefined }) {
@@ -83,99 +85,69 @@ export function LandmarkGlyph({ id, dim }: { id: LandmarkId; dim?: boolean | und
   }
 }
 
-function Sprout() {
-  return (
-    <g>
-      <ellipse cx="20" cy="35" rx="6" ry="2" fill="#8a6a4a" opacity="0.6" />
-      <path d="M20 35v-7" stroke="#4a8a46" strokeWidth="1.4" />
-      <path d="M20 29c-3-1-5-3-5-5 3 0 5 2 5 5zM20 29c3-1 5-3 5-5-3 0-5 2-5 5z" fill="#86c77f" stroke="#4a8a46" strokeWidth="0.8" />
-    </g>
-  );
+/**
+ * Renders of the game's own shop island (apps/worker/tools/render_shop_island.gd), one per island the
+ * console can show. An island only uses a render whose landmarks match its own levels exactly, so the
+ * picture never shows a landmark the shop has not earned; anything else falls back to the bare island.
+ */
+type Render = { levels: Record<string, string>; pins: Record<string, [number, number]>; stage: number };
+const RENDERS = renders as unknown as Record<string, Render>;
+
+function levelKey(lm: LandmarkView): string {
+  return lm.sprout ? "s" : String(lm.level);
 }
 
-function Placeholder() {
-  return <ellipse cx="20" cy="34" rx="9" ry="3" fill="none" stroke="rgba(0,0,0,0.18)" strokeDasharray="2 2" />;
+function pickRender(island: IslandView): [string, Render] {
+  for (const [key, r] of Object.entries(RENDERS)) {
+    if (island.landmarks.every((lm) => r.levels[lm.id] === levelKey(lm))) return [key, r];
+  }
+  return ["bare", RENDERS.bare!];
 }
 
-/** Island slots: back row, front row, and the pier for the welcome-back arch. */
-const SLOTS: Record<LandmarkId, [number, number]> = {
-  clock_tower: [150, 168],
-  fair_fountain: [468, 168],
-  lantern_path: [98, 222],
-  rest_grove: [212, 272],
-  guide_post: [320, 286],
-  payday_bell: [428, 272],
-  welcome_arch: [556, 226],
-};
-
-export function IslandArt({ island, shopName, signColor, compact, labels }: {
+export function IslandArt({ island, shopName, signColor, compact, labels, tags, note }: {
   island: IslandView;
   shopName: string;
   signColor: string;
   compact?: boolean;
   labels: Record<LandmarkId, string>;
+  tags?: Record<PositiveTag, string> | undefined;
+  note?: string | undefined;
 }) {
+  const [key, render] = pickRender(island);
   const titleText = island.landmarks.map((l) => `${labels[l.id]} ${l.level}`).join(", ");
+  const shopPin = render.pins.shop;
+  const pinned = island.landmarks
+    .filter((lm) => lm.level > 0 && render.pins[lm.id])
+    .sort((a, b) => render.pins[a.id]![1] - render.pins[b.id]![1]);
   return (
-    <svg viewBox="0 0 640 330" className="island-mini" role="img" aria-label={`${shopName}: ${titleText}`}>
-      <defs>
-        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="var(--sea)" />
-          <stop offset="1" stopColor="var(--sea-2)" />
-        </linearGradient>
-      </defs>
-      <rect width="640" height="330" rx="12" fill="url(#sea)" />
-      {[[60, 60], [560, 70], [590, 290], [40, 280]].map(([x, y], i) => (
-        <path key={i} d={`M${x} ${y}q8 -6 16 0t16 0`} stroke="#fff" strokeOpacity="0.6" strokeWidth="2" fill="none" strokeLinecap="round" />
-      ))}
-      {/* pier */}
-      <rect x="548" y="226" width="70" height="10" rx="2" fill="#b98552" />
-      {[556, 576, 596, 612].map((x) => <rect key={x} x={x} y="234" width="4" height="16" fill="#8a6a4a" />)}
-      {/* island */}
-      <path d="M58 214c-6-52 58-104 150-114 60-7 110-14 170-8 104 10 184 50 190 110 6 56-70 94-250 96-176 2-254-30-260-84z" fill="var(--sand)" />
-      <path d="M78 206c-4-44 54-88 136-96 56-6 104-12 160-6 94 9 164 42 170 94 5 44-64 76-232 78-164 2-230-28-234-70z" fill="var(--grass)" />
-      <path d="M150 128c40-14 110-20 170-18 60 2 118 12 152 26" stroke="var(--grass-2)" strokeWidth="10" strokeLinecap="round" fill="none" opacity="0.5" />
-      {/* the shop on the hill */}
-      <g transform="translate(262 38)">
-        <rect x="8" y="40" width="100" height="48" rx="3" fill="#fff6ea" stroke="rgba(0,0,0,0.12)" />
-        <path d="M0 42 58 12l58 30z" fill={signColor} stroke="rgba(0,0,0,0.18)" strokeLinejoin="round" />
-        {Array.from({ length: 8 }, (_, i) => (
-          <rect key={i} x={8 + i * 12.5} y="46" width="12.5" height="9" fill={i % 2 ? "#fdf7ee" : signColor} />
-        ))}
-        <rect x="18" y="60" width="30" height="18" rx="2" fill="#ffe9b8" stroke="rgba(0,0,0,0.12)" />
-        <rect x="70" y="60" width="20" height="28" rx="2" fill="#b98552" />
-        <rect x="16" y="-4" width="84" height="20" rx="4" fill={signColor} stroke="rgba(0,0,0,0.15)" />
-        <text x="58" y="10" textAnchor="middle" fontSize="11" fontWeight="600" fill="#fff" fontFamily="var(--font)">{shopName.length > 16 ? `${shopName.slice(0, 15)}…` : shopName}</text>
-      </g>
-      {island.landmarks.map((lm) => {
-        const [x, y] = SLOTS[lm.id];
-        const scale = lm.level === 3 ? 2.5 : lm.level === 2 ? 2.1 : lm.level === 1 ? 1.7 : 1.3;
-        return (
-          <g key={lm.id} transform={`translate(${x - 20 * scale} ${y - 36 * scale}) scale(${scale})`}>
-            <title>{`${labels[lm.id]} · ${lm.votes}`}</title>
-            <ellipse cx="20" cy="36" rx="12" ry="3" fill="rgba(0,0,0,0.12)" />
-            {lm.level > 0 ? <LandmarkGlyph id={lm.id} /> : lm.sprout ? <Sprout /> : <Placeholder />}
-          </g>
-        );
-      })}
+    <figure className={`island-v2${compact ? " compact" : ""}`} role="img" aria-label={`${shopName}: ${titleText}`}>
+      <Image
+        src={`/island/island-${key}-1600.webp`}
+        alt=""
+        width={1600}
+        height={1000}
+        sizes={compact ? "(max-width: 900px) 100vw, 420px" : "(max-width: 900px) 100vw, 760px"}
+        priority={!compact}
+      />
+      {shopPin ? (
+        <span className="island-sign" style={{ left: `${shopPin[0] * 100}%`, top: `${shopPin[1] * 100}%`, background: signColor }}>
+          {shopName}
+        </span>
+      ) : null}
       {!compact
-        ? island.landmarks.map((lm) => {
-            const [x, y] = SLOTS[lm.id];
-            return <LevelPips key={lm.id} x={x} y={y + 8} lm={lm} />;
+        ? pinned.map((lm) => {
+            const [x, y] = render.pins[lm.id]!;
+            return (
+              // Tall landmarks reach the top edge; keep their name tag inside the picture.
+              <span key={lm.id} className="island-pin" style={{ left: `${x * 100}%`, top: `${Math.max(y, 0.11) * 100}%` }}>
+                <b>{labels[lm.id]}</b>
+                {tags ? <i>{tags[lm.tag]}</i> : null}
+              </span>
+            );
           })
         : null}
-    </svg>
-  );
-}
-
-function LevelPips({ x, y, lm }: { x: number; y: number; lm: LandmarkView }) {
-  return (
-    <g transform={`translate(${x - 19} ${y})`}>
-      <rect x="-3" y="-3" width="44" height="12" rx="6" fill="rgba(255,255,255,0.85)" />
-      {[0, 1, 2].map((i) => (
-        <rect key={i} x={i * 13 + 1} y="0" width="10" height="6" rx="3" fill={i < lm.level ? "#3f9e8f" : "#d5dbe3"} />
-      ))}
-    </g>
+      {note ? <span className="island-note">{note}</span> : null}
+    </figure>
   );
 }
 
