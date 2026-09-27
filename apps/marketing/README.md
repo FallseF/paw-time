@@ -36,4 +36,16 @@ Google Fonts supplies Nunito (display), DM Sans (body) and Zen Maru Gothic (Japa
 
 Check both languages, desktop/intermediate/mobile layouts, collection disclosure and filters, modal open/close and Escape focus return, video playback/pausing, and horizontal overflow. Reduced-motion users see the poster until choosing playback. Without JavaScript, the inline trailer has native controls and the native disclosure makes the full collection accessible.
 
-This change is prepared locally for review. Publishing and deployment are separate actions.
+## Deployment
+
+Published on 2026-09-27 after the user's explicit deployment request.
+
+- Project: `eiyutos-projects/paw-time-launch`.
+- Public English page: https://paw-time-launch.vercel.app/.
+- Public Japanese page: https://paw-time-launch.vercel.app/ja/.
+- Deployed source: `0dfb476` (LP implementation: `e6ab97f`).
+- Deployment: `dpl_D6e5JjKBT5TaaQXTxfnjX9Rdu4dL`.
+
+Deploy from this directory, whose Vercel project root is `.`. Confirm the linked project before deploying. Use `vercel deploy --prod --skip-domain`, wait for `READY`, verify the deployment with `vercel curl`, and then promote that same deployment. `.vercelignore` excludes development notes, the verifier, environment files and Godot import metadata.
+
+The production HTML for all three routes, CSS and JavaScript matched local source byte for byte. Both videos returned HTTP 200 with the expected type and size. Desktop presentation, English video playback and Escape/focus return were checked in the public browser. The additional production mobile/language-click check was interrupted by browser automation timeouts; the responsive and bilingual local checks above remain the available UI evidence.
