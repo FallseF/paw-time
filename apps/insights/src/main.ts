@@ -8,6 +8,7 @@ import { CALC_DEFAULTS_BY_CURRENCY, pilotValue, type CalcInput } from "./calc";
 import { currencyOf, currencySymbol, esc, feedText, fillTemplate, fmtMoney, type Currency } from "./format";
 import { I18N, type Dict, type Lang } from "./i18n";
 import { UI, type UiDict } from "./i18n-ui";
+import { launchParams } from "./launch";
 import { skinDict, skinUi } from "./skin";
 import {
   applyQuery, COLUMNS, DEFAULT_VISIBLE, listingRows, shopRows, signalRows, supplyRows, toCsv, VIEWS,
@@ -61,17 +62,11 @@ try {
 } catch {
   // storage may be blocked; defaults are fine
 }
-const params = new URLSearchParams(location.search);
-const qMode = params.get("mode");
-if (qMode === "live" || qMode === "simulated") state.mode = qMode;
-const qLang = params.get("lang");
-if (qLang === "ja" || qLang === "en") state.lang = qLang;
-// The game opens ?mode=live&lang=en(&demo=1): show the judge's own demo actions right away.
-if (params.get("demo") === "1") {
-  state.demoOnly = true;
-  state.liveOpen = true;
-} else if (params.get("demo") === "0") state.demoOnly = false;
-if (params.get("live") === "1") state.liveOpen = true;
+const launch = launchParams(location.search);
+if (launch.mode) state.mode = launch.mode;
+if (launch.lang) state.lang = launch.lang;
+if (launch.demoOnly !== undefined) state.demoOnly = launch.demoOnly;
+if (launch.liveOpen) state.liveOpen = true;
 
 function persist() {
   try {
@@ -923,7 +918,8 @@ function renderLive() {
   el.hidden = !state.liveOpen;
   document.body.classList.toggle("live-open", state.liveOpen);
   if (!state.liveOpen) return;
-  const t = d();
+  // Real events from the game: keep the game's own shop and role names, even over the simulation.
+  const t = I18N[state.lang];
   const fd = state.feed;
   const c = fd?.counts ?? {};
   const count = (k: string) => (fd ? n(c[k] ?? 0) : "—");
@@ -1191,6 +1187,10 @@ window.setInterval(() => {
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 
 state.route = parseRoute();
+if (!location.hash && launch.view) {
+  state.route = { kind: "view", id: launch.view };
+  history.replaceState(null, "", hrefOf(state.route));
+}
 render();
 void refresh();
 startFeed();

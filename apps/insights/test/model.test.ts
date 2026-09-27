@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { CALC_DEFAULTS, CALC_DEFAULTS_BY_CURRENCY, WEEKS_PER_MONTH, pilotValue } from "../src/calc";
 import type { InsightsAggregate } from "@paw-time/api-contracts";
+import { launchParams } from "../src/launch";
 import { applyQuery, COLUMNS, listingRows, listingStatus, riskLevel, shopRows, supplyStatus, toCsv, VIEWS, type Row } from "../src/model";
 
 test("pilot calculator: monthly fills, no-shows avoided and yen value", () => {
@@ -117,4 +118,13 @@ test("shop and listing rows carry the payload's wages and the most common pay st
   assert.equal(listingRows(a)[0]!.hourly_wage, 23);
   const noPay = { recruit: { ...recruit, pay: undefined } } as unknown as InsightsAggregate;
   assert.equal(shopRows(noPay)[0]!.hourly_wage, null, "live payloads have no wages");
+});
+
+test("launch URL: the game's demo link lands on the simulation with the live drawer; old links still work", () => {
+  assert.deepEqual(launchParams("?mode=sim&view=at-risk&drawer=live&demo=1&lang=en"), { mode: "simulated", lang: "en", demoOnly: true, liveOpen: true, view: "at-risk" });
+  assert.deepEqual(launchParams("?mode=sim&view=at-risk&drawer=live&demo=1&lang=ja").lang, "ja");
+  assert.deepEqual(launchParams("?mode=live&lang=en&demo=1"), { mode: "live", lang: "en", demoOnly: true, liveOpen: true, view: undefined });
+  assert.deepEqual(launchParams("?mode=simulated&live=1"), { mode: "simulated", lang: undefined, demoOnly: undefined, liveOpen: true, view: undefined });
+  assert.deepEqual(launchParams("?mode=bogus&view=nope&lang=fr&demo=0"), { mode: undefined, lang: undefined, demoOnly: false, liveOpen: false, view: undefined });
+  assert.deepEqual(launchParams(""), { mode: undefined, lang: undefined, demoOnly: undefined, liveOpen: false, view: undefined });
 });
