@@ -7,6 +7,7 @@
   高さの場（島の形・砂浜・崖・うしろの丘・ふたつめの小島）から格子を持ち上げ、
   頂点色に 芝・砂・ぬれた砂・岩 を塗り分けて AO を掛ける。芝の上は y=0 の平ら（置き物がそのまま立つ）。
   段 0: ちいさな丸い島 / 段 1: 岸がひろがり、左右のうしろに岩の崖 / 段 2: 右手前に小島（橋でつなぐ）
+  タイトルの手前の岬（terrain_title.glb、-- title）：段 1 と同じ作りで、右手前の弧を段のある砂岩の崖に
 葉・岩（assets/models/island/*.glb）
   距離場のなめらかな和を、細かく割った球に写し取る（猫おばけの体と同じ作り方）。頂点色 R に AO。
 
@@ -30,6 +31,8 @@ WET = (0.78, 0.68, 0.52)
 ROCK = (0.62, 0.58, 0.56)
 ROCK_DARK = (0.46, 0.42, 0.44)
 SEABED = (0x1F / 255, 0x6F / 255, 0x8A / 255)
+SANDSTONE = (0.90, 0.80, 0.65)  # 崖の棚（平ら）
+SANDSTONE_DARK = (0.70, 0.58, 0.49)  # 崖の落ちる面
 
 
 def srgb_to_lin(c):
@@ -370,6 +373,92 @@ def build_canopies():
     blob_asset("rock", rock, np.array([0, 0, 0]), res=10)
 
 
+# ---------------------------------------------------------------- タイトルの岬
+
+TITLE_SEA = -0.8  # 岬の海面の高さ（芝の上 y=0 から）。screen_title_v2.gd の GROUND_Y と合わせる
+
+
+def build_title_headland():
+    """タイトルの手前の岬。段 1 の島と同じ形の場で、崖を右手前（カメラ側の右、+X+Z の 40°）を中心に手前と左右へ回す（横長の画面で枠の外に続いても岸が崖のまま）。
+    崖は 3 段の砂岩（段ごとに少し引っ込む）、上はやわらかく盛り上がる芝のふち。ほかの岸は海へ下りる砂浜"""
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    r = 4.5
+
+    def rr_of(th):
+        return r * (1.0 + 0.045 * np.sin(3 * th + 1.1) + 0.03 * np.sin(5 * th + 0.3))
+
+    def dist(x, z):
+        return np.hypot(x, z) - rr_of(np.arctan2(z, x))
+
+    def mask(x, z):
+        th = np.degrees(np.arctan2(z, x))
+        dd = np.abs(((th - 40.0 + 180) % 360) - 180)
+        return 1.0 - smoothstep(115.0, 145.0, dd)  # 手前と左右は崖。うしろだけ砂浜
+
+    def drop_of(d):
+        return -0.38 * smoothstep(-0.06, 0.16, d) - 0.34 * smoothstep(0.32, 0.52, d) - 0.4 * smoothstep(0.68, 0.88, d)
+
+    # 岸に沿った格子（角度 × 岸からの距離）。段の線が格子とそろうので、斜めの岸でもぎざぎざにならない
+    n_th = 360
+    ths = np.linspace(-np.pi, np.pi, n_th, endpoint=False)
+    ts = np.concatenate([np.linspace(-4.2, -0.5, 16, endpoint=False), np.linspace(-0.5, 1.1, 64, endpoint=False), np.linspace(1.1, 2.4, 10)])
+    TH, T = np.meshgrid(ths, ts)
+    rad = np.maximum(rr_of(TH) + T, 0.05)
+    x = np.concatenate([[0.0], (np.cos(TH) * rad).ravel()])
+    z = np.concatenate([[0.0], (np.sin(TH) * rad).ravel()])
+    d = dist(x, z)
+    cm = mask(x, z)
+    beach = -1.35 * smoothstep(-0.35, 2.2, d)
+    lip = 0.1 * smoothstep(-1.0, -0.3, d) * (1.0 - smoothstep(-0.12, 0.0, d))
+    # 3 段：落ちて、平らな棚、また落ちる
+    drop = drop_of(d)
+    cliff = lip + drop
+    h = beach * (1.0 - cm) + cliff * cm
+    h = np.where(d < -0.35, np.where(cm > 0.01, h, 0.0), h)
+    h = np.maximum(h, -1.35)
+    V = np.stack([x, h, z], axis=1)
+    faces = []
+    for i in range(n_th):  # まん中の扇
+        i2 = (i + 1) % n_th
+        faces.append([0, 1 + i2, 1 + i])
+    for j in range(len(ts) - 1):
+        for i in range(n_th):
+            i2 = (i + 1) % n_th
+            a, b = 1 + j * n_th + i, 1 + j * n_th + i2
+            faces.append([a, b, b + n_th, a + n_th])
+    ob = make_object("Terrain", V, faces)
+    import bmesh
+
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    deep = [f for f in bm.faces if all(v.co.z < -1.33 for v in f.verts)]
+    bmesh.ops.delete(bm, geom=deep, context="FACES")
+    bm.to_mesh(ob.data)
+    bm.free()
+    V = read_verts(ob)
+    x, h, z = V[:, 0], V[:, 1], V[:, 2]
+    d = dist(x, z)
+    cm = mask(x, z)
+    noise = 0.5 + 0.5 * np.sin(x * 1.7 + np.sin(z * 1.3) * 2.0) * np.sin(z * 1.9 + np.sin(x * 0.9))
+    grass = np.array(GRASS)[None, :] * (1 - noise[:, None] * 0.6) + np.array(GRASS2)[None, :] * (noise[:, None] * 0.6)
+    sand = np.array(SAND)[None, :].repeat(len(x), 0)
+    sand = sand + (np.array(WET)[None, :] - sand) * smoothstep(TITLE_SEA + 0.18, TITLE_SEA, h)[:, None]
+    g_amt = 1.0 - smoothstep(-0.45, -0.25, d)
+    col = sand + (grass - sand) * g_amt[:, None]
+    # 崖は砂岩。落ちる面（急なところ）は暗く、棚は明るく塗り分けて、段を読ませる
+    rock_t = cm * smoothstep(-0.12, 0.02, d)
+    steep = np.clip(np.abs(drop_of(d + 0.02) - drop_of(d - 0.02)) / 0.04 / 2.0, 0.0, 1.0)
+    rock = np.array(SANDSTONE)[None, :] + (np.array(SANDSTONE_DARK) - np.array(SANDSTONE))[None, :] * steep[:, None]
+    col = col + (rock - col) * rock_t[:, None]
+    ao = bake_ao([ob], 0.6)[0]
+    ao = np.clip(ao, 0, 1) ** 0.7
+    lin = srgb_to_lin(col) * (0.45 + 0.55 * ao)[:, None]
+    deep = smoothstep(TITLE_SEA - 0.1, TITLE_SEA - 0.45, h)[:, None]
+    lin = lin + (srgb_to_lin(np.array(SEABED))[None, :] - lin) * deep
+    set_colors(ob, lin)
+    export([ob], "terrain_title")
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     what = argv or ["terrain", "canopy"]
@@ -378,6 +467,8 @@ def main():
             build_terrain(i)
     if "canopy" in what:
         build_canopies()
+    if "title" in what:
+        build_title_headland()
 
 
 main()
