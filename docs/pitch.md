@@ -1,88 +1,67 @@
-# Paw Time ピッチ原稿（3分）
+# Paw Time 3分ピッチ原稿（物語仕立て）
 
-話すのは英語、日本語は意味の確認用。1分あたり約130語で、合計約390語（3分）。
-公開審査項目は「Potential Impact」「Creativity and Innovation」「Technical Architecture & Viability」。背景の出典・数値の対象・主張できる範囲は [ピッチ用の調査メモ](pitch-evidence.md) を参照。
+スライド（Claude Artifact）: https://claude.ai/artifact/5Z1bK7jBSxp43aS6KSGkGz ／ 各スライドのスピーカーノートと同じ内容。主人公のアオイさんは説明用の架空の人物。
 
-> 発表前の確認：現在のデモ用ゲーム処理は勤務時間に応じて網が増える。下記の「Working longer never earns more」は現行実装と一致しないため、報酬ルールまたは原稿を揃える。
+英語の語数: 480（1分150語で約3分）
 
-| 時間 | 場面 | 画面 |
-|---|---|---|
-| 0:00–0:25 | つかみ | タイトル画面（猫おばけ） |
-| 0:25–1:10 | 遊び（デモ） | 求人カード → 一緒に働く → へとへと → すくい |
-| 1:10–1:45 | なぜゲームか | リクルート向け画面「Live now」 |
-| 1:45–2:25 | 働いたあとの信号とリクルートの本業 | 働いたあとの信号の画面 |
-| 2:25–3:00 | 守る線と試験運用のお願い | 試験運用の提案カード |
+## 1/9 · Opening: meet Aoi (about 20 seconds)
 
----
+**SAY（英語）** Imagine Aoi. She's a student in Tokyo who picks up spot shifts between classes. Tonight she'll open a job app, take a shift, work it, and when it ends, no one will ever know how it went. We're Team Dry Grape, and this is Paw Time. Let's work together.
 
-## 0:00–0:25 つかみ
+**意味（日本語）** アオイさんを想像してください。東京の学生で、授業の合間にスキマバイトをしています。今夜も求人アプリを開いてシフトを取り、働きます。でも終わったあと、その仕事が合っていたかは誰にも分かりません。私たちはチーム Dry Grape、これが Paw Time です。いっしょにはたらこう。
 
-> About six million people in Japan did short-term, one-off work in 2024, according to Recruit Works Institute.
-> But 44.6% of surveyed workers reported problems.
-> Finding a shift is only part of the experience.
-> **Paw Time connects work with what comes after it — including rest.**
+> アオイさんは説明のための架空の人物です（実在の人ではない）。
 
-（リクルートワークス研究所は、2024年に約605万人が短期・単発ワークを行ったと推計。就労実態調査では44.6%が困りごとを経験した。仕事を見つけた後の体験と休息までつなぐのがPaw Time。）
+## 2/9 · Problem: AI floods applications (about 25 seconds)
 
-## 0:25–1:10 遊び（デモ）
+**SAY（英語）** Aoi's friends now let an AI apply for them: twenty dollars, and it applies to hundreds of jobs. So recruiters drown. Applications per recruiter are up four hundred percent. And every application looks perfect, so none of them tells you who will actually fit. Only one thing does: what happens after the hire. Did she show up? Did she come back? But no tool collects that.
 
-> Meet your cat-obake. Every morning it brings you three or four jobs that fit your area, hours and wage.
-> Accept one, and it's in your calendar.
-> During your real shift, your cat works too — in its own tiny shop.
-> But it gets tired. After seven and a half hours it says, *"Let's both head home."*
-> Working longer never earns more. Resting does.
-> Then a ten-second review, a night scoop, a morning hatch.
-> Build your island and visit friends by raft or helicopter.
+**意味（日本語）** アオイさんの友だちは、もう AI に応募させています。20ドル払えば、何百件も自動で応募してくれる。だから採用担当はおぼれています。担当1人あたりの応募は4倍以上に増えました。しかもどの応募書類も完璧なので、誰が本当に合うかは分かりません。分かる手がかりは一つだけ、採用のあとに何が起きたか。ちゃんと来たか、また来たか。でも、それを集める手段がありません。
 
-（おばネコが毎朝、合う求人を3〜4件持ってくる。受ければカレンダーに入る。本物のシフト中はおばネコも働くが、疲れて「一緒に帰ろ」と言う。長く働いても得をしない。休むと得をする。10秒のレビュー、夜のすくい、朝の孵化。島をつくって、いかだやヘリで友達の島へ。）
+> 出典：Greenhouse のデータ（Fortune、2026年7月27日：採用担当1人あたりの応募 +412%、求人1件あたり約254人、20ドルで大量応募できるAIツール）。パーソル総合研究所（スポットワーカー452万人、職場で困りごと65%）。
 
-## 1:10–1:45 なぜゲームか
+## 3/9 · Insight: why nobody has that data (about 20 seconds)
 
-> Why a game? Two things only a character can do.
-> First, it gets opened on days you're not looking for work — so dormant sign-ups wake up.
-> Second, people actually listen when a cat they love says "stop." An app warning gets dismissed.
-> Here's the Recruit view. The actions you just saw in the demo appear here, live.
+**SAY（英語）** Why doesn't anyone have it? Because job apps are only opened when people look for work. Aoi opens one about once a week, when money is short. After she's hired, she's gone. So outcome data is never collected. But a game gets opened every day. A game opened daily can collect it.
 
-（なぜゲームか。キャラクターにしかできないことが2つ。①仕事を探していない日にも開かれるので、眠っている登録者が起きる。②好きな猫に「やめよう」と言われると、人は本当に止まる。ここがリクルート向けの画面。今のデモの操作が、ここにその場で出る。）
+**意味（日本語）** なぜ誰もそのデータを持っていないのか。求人アプリは、仕事を探すときにしか開かれないからです。アオイさんが開くのは、お金が足りない週1回くらい。採用されたら、もう開きません。だから結果のデータは集まらない。でもゲームは毎日開かれます。毎日開かれるゲームなら、それを集められます。
 
-## 1:45–2:25 働いたあとの信号とリクルートの本業
+> 週のマス目は傾向を示す例え（ILLUSTRATIVE）で、実測ではありません。
 
-> Today, matching learns from applications and hires. After the hire, the lights go out.
-> Paw Time stays open after the shift. So we can see what nobody writes down:
-> did people come back to the app the next day, revisit the shop's island, accept the shop's invite again?
-> That turns matching from *"likely to apply"* into *"likely to fit and stay."*
-> That's where employers want to pay — and it works for Indeed and Townwork, not only spot work.
-> We don't compete with a new marketplace. We're a daily front door for Recruit's jobs.
+## 4/9 · Solution: Aoi gets a cat (about 25 seconds)
 
-（今のマッチングは、応募と採用から学ぶ。採用のあとは目が閉じる。Paw Time は働いたあとも開かれるので、翌日に戻ったか、店の島を再訪したか、誘いをまた受けたか、という「誰も書かない声」が見える。マッチングを「応募されやすい」から「合って続く」へ。お店が一番払いたいのはここで、スポットワークに限らず Indeed やタウンワークにも効く。新しい市場で戦うのではなく、リクルートの求人の「毎日開かれる入口」になる。）
+**SAY（英語）** So we gave Aoi a cat. Her obaneko brings three or four shifts that fit her week. During the real shift, the cat works too, and when she overdoes it, it gets tired and says: let's both head home. At night she scoops glowing orbs; in the morning they hatch. And every one of these moments becomes a signal in the Recruit view.
 
-## 2:25–3:00 守る線と試験運用のお願い
+**意味（日本語）** そこでアオイさんに猫を渡しました。おばねこが、その週に合うシフトを3〜4件持ってきます。本当のシフト中は猫も一緒に働き、働きすぎると疲れて「一緒に帰ろ」と言います。夜は光る玉をすくい、朝に孵化します。そしてこの一つひとつの場面が、リクルート向け画面のデータになります。
 
-> Our rules: workers never pay, wages are never touched, and we only sell cosmetics.
-> Shops never get a score on a person — only results and aggregates.
-> Workers can talk to their cat. **Your cat never passes your words to the shop** — only anonymous totals, or what you choose to tell.
-> Shop islands only grow from real worker reviews; money can't buy them, and nothing bad is ever shown.
-> **Our ask: a four-week pilot with three to five shops.**
-> We'll measure daily use, fill rate, no-shows, repeat rate — and whether the next-day signal predicts who comes back.
-> Paw Time. Make work a little brighter.
+## 5/9 · Everyone wins (about 20 seconds)
 
-（守る線：働く人は払わない、賃金には触らない、売るのは見た目だけ。お店に人の点数は渡さない、渡すのは結果と集計だけ。おばネコに話せる。**おばネコは、あなたの言葉をお店に渡さない**。届くのは名前を伏せた集計か、本人が伝えると決めたことだけ。店の島はレビューだけで育ち、お金では買えず、悪いものは出さない。お願い：お店3〜5軒で4週間の試験運用。毎日開く率、埋まる率、急なお休み、また来る率、そして翌日の信号が「また来る人」を当てるかを測る。）
+**SAY（英語）** Everyone comes out ahead. Aoi gets shifts that fit and a cat that tells her to rest. The shop gets people who show up and come back. And Recruit gets something it has never had: fit-and-stay data after the hire. It loops: play, signals, better matches, people who stay, better shifts.
 
----
+**意味（日本語）** みんなが得をします。アオイさんは合うシフトと、休めと言ってくれる猫。お店は、来てくれて、また来てくれる人。リクルートは、今まで持てなかった「採用のあと、合って続いたか」のデータ。そしてこれが回ります。遊ぶ→データ→良いマッチ→定着→もっと良いシフト。
 
-## 質疑の想定
+## 6/9 · Impact: what it's worth (about 20 seconds)
 
-| 質問 | 答えの芯 |
-|---|---|
-| タイミーと何が違う？ | 新しい市場を作らず、リクルートの求人に乗る入口。強みは毎日開かれることと、働いたあとの信号 |
-| なぜゲーム？ | 毎日開く理由と、キャラクターが言うと人が休むこと。どちらも普通の求人アプリには真似できない |
-| データは大丈夫？ | 人の点数はお店に渡さない。外に出るのは本人が選んだものと集計だけ。5人未満は出さない。社内での利用は公表した目的の範囲 |
-| 本当に毎日開く？ | 今は仮説。デモの Live は試遊者の本物、12週間の数字はシミュレーションと明記している。試験運用で確かめる |
-| おばネコとのチャットは何に使う？ | 社内では合う仕事探しと改善に使う（初回に同意、「ないしょモード」なら何も使わない）。お店に渡すのは5人以上そろった集計と、本人が伝えると決めた困りごとだけ。生の文は渡さない。健康などの話は取り出さない |
-| 長期のバイトに移ったら？ | 遊びの芯は登録したシフトで動く。求人の知らせは切れる。お店に長期で採られて「卒業」する形も用意する |
-| 収益は？ | お店側：求人掲載、急な穴埋め、改善レポート、長期採用の成功報酬。働く人からは見た目の品の買い切りのみ（任意） |
+**SAY（英語）** What's it worth? Spot-work matching in Japan is a 134.7-billion-yen market. If our signals improve matching by just one percent, that's 1.35 billion yen a year. Across all of Recruit HR Technology, 14.6 billion. It's an illustration, not a forecast. The pilot will tell us the real number.
 
-## 言わないこと
-- 「おばネコは告げ口しない」「自分とおばネコだけが見る」（社内では使うので不正確）。代わりに「おばネコは、あなたの言葉をお店に渡さない」。
-- タウンワークスキマの中止理由の推測（公表されている「開発優先順位」以上は言わない）。
-- シミュレーションの数字を実績のように言うこと。
+**意味（日本語）** どれくらいの価値か。日本のスポットワークのマッチング市場は1,347億円。私たちのデータでマッチングが1%良くなれば、年13.5億円。リクルートのHRテクノロジー全体なら146億円。これは予測ではなく例示で、本当の数字は試験運用で確かめます。
+
+> 出典：矢野経済研究所（2025年度見込み）、リクルートホールディングス 2025年度決算。売上がマッチングの質に比例すると仮定。
+
+## 7/9 · Why us (about 20 seconds)
+
+**SAY（英語）** Why us? AI can write a perfect application. It can't show up every day. Spot apps see the application; job boards see searches too; after the shift, both go silent. Paw Time sees all four moments, because Aoi opens it for her cat. That daily habit is the one signal AI can't fake, and it can't be bolted onto a job app.
+
+**意味（日本語）** なぜ私たちか。AI は完璧な応募書類を書けます。でも毎日そこに来ることはできません。スキマバイトアプリに見えるのは応募だけ、求人サイトは検索まで、仕事のあとはどちらも何も分かりません。Paw Time は4つの場面すべてが見えます。アオイさんが猫のために毎日開くからです。この毎日の習慣こそ AI には偽れない信号で、求人アプリに後から付け足すこともできません。
+
+## 8/9 · Trust by design (about 15 seconds)
+
+**SAY（英語）** And we built it so Aoi can trust it. Only fixed, consented events leave her phone; free text is rejected. Shops never see a score on her, only groups of five or more. Her chat with the cat stays on her device.
+
+**意味（日本語）** そしてアオイさんが安心して使えるように作りました。スマホから出るのは、同意した決まった種類の出来事だけ。自由な文章は受け付けません。お店は彼女個人の点数を見られず、見えるのは5人以上の集計だけ。猫とのチャットは端末の中に残ります。
+
+## 9/9 · The ask (about 20 seconds)
+
+**SAY（英語）** Here's our ask. Start with a four-week pilot with three to five shops, and test one thing: does next-day return predict who comes back? Then one city on Recruit listings, then inside Indeed matching. Scan the code and play it right now. Paw Time. Let's work together.
+
+**意味（日本語）** お願いです。まず3〜5店舗で4週間の試験運用をして、1つだけ確かめます。「翌日も戻ってくるか」で、また来てくれる人が分かるのか。次にリクルートの求人で1都市、その先は Indeed のマッチングの中へ。QRを読んで、今すぐ遊んでみてください。Paw Time。いっしょにはたらこう。
