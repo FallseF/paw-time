@@ -638,7 +638,7 @@ ONB_SPECIAL_KICKER,A SPECIAL obake cat appeared!,とくべつなおばけ猫が 
 ONB_SPECIAL_RIBBON,★ SPECIAL · %s ★,★ とくべつ・%s ★
 ONB_SPECIAL_PET,"Say hi to %s, your partner!",あいぼうの %s だよ！
 ONB_SHIFT_PLACE,Practice shift,練習のシフト
-ONB_SHIFT_MOCK,▶▶ Practice: 4 hours in 8 seconds,▶▶ 練習：4時間を8秒で
+ONB_SHIFT_MOCK,Practice: 4 hours in 8 seconds,練習：4時間を8秒で早送り
 ONB_NAME_SAY,What will you call me?,ぼくの名前、どうする？
 ONB_NAME_TITLE,Name your partner,相棒の名前
 ONB_NAME_HINT,Up to %d letters. You can change it later in My page.,%d文字まで。あとでマイページから変えられるよ。
