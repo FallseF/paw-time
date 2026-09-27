@@ -315,19 +315,20 @@ func _island_tour() -> void:
 	_tour_step()
 
 
+## 4 枚の順番（レビュー）：① 相棒が仕事を持ってくる ② 働くとポイ（肉球コインもここで）③ ポイで材料・服 ④ 島を育てる
 func _tour_step() -> void:
 	var pet := SpecialObake.pet_name()
 	var n := 4
 	tour_i += 1
 	match tour_i:
 		1:
-			_sheet(pet, tr("TOUR_1_TITLE"), tr("TOUR_1_BODY") % pet, tr("TOUR_NEXT"), _tour_step, 1, n)
+			_sheet(pet, tr("R2_TOUR_1_TITLE") % pet, tr("R2_TOUR_1_BODY") % pet, tr("TOUR_NEXT"), _tour_step, 1, n)
 		2:
-			_sheet(pet, tr("TOUR_2_TITLE"), tr("TOUR_2_BODY"), tr("TOUR_NEXT"), _tour_step, 2, n)
+			_sheet(pet, tr("R2_TOUR_2_TITLE"), tr("R2_TOUR_2_BODY") % [pet, Wallet.balance()], tr("TOUR_NEXT"), _tour_step, 2, n)
 		3:
-			_sheet(pet, tr("TOUR_3_TITLE"), tr("TOUR_3_BODY"), tr("TOUR_NEXT"), _tour_step, 3, n)
+			_sheet(pet, tr("R2_TOUR_3_TITLE"), tr("R2_TOUR_3_BODY"), tr("TOUR_NEXT"), _tour_step, 3, n)
 		4:
-			_sheet(pet, tr("TOUR_4_TITLE") % Wallet.balance(), tr("TOUR_4_BODY") % pet, tr("TOUR_TO_PREFS") % pet, func():
+			_sheet(pet, tr("R2_TOUR_4_TITLE"), tr("R2_TOUR_4_BODY"), tr("TOUR_TO_PREFS") % pet, func():
 				Onboarding.advance("prefs")
 				_go("prefs"), 4, n)
 
