@@ -29,6 +29,7 @@ var info_line: Label
 var action: Button
 var home_link: Button
 var result_layer: Control
+var shop_link: Button
 var _t := 0.0
 var _tick := 0.0
 var _last_coins := -1
@@ -258,8 +259,8 @@ func _build_ui() -> void:
 	# The card: one line of numbers the player needs, one primary action
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.97), 24, 0.14, Vector2(18, 14)))
-	card.position = Vector2(12, 470)
-	card.size = Vector2(336, 158)
+	card.position = Vector2(12, 462)
+	card.size = Vector2(336, 166)
 	add_child(card)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
@@ -272,6 +273,21 @@ func _build_ui() -> void:
 	v.add_child(info_line)
 	action = Kit.button("", Color("ff8a5b"), _on_action)
 	v.add_child(action)
+	# 働いている間に開けるのは、いまのシフトのお店とのチャットだけ（「少し遅れます」など）
+	shop_link = Kit.button(tr("Message the shop"), Color(1, 1, 1, 0.92), func():
+		var th := _shop_thread()
+		if th != "" and ChatHub.allowed_during_shift(th):
+			ChatHub.open(self, th), Color("6a5bd6"), 34, 13)
+	shop_link.position = Vector2(12, 420)
+	shop_link.size = Vector2(0, 34)
+	shop_link.visible = false
+	add_child(shop_link)
+
+
+## いまのシフト（登録シフト）のお店のチャット。手で始めたときは無し
+func _shop_thread() -> String:
+	var cur := Shifts.current()
+	return "" if cur.is_empty() else ChatShops.thread_id_for(cur)
 
 
 func _on_action() -> void:
@@ -326,10 +342,14 @@ func _refresh(force := false) -> void:
 	var place := tr(String(st.get("place", "")))
 	head.text = WorkTogether.role_label(role) + ((" · " + place) if place != "" else "")
 	bubble_label.text = WorkTogether.line(st)
+	# 働いている間は、島へは行かない（ここで猫を見守るだけ。終わったら「帰る」）
+	home_link.visible = not working and not _ending
+	if shop_link:
+		shop_link.visible = working and not _shop_thread().is_empty()
 	if working:
 		var hs: float = st.hours_session
 		sub.text = tr("At work together")
-		info_line.text = tr("%dh %02dm · %d Paw Coins") % [int(hs), int(fmod(hs * 60.0, 60.0)), st.coins]
+		info_line.text = tr("Your cat is at work too. See you after your shift!") + "\n" + tr("%dh %02dm · %d Paw Coins") % [int(hs), int(fmod(hs * 60.0, 60.0)), st.coins]
 		if st.exhausted:
 			info_line.text += "\n" + tr("No more coins today — time to rest.")
 		action.text = tr("Back home")

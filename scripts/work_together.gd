@@ -353,6 +353,16 @@ static func line(st: Dictionary) -> String:
 	return ""
 
 
+## 働いている間に開ける画面（ほかは開かない：遊ばずに、スマホを置いて働けるように）。
+## 猫の仕事場（work）と、タイトルだけ。お店とのチャットは、いまのシフトのお店だけ（ChatHub.allowed_during_shift）
+const ON_SHIFT_SCREENS := ["work", "title"]
+
+
+static func screen_allowed(screen_name: String, t := -1.0) -> bool:
+	sync(t)
+	return not active() or screen_name in ON_SHIFT_SCREENS
+
+
 static func role_label(role: String) -> String:
 	return TranslationServer.translate({"register": "Register", "dish": "Dishes", "hall": "Floor", "kitchen": "Kitchen", "stock": "Stocking"}.get(role, "Work"))
 

@@ -210,6 +210,9 @@ func go(screen_name: String, instant := false) -> void:
 	if busy:
 		return
 	busy = true
+	# 働いている間は、猫の仕事場だけ（すくい・島づくり・キセカエ・おさらい・求人は、シフトが終わってから）
+	if not WorkTogether.screen_allowed(screen_name) and OS.get_environment("OBAKE_START") == "":
+		screen_name = "work"
 	# 自分の島へは、実際の時計に合わせてから（朝が来ていれば夜が明けて、玉がかえる）
 	if screen_name == "garden" and GameState.visit.is_empty() and Onboarding.at("done") and OS.get_environment("OBAKE_START") == "":
 		GameState.sync_clock()
