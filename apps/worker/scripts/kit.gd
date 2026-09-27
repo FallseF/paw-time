@@ -100,7 +100,7 @@ static func button(t: String, bg: Color, cb: Callable, fg := Color.WHITE, h := 5
 	b.add_theme_color_override("font_pressed_color", fg)
 	b.add_theme_color_override("font_focus_color", fg)
 	b.pressed.connect(func():
-		play(b, "tap")
+		play(b, Sfx.for_label(t))
 		cb.call())
 	return b
 
@@ -133,9 +133,12 @@ static func bar(value: float, color: Color, w := 120, h := 10, back := Color(0, 
 	return p
 
 
-## 効果音。node の子に AudioStreamPlayer を作って鳴らす
+## 効果音。root の子に AudioStreamPlayer を作り、SFX のバスで鳴らす（scripts/sfx.gd）。同じ音の連打は間引く
 static func play(node: Node, name: String, pitch := 1.0, db := 0.0) -> void:
 	if node == null or not node.is_inside_tree():
+		return
+	Sfx.install(node.get_tree())
+	if not Sfx.allow(name):
 		return
 	if not _sfx.has(name):
 		var path := "res://assets/sfx/%s.wav" % name
@@ -146,6 +149,7 @@ static func play(node: Node, name: String, pitch := 1.0, db := 0.0) -> void:
 	p.stream = _sfx[name]
 	p.pitch_scale = pitch
 	p.volume_db = db
+	p.bus = Sfx.BUS
 	p.autoplay = true
 	p.finished.connect(p.queue_free)
 	node.get_tree().root.add_child.call_deferred(p)

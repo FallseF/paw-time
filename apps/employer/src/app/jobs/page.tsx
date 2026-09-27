@@ -1,9 +1,11 @@
-import { JobList } from "../../features/job-postings/JobList";
-import { listJobs } from "../../lib/api";
+import { Suspense } from "react";
+import { Skeleton } from "../../components/ui";
+import { JobsPage } from "../../features/job-postings/JobsPage";
 
-export const dynamic = "force-dynamic";
-
-export default async function JobsPage() {
-  const jobs = await listJobs();
-  return <><header className="pageHeader"><div><p className="eyebrow">RECRUITMENT</p><h1>求人</h1><p>下書きから公開終了までを管理します。</p></div><button className="primaryButton">新しい求人</button></header><JobList jobs={jobs} /></>;
+export default function Page() {
+  return (
+    <Suspense fallback={<Skeleton />}>
+      <JobsPage />
+    </Suspense>
+  );
 }

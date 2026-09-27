@@ -9,6 +9,9 @@ var main
 const INK := Color("2a2233")
 const SUB := Color("6a5f70")
 const COIN := Color("ffc93d")
+const CAM_AT := Vector3(0.12, 1.75, 4.4)
+const CAM_LOOK := Vector3(0.12, 0.62, -0.2)
+const TRAY_AT := Vector3(0.78, 0.62, 0.45)
 
 var vp: SubViewport
 var world: Node3D
@@ -20,6 +23,8 @@ var coin_nodes: Array = []
 var zzz: Label3D
 var sweat: MeshInstance3D
 var role := ""
+var ws := WorkSet.new()
+var night := 0.0 # 0 昼 / 0.5 夕方 / 1 夜（実際の時計）
 
 var bubble: PanelContainer
 var bubble_label: Label
@@ -75,34 +80,14 @@ func _build_world() -> void:
 	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	# 光と空気は休憩室と同じ Look（room）。キーライトだけ影を落とす
-	Look.apply(world, "room", Color("f3dcc4"), false, true)
+	# 光と空気は Look（room）をもとに、この部屋用に締める（WorkSet.grade）。時刻で昼・夕方・夜
+	night = WorkSet.night_amount(GameState.now_real())
+	WorkSet.grade(Look.apply(world, "room", Color("5a3f3c"), false, true), night)
 	cam = Camera3D.new()
-	cam.position = Vector3(0, 2.3, 5.6)
-	cam.fov = 40
+	cam.position = CAM_AT
+	cam.fov = 46
 	world.add_child(cam)
-	cam.look_at_from_position(cam.position, Vector3(0, 0.55, -0.2))
-
-	# A small corner of a shop: floor tiles, back wall, a warm lamp
-	_box(Vector3(6, 0.1, 5), Vector3(0, -0.05, 0), Color("c99a72"))
-	for i in 7:
-		_box(Vector3(6, 0.004, 0.02), Vector3(0, 0.002, -2.4 + i * 0.8), Color("b5855f"))
-	_box(Vector3(6, 3.4, 0.12), Vector3(0, 1.7, -1.6), Color("f6e6d2"))
-	_box(Vector3(6, 0.6, 0.14), Vector3(0, 0.3, -1.55), Color("d9b48c"))
-	var lamp := MeshInstance3D.new()
-	var lm := SphereMesh.new()
-	lm.radius = 0.16
-	lm.height = 0.24
-	lamp.mesh = lm
-	lamp.position = Vector3(-1.3, 2.4, -1.2)
-	lamp.material_override = Kit.glow(Color("ffd48a"), 1.6)
-	world.add_child(lamp)
-	var ol := OmniLight3D.new()
-	ol.light_color = Color("ffcf8a")
-	ol.light_energy = 0.8
-	ol.omni_range = 4.0
-	ol.position = lamp.position
-	world.add_child(ol)
+	cam.look_at_from_position(cam.position, CAM_LOOK)
 
 	props = Node3D.new()
 	world.add_child(props)
@@ -117,7 +102,7 @@ func _build_world() -> void:
 		obake = Obake3D.make_custom(QuizData.TYPES[GameState.my_obake.type_id].look)
 	else:
 		obake = Obake3D.make(GameState.host())
-	obake.scale = Vector3.ONE * 0.62
+	obake.scale = Vector3.ONE * 0.7
 	obake.position = Vector3(-0.3, 0, 0.2)
 	obake.bob = false
 	world.add_child(obake)
@@ -138,7 +123,7 @@ func _build_world() -> void:
 
 	# The coin tray
 	tray = Node3D.new()
-	tray.position = Vector3(0.78, 0.62, 0.45)
+	tray.position = TRAY_AT
 	world.add_child(tray)
 	var dish := MeshInstance3D.new()
 	var dm := CylinderMesh.new()
@@ -148,82 +133,12 @@ func _build_world() -> void:
 	dish.mesh = dm
 	dish.material_override = Obake3D.toon(Color("e8e2d8"), 0.2)
 	tray.add_child(dish)
-	_box(Vector3(0.5, 0.62, 0.5), Vector3(0.78, 0.29, 0.45), Color("a8795a"))
 
 
-func _box(size: Vector3, pos: Vector3, c: Color, parent: Node3D = null) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var b := BoxMesh.new()
-	b.size = size
-	m.mesh = b
-	m.position = pos
-	m.material_override = Obake3D.toon(c, 0.05)
-	(parent if parent else world).add_child(m)
-	return m
-
-
-func _cyl(r: float, h: float, pos: Vector3, c: Color, parent: Node3D) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var cm := CylinderMesh.new()
-	cm.top_radius = r
-	cm.bottom_radius = r
-	cm.height = h
-	m.mesh = cm
-	m.position = pos
-	m.material_override = Obake3D.toon(c, 0.15)
-	parent.add_child(m)
-	return m
-
-
-## A tiny workplace for each job
+## A tiny workplace for each job: a cozy room (wall, window, shelves, lamps) and the job's counter (WorkSet)
 func _build_props(r: String) -> void:
-	for c in props.get_children():
-		c.queue_free()
-	match r:
-		"register":
-			_box(Vector3(1.6, 0.8, 0.6), Vector3(-0.2, 0.4, -0.75), Color("8f6a4c"), props)
-			_box(Vector3(0.5, 0.3, 0.4), Vector3(-0.55, 0.95, -0.75), Color("5b6f8f"), props)
-			_box(Vector3(0.36, 0.14, 0.02), Vector3(-0.55, 1.05, -0.54), Color("9fe0a0"), props)
-			_box(Vector3(0.1, 0.02, 0.4), Vector3(-0.2, 0.81, -0.55), Color("fffaf0"), props)
-		"dish":
-			_box(Vector3(1.6, 0.8, 0.6), Vector3(-0.2, 0.4, -0.75), Color("aeb8c2"), props)
-			_box(Vector3(0.8, 0.06, 0.45), Vector3(-0.2, 0.8, -0.75), Color("6fa8d0"), props)
-			for i in 4:
-				_cyl(0.16, 0.025, Vector3(0.45, 0.83 + i * 0.03, -0.75), Color("fffaf0"), props)
-			for i in 5:
-				var bub := MeshInstance3D.new()
-				var bm := SphereMesh.new()
-				bm.radius = 0.06 + i * 0.01
-				bm.height = bm.radius * 2
-				bub.mesh = bm
-				bub.position = Vector3(-0.45 + i * 0.12, 0.88, -0.7)
-				bub.material_override = Obake3D.toon(Color("f4fbff"), 0.8)
-				props.add_child(bub)
-		"hall":
-			for x in [-1.2, 0.6]:
-				_cyl(0.35, 0.05, Vector3(x, 0.7, -0.6), Color("b07a4a"), props)
-				_cyl(0.05, 0.7, Vector3(x, 0.35, -0.6), Color("7a4e32"), props)
-				_cyl(0.05, 0.12, Vector3(x + 0.1, 0.78, -0.6), Color("cfe8ff"), props)
-			_cyl(0.3, 0.03, Vector3(0.35, 0.95, 0.35), Color("c8ced6"), props)
-		"kitchen":
-			_box(Vector3(1.6, 0.8, 0.6), Vector3(-0.2, 0.4, -0.75), Color("c4c9cf"), props)
-			_cyl(0.22, 0.02, Vector3(-0.5, 0.81, -0.75), Color("3a3a42"), props)
-			_cyl(0.2, 0.08, Vector3(-0.5, 0.86, -0.75), Color("4a4a52"), props)
-			_box(Vector3(0.36, 0.03, 0.06), Vector3(-0.2, 0.87, -0.75), Color("4a4a52"), props)
-			var flame := MeshInstance3D.new()
-			var fm := SphereMesh.new()
-			fm.radius = 0.08
-			fm.height = 0.12
-			flame.mesh = fm
-			flame.position = Vector3(-0.5, 0.79, -0.75)
-			flame.material_override = Kit.glow(Color("ff9a4d"), 2.0)
-			props.add_child(flame)
-		_: # stock
-			for i in 3:
-				_box(Vector3(1.7, 0.05, 0.5), Vector3(-0.3, 0.3 + i * 0.55, -1.2), Color("9a7458"), props)
-				for j in 3:
-					_box(Vector3(0.36, 0.3, 0.3), Vector3(-0.9 + j * 0.5, 0.48 + i * 0.55, -1.2), Color("d9a86c").lerp(Color("c78f55"), j * 0.3), props)
-			_box(Vector3(0.45, 0.35, 0.4), Vector3(0.45, 0.18, 0.1), Color("d9a86c"), props)
+	ws.build(props, r, night, TRAY_AT)
+	ws.set_time(GameState.now_real())
 
 
 # ---------------------------------------------------------------- UI
@@ -322,6 +237,7 @@ func _process(delta: float) -> void:
 	_tick -= delta
 	if _tick <= 0.0 and not _ending:
 		_tick = 0.5
+		ws.set_time(GameState.now_real())
 		var ended := WorkTogether.sync()
 		if not ended.is_empty():
 			_ending = true

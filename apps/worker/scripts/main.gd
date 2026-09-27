@@ -39,6 +39,7 @@ var demo: Node
 
 func _ready() -> void:
 	Kit.load_lang()
+	Sfx.install(get_tree())
 	# 宣伝動画の撮影用：ウィンドウの大きさを指定（OBAKE_WINDOW=720x1280）
 	var win := OS.get_environment("OBAKE_WINDOW")
 	if win != "":
@@ -135,7 +136,7 @@ func _on_goal(text: String, all_done: bool) -> void:
 		return
 	# ほかの知らせと重ならないよう、順番に（Toasts）
 	Toasts.push(tr("めあて達成　めぐみ +3"), tr(text) + ("\n" + tr("3つそろった！ 肉球コイン +10") if all_done else ""), "goal")
-	Kit.play(self, "bell", 1.3, -6)
+	Kit.play(self, "coin")
 	Music.duck("jingle", -6.0, 1.6)
 
 

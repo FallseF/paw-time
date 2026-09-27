@@ -6,12 +6,15 @@ import {
 } from "@paw-time/api-contracts";
 import { Hono } from "hono";
 import { store } from "../infrastructure/memory-store.js";
+import { shopConsoleRoutes } from "../modules/shop-console/routes.js";
 import { requireBusinessContext } from "../middleware/business-context.js";
 import type { AppEnv } from "../types.js";
 
 export const businessRoutes = new Hono<AppEnv>();
 
 businessRoutes.use("*", requireBusinessContext);
+
+businessRoutes.route("/console", shopConsoleRoutes);
 
 businessRoutes.get("/jobs", (context) => {
   return context.json({ data: store.listOrganizationJobs(context.get("organizationId")) });
