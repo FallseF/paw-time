@@ -28,6 +28,7 @@ func _init(mode := "me", shop_id := "", px := Vector2(360, 150)) -> void:
 	vp.transparent_bg = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	add_child(vp)
+	View3D.fit(self, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	Look.apply(world, "studio", Color(0, 0, 0, 0), true)

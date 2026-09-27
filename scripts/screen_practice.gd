@@ -76,6 +76,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	# 光と空気は休憩室・一緒に働く画面と同じ Look（room）。キーだけ影を落とす
@@ -345,12 +346,12 @@ func _process(_delta: float) -> void:
 		return
 	var floor_y := panel.position.y - 6 if panel.visible else 600.0
 	if bubble.visible and is_instance_valid(cat):
-		var p := cam.unproject_position(cat.global_position + Vector3(0, 0.78, 0))
+		var p := View3D.unproject(cam, cat.global_position + Vector3(0, 0.78, 0))
 		bubble.position = Vector2(clampf(p.x - 50, 8, 352 - bubble.size.x), clampf(p.y - bubble.size.y - 6, 84, floor_y - bubble.size.y))
 	if order_box.visible:
 		var q := Vector2(346 - order_box.size.x, 150)
 		if order_anchor and is_instance_valid(order_anchor) and order_anchor.is_inside_tree():
-			var p2 := cam.unproject_position(order_anchor.global_position + Vector3(0, 0.62, 0))
+			var p2 := View3D.unproject(cam, order_anchor.global_position + Vector3(0, 0.62, 0))
 			q = Vector2(clampf(p2.x - order_box.size.x + 50, 8, 352 - order_box.size.x), clampf(p2.y - order_box.size.y - 6, 84, floor_y - order_box.size.y))
 		# 相棒の吹き出しと重なるなら、上へずらす
 		if bubble.visible and Rect2(bubble.position, bubble.size).intersects(Rect2(q, order_box.size)):

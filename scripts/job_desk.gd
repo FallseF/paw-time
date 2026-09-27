@@ -221,7 +221,7 @@ func _partner_screen_pos() -> Vector2:
 	var host = garden.get("host_node")
 	var cam = garden.get("cam")
 	if host and cam and is_instance_valid(host) and host.is_inside_tree():
-		return (cam as Camera3D).unproject_position((host as Node3D).global_position + Vector3(0, 0.9, 0))
+		return View3D.unproject(cam as Camera3D, (host as Node3D).global_position + Vector3(0, 0.9, 0))
 	return Vector2(180, 300)
 
 

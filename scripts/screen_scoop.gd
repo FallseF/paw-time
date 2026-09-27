@@ -96,6 +96,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 
@@ -635,8 +636,8 @@ func _cycle_poi() -> void:
 # ---------- 入力 ----------
 
 func _ground(p: Vector2) -> Vector3:
-	var from := cam.project_ray_origin(p)
-	var dir := cam.project_ray_normal(p)
+	var from := cam.project_ray_origin(View3D.to_vp(cam, p))
+	var dir := cam.project_ray_normal(View3D.to_vp(cam, p))
 	if absf(dir.y) < 1e-4:
 		return last_ground
 	var t := -from.y / dir.y
@@ -808,7 +809,7 @@ func _lift() -> void:
 		_banner("すくった！" if not target.data.rare else "すくった！\nふしぎな光…", Color("fff2a8"))
 	var tw2 := create_tween().set_parallel()
 	tw2.tween_property(cam, "transform", cam_base, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw2.tween_property(target, "position", cam.project_position(Vector2(120, 40), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw2.tween_property(target, "position", cam.project_position(View3D.to_vp(cam, Vector2(120, 40)), 2.0), 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw2.tween_property(target, "scale", Vector3.ONE * 0.3, 0.7)
 	await tw2.finished
 	target.queue_free()
@@ -1045,7 +1046,7 @@ func demo_real() -> void:
 	var o: Orb3D = orbs[0]
 	o.set_process(false)
 	o.vel = Vector3.ZERO
-	var sp := cam.unproject_position(o.global_position)
+	var sp := View3D.unproject(cam, o.global_position)
 	var start := sp + Vector2(40, 30)
 	var ev := InputEventMouseButton.new()
 	ev.button_index = MOUSE_BUTTON_LEFT

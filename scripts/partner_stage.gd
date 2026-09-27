@@ -21,6 +21,7 @@ func _init(px := Vector2(200, 180), bg := Color(0, 0, 0, 0)) -> void:
 	vp.transparent_bg = bg.a < 0.01
 	vp.msaa_3d = Viewport.MSAA_4X
 	add_child(vp)
+	View3D.fit(self, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	# 光は図鑑の舞台と同じ Look（studio）。背景が透明なら、下のカードの色がそのまま見える

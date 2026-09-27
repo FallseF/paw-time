@@ -65,6 +65,7 @@ func _build_world() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	var rig := Look.apply(world, "island", Color("bfe4f4"), false, true)
@@ -234,7 +235,7 @@ func _gui_input(event: InputEvent) -> void:
 	var best = null
 	var bd := 56.0
 	for mk in marks:
-		var sp := cam.unproject_position(mk.anchor)
+		var sp := View3D.unproject(cam, mk.anchor)
 		var dist := sp.distance_to(pos)
 		if dist < bd:
 			bd = dist
@@ -244,8 +245,8 @@ func _gui_input(event: InputEvent) -> void:
 		walk_to(best.anchor * Vector3(1, 0, 1) + Vector3(0, 0, 0.7))
 		return
 	# 地面なら、そこへ歩く
-	var from := cam.project_ray_origin(pos)
-	var dir := cam.project_ray_normal(pos)
+	var from := cam.project_ray_origin(View3D.to_vp(cam, pos))
+	var dir := cam.project_ray_normal(View3D.to_vp(cam, pos))
 	if absf(dir.y) < 0.001:
 		return
 	var p := from + dir * (-from.y / dir.y)

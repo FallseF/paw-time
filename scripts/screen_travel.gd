@@ -29,6 +29,7 @@ func _ready() -> void:
 	vp.own_world_3d = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	var rig := Look.apply(world, "island_night", Color("1d2760"), false, false)

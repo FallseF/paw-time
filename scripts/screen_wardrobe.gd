@@ -89,6 +89,7 @@ func _build_stage() -> void:
 	vp.transparent_bg = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
 	# 透明な SubViewport でキーライトの影を付けると、AAA の体が白く飛ぶ（2026-09 確認）。影なしにする
