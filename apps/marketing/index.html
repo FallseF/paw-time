@@ -3,264 +3,158 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Paw Time</title>
-<meta name="description" content="Worked a shift? More nets. Slept well? Your orbs hatch. A game for people who work. Recruit Innovation Cup 2026 / Team Dry Grape">
-<meta property="og:title" content="Paw Time">
-<meta property="og:description" content="Worked a shift? More nets. Slept well? Your orbs hatch.">
-<meta property="og:image" content="img/og.jpg">
+<meta name="theme-color" content="#141a3a">
+<title>Paw Time — Your shifts change. Your companion stays.</title>
+<meta name="description" content="A cozy game companion for shift workers. Discover sample jobs, work alongside your cat, and build an island of your own. Explore the playable Paw Time prototype.">
+<meta property="og:title" content="Paw Time — Your shifts change. Your companion stays.">
+<meta property="og:description" content="A cozy game companion for shift workers. Discover sample jobs, work alongside your cat, and build an island of your own. Explore the playable Paw Time prototype.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paw-time-launch.vercel.app/">
+<meta property="og:image" content="https://paw-time-launch.vercel.app/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://paw-time-launch.vercel.app/">
+<link rel="alternate" hreflang="en" href="https://paw-time-launch.vercel.app/">
+<link rel="alternate" hreflang="ja" href="https://paw-time-launch.vercel.app/ja/">
+<link rel="alternate" hreflang="x-default" href="https://paw-time-launch.vercel.app/">
+<link rel="icon" type="image/webp" href="img/rares/amagasa.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
-<style>
-:root{
-  --cream:#f6efe6; --paper:#fffaf3; --ink:#2a2233; --sub:#6a5f70; --line:#e6dbcd;
-  --orange:#ff8a5b; --orange-d:#e56a3c; --night:#141a3a; --night2:#232b5c; --lav:#8b7bff; --gold:#ffd23f;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--cream);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased}
-img,video{max-width:100%;display:block}
-a{color:inherit}
-.wrap{max-width:1080px;margin:0 auto;padding-inline:20px}
-section{padding-block:72px}
-h1,h2,h3{line-height:1.3;margin:0;text-wrap:balance}
-h2{font-size:clamp(26px,4vw,38px);font-weight:900}
-.eyebrow{font-size:13px;letter-spacing:.14em;font-weight:700;color:var(--orange-d)}
-.lead{color:var(--sub);max-width:60ch;margin-top:12px}
-
-/* hero */
-.hero{background:radial-gradient(120% 90% at 50% 0%,#2e3778 0%,var(--night) 60%);color:#f3eeff;padding-block:48px 80px;overflow:hidden;position:relative}
-.stars{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 12% 20%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 30% 70%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 62% 18%,#fffb 50%,transparent 51%),radial-gradient(1px 1px at 82% 44%,#fff8 50%,transparent 51%),radial-gradient(1.5px 1.5px at 90% 12%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 48% 36%,#fff7 50%,transparent 51%)}
-.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;position:relative}
-.hero h1{font-size:clamp(40px,7vw,72px);font-weight:900;letter-spacing:.02em}
-.hero .tag{font-size:clamp(18px,2.6vw,24px);font-weight:700;margin-top:18px;color:#fff}
-.hero .tag span{color:var(--gold)}
-.hero p.sub{color:#c9c3ec;margin-top:14px;max-width:44ch}
-.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:999px;font-weight:900;text-decoration:none;font-size:16px;transition:transform .15s}
-.btn:hover{transform:translateY(-2px)}
-.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
-.btn-main{background:var(--orange);color:#fff;box-shadow:0 6px 0 var(--orange-d)}
-.btn-ghost{background:#ffffff1a;color:#fff;border:2px solid #ffffff55}
-.phone{width:min(300px,100%);margin-inline:auto;border-radius:34px;background:#0b0e22;padding:10px;box-shadow:0 30px 60px #0008,0 0 0 2px #ffffff22 inset}
-.phone video{border-radius:26px;aspect-ratio:9/16;width:100%;height:auto;background:#000;object-fit:cover}
-.float{position:absolute;width:120px;pointer-events:none;filter:drop-shadow(0 8px 12px #0006)}
-.f1{left:-30px;bottom:-10px;transform:rotate(-8deg)}
-.f2{right:-20px;top:20px;width:110px;transform:rotate(6deg)}
-@media (prefers-reduced-motion:no-preference){
-  .float{animation:hop 2.6s ease-in-out infinite}
-  .f2{animation-delay:.8s}
-  @keyframes hop{0%,100%{translate:0 0}50%{translate:0 -10px}}
-}
-
-/* loop */
-.loop{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:32px}
-.step{background:var(--paper);border:2px solid var(--line);border-radius:20px;padding:18px 14px;text-align:center}
-.step b{display:block;font-size:13px;color:var(--orange-d);letter-spacing:.1em}
-.step h3{font-size:18px;margin-top:6px}
-.step p{font-size:13px;color:var(--sub);margin:6px 0 0}
-.step.night{background:var(--night2);color:#f3eeff;border-color:var(--night2)}
-.step.night p{color:#c9c3ec}.step.night b{color:var(--gold)}
-
-/* boosts */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
-.pillar{background:var(--paper);border-radius:22px;padding:24px;border:2px solid var(--line)}
-.pillar h3{font-size:20px}
-.pillar .num{font-size:40px;font-weight:900;color:var(--orange)}
-.pillar p{color:var(--sub);font-size:15px;margin:8px 0 0}
-
-/* variants */
-.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
-.v{background:var(--paper);border-radius:26px;padding:18px;border:2px solid var(--line);display:flex;flex-direction:column;gap:14px}
-.v video{border-radius:18px;aspect-ratio:9/16;width:100%;height:auto;object-fit:cover;background:#111}
-.v .badge{align-self:flex-start;font-size:12px;font-weight:900;padding:3px 12px;border-radius:999px;background:var(--ink);color:#fff}
-.v h3{font-size:22px}
-.v p{color:var(--sub);font-size:14px;margin:0}
-.v ul{margin:0;padding-left:1.2em;font-size:14px;color:var(--ink)}
-.v .btn{justify-content:center;margin-top:auto}
-
-/* rares */
-.rare-sec{background:#fff}
-.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-.filters button{font:inherit;font-weight:700;font-size:14px;padding:6px 16px;border-radius:999px;border:2px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
-.filters button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.filters button:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:22px}
-.card{background:var(--cream);border-radius:20px;padding:12px;text-align:center}
-.card img{width:100%;aspect-ratio:1;object-fit:contain}
-.card h4{margin:6px 0 0;font-size:16px}
-.card small{display:block;color:var(--sub);font-size:12px;line-height:1.5;margin-top:4px}
-.card .g{display:inline-block;font-size:11px;font-weight:700;color:var(--orange-d)}
-
-/* fair */
-.fair{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
-.fair div{border-left:4px solid var(--orange);padding:4px 0 4px 16px}
-.fair h3{font-size:18px}.fair p{color:var(--sub);font-size:14px;margin:6px 0 0}
-
-footer{background:var(--night);color:#c9c3ec;padding-block:40px;font-size:14px}
-footer b{color:#fff}
-
-@media (max-width:860px){
-  .hero-grid{grid-template-columns:1fr}
-  .loop{grid-template-columns:1fr 1fr}
-  .pillars,.variants,.fair{grid-template-columns:1fr}
-  .float{display:none}
-}
-
-.lang{position:absolute;top:16px;right:20px;z-index:2;font-size:14px;font-weight:700;color:#fff;text-decoration:none;border:2px solid #ffffff55;border-radius:999px;padding:4px 14px}
-.lang:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-</style>
+<link rel="stylesheet" href="site.css">
+<script src="site.js" defer></script>
 </head>
 <body>
-
-<header class="hero">
-  <div class="stars"></div>
-  <a class="lang" href="ja/" hreflang="ja">日本語</a>
-  <div class="wrap hero-grid">
-    <div>
-      <div class="eyebrow" style="color:#ffd23f">RECRUIT INNOVATION CUP 2026 ・ TEAM DRY GRAPE</div>
-      <h1 style="margin-top:14px">Paw Time</h1><p style="margin:6px 0 0;font-weight:700;color:#c9c3ec">A breakroom full of cat-ghosts</p>
-      <p class="tag">Worked a shift? <span>More nets.</span><br>Slept well? <span>Your orbs hatch.</span></p>
-      <p class="sub">The kind of work you do and the nights you sleep well become boosts in the game. Working longer hours never pays more. A game for people who work, worth opening every day.</p>
-      <div class="cta">
-        <a class="btn btn-main" href="#play">Play the 3 prototypes</a>
-        <a class="btn btn-ghost" href="#rares">See the 30 rares</a>
-      </div>
-    </div>
-    <div style="position:relative">
-      <img class="float f1" src="img/rares/amagasa.webp" alt="">
-      <img class="float f2" src="img/rares/kaminari.webp" alt="">
-      <div class="phone"><video src="video/promo_c.mp4" poster="img/poster_c.jpg" autoplay muted loop playsinline></video></div>
-    </div>
+<a class="skip" href="#main">Skip to content</a>
+<header class="hero night" id="top">
+ <div class="wrap topbar"><a class="brand" href="#top" aria-label="Paw Time"><svg class="paw" viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="9" cy="8" rx="4" ry="5" transform="rotate(-20 9 8)"/><ellipse cx="22" cy="7" rx="4" ry="5" transform="rotate(20 22 7)"/><ellipse cx="3.8" cy="17" rx="3.3" ry="4.4" transform="rotate(-28 3.8 17)"/><ellipse cx="28" cy="16" rx="3.3" ry="4.4" transform="rotate(28 28 16)"/><path d="M8 23c0-5 4-9 8-9s8 4 8 9c0 5-4 5-8 4-4 1-8 1-8-4Z"/></svg><span>Paw Time</span></a>
+  <nav class="navigation" aria-label="Main navigation">
+   <a class="nav-section" href="#game">The game</a>
+   <a class="nav-section" href="#judges">For judges</a>
+   <a class="nav-play" href="https://paw-time-play.vercel.app/" target="_blank" rel="noopener">Play demo</a>
+   <a class="language" href="ja/" lang="ja" hreflang="ja">日本語</a>
+  </nav>
+ </div>
+ <div class="wrap hero-inner">
+  <div class="hero-copy">
+   <p class="intro">A game for people who work shifts</p>
+   <h1>Your shifts change.<br>Your companion stays.</h1>
+   <p class="hero-description">Find a shift, spend the day with your cat, and build a little world to come home to.</p>
+   <div class="actions"><a class="button button-primary" href="https://paw-time-play.vercel.app/" target="_blank" rel="noopener">Play the browser demo</a><a class="button button-secondary" href="#trailer" data-open-trailer><span class="play-icon" aria-hidden="true"></span>Watch the 44-second film</a></div>
+   <p class="hero-note">Free browser prototype. Sample jobs. The first game load can take a few dozen seconds.</p>
   </div>
+  <div class="scene">
+   <span class="star star-one" aria-hidden="true">✦</span><span class="star star-two" aria-hidden="true">✦</span><span class="star star-three" aria-hidden="true">✧</span>
+   <img class="scene-cat cat-left" src="img/rares/amagasa.webp" alt="" width="300" height="300">
+   <img class="scene-cat cat-right" src="img/rares/kaminari.webp" alt="" width="300" height="300">
+   <div class="game-window">
+    <video data-hero-video src="video/paw_time_en.mp4" poster="img/poster_en.jpg" muted loop playsinline preload="none" aria-label="Paw Time gameplay preview, muted"></video>
+    <button class="video-pause" data-video-pause type="button" aria-label="Play background video">▶</button>
+   </div>
+   <p class="scene-note">A little world,<span>built around your day.</span></p>
+  </div>
+ </div>
+ <div class="wrap event-strip"><span>Recruit Holdings Innovation Cup 2026</span><span>Made by Team Dry Grape</span></div>
 </header>
-
-<section>
-  <div class="wrap">
-    <div class="eyebrow">A DAY IN THE GAME</div>
-    <h2>Work, scoop, sleep, and meet them in the morning.</h2>
-    <p class="lead">Your real shifts and sleep connect to a day in the game. You can play every day without any records; connecting them just makes things a little better.</p>
-    <div class="loop">
-      <div class="step"><b>DAY</b><h3>Shift</h3><p>Nets matching your job arrive. Same amount, however long you work.</p></div>
-      <div class="step night"><b>NIGHT</b><h3>Obake scooping</h3><p>Gently scoop glowing orbs from the riverside pond.</p></div>
-      <div class="step night"><b>SLEEP</b><h3>Rest</h3><p>How long, and how regular. Good sleep makes stronger nets.</p></div>
-      <div class="step"><b>MORNING</b><h3>Orbs hatch</h3><p>One by one they crack open, and an obake is born.</p></div>
-      <div class="step"><b>ALWAYS</b><h3>Collection</h3><p>5 common + 30 rare obake. Only a hint shows until you meet them.</p></div>
-    </div>
+<main id="main">
+ <section class="problem" aria-labelledby="problem-title">
+  <div class="wrap problem-grid">
+   <div class="problem-copy"><p class="section-kicker">Different places. A familiar face.</p><h2 id="problem-title">A new workplace shouldn’t mean starting from zero.</h2><p>A café on Tuesday. A shop on Friday. Paw Time is for people whose workplaces and coworkers keep changing. Your companion and your island give that changing week a little continuity.</p></div>
+   <div class="week" aria-label="The same companion">
+    <div class="shift-stub"><small>Tuesday</small><strong>Café</strong><span>A new team</span></div>
+    <img class="week-cat" src="img/rares/sakura.webp" alt="The same companion" width="300" height="300" loading="lazy">
+    <div class="shift-stub"><small>Friday</small><strong>Shop</strong><span>A new team</span></div>
+   </div>
   </div>
-</section>
-
-<section style="padding-top:0">
+ </section>
+ <section class="section" id="game" aria-labelledby="game-title">
   <div class="wrap">
-    <div class="eyebrow">HOW IT WORKS</div>
-    <h2>Work and sleep are boost items.</h2>
-    <div class="pillars">
-      <div class="pillar"><div class="num">2 nets</div><h3>A shift pays the same</h3><p>Four hours or ten, it is the same. What matters is the kind of work: register, dishes, floor, kitchen or stocking each attract different obake.</p></div>
-      <div class="pillar"><div class="num">×1.25</div><h3>Good sleep, stronger mornings</h3><p>Sleep 7+ hours and your net tears less and your orbs hatch better. Staying up late has its own night obake, so there is no single right answer.</p></div>
-      <div class="pillar"><div class="num">30 rares</div><h3>Rares come from how you live</h3><p>A rainy shift, a full-moon night, a first day at a new shop, a real rest after a busy stretch. Variety, rest and people, never sheer hours.</p></div>
-    </div>
+   <p class="section-kicker">Your day, with a little more magic</p>
+   <div class="section-intro"><h2 id="game-title">One companion.<br>A whole day together.</h2><p>A familiar rhythm connects the work you do to a world you make your own.</p></div>
+   <div class="journey"><article><div class="journey-visual"><span class="journey-number">01</span><img src="img/shot_job.webp" alt="An English sample job card showing the hourly pay and Accept and Pass buttons" width="360" height="640" loading="lazy"></div><div><h3>Find your next shift.</h3><p>Your cat brings a few sample jobs that fit your preferences. See the pay and worker reviews, then accept or pass.</p></div></article>
+<article><div class="journey-visual"><span class="journey-number">02</span><img src="img/shot_tired.webp" alt="A tired cat in its tiny shop with a message suggesting it is time to go home" width="360" height="640" loading="lazy"></div><div><h3>Have someone by your side.</h3><p>During a shift, your cat works in its own tiny shop. It visibly tires, and its game-coin earnings eventually stop.</p></div></article>
+<article><div class="journey-visual"><span class="journey-number">03</span><img src="img/shot_island.webp" alt="A player-built island with a cat companion and room to grow" width="360" height="640" loading="lazy"></div><div><h3>Come home to your world.</h3><p>Scoop glowing orbs, meet new companions, and build your island. There is something to enjoy on days off, too.</p></div></article></div>
+   <p class="journey-note">Screens from the prototype. Jobs shown are samples, not real job offers.</p>
   </div>
-</section>
-
-<section id="play" style="background:#efe6da">
-  <div class="wrap">
-    <div class="eyebrow">THREE PROTOTYPES IN ONE NIGHT</div>
-    <h2>Same world, different ways to play.</h2>
-    <p class="lead">Three prototypes built on the same obake and the same rules, each with a different core. They run in your browser (the first load takes a few dozen seconds). Play in English (Japanese is available on the title screen).</p>
-    <div class="variants">
-      <article class="v">
-        <span class="badge">A</span>
-        <video src="video/promo_a.mp4" poster="img/poster_a.jpg" controls muted playsinline preload="metadata"></video>
-        <h3>Scoop &amp; Collect</h3>
-        <p>Scooping skill and filling the collection.</p>
-        <ul><li>Keep it steady, aim for the center, check the weight</li><li>Weather, nightly goals, Saturday festival</li><li>Titles, medals and obake that visibly grow</li></ul>
-        <a class="btn btn-main" href="https://obake-breakroom-a-scoop.vercel.app" target="_blank" rel="noopener">Play A</a>
-      </article>
-      <article class="v">
-        <span class="badge">B</span>
-        <video src="video/promo_b.mp4" poster="img/poster_b.jpg" controls muted playsinline preload="metadata"></video>
-        <h3>Sleep Rhythm</h3>
-        <p>Sleep at your usual time and a night garden grows.</p>
-        <ul><li>Sleep scored by length and regularity</li><li>Choose how to spend the evening (even a night market)</li><li>Sheep-counting dreams and full-moon nights</li></ul>
-        <a class="btn btn-main" href="https://obake-breakroom-b-sleep.vercel.app" target="_blank" rel="noopener">Play B</a>
-      </article>
-      <article class="v">
-        <span class="badge">C</span>
-        <video src="video/promo_c.mp4" poster="img/poster_c.jpg" controls muted playsinline preload="metadata"></video>
-        <h3>Run the Shop</h3>
-        <p>Trouble pops up all over the shop. Put your cat-obake at the right stations.</p>
-        <ul><li>Register, tables, kitchen, sink, shelves</li><li>Matching jobs work faster; tired ones take a break</li><li>Three shops and the big Friday rush</li></ul>
-        <a class="btn btn-main" href="https://obake-breakroom-c-defense.vercel.app" target="_blank" rel="noopener">Play C</a>
-      </article>
-    </div>
+ </section>
+ <section class="section trailer-section night" id="trailer" aria-labelledby="film-title">
+  <div class="wrap trailer-grid">
+   <div class="trailer-copy"><p class="section-kicker">See the actual game</p><h2 id="film-title">A small world.<br>A lot to come back to.</h2><p>From meeting your cat to a morning hatch, the 44-second film shows the game in motion. Then try it for yourself.</p><div class="actions"><a class="button button-primary" href="https://paw-time-play.vercel.app/" target="_blank" rel="noopener">Play the browser demo</a></div><p class="hero-note" style="font-size:12px">For a guided run, choose “3-minute demo” on the game’s title screen. If it opens in Japanese, choose “EN” there. Starting that route can replace an existing save; the game asks first.</p></div>
+   <div><div class="trailer-card">
+    <video data-inline-trailer src="video/paw_time_en.mp4" poster="img/poster_en.jpg" controls playsinline preload="none" aria-label="Paw Time in 44 seconds"><a href="video/paw_time_en.mp4">Download the film</a></video>
+    <button class="trailer-trigger" type="button" data-open-trailer aria-label="Play the 44-second film"><span class="play-circle" aria-hidden="true"><span class="play-icon"></span></span><span>Play the 44-second film</span></button>
+   </div><p class="caption">Actual gameplay. English on-screen text.</p></div>
   </div>
-</section>
-
-<section id="rares" class="rare-sec">
-  <div class="wrap">
-    <div class="eyebrow">30 RARE OBAKE</div>
-    <h2>Born from invisible work and good rest.</h2>
-    <p class="lead">Until you meet one, the collection shows just a one-line hint. Collecting them becomes practice for working and sleeping well.</p>
-    <div class="filters" role="group" aria-label="Filter by group" id="filters"></div>
-    <div class="grid" id="grid"></div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="eyebrow">WHAT THE DESIGN PROTECTS</div>
-    <h2>Not a game that makes you work more.</h2>
-    <div class="fair">
-      <div><h3>Longer hours never pay more</h3><p>Shift rewards are fixed. What counts is the kind of work, and taking breaks in between.</p></div>
-      <div><h3>No sleep, no strength</h3><p>Sleep decides how strong your net is and how well your orbs hatch. Some rares only come on days off.</p></div>
-      <div><h3>No leaderboards</h3><p>You compare with yesterday's you and the people on your shift. Coworkers gift obake to each other.</p></div>
-    </div>
-  </div>
-</section>
-
-<section style="background:#141a3a;color:#f3eeff">
-  <div class="wrap">
-    <div class="eyebrow" style="color:#ffd23f">WHAT WE BELIEVE</div>
-    <h2>Make work feel good. Never make people work more.</h2>
-    <p class="lead" style="color:#c9c3ec">Your cat-obake works alongside you during your real shift. When you have done enough, it gets tired and says "let's call it a day" — and no extra rewards are generated. Work is colored in, not squeezed.</p>
-    <div class="pillars">
-      <div class="pillar" style="background:#232b5c;border-color:#232b5c;color:#f3eeff"><div class="num" style="color:#ffd23f">Free</div><h3>Workers never pay</h3><p style="color:#c9c3ec">Every gameplay feature is free. Rewards come from the kind of work you do, rest and people — never from hours or money.</p></div>
-      <div class="pillar" style="background:#232b5c;border-color:#232b5c;color:#f3eeff"><div class="num" style="color:#ffd23f">B2B</div><h3>Employers pay</h3><p style="color:#c9c3ec">Shops pay for job listings, last-minute shift matching and anonymous insights from worker reviews ("breaks respected ★4.6").</p></div>
-      <div class="pillar" style="background:#232b5c;border-color:#232b5c;color:#f3eeff"><div class="num" style="color:#ffd23f">Wages untouched</div><h3>Cosmetics only</h3><p style="color:#c9c3ec">Optional one-time cosmetic items. No gacha, no pay-to-skip, nothing convertible to cash. Your wages never enter the game.</p></div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <b>Paw Time</b> ・ Team Dry Grape (Keigo Oyama, Yuto Aoki, Risa Koyanagi) ・ Recruit Innovation Cup 2026<br>
-    All prototypes were built during the event. Made with Godot 4; every cat-obake is an in-game 3D model.
-  </div>
-</footer>
-
-<script>
-const RARES = [{"id": "nemurin", "name": "Nemurin", "group": "Sleep", "desc": "Born the morning after 7+ hours of sleep. Breathes softly."}, {"id": "yumemi", "name": "Yumemi", "group": "Sleep", "desc": "After 8+ hours of sleep. The color of last night's dream."}, {"id": "asayake", "name": "Asayake", "group": "Sleep", "desc": "Three good nights in a row. Sunrise-colored."}, {"id": "yomise", "name": "Yomise", "group": "Sleep", "desc": "After a night under 5 hours. Carries a lantern through the dark."}, {"id": "hirunen", "name": "Hirunen", "group": "Sleep", "desc": "Sleep 9 hours on a day off. Smells like sunshine."}, {"id": "totonou", "name": "Totonou", "group": "Sleep", "desc": "Go to bed at the same time three nights running. Always calm."}, {"id": "kirari", "name": "Kirari", "group": "Firsts", "desc": "Your first shift at a new shop."}, {"id": "hajimete", "name": "Hajimete", "group": "Firsts", "desc": "Your first time doing a new kind of job. Still a little clumsy."}, {"id": "wataridori", "name": "Wataridori", "group": "Firsts", "desc": "Try all five kinds of work. Can go anywhere."}, {"id": "mitsuboshi", "name": "Mitsuboshi", "group": "Firsts", "desc": "Work at three different shops in one week."}, {"id": "hatsukoe", "name": "Hatsukoe", "group": "Firsts", "desc": "Your first shift with a new coworker. Great at greetings."}, {"id": "yonaki", "name": "Yonaki", "group": "Time of day", "desc": "A late-night shift. Likes quiet places."}, {"id": "asatsuyu", "name": "Asatsuyu", "group": "Time of day", "desc": "Three morning shifts. Made of dewdrops."}, {"id": "tsukimi", "name": "Tsukimi", "group": "Time of day", "desc": "A shift on a full-moon night."}, {"id": "tasogare", "name": "Tasogare", "group": "Time of day", "desc": "Day and night shifts in the same week."}, {"id": "shinya", "name": "Mayonaka", "group": "Time of day", "desc": "Restocking shelves late at night. Loves box corners."}, {"id": "amagasa", "name": "Amagasa", "group": "Weather", "desc": "A shift on a rainy day. Sings under its umbrella."}, {"id": "yukimi", "name": "Yukimi", "group": "Weather", "desc": "A shift on a snowy day. A little chilly."}, {"id": "kaminari", "name": "Kaminari", "group": "Weather", "desc": "A shift during a thunderstorm. A bit impatient."}, {"id": "sakura", "name": "Sakura", "group": "Weather", "desc": "A shift in spring. Wrapped in petals."}, {"id": "nakayoshi", "name": "Nakayoshi", "group": "Together", "desc": "Three shifts with the same coworker."}, {"id": "okurimono", "name": "Okurimono", "group": "Together", "desc": "Give an obake to a coworker."}, {"id": "morattan", "name": "Morattan", "group": "Together", "desc": "Receive an obake from a coworker."}, {"id": "teamwork", "name": "Te-wo-tsunagu", "group": "Together", "desc": "Get through the big rush together."}, {"id": "senpai", "name": "Senpai", "group": "Together", "desc": "Share a shift with someone on their first day."}, {"id": "yasumijouzu", "name": "Yasumi-jozu", "group": "Rhythm", "desc": "Rest properly after two days of work. A master of breaks."}, {"id": "shuumatsu", "name": "Shumatsu", "group": "Rhythm", "desc": "Work both days of a weekend."}, {"id": "hyakki", "name": "Hyakki", "group": "Rhythm", "desc": "Collect every common obake. Leads the night parade."}, {"id": "kazoeuta", "name": "Kazoeuta", "group": "Rhythm", "desc": "Your collection passes ten. Sings the numbers."}, {"id": "mangetsu", "name": "Mangetsu", "group": "Rhythm", "desc": "Average 7+ hours of sleep for a month."}];
-const groups = ["All", "Sleep", "Firsts", "Time of day", "Weather", "Together", "Rhythm"];
-const grid = document.getElementById("grid");
-const filters = document.getElementById("filters");
-function render(g){
-  grid.innerHTML = "";
-  for (const r of RARES){
-    if (g !== "All" && r.group !== g) continue;
-    const c = document.createElement("div");
-    c.className = "card";
-    c.innerHTML = `<img src="img/rares/${r.id}.webp" alt="${r.name}"><span class="g">${r.group}</span><h4>${r.name}</h4><small>${r.desc}</small>`;
-    grid.appendChild(c);
-  }
-  for (const b of filters.children) b.setAttribute("aria-pressed", String(b.dataset.g === g));
-}
-for (const g of groups){
-  const b = document.createElement("button");
-  b.type = "button"; b.textContent = g; b.dataset.g = g;
-  b.addEventListener("click", () => render(g));
-  filters.appendChild(b);
-}
-render("All");
-</script>
+ </section>
+ <section class="section" aria-labelledby="principle-title"><div class="wrap principle">
+  <div class="principle-copy"><p class="section-kicker">Designed around a working life</p><h2 id="principle-title">Make room for the rest of your day.</h2><p>The idea is to make a working day feel a little more personal. The game’s rewards have limits; they are never your wages.</p></div>
+  <div class="rule-list"><div class="rule-item"><span class="rule-symbol" aria-hidden="true">≈</span><div><h3>A shift gives a fixed number of nets.</h3><p>The shift-completion reward does not increase with the length of that shift.</p></div></div>
+<div class="rule-item"><span class="rule-symbol" aria-hidden="true">◷</span><div><h3>Game coins stop when your cat tires.</h3><p>Coins accumulate during shifts, with a daily cap and a 7.5-hour daily limit. They cannot be exchanged for money.</p></div></div>
+<div class="rule-item"><span class="rule-symbol" aria-hidden="true">✦</span><div><h3>Your island is there on days off.</h3><p>Collect, decorate and dress up without needing another shift. Rest is part of the loop, alongside making your space your own.</p></div></div></div>
+ </div></section>
+ <section class="section judges" id="judges" aria-labelledby="judges-title"><div class="wrap">
+  <p class="section-kicker">A closer look, for judges</p><div class="judges-head"><h2 id="judges-title">Here’s what you can evaluate today.</h2><p>A playable game, a proposed business, and a hypothesis to test. Each has a different level of evidence.</p></div>
+  <table class="status-table"><caption class="sr-only">Here’s what you can evaluate today.</caption><tbody><tr><th scope="row">The game<br><span class="state ">Playable prototype</span></th><td>Companion quiz, sample job cards, working together, orb collecting, wardrobe and island building.<p>The film shows these screens; the browser build lets you explore them.</p></td></tr>
+<tr><th scope="row">The jobs<br><span class="state state-sample">Sample data</span></th><td>Listings and demo shifts are examples, not live job offers.<p>The current prototype does not establish real hiring outcomes.</p></td></tr>
+<tr><th scope="row">The business<br><span class="state state-proposal">Proposed model</span></th><td>A free core game, with employers paying for listings and shift matching.<p>Optional cosmetic purchases are planned. Payment flows and employer willingness to pay still need validation.</p></td></tr>
+<tr><th scope="row">The impact<br><span class="state state-proposal">To validate</span></th><td>Do workers choose to return between shifts, and does the companion feel supportive?<p>A worker pilot is the next step. Effects on sleep, overwork and hiring remain unvalidated.</p></td></tr></tbody></table>
+  <div class="architecture"><div><h3>The game</h3><p>Godot 4, with 3D characters and a browser export.</p></div>
+<div><h3>The platform</h3><p>A TypeScript API and a separate employer web app in the monorepo.</p></div>
+<div><h3>The data</h3><p>Local game progress plus a separate usage-analytics path. See the data notes for its boundaries.</p></div></div>
+  <div class="source-links"><a href="https://github.com/ooyamakeigo/paw-time" target="_blank" rel="noopener">Explore the source</a><a href="https://github.com/ooyamakeigo/paw-time/blob/main/docs/architecture/monorepo.md" target="_blank" rel="noopener">Read the architecture</a><a href="https://github.com/ooyamakeigo/paw-time/blob/main/docs/architecture/insights.md" target="_blank" rel="noopener">Read the data notes</a></div>
+ </div></section>
+ <section class="section collection" id="companions" aria-labelledby="companions-title"><div class="wrap">
+  <p class="section-kicker">A few friends you might meet</p><h2 id="companions-title">A pocket-sized cast.<br>Plenty of personality.</h2><p class="lead">Sleepy, sunny, a little strange. Thirty rare companions bring their own character to your island.</p>
+  <div class="featured"><figure><img src="img/rares/nemurin.webp" alt="Nemurin" width="300" height="300" loading="lazy"><figcaption><h3>Nemurin</h3><p>A tiny expert at taking it easy.</p></figcaption></figure>
+<figure><img src="img/rares/amagasa.webp" alt="Amagasa" width="300" height="300" loading="lazy"><figcaption><h3>Amagasa</h3><p>A little company on rainy days.</p></figcaption></figure>
+<figure><img src="img/rares/sakura.webp" alt="Sakura" width="300" height="300" loading="lazy"><figcaption><h3>Sakura</h3><p>A touch of spring, wherever you go.</p></figcaption></figure></div>
+  <details class="collection-details"><summary>Meet all 30 companions</summary><div class="collection-content">
+   <p>Explore the characters by theme. This is a character gallery, not a list of tasks to complete.</p>
+   <div class="filters" data-filters hidden role="group" aria-label="Filter companions by theme"><button type="button" data-group="all" aria-pressed="true" aria-controls="roster">All</button>
+<button type="button" data-group="sleep" aria-pressed="false" aria-controls="roster">Sleep</button>
+<button type="button" data-group="firsts" aria-pressed="false" aria-controls="roster">Firsts</button>
+<button type="button" data-group="time" aria-pressed="false" aria-controls="roster">Time of day</button>
+<button type="button" data-group="weather" aria-pressed="false" aria-controls="roster">Weather</button>
+<button type="button" data-group="together" aria-pressed="false" aria-controls="roster">Together</button>
+<button type="button" data-group="rhythm" aria-pressed="false" aria-controls="roster">Rhythm</button></div>
+   <p class="filter-status" data-filter-status role="status" aria-live="polite">30 companions</p>
+   <div class="roster" id="roster"><article class="character" data-character-group="sleep"><img src="img/rares/nemurin.webp" alt="" width="300" height="300" loading="lazy"><h4>Nemurin</h4><p>Sleep</p></article>
+<article class="character" data-character-group="sleep"><img src="img/rares/yumemi.webp" alt="" width="300" height="300" loading="lazy"><h4>Yumemi</h4><p>Sleep</p></article>
+<article class="character" data-character-group="sleep"><img src="img/rares/asayake.webp" alt="" width="300" height="300" loading="lazy"><h4>Asayake</h4><p>Sleep</p></article>
+<article class="character" data-character-group="sleep"><img src="img/rares/yomise.webp" alt="" width="300" height="300" loading="lazy"><h4>Yomise</h4><p>Sleep</p></article>
+<article class="character" data-character-group="sleep"><img src="img/rares/hirunen.webp" alt="" width="300" height="300" loading="lazy"><h4>Hirunen</h4><p>Sleep</p></article>
+<article class="character" data-character-group="sleep"><img src="img/rares/totonou.webp" alt="" width="300" height="300" loading="lazy"><h4>Totonou</h4><p>Sleep</p></article>
+<article class="character" data-character-group="firsts"><img src="img/rares/kirari.webp" alt="" width="300" height="300" loading="lazy"><h4>Kirari</h4><p>Firsts</p></article>
+<article class="character" data-character-group="firsts"><img src="img/rares/hajimete.webp" alt="" width="300" height="300" loading="lazy"><h4>Hajimete</h4><p>Firsts</p></article>
+<article class="character" data-character-group="firsts"><img src="img/rares/wataridori.webp" alt="" width="300" height="300" loading="lazy"><h4>Wataridori</h4><p>Firsts</p></article>
+<article class="character" data-character-group="firsts"><img src="img/rares/mitsuboshi.webp" alt="" width="300" height="300" loading="lazy"><h4>Mitsuboshi</h4><p>Firsts</p></article>
+<article class="character" data-character-group="firsts"><img src="img/rares/hatsukoe.webp" alt="" width="300" height="300" loading="lazy"><h4>Hatsukoe</h4><p>Firsts</p></article>
+<article class="character" data-character-group="time"><img src="img/rares/yonaki.webp" alt="" width="300" height="300" loading="lazy"><h4>Yonaki</h4><p>Time of day</p></article>
+<article class="character" data-character-group="time"><img src="img/rares/asatsuyu.webp" alt="" width="300" height="300" loading="lazy"><h4>Asatsuyu</h4><p>Time of day</p></article>
+<article class="character" data-character-group="time"><img src="img/rares/tsukimi.webp" alt="" width="300" height="300" loading="lazy"><h4>Tsukimi</h4><p>Time of day</p></article>
+<article class="character" data-character-group="time"><img src="img/rares/tasogare.webp" alt="" width="300" height="300" loading="lazy"><h4>Tasogare</h4><p>Time of day</p></article>
+<article class="character" data-character-group="time"><img src="img/rares/shinya.webp" alt="" width="300" height="300" loading="lazy"><h4>Mayonaka</h4><p>Time of day</p></article>
+<article class="character" data-character-group="weather"><img src="img/rares/amagasa.webp" alt="" width="300" height="300" loading="lazy"><h4>Amagasa</h4><p>Weather</p></article>
+<article class="character" data-character-group="weather"><img src="img/rares/yukimi.webp" alt="" width="300" height="300" loading="lazy"><h4>Yukimi</h4><p>Weather</p></article>
+<article class="character" data-character-group="weather"><img src="img/rares/kaminari.webp" alt="" width="300" height="300" loading="lazy"><h4>Kaminari</h4><p>Weather</p></article>
+<article class="character" data-character-group="weather"><img src="img/rares/sakura.webp" alt="" width="300" height="300" loading="lazy"><h4>Sakura</h4><p>Weather</p></article>
+<article class="character" data-character-group="together"><img src="img/rares/nakayoshi.webp" alt="" width="300" height="300" loading="lazy"><h4>Nakayoshi</h4><p>Together</p></article>
+<article class="character" data-character-group="together"><img src="img/rares/okurimono.webp" alt="" width="300" height="300" loading="lazy"><h4>Okurimono</h4><p>Together</p></article>
+<article class="character" data-character-group="together"><img src="img/rares/morattan.webp" alt="" width="300" height="300" loading="lazy"><h4>Morattan</h4><p>Together</p></article>
+<article class="character" data-character-group="together"><img src="img/rares/teamwork.webp" alt="" width="300" height="300" loading="lazy"><h4>Te-wo-tsunagu</h4><p>Together</p></article>
+<article class="character" data-character-group="together"><img src="img/rares/senpai.webp" alt="" width="300" height="300" loading="lazy"><h4>Senpai</h4><p>Together</p></article>
+<article class="character" data-character-group="rhythm"><img src="img/rares/yasumijouzu.webp" alt="" width="300" height="300" loading="lazy"><h4>Yasumi-jozu</h4><p>Rhythm</p></article>
+<article class="character" data-character-group="rhythm"><img src="img/rares/shuumatsu.webp" alt="" width="300" height="300" loading="lazy"><h4>Shumatsu</h4><p>Rhythm</p></article>
+<article class="character" data-character-group="rhythm"><img src="img/rares/hyakki.webp" alt="" width="300" height="300" loading="lazy"><h4>Hyakki</h4><p>Rhythm</p></article>
+<article class="character" data-character-group="rhythm"><img src="img/rares/kazoeuta.webp" alt="" width="300" height="300" loading="lazy"><h4>Kazoeuta</h4><p>Rhythm</p></article>
+<article class="character" data-character-group="rhythm"><img src="img/rares/mangetsu.webp" alt="" width="300" height="300" loading="lazy"><h4>Mangetsu</h4><p>Rhythm</p></article></div>
+  </div></details>
+ </div></section>
+ <section class="closing" aria-labelledby="closing-title"><div class="wrap closing-inner"><div><h2 id="closing-title">Your next shift has a little company.</h2><p>Meet your companion. Make the island yours.</p></div><div class="actions"><a class="button button-primary" href="https://paw-time-play.vercel.app/" target="_blank" rel="noopener">Play the browser demo</a></div></div></section>
+</main>
+<footer><div class="wrap"><div class="footer-top"><a class="brand" href="#top" aria-label="Paw Time"><svg class="paw" viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="9" cy="8" rx="4" ry="5" transform="rotate(-20 9 8)"/><ellipse cx="22" cy="7" rx="4" ry="5" transform="rotate(20 22 7)"/><ellipse cx="3.8" cy="17" rx="3.3" ry="4.4" transform="rotate(-28 3.8 17)"/><ellipse cx="28" cy="16" rx="3.3" ry="4.4" transform="rotate(28 28 16)"/><path d="M8 23c0-5 4-9 8-9s8 4 8 9c0 5-4 5-8 4-4 1-8 1-8-4Z"/></svg><span>Paw Time</span></a><p>A game for people whose working week keeps changing.</p></div><div class="footer-bottom"><p>Team Dry Grape<br>Keigo Oyama, Yuto Aoki & Risa Koyanagi</p><p>Recruit Holdings Innovation Cup 2026<br><a href="https://github.com/ooyamakeigo/paw-time" target="_blank" rel="noopener">GitHub</a> &nbsp; / &nbsp; <a href="#top">Back to top</a></p></div></div></footer>
+<dialog class="video-dialog" data-video-dialog aria-labelledby="dialog-title">
+ <div class="dialog-top"><h2 id="dialog-title">Paw Time in 44 seconds</h2><button class="dialog-close" data-close-dialog type="button" aria-label="Close video" autofocus>×</button></div>
+ <video data-src="video/paw_time_en.mp4" controls playsinline preload="none" poster="img/poster_en.jpg" aria-label="Paw Time in 44 seconds"></video>
+ <p class="dialog-caption">Recorded gameplay from the prototype.</p>
+</dialog>
 </body>
 </html>
