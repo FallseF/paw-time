@@ -8,6 +8,7 @@ const SKY := preload("res://assets/title/sky.png")
 const LOGO := preload("res://assets/title/logo.png")
 ## 3D のロゴ（別の席が作る。あれば使い、なければ平らなロゴ）。logo_turntable_0..11 は出だしで回して見せる
 const LOGO3D := "res://assets/title/logo3d/"
+const LOGO3D_W := 0.78 * 1480.0 / 1334.0 # 絵の幅 ÷ 字の幅（tools/blender/logo/crop_a.py で切り出した余白）
 const SEA_SHADER := preload("res://shaders/title_sea.gdshader")
 const FRAME_FADE := preload("res://shaders/title_frame_fade.gdshader")
 
@@ -607,7 +608,7 @@ func _build_ui() -> void:
 			if ResourceLoader.exists(f):
 				logo_frames.append(load(f))
 		logo_shadow = _logo_rect(LOGO3D + "logo_shadow.png")
-		logo_glow = _logo_rect(LOGO3D + "logo_main_glow.png")
+		logo_glow = _logo_rect(LOGO3D + "logo_glow.png") # にじみだけ（字入りの絵を大きく重ねると、字が二重に見える）
 		if logo_glow:
 			var add := CanvasItemMaterial.new()
 			add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
@@ -737,14 +738,15 @@ func _safe_insets() -> Vector2:
 func _layout_ui() -> void:
 	var f := frame
 	var inset := _safe_insets()
-	var lw := f.size.x * 0.78
+	# 字の幅が画面の 78%（3D のロゴ（案 A・1 行）は影とにじみの余白ぶん、絵を少し大きく）
+	var lw := f.size.x * (LOGO3D_W if logo_main != LOGO else 0.78)
 	logo.size = Vector2(lw, lw * float(logo_main.get_height()) / logo_main.get_width())
 	logo_y = maxf(f.size.y * 0.07, inset.x + 44.0)
 	logo.position = Vector2(f.position.x + (f.size.x - lw) * 0.5, logo_y)
 	logo.pivot_offset = logo.size * 0.5
 	for r in [logo_glow, logo_shadow]:
 		if r:
-			(r as Control).size = logo.size * (1.12 if r == logo_glow else 1.0)
+			(r as Control).size = logo.size
 			(r as Control).position = logo.position - ((r as Control).size - logo.size) * 0.5 + (Vector2(0, 6) if r == logo_shadow else Vector2.ZERO)
 			(r as Control).pivot_offset = (r as Control).size * 0.5
 	var bottom := minf(f.size.y * 0.95, f.size.y - inset.y - 8.0)

@@ -1,6 +1,7 @@
 """Post steps for the Paw Time 3D logo (system python3 + Pillow).
 
-  python3 tools/blender/logo/post.py glow  <logo_main.png> <out_dir>
+  python3 tools/blender/logo/post.py glow   <logo_main.png> <out_dir>
+  python3 tools/blender/logo/post.py shadow <logo_shadow.png>          (in place)
   python3 tools/blender/logo/post.py sheet <out.png> A.png B.png C.png D.png
   python3 tools/blender/logo/post.py phone <logo.png> <out.png> [shadow.png]
 """
@@ -32,12 +33,37 @@ def glow(src, out_dir):
     comp.save(os.path.join(out_dir, "logo_main_glow.png"))
 
 
+def edge_fade(a, frac=0.06):
+    """Ramp alpha to 0 at the canvas border so the drop-shadow tail never ends in a hard edge."""
+    w, h = a.size
+    m = int(min(w, h) * frac)
+    ramp = lambda i, n: min(1.0, min(i, n - 1 - i) / m)
+    col = Image.new("L", (w, 1))
+    col.putdata([int(255 * ramp(x, w)) for x in range(w)])
+    row = Image.new("L", (1, h))
+    row.putdata([int(255 * ramp(y, h)) for y in range(h)])
+    mask = ImageChops.multiply(col.resize((w, h)), row.resize((w, h)))
+    return ImageChops.multiply(a, mask)
+
+
+def shadow(src, opacity=0.5):
+    """Cap the shadow-catcher layer to a gentle opacity and soften it (in place)."""
+    im = Image.open(src).convert("RGBA")
+    a = im.getchannel("A").point(lambda v: int(v * opacity))
+    a = a.filter(ImageFilter.GaussianBlur(im.width * 0.004))
+    a = edge_fade(a)
+    out = Image.new("RGBA", im.size, (20, 18, 40, 0))
+    out.putalpha(a)
+    out.save(src)
+
+
 def sky_crop(size):
     sky = Image.open(SKY).convert("RGBA")
     w, h = size
     s = max(w / sky.width, h / sky.height)
     sky = sky.resize((int(sky.width * s) + 1, int(sky.height * s) + 1), Image.LANCZOS)
-    return sky.crop((0, int(sky.height * 0.08), w, int(sky.height * 0.08) + h))
+    top = min(int(sky.height * 0.08), sky.height - h)
+    return sky.crop((0, top, w, top + h))
 
 
 def sheet(out, paths):
@@ -77,6 +103,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "glow":
         glow(sys.argv[2], sys.argv[3])
+    elif cmd == "shadow":
+        shadow(sys.argv[2])
     elif cmd == "sheet":
         sheet(sys.argv[2], sys.argv[3:])
     elif cmd == "phone":
