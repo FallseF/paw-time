@@ -43,7 +43,7 @@ static func open(parent: Node, section := "") -> SettingsScreen:
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT) # 重ねて開いたときも、親いっぱいに
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build()
 
@@ -54,14 +54,14 @@ func _build() -> void:
 	chips.clear()
 	var bg := ColorRect.new()
 	bg.color = BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
 	# 見出し：もどる・マイページ
 	var head := PanelContainer.new()
 	head.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.94), 0, 0.08, Vector2(8, 6)))
 	head.position = Vector2(0, 0)
-	head.size = Vector2(360, 56)
+	head.size = Vector2(360, 66)
 	var hh := HBoxContainer.new()
 	hh.add_theme_constant_override("separation", 6)
 	head.add_child(hh)
@@ -73,8 +73,8 @@ func _build() -> void:
 	hh.add_child(title)
 
 	scroll = ScrollContainer.new()
-	scroll.position = Vector2(0, 56)
-	scroll.size = Vector2(360, 584)
+	scroll.position = Vector2(0, 66)
+	scroll.size = Vector2(360, 574)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
 	add_child(head)
@@ -203,6 +203,7 @@ func _name_section() -> void:
 	save.custom_minimum_size.x = 84
 	v.add_child(_row([name_edit, save]))
 	name_status = _note("")
+	name_status.visible = false # 保存したときだけ
 	v.add_child(name_status)
 
 
@@ -211,6 +212,7 @@ func save_name() -> void:
 	name_edit.text = SpecialObake.pet_name()
 	name_edit.release_focus()
 	name_status.text = tr("SETTINGS_SAVED")
+	name_status.visible = true
 
 
 func _lang_section() -> void:
@@ -256,6 +258,7 @@ func _usage_section() -> void:
 	v.add_child(id_l)
 	v.add_child(Kit.button(tr("TELEMETRY_DELETE"), Color("f3ecff"), delete_usage, PURPLE, 40, 14))
 	tm_status = _note("", 11)
+	tm_status.visible = false # 削除したときだけ
 	v.add_child(tm_status)
 
 
@@ -267,6 +270,7 @@ func set_usage(on: bool) -> void:
 func delete_usage() -> void:
 	Telemetry.request_deletion()
 	tm_status.text = tr("TELEMETRY_DELETED")
+	tm_status.visible = true
 	id_l.text = tr("TELEMETRY_ID") % Telemetry.install_id()
 
 
@@ -300,7 +304,7 @@ func ask_reset() -> void:
 		return
 	confirm = ColorRect.new()
 	(confirm as ColorRect).color = Color(0.12, 0.1, 0.2, 0.55)
-	confirm.set_anchors_preset(Control.PRESET_FULL_RECT)
+	confirm.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	confirm.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(confirm)
 	var p := PanelContainer.new()
