@@ -4,11 +4,8 @@
 
 A game for people who work. Your real shifts become boosts in a cozy cat-obake (cat-ghost) collecting game — and working longer hours never pays more: your cat gets tired and stops. Built by Team Dry Grape for the Recruit Innovation Cup 2026.
 
-- Launch page (EN / JA): https://obake-breakroom-launch.vercel.app
-- Playable prototypes (browser):
-  - A — Scoop & Collect: https://obake-breakroom-a-scoop.vercel.app
-  - Mainline (build & share your island): https://obake-breakroom-b-sleep.vercel.app
-  - C — Run the Shop: https://obake-breakroom-c-defense.vercel.app
+- **Play the current game:** https://paw-time-play.vercel.app (see the [root README](../../README.md) for judges)
+- Launch page (EN / JA): https://paw-time-launch.vercel.app
 
 ## Core loop
 1. **Day — shift:** you get nets (poi) matching your kind of work. Same amount however long you work.
