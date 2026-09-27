@@ -285,7 +285,7 @@ func _card(r: Dictionary) -> Control:
 
 
 func _show_detail(r: Dictionary) -> void:
-	Kit.play(self, "tap", 1.1)
+	Kit.play(self, "open")
 	if not GameState.seen.has(r.id):
 		GameState.goal("zukan")
 	if detail:
