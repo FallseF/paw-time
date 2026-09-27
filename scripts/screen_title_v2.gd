@@ -11,11 +11,15 @@ const BTN_PRIMARY_PRESSED := preload("res://assets/title/btn_primary_pressed.png
 const BTN_SECONDARY := preload("res://assets/title/btn_secondary.png")
 const PILL := preload("res://assets/title/pill_small.png")
 const SEA_SHADER := preload("res://shaders/title_sea.gdshader")
+const FRAME_FADE := preload("res://shaders/title_frame_fade.gdshader")
 
-const HORIZON := 0.58 # 空の絵の水平線（上からの割合）
+const HORIZON := 0.38 # 画面の水平線（上からの割合）
+const SKY_HORIZON := 0.58 # 空の絵の中の水平線（ここを HORIZON に合わせ、下の暖かい色を水平線のすぐ上に）
 const FOV := 46.0 # 縦の画角
-const CAM_H := 1.0 # 島の地面（y=0）からのカメラの高さ
+const CAM_H := 2.4 # 海面近くからのカメラの高さ（手前の島の上の芝と岸の縁が見える、見下ろし 12〜15°）
 const SEA_Y := -0.14 # 島の画面と同じ海面の高さ
+const GROUND_Y := 0.2 # 手前の島の芝の高さ（海から少し上げて、砂の岸を見せる）
+const SIDE_LAYER := 1 << 9 # 横長の画面で、縦の枠の外にも描くもの（海・海の底・ヘリ）
 const CREAM := Color("fff6e6")
 const NAVY := Color("23285a")
 
@@ -23,9 +27,12 @@ const NAVY := Color("23285a")
 static var _open := 0
 static var _prev_aspect := Window.CONTENT_SCALE_ASPECT_KEEP
 
-var box: SubViewportContainer
+var box: SubViewportContainer # 画面いっぱい：枠の外の海と空の物だけ（横長の画面のとき）
+var frame_box: SubViewportContainer # 縦の枠：ぜんぶ
+var frame_vp: SubViewport
 var world: Node3D
 var cam: Camera3D
+var cam_wide: Camera3D
 var sky_rects: Array[TextureRect] = []
 var cat: MyObake3D
 var cat_mat: ShaderMaterial
@@ -42,7 +49,7 @@ var lang_btn: Button
 var frame := Rect2(0, 0, 360, 640)
 var pitch := 0.0
 var logo_y := 0.0
-var heli_fx := 0.8
+var heli_fx := 0.86
 var heli_depth := 30.0
 var raft_y := 0.0
 var _blink_in := 2.5
@@ -90,12 +97,12 @@ func _ready() -> void:
 # ---------------------------------------------------------------- 3D
 
 func _build_world() -> void:
-	box = SubViewportContainer.new()
-	box.stretch = false
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# 透明の背景に描いた 3D は、色に透明度が掛かった状態（premultiplied）。そのまま重ねると縁が黒ずむ
 	var pm := CanvasItemMaterial.new()
 	pm.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
+	box = SubViewportContainer.new()
+	box.stretch = false
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.material = pm
 	add_child(box)
 	vp = SubViewport.new()
@@ -106,12 +113,25 @@ func _build_world() -> void:
 	world = Node3D.new()
 	vp.add_child(world)
 	Look.apply(world, "title_golden", Color(0, 0, 0, 0), true, false)
-	cam = Camera3D.new()
-	cam.keep_aspect = Camera3D.KEEP_HEIGHT
-	cam.fov = FOV
-	cam.near = 0.1
-	cam.far = 3000.0
-	world.add_child(cam)
+	cam_wide = _camera()
+	cam_wide.cull_mask = SIDE_LAYER
+	world.add_child(cam_wide)
+	# 縦の枠は、同じ世界を別のカメラで（枠の外に島や陸を出さない）
+	frame_box = SubViewportContainer.new()
+	frame_box.stretch = false
+	frame_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 横長の画面では、枠の左右のふちを少しぼかして、枠の外の海へなじませる（島がすぱっと切れて見えないように）
+	var fm := ShaderMaterial.new()
+	fm.shader = FRAME_FADE
+	frame_box.material = fm
+	add_child(frame_box)
+	frame_vp = SubViewport.new()
+	frame_vp.world_3d = vp.find_world_3d()
+	frame_vp.transparent_bg = true
+	frame_vp.msaa_3d = Viewport.MSAA_4X
+	frame_box.add_child(frame_vp)
+	cam = _camera()
+	frame_vp.add_child(cam)
 	# 浅瀬の底（半透明の海の下。島の岸の外側も同じ色）
 	var bed := MeshInstance3D.new()
 	var bp := PlaneMesh.new()
@@ -122,6 +142,7 @@ func _build_world() -> void:
 	bm.albedo_color = Color("2a6d86")
 	bed.material_override = bm
 	bed.position.y = -0.56
+	bed.layers = 1 | SIDE_LAYER
 	world.add_child(bed)
 	var sea := MeshInstance3D.new()
 	var sp := PlaneMesh.new()
@@ -131,6 +152,7 @@ func _build_world() -> void:
 	(sea.material_override as ShaderMaterial).shader = SEA_SHADER
 	sea.position.y = SEA_Y
 	sea.name = "Sea"
+	sea.layers = 1 | SIDE_LAYER
 	world.add_child(sea)
 	# 手前の自分の島（左下を切り取る）と桟橋
 	island = Node3D.new()
@@ -143,7 +165,7 @@ func _build_world() -> void:
 	world.add_child(pier)
 	raft = VehicleProps.build_vehicle("raft")
 	world.add_child(raft)
-	# 自分の猫（診断の子。まだなら生成りの子）に、カフェのエプロン
+	# 自分の猫（診断の子。まだなら生成りの子）
 	cat = _make_cat()
 	world.add_child(cat)
 	# 遠くの 2 つの島：カフェ（赤い瓦としま模様の日よけ）と、角のお店（緑の屋根）
@@ -151,10 +173,21 @@ func _build_world() -> void:
 	far_isles.append(_far_isle(Color("6fae6a"), Color("fff6e6"), "tree_palm"))
 	heli = VehicleProps.build_vehicle("helicopter")
 	world.add_child(heli)
+	for m in heli.find_children("*", "GeometryInstance3D", true, false):
+		(m as VisualInstance3D).layers |= SIDE_LAYER
 	for v in [raft, heli]:
 		for n in (v as Node3D).find_children("*", "Node3D", true, false):
 			if n.has_meta("spin"):
 				spinners.append(n)
+
+
+func _camera() -> Camera3D:
+	var c := Camera3D.new()
+	c.keep_aspect = Camera3D.KEEP_HEIGHT
+	c.fov = FOV
+	c.near = 0.1
+	c.far = 3000.0
+	return c
 
 
 ## 地形と同じ塗り（頂点色の芝・砂・ぬれた砂）
@@ -174,15 +207,6 @@ func _make_cat() -> MyObake3D:
 	if look.is_empty():
 		look = {"color": "fff3df", "accessory": "", "accent": "e0674f", "motion": "bob"}
 	var c := MyObake3D.new().setup_look(look)
-	# エプロンは体の場所。体の持ち物（名札など）とは重ねない
-	Outfit.dress(c, {"body": "-"})
-	var root := c.body.get_node("Outfit") as Node3D
-	var apron := Outfit.build(c, {"shape": "apron", "c": "d9774f", "c2": "fff1dc"})
-	apron.name = "body"
-	root.add_child(apron)
-	var acc := c.body.get_node_or_null("Accessory") as Node3D
-	if acc and Outfit.ACC_SLOT.get(look.get("accessory", ""), "") == "body":
-		acc.visible = false
 	# 耳を動かすために、この子の体だけ材質を分ける（ほかの子と共有しない）
 	var b := c.body.find_child("Body", true, false) as MeshInstance3D
 	if b and b.material_override is ShaderMaterial:
@@ -192,7 +216,7 @@ func _make_cat() -> MyObake3D:
 		b.material_override = cat_mat
 	c.bob = false
 	c.set_process(false) # 息・まばたき・耳はここで動かす（しぐさで体がゆれないように）
-	c.rotation.y = 0.6 # 右（遠くの島）を向いた 3/4
+	c.rotation.y = 0.7 # 右（遠くの島）を向いた 3/4
 	return c
 
 
@@ -210,6 +234,11 @@ func _far_isle(sign_c: Color, accent: Color, tree_id: String) -> Node3D:
 	tree.position = Vector3(1.35, 0, -0.5)
 	tree.scale = Vector3.ONE * 0.9
 	n.add_child(tree)
+	var pr := IslandProps.build("pier")
+	pr.scale = Vector3(0.7, 0.7, 0.5)
+	pr.position = Vector3(-1.0, -0.1, 1.9)
+	pr.rotation.y = -0.35
+	n.add_child(pr)
 	# 小さな灯り（窓の明かりと、店先の灯）
 	for p in [Vector3(-0.44, 0.62, 0.52), Vector3(0.95, 0.5, 0.9)]:
 		var g := MeshInstance3D.new()
@@ -247,6 +276,11 @@ func _world_w(p: Vector3, frac: float) -> float:
 	return frac * frame.size.x * 2.0 * d * tan(deg_to_rad(FOV * 0.5)) / frame.size.y
 
 
+## 世界の点が映る場所（キャンバスの座標）。枠のカメラで
+func _proj(p: Vector3) -> Vector2:
+	return cam.unproject_position(p) * frame.size.y / float(frame_vp.size.y) + frame.position
+
+
 func _on_plane_px(p: Vector2, y: float) -> Vector3:
 	return _on_plane((p.x - frame.position.x) / frame.size.x, (p.y - frame.position.y) / frame.size.y, y)
 
@@ -272,21 +306,19 @@ func _fit_cat(fx: float, top_fy: float, bottom_fy: float) -> Vector3:
 	var want_top := frame.position.y + top_fy * frame.size.y
 	var want_bottom := frame.position.y + bottom_fy * frame.size.y
 	var want_x := frame.position.x + fx * frame.size.x
-	var foot := _on_plane(fx, bottom_fy, 0.0)
+	var foot := _on_plane(fx, bottom_fy, GROUND_Y)
 	var s := _fit_height(foot, fx, top_fy, box.end.y)
-	var k := float(vp.size.y) / size.y
 	for i in 6:
 		cat.position = foot
 		cat.scale = Vector3.ONE * s
 		var pts: Array[Vector2] = []
 		for p in probes:
-			pts.append(cam.unproject_position(cat.to_global(p)) / k)
+			pts.append(_proj(cat.to_global(p)))
 		var top := pts[0].y
 		var bottom := pts[1].y
 		var mid := (pts[2].x + pts[3].x) * 0.5
 		s *= (want_bottom - want_top) / maxf(bottom - top, 1.0)
-		var fp := cam.unproject_position(foot) / k
-		foot = _on_plane_px(fp + Vector2(want_x - mid, want_bottom - bottom), 0.0)
+		foot = _on_plane_px(_proj(foot) + Vector2(want_x - mid, want_bottom - bottom), GROUND_Y)
 	cat.position = foot
 	cat.scale = Vector3.ONE * s
 	return foot
@@ -306,61 +338,71 @@ func _layout() -> void:
 		return
 	var fw := minf(vs.x, vs.y * 9.0 / 16.0)
 	frame = Rect2((vs.x - fw) * 0.5, 0, fw, vs.y)
-	# 空：高さに合わせて縦横比を保ち、真ん中に。左右は鏡でのばす（水平線はいつも 58%）
+	# 空：高さに合わせて縦横比を保ち、真ん中に。左右は鏡でのばす。
+	# 絵の水平線（58%）を画面の水平線（38%）へ上げて、下の暖かい桃色を水平線のすぐ上に置く
 	var sw := vs.y * 9.0 / 16.0
 	var sx := (vs.x - sw) * 0.5
 	for i in 5:
-		sky_rects[i].position = Vector2(sx + (i - 2) * sw, 0)
+		sky_rects[i].position = Vector2(sx + (i - 2) * sw, (HORIZON - SKY_HORIZON) * vs.y)
 		sky_rects[i].size = Vector2(sw, vs.y)
 	# 3D は画面の実際の画素で描く（キャンバスの拡大でぼやけないように）
 	var k := clampf(get_viewport().get_final_transform().x.x, 1.0, 2.0 if OS.has_feature("web") else 3.0)
-	vp.size = Vector2i(ceili(vs.x * k), ceili(vs.y * k))
-	box.size = Vector2(vp.size)
-	box.scale = Vector2.ONE / k
-	# 水平線が 58% に来るよう、カメラを少し上へ向ける
+	frame_vp.size = Vector2i(ceili(frame.size.x * k), ceili(frame.size.y * k))
+	frame_box.size = Vector2(frame_vp.size)
+	frame_box.scale = Vector2.ONE / k
+	frame_box.position = frame.position
+	# 枠の外（横長の画面）は、海とヘリだけを画面いっぱいに。縦長なら描かない
+	var wide := vs.x > frame.size.x + 1.0
+	box.visible = wide
+	vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE if wide else SubViewport.UPDATE_DISABLED
+	(frame_box.material as ShaderMaterial).set_shader_parameter("fade", 28.0 / frame.size.x if wide else 0.0)
+	if wide:
+		vp.size = Vector2i(ceili(vs.x * k), ceili(vs.y * k))
+		box.size = Vector2(vp.size)
+		box.scale = Vector2.ONE / k
+	# 水平線が 38% に来るよう、カメラを下へ向ける
 	var tv := tan(deg_to_rad(FOV * 0.5))
 	pitch = atan((HORIZON - 0.5) * 2.0 * tv)
-	cam.position = Vector3(0, CAM_H, 0)
-	cam.rotation = Vector3(pitch, 0, 0)
+	for c in [cam, cam_wide]:
+		(c as Camera3D).position = Vector3(0, CAM_H, 0)
+		(c as Camera3D).rotation = Vector3(pitch, 0, 0)
 	_place_world()
 	_layout_ui()
 
 
 func _place_world() -> void:
-	# 猫：体の真ん中 (32%, 66%)、高さは画面の 34%（足元 83% ・ 耳の先 49%）
-	var foot := _fit_cat(0.32, 0.49, 0.83)
-	var s := cat.scale.x
-	# 島：中心は画面の左の外。右の岸が猫のすぐ右（47%）を通り、手前と左は画面の外へ切れる
-	# 右の岸は、ほぼまっすぐ手前から (52%, 86%) を通って桟橋の根元 (40%, 76%) へ、奥は左の 70% へ回りこむ
-	var a := _on_plane(0.52, 0.86, 0.0)
-	var q := absf(a.x - _on_plane(0.0, 0.86, 0.0).x) / 1.03 # 横の見え方（9:16 で 1）
-	island.position = Vector3(a.x - 3.05 * q, 0.0, a.z)
-	island.scale = Vector3(3.05 * q, 6.16, 5.5) / 6.16 # 波打ちぎわは land_lobe の半径 r+0.16
-	# 桟橋：猫の右うしろの岸から、右奥へ。いかだはその手前に横づけ (55%, 80%)
-	var shore := _on_plane(0.4, 0.76, 0.0)
-	var tip := _on_plane(0.9, 0.695, SEA_Y)
+	# 猫：体ぜんぶ。真ん中が横 32%、耳の先 48%・しっぽの下 70%（画面の高さの 22%）
+	_fit_cat(0.32, 0.48, 0.70)
+	# 手前の島：芝の縁は左下から上がり、猫の右（47%, 72%）へ。その下は海（ボタンは海の上）
+	var a := _on_plane(0.47, 0.72, GROUND_Y)
+	var q := absf(a.x - _on_plane(0.0, 0.72, GROUND_Y).x) / 1.876 # 横の見え方（9:16 で 1）
+	island.position = Vector3(a.x - 2.19 * q, GROUND_Y, a.z - 1.12) # 手前の岸は左の 80% へ下りる
+	island.scale = Vector3(2.35 * q / 6.16, 1.6, 2.8 / 6.16) # 波打ちぎわは land_lobe の半径 r+0.16。縦は岸の斜面を立てる
+	# 短い桟橋：猫の右の岸から右奥へ。いかだはその手前に横づけ (62%, 70%)
+	var shore := _on_plane(0.44, 0.685, GROUND_Y)
+	var tip := _on_plane(0.74, 0.655, SEA_Y)
 	var dir := Vector3(tip.x - shore.x, 0, tip.z - shore.z)
-	var ws := _world_w(shore, 0.1) / 0.8
+	var ws := _world_w(shore, 0.08) / 0.8
 	pier.scale = Vector3(ws, ws, dir.length() / 2.2)
 	pier.rotation.y = atan2(dir.x, dir.z)
 	pier.position = (shore + tip) * 0.5
-	pier.position.y = 0.03 - 0.14 * ws
-	var rp := _on_plane(0.55, 0.80, SEA_Y)
+	pier.position.y = GROUND_Y + 0.02 - 0.14 * ws
+	var rp := _on_plane(0.62, 0.70, SEA_Y)
 	raft_y = SEA_Y + 0.01
 	raft.position = Vector3(rp.x, raft_y, rp.z)
-	raft.scale = Vector3.ONE * _world_w(rp, 0.24) / 1.3
+	raft.scale = Vector3.ONE * _world_w(rp, 0.2) / 1.3
 	raft.rotation.y = pier.rotation.y - PI * 0.5
-	# 遠くの島：水平線のすぐ手前（68〜88%）。屋根の上が 50% くらい
-	var spots := [[0.735, 0.525], [0.855, 0.535]]
+	# 遠くの島：カフェ（左）と角のお店（右）。水平線に乗り、横 55〜95%、屋根の上が 30% くらい
+	var spots := [[0.63, 0.447, 0.325], [0.845, 0.442, 0.34]]
 	for i in far_isles.size():
-		var fp := _on_plane(spots[i][0], 0.587, SEA_Y)
+		var fp := _on_plane(spots[i][0], spots[i][1], SEA_Y)
 		var isle := far_isles[i]
 		isle.position = Vector3(fp.x, SEA_Y + 0.1, fp.z)
-		isle.scale = Vector3.ONE * _fit_height(isle.position, spots[i][0], spots[i][1], 2.1)
-		isle.rotation.y = atan2(-fp.x, -fp.z) + (0.25 if i == 0 else -0.3)
+		isle.scale = Vector3.ONE * _fit_height(isle.position, spots[i][0], spots[i][2], 2.1)
+		isle.rotation.y = atan2(-fp.x, -fp.z) + (0.3 if i == 0 else -0.25)
 	var sm := (world.get_node("Sea") as MeshInstance3D).material_override as ShaderMaterial
-	sm.set_shader_parameter("sun_dir", _ray(0.8, 0.55))
-	# ヘリ：右上 (80%, 28%) から左へゆっくり
+	sm.set_shader_parameter("sun_dir", _ray(0.76, 0.35))
+	# ヘリ：右上 (86%, 22%) から左へゆっくり
 	heli_depth = 34.0
 	var hw := 0.11 * frame.size.x * 2.0 * heli_depth * tan(deg_to_rad(FOV * 0.5)) / frame.size.y
 	heli.scale = Vector3.ONE * hw / 2.6
@@ -368,7 +410,8 @@ func _place_world() -> void:
 
 
 func _place_heli(t: float) -> void:
-	heli.position = Vector3(0, CAM_H, 0) + _ray(heli_fx, 0.28 + sin(t * 0.9) * 0.004) * heli_depth
+	# 高さ 22.5%：ロゴの下の縁（18.6%）にかからない
+	heli.position = Vector3(0, CAM_H, 0) + _ray(heli_fx, 0.225 + sin(t * 0.9) * 0.004) * heli_depth
 	heli.rotation = Vector3(0, PI - 0.35, 0.05) # 左（-X）へ進む。少しこちらへ振って形を読ませる
 
 
@@ -496,11 +539,12 @@ func _process(delta: float) -> void:
 	_t += delta
 	# カメラ：12 秒で ±1.5° ゆっくり左右に
 	cam.rotation = Vector3(pitch, deg_to_rad(1.5) * sin(_t * TAU / 12.0), 0)
+	cam_wide.rotation = cam.rotation
 	logo.position.y = logo_y + sin(_t * TAU / 5.0) * 4.0
 	raft.position.y = raft_y + sin(_t * 1.1) * 0.025 * cat.scale.x
 	raft.rotation.z = sin(_t * 0.8 + 0.6) * 0.03
 	raft.rotation.x = sin(_t * 0.95) * 0.025
-	# ヘリ：80% から左へ（20 秒で画面の外）、右から戻ってくる
+	# ヘリ：86% から左へ（20 秒ほどで画面の外）、右から戻ってくる
 	heli_fx -= minf(delta, 0.1) * 0.044 # 読み込みで止まった間に飛んでいかないよう
 	if heli_fx < -0.14:
 		heli_fx = 1.14
