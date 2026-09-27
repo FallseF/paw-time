@@ -5,6 +5,7 @@ extends SceneTree
 ## 2. どのお店でも、評価をいくつ足しても、目印は消えない・段は下がらない・島の広さも縮まない（星 1 の評価でも）
 ## 3. よい評価（星 4 以上）のあとだけ、そのお店からおさそい。受けたら Shifts に入る。断っても何も減らない
 ## 4. 前の晩（あしたのシフト）と当日の朝（きょうのこれからのシフト）の拾い出し
+## 2b. 大変だったこと（ネガティブの選択肢）は、お店の島の目印・段・広さを一切変えない。お店の匿名の集計は 5 人以上から
 ## 5. 新しい文字（英語・日本語）と、画面で足した記号が Zen Maru Gothic にある
 
 var fails := 0
@@ -83,6 +84,42 @@ func _run() -> void:
 	_check(vd.get("shop", "") == "cafe_komorebi" and vd.name != "" and vd.has("level"), "visit_data")
 	Reviews.reset()
 
+	# 2b. 大変だったこと：何件足しても、目印・段・票・島の広さは同じ（島には出ない・減らさない）
+	for e in JobListings.LIST.slice(0, 16):
+		var id: String = e[0]
+		var before := ShopCulture.landmarks(id)
+		var stage0 := ShopCulture.stage_for(before)
+		for k in 40:
+			var bad: Array = [Reviews.ISSUES[k % Reviews.ISSUES.size()], Reviews.ISSUES[(k * 3 + 1) % Reviews.ISSUES.size()]]
+			Reviews.add({"id": "%s_n%d" % [id, k], "listing": id}, 1, bad, bad)
+			Reviews.send_issues({"listing": id}, bad, true)
+		var now := ShopCulture.landmarks(id)
+		for i in now.size():
+			_check(int(now[i].level) == int(before[i].level) and int(now[i].votes) == int(before[i].votes), "%s %s changed by negatives" % [id, now[i].id])
+		_check(ShopCulture.stage_for(now) == stage0, "%s island size changed by negatives" % id)
+		for tg in Reviews.totals(id).tags:
+			_check(tg in Reviews.TAGS, "%s negative tag %s reached the island totals" % [id, tg])
+	_check(Reviews.ISSUE_OUTBOX.values().all(func(t): return t in ChatOutbox.TAGS and ChatOutbox.ISSUE_TOPIC.has(t)), "every sent issue maps to an allowed anon_issue_sent tag")
+	_check(not Reviews.ISSUE_OUTBOX.has("left_late"), "left_late stays on the device")
+	for t in ChatOutbox.ISSUE_TOPIC.values():
+		_check(t in ChatSignals.ISSUES, "anon topic %s is an API issue topic" % t)
+	# 匿名の集計：5 人未満は見えない。同じ人が何度言っても 1 人
+	var four: Array = []
+	for w in 4:
+		four.append({"worker": "w%d" % w, "shop_id": "cafe_mori", "tag": "no_break"})
+	for k in 6:
+		four.append({"worker": "w0", "shop_id": "cafe_mori", "tag": "no_break"})
+	_check(ChatOutbox.aggregate(four).is_empty(), "4 workers (one saying it 7 times) stay hidden")
+	four.append({"worker": "w4", "shop_id": "cafe_mori", "tag": "no_break"})
+	var ag := ChatOutbox.aggregate(four)
+	_check(ag.get("cafe_mori", {}).get("no_break", 0) == 5 and ag.size() == 1, "5 distinct workers are shown %s" % [ag])
+	four.append({"worker": "w9", "shop_id": "cafe_mori", "tag": "my own words"})
+	_check(ChatOutbox.aggregate(four).get("cafe_mori", {}).size() == 1, "unknown tags never counted")
+	for id in ["cafe_mori", "izk_tanuki", "wh_kita"]:
+		for tg in ChatOutbox.shop_report(id):
+			_check(int(ChatOutbox.shop_report(id)[tg]) >= ChatOutbox.SHOP_MIN, "%s report %s under the threshold" % [id, tg])
+	Reviews.reset()
+
 	# 3. おさそい → Shifts.add
 	Shifts.reset()
 	Invites.reset()
@@ -135,10 +172,12 @@ func _run() -> void:
 	for ch in "›×·–":
 		for fo in fonts:
 			_check(fo.has_char(ch.unicode_at(0)), "glyph %s missing" % ch)
-	var keys: Array = ["SHOP_HOME", "SHOP_BASED_ON", "SHOP_WORKERS_SAID", "SHOP_SPROUT_BODY", "JOB_VISIT_ISLAND", "INVITE_CHIP", "INVITE_NOTE", "REMIND_EVE_TITLE", "REMIND_AM_TITLE", "WORK_MENU_SHOPS"]
+	var keys: Array = ["REVIEW_GOOD", "REVIEW_BAD", "REVIEW_BAD_NOTE", "REVIEW_SUPPORT", "REVIEW_SUPPORT_SENT", "SHOP_HOME", "SHOP_BASED_ON", "SHOP_WORKERS_SAID", "SHOP_SPROUT_BODY", "JOB_VISIT_ISLAND", "INVITE_CHIP", "INVITE_NOTE", "REMIND_EVE_TITLE", "REMIND_AM_TITLE", "WORK_MENU_SHOPS"]
 	for lm in ShopCulture.LANDMARKS:
 		keys.append("SHOP_LM_" + String(lm[1]).to_upper())
 		keys.append("SHOP_LM_" + String(lm[1]).to_upper() + "_BODY")
+	for i in Reviews.ISSUES:
+		keys.append("REVIEW_ISSUE_" + String(i).to_upper())
 	for k in ShopCulture.KIND_STYLE:
 		keys.append("SHOP_VALUES_" + String(k).to_upper())
 	for loc in ["en", "ja"]:

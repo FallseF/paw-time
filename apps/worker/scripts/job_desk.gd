@@ -1108,8 +1108,11 @@ func _close_viewer() -> void:
 
 var rv_stars := 0
 var rv_tags := {}
+var rv_issues := {} # 大変だったこと（Reviews.ISSUES）。島には出ない。お店には匿名の集計（5 人以上）だけ
+var rv_support := false # 失礼な扱い：Paw Time の窓口にも知らせる
 var rv_star_btns: Array[Button] = []
 var rv_send: Button
+var rv_support_btn: Button
 
 
 var rv_shift := {}
@@ -1122,10 +1125,21 @@ func _open_review(s: Dictionary) -> void:
 	_build_viewer()
 	rv_stars = 0
 	rv_tags = {}
+	rv_issues = {}
+	rv_support = false
 	rv_star_btns.clear()
+	# よかったこと・大変だったことの 2 群が 360x640 に収まるよう、相棒を小さく・カードを上に
+	stage.scale = Vector2(0.5, 0.5)
+	stage.position = Vector2(8, 4)
+	var bub := bubble_l.get_parent() as Control
+	bub.position = Vector2(84, 24)
+	bub.size = Vector2(268, 0)
+	bubble_l.custom_minimum_size = Vector2(244, 0)
+	card.position.y = 96
+	card_box.add_theme_constant_override("separation", 4)
 	_say(tr("REVIEW_ASK") % String(s.get("store", s.get("place", ""))))
-	card_box.add_child(_text(tr("REVIEW_TITLE"), 18, INK, true))
-	card_box.add_child(_text(tr("REVIEW_WHY"), 12, SUB))
+	card_box.add_child(_text(tr("REVIEW_TITLE"), 17, INK, true))
+	card_box.add_child(I18n.wrap(_text(tr("REVIEW_WHY"), 11, SUB)))
 	var sr := HBoxContainer.new()
 	sr.alignment = BoxContainer.ALIGNMENT_CENTER
 	sr.add_theme_constant_override("separation", 4)
@@ -1133,9 +1147,9 @@ func _open_review(s: Dictionary) -> void:
 		var b := Button.new()
 		b.text = "★"
 		b.flat = true
-		b.custom_minimum_size = Vector2(48, 46)
+		b.custom_minimum_size = Vector2(46, 40)
 		b.add_theme_font_override("font", Kit.black())
-		b.add_theme_font_size_override("font_size", 34)
+		b.add_theme_font_size_override("font_size", 30)
 		b.pressed.connect(func():
 			Kit.play(self, "tap", 1.0 + i * 0.08)
 			rv_stars = i + 1
@@ -1143,22 +1157,21 @@ func _open_review(s: Dictionary) -> void:
 		sr.add_child(b)
 		rv_star_btns.append(b)
 	card_box.add_child(sr)
-	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 6)
-	flow.add_theme_constant_override("v_separation", 6)
-	for tg in Reviews.TAGS:
-		var c := Button.new()
-		c.text = tr("REVIEW_TAG_" + tg.to_upper())
-		c.custom_minimum_size = Vector2(0, 32)
-		c.add_theme_font_override("font", Kit.black())
-		c.add_theme_font_size_override("font_size", 12)
-		c.set_meta("tag", tg)
-		c.pressed.connect(func():
-			Kit.play(self, "tap", 1.1)
-			rv_tags[tg] = not rv_tags.get(tg, false)
-			_review_refresh())
-		flow.add_child(c)
-	card_box.add_child(flow)
+	card_box.add_child(_text(tr("REVIEW_GOOD"), 12, INK, true))
+	card_box.add_child(_review_chips(Reviews.TAGS, "tag"))
+	card_box.add_child(_text(tr("REVIEW_BAD"), 12, INK, true))
+	card_box.add_child(_review_chips(Reviews.ISSUES, "issue"))
+	rv_support_btn = Button.new()
+	rv_support_btn.text = tr("REVIEW_SUPPORT")
+	rv_support_btn.custom_minimum_size = Vector2(0, 28)
+	rv_support_btn.add_theme_font_override("font", Kit.black())
+	rv_support_btn.add_theme_font_size_override("font_size", 11)
+	rv_support_btn.pressed.connect(func():
+		Kit.play(self, "tap", 1.1)
+		rv_support = not rv_support
+		_review_refresh())
+	card_box.add_child(rv_support_btn)
+	card_box.add_child(I18n.wrap(_text(tr("REVIEW_BAD_NOTE"), 10, SUB)))
 	rv_send = Kit.button(tr("REVIEW_SEND") % Reviews.BONUS_POI, ORANGE, func(): _send_review(s))
 	card_box.add_child(rv_send)
 	card_box.add_child(_link(tr("REVIEW_SKIP"), func():
@@ -1169,6 +1182,28 @@ func _open_review(s: Dictionary) -> void:
 	_pop_card()
 
 
+## 評価のチップの群（kind: "tag" よかったこと / "issue" 大変だったこと）
+func _review_chips(ids: Array, kind: String) -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 5)
+	flow.add_theme_constant_override("v_separation", 5)
+	flow.set_meta("kind", kind)
+	for id in ids:
+		var c := Button.new()
+		c.text = tr(("REVIEW_TAG_" if kind == "tag" else "REVIEW_ISSUE_") + String(id).to_upper())
+		c.custom_minimum_size = Vector2(0, 28)
+		c.add_theme_font_override("font", Kit.black())
+		c.add_theme_font_size_override("font_size", 11)
+		c.set_meta("tag", id)
+		c.pressed.connect(func():
+			Kit.play(self, "tap", 1.1)
+			var d: Dictionary = rv_tags if kind == "tag" else rv_issues
+			d[id] = not d.get(id, false)
+			_review_refresh())
+		flow.add_child(c)
+	return flow
+
+
 func _review_refresh() -> void:
 	for i in rv_star_btns.size():
 		var on := i < rv_stars
@@ -1176,12 +1211,28 @@ func _review_refresh() -> void:
 			rv_star_btns[i].add_theme_color_override(k, Color("ffb42e") if on else Color("e2d9e6"))
 	for c in card_box.get_children():
 		if c is HFlowContainer:
+			var good: bool = c.get_meta("kind", "tag") == "tag"
+			# よかったこと＝紫、大変だったこと＝落ち着いた灰青（赤で警告しない）
+			var sel: Dictionary = rv_tags if good else rv_issues
+			var on_c := Color("8b7bff") if good else Color("7d8aa6")
+			var off_c := Color("f3ecff") if good else Color("eef0f4")
+			var ink_c := Color("6a5bd6") if good else Color("5b6478")
 			for b: Button in c.get_children():
-				var on: bool = rv_tags.get(b.get_meta("tag"), false)
+				var on: bool = sel.get(b.get_meta("tag"), false)
 				for k in ["normal", "hover", "pressed", "focus"]:
-					b.add_theme_stylebox_override(k, Kit.pill(Color("8b7bff") if on else Color("f3ecff"), 16, 0.0, Vector2(10, 3)))
+					b.add_theme_stylebox_override(k, Kit.pill(on_c if on else off_c, 14, 0.0, Vector2(9, 2)))
 				for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-					b.add_theme_color_override(k, Color.WHITE if on else Color("6a5bd6"))
+					b.add_theme_color_override(k, Color.WHITE if on else ink_c)
+	# 失礼な扱いを選んだときだけ、窓口に知らせる選択肢
+	if rv_support_btn and is_instance_valid(rv_support_btn):
+		rv_support_btn.visible = rv_issues.get("rude", false)
+		if not rv_support_btn.visible:
+			rv_support = false
+		for k in ["normal", "hover", "pressed", "focus"]:
+			rv_support_btn.add_theme_stylebox_override(k, Kit.pill(Color("5b6478") if rv_support else Color("fffaf2"), 14, 0.0, Vector2(9, 2)))
+		for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			rv_support_btn.add_theme_color_override(k, Color.WHITE if rv_support else Color("5b6478"))
+		rv_support_btn.text = ("✓ " if rv_support else "") + tr("REVIEW_SUPPORT")
 	rv_send.disabled = rv_stars == 0
 
 
@@ -1193,8 +1244,15 @@ func _send_review(s: Dictionary) -> void:
 	for tg in rv_tags:
 		if rv_tags[tg]:
 			tags.append(tg)
-	Reviews.add(s, rv_stars, tags)
+	var issues: Array = []
+	for i in Reviews.ISSUES:
+		if rv_issues.get(i, false):
+			issues.append(i)
+	Reviews.add(s, rv_stars, tags, issues)
+	# review_submitted の tags はよいタグだけ（API の決まり）。大変だったことは anon_issue_sent（ChatOutbox.tell_shop）で匿名の箱へ
 	Telemetry.track("review_submitted", JobListings.telemetry_shop(s.get("listing"), {"tag_count": tags.size(), "tags": tags, "stars": rv_stars}))
+	Reviews.send_issues(s, issues, rv_support)
+	var told_support := rv_support and "rude" in issues
 	Invites.after_review(s, rv_stars) # よい評価なら、そのお店から「また来てほしいな」のおさそい
 	# ごほうびはポイ（すくいの網）。働いた時間とは関係なく、1 回 1 本
 	GameState.nets["plain"] = GameState.nets.get("plain", 0) + Reviews.BONUS_POI
@@ -1205,6 +1263,10 @@ func _send_review(s: Dictionary) -> void:
 	_clear_card()
 	card_box.add_child(_text(tr("REVIEW_DONE"), 18, GREEN, true, HORIZONTAL_ALIGNMENT_CENTER))
 	card_box.add_child(I18n.wrap(_text(tr("REVIEW_DONE_BODY"), 13, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)))
+	if not issues.is_empty():
+		card_box.add_child(I18n.wrap(_text(tr("REVIEW_BAD_NOTE"), 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)))
+	if told_support:
+		card_box.add_child(I18n.wrap(_text(tr("REVIEW_SUPPORT_SENT"), 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)))
 	card_box.add_child(Kit.button(tr("TOUR_NEXT"), ORANGE, func():
 		_close_viewer()
 		_daily()))
@@ -1303,4 +1365,13 @@ func demo_send() -> void:
 func demo_stars() -> void:
 	rv_stars = 4
 	rv_tags = {"breaks": true, "friendly": true, "again": true}
+	_review_refresh()
+
+
+## 大変だったことも選んだ形（失礼な扱い＋窓口）
+func demo_issues() -> void:
+	rv_stars = 3
+	rv_tags = {"friendly": true}
+	rv_issues = {"no_break": true, "rude": true}
+	rv_support = true
 	_review_refresh()

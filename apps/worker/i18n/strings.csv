@@ -773,6 +773,17 @@ REVIEW_SKIP,Skip,とばす
 REVIEW_THANKS,Thank you! Here's %d poi.,ありがとう！ ポイ %d 本どうぞ。
 REVIEW_DONE,Review sent!,送ったよ！
 REVIEW_DONE_BODY,Your voice now shows on this workplace's job cards.,この職場の求人カードに、きみの声が入ったよ。
+REVIEW_GOOD,What went well?,よかったこと
+REVIEW_BAD,Anything hard? (optional),大変だったこと（あれば）
+REVIEW_BAD_NOTE,Shops only see this anonymously when 5+ people say the same.,お店に届くのは、5人以上が同じことを言ったときだけ（名前は出ません）。
+REVIEW_ISSUE_NO_BREAK,Couldn't take a break,休憩がとれなかった
+REVIEW_ISSUE_LEFT_LATE,Left later than planned,予定より遅く帰った
+REVIEW_ISSUE_UNCLEAR,Instructions were unclear,説明がわかりにくかった
+REVIEW_ISSUE_TOO_BUSY,Too busy / understaffed,忙しすぎ・人が足りない
+REVIEW_ISSUE_RUDE,Treated rudely,失礼な扱いを受けた
+REVIEW_ISSUE_LATE_PAY,Pay was late,給料が遅れた
+REVIEW_SUPPORT,Report to Paw Time support (anonymous),Paw Time の窓口にも知らせる（匿名）
+REVIEW_SUPPORT_SENT,"Paw Time support was told, without your name.",名前を伏せて、Paw Time の窓口にも知らせたよ。
 QUIZ_Q1,Day off. You're…,休みの日は？
 QUIZ_Q1_A,Out and about,外へおでかけ
 QUIZ_Q1_B,Cozy at home,家でまったり
