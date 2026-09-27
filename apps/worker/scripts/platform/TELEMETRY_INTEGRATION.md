@@ -79,9 +79,8 @@ and `false` when it ends. The dashboard's "Live now" panel can then filter to de
 
 ## Consent and settings (add to `i18n/strings.csv`)
 
-Show the notice once on first launch (e.g. in onboarding) and put the toggle and delete button in
-the job-preferences screen (`scripts/screen_job_prefs.gd`, next to the suggestion on/off chips),
-since there is no dedicated settings screen yet.
+Show the notice once on first launch (e.g. in onboarding). The toggle, the usage ID and the delete button
+live in My page (`scripts/screen_settings.gd`, `SettingsScreen.open(parent)`), together with the privacy text.
 
 ```csv
 keys,en,ja

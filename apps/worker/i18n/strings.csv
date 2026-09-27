@@ -637,33 +637,24 @@ SPECIAL_BLOSSOM_PET,Sakura,さくら
 ONB_SPECIAL_KICKER,A SPECIAL obake cat appeared!,とくべつなおばけ猫が あらわれた！
 ONB_SPECIAL_RIBBON,★ SPECIAL · %s ★,★ とくべつ・%s ★
 ONB_SPECIAL_PET,"Say hi to %s, your partner!",あいぼうの %s だよ！
-ONB_SHIFT_PLACE,Practice shift · Café Komorebi,体験バイト・カフェ こもれび
-ONB_SHIFT_MOCK,Just pretend! 4 hours in 30 seconds,練習だよ！ 4時間を30秒で
-ONB_SHIFT_HELLO,I'm %s! Let's try a shift together!,%s だよ！ いっしょに働いてみよう！
-ONB_SHIFT_HINT_START,Tap to open the café,押して、お店をあけよう
-ONB_SHIFT_START,Open the café,お店をあける
-ONB_SHIFT_GO,Here they come!,お客さんが来るよ！
-ONB_SHIFT_HINT_WAIT,Wait for a customer…,お客さんを待とう…
-ONB_SHIFT_HINT_SERVE,A customer! Tap Serve,お客さんだ！ 「出す」を押そう
-ONB_SHIFT_SERVE,Serve,出す
-ONB_SHIFT_NOT_YET,Wait for a customer first!,まずはお客さんを待とう！
-ONB_SHIFT_SERVED,Served: %d,出した数：%d
-ONB_ORDER_1,"Latte, please!",ラテください！
-ONB_ORDER_2,One melon soda!,メロンソーダひとつ！
-ONB_ORDER_3,"Pancakes, please!",パンケーキください！
-ONB_ORDER_4,Hot cocoa!,ココアください！
-ONB_CHEER_1,Nice one!,いいね！
-ONB_CHEER_2,You're a natural!,じょうず！
-ONB_CHEER_3,They loved it!,よろこんでたよ！
-ONB_SHIFT_DONE_SAY,We did it! Great shift!,おつかれさま！ いいシフトだった！
-ONB_SHIFT_DONE,Shift done!,シフトおわり！
-ONB_SHIFT_RESULT,Customers served: %d,お客さん %d 人に出したよ
+ONB_SHIFT_PLACE,Practice shift,練習のシフト
+ONB_SHIFT_MOCK,Practice: 4 hours in 8 seconds,練習：4時間を8秒で早送り
+ONB_NAME_SAY,What will you call me?,ぼくの名前、どうする？
+ONB_NAME_TITLE,Name your partner,相棒の名前
+ONB_NAME_HINT,Up to %d letters. You can change it later in My page.,%d文字まで。あとでマイページから変えられるよ。
+ONB_NAME_OK,Use this name,この名前にする
+ONB_NAME_SKIP,Decide later,あとで決める
+ONB_NAME_THANKS,%s! I love it!,%s！ うれしい！
+ONB_GO_SAY,"While you're at your shift, I'll work too!",きみがシフトの間、ぼくも働くね！
+ONB_GO_TITLE,Go to your shift,シフトに行こう
+ONB_GO_BODY,"When you go to work, %s works at a tiny shop too and earns Paw Coins. Try a sped-up one!",きみが働きに行くと、%s も小さなお店で働いて肉球コインをかせぐよ。早送りでやってみよう！
+ONB_GO_BTN,Go to my shift,シフトに行く
+ONB_TOGETHER_SAY,Good work! Look how much we earned!,おつかれさま！ こんなにかせいだよ！
+ONB_TOGETHER_TITLE,We did it together!,いっしょにがんばったね！
 ONB_SHIFT_EARNED,+2 poi,ポイ +2
 ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
 ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
 ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Hold on the water, slide under the orb, and let go.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 水を押したまま玉の下へ、そして離す。
-ONB_NIGHT_TITLE,Night by the river,川べりの夜
-ONB_NIGHT_BODY,Orbs hatch in the morning. %s will keep watch.,玉は、朝になったらかえる。%s が見てるね。
 ONB_NIGHT_SLEEP,Until morning,朝まで待つ
 TOUR_1_TITLE,This is your island!,ここが、きみの島！
 TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。
@@ -754,7 +745,7 @@ END_SAY_NONE,Rest is good too!,休むのも、だいじ！
 END_BACK,Back to the island,島にもどる
 END_EDIT,Change work conditions,働く条件を変える
 FOUND_TITLE,%s found %d jobs!,%s が %d 件みつけた！
-FOUND_BODY,"They match your area, days, time and wage. Take a look?",場所・曜日・時間・時給に合う仕事だよ。見てみる？
+FOUND_BODY,"They match your area, schedule and wage. Take a look?",場所・日程・時給に合う仕事だよ。見てみる？
 FOUND_SEE,See jobs,見てみる
 FOUND_NONE_TITLE,No matches yet,まだ見つからない
 FOUND_NONE_BODY,Try a lower minimum wage or more days.,最低時給を下げるか、曜日を増やしてみて。
@@ -986,7 +977,7 @@ SHIFT_FORM_DEMO_PLACE,Station-front café,駅前のカフェ
 WORK_PILL,Work,しごと
 WORK_MENU_TITLE,Your shifts,あなたのシフト
 WORK_MENU_BODY,"Coming up: %d. After each shift, a 10-second review gives you 1 poi.",これからのシフト：%d 件。働いたあとの10秒のひとこと評価で、ポイが1本。
-WORK_MENU_PREFS,Work conditions & job suggestions,働く条件・求人の知らせ
+WORK_MENU_PREFS,Work conditions,働く条件
 WORK_MENU_CLOSE,Close,とじる
 SHIFT_ADDED_TITLE,Shift added!,シフトを入れた！
 SHIFT_ADDED_BODY,"""%s"" is in. %s will ask how it went afterward.",「%s」を入れました。終わったら、%sが様子を聞きにきます。
@@ -1652,9 +1643,10 @@ CHAT_AUTO_CAT,Auto reply from the shop's cat,お店の猫の自動の返事
 CHAT_MODE_SHARED,"Your cat remembers, to find jobs that fit you",あなたに合う仕事さがしのために、相棒が覚えておくよ
 CHAT_MODE_PRIVATE,Just between us: your cat keeps nothing,ふたりだけのひみつ：相棒は何も覚えない
 CHAT_CONSENT_TITLE,Before we talk,話すまえに
-CHAT_CONSENT_BODY,"Your cat remembers what you share to find jobs that fit you. Shops never see your words — only anonymous totals when 5+ workers say the same, or things you choose to tell them.",相棒は、あなたに合う仕事をさがすために、話してくれたことを覚えておきます。お店にあなたの言葉が見えることはありません。見えるのは、同じ声が5人以上そろったときの名前のない合計か、あなたが伝えると決めたことだけです。
+CHAT_CONSENT_BODY,Your cat remembers what you share to find better jobs. Your words never go to shops.,話したことは、合う仕事さがしのために相棒が覚えておくよ。あなたの言葉はお店に届きません。
 CHAT_CONSENT_OK,OK,OK
 CHAT_CONSENT_PRIVATE,Just between us,ふたりだけのひみつにする
+CHAT_CONSENT_DETAILS,Details,くわしく
 CHAT_MENU_PRIVATE_OFF,Just between us: Off,ふたりだけのひみつ：オフ
 CHAT_MENU_PRIVATE_ON,Just between us: On,ふたりだけのひみつ：オン
 シフトの日は、猫もいっしょに働いた,Worked a shift? Your cat worked too.,シフトの日は、猫もいっしょに働いた
@@ -1749,7 +1741,7 @@ DEMO3_FINAL_TITLE,That's a day with Paw Time,これが Paw Time の一日
 DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.","仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。"
 DEMO3_RECRUIT,See the Recruit view,Recruit の見え方を見る
 DEMO3_KEEP,Keep playing,このまま遊ぶ
-TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in Work conditions.","Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。「働く条件」でいつでもオフにできます。"
+TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in My page.",Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。マイページでいつでもオフにできます。
 TELEMETRY_NOTICE_OK,OK,OK
 TELEMETRY_NOTICE_MORE,Privacy notice,プライバシーについて
 TELEMETRY_TOGGLE,Share anonymous usage,匿名の利用データを送る
@@ -1757,5 +1749,22 @@ TELEMETRY_TOGGLE_HINT,Helps us improve Paw Time. No names or location.,Paw Time 
 TELEMETRY_ID,Your usage ID: %s,利用データのID: %s
 TELEMETRY_DELETE,Delete my usage data,利用データを削除
 TELEMETRY_DELETED,Deleted. A new ID was created.,削除しました。新しいIDを作りました。
+SETTINGS_TITLE,My page,マイページ
+SETTINGS_NAME,Your partner's name,相棒の名前
+SETTINGS_NAME_SAVE,Save,保存
+SETTINGS_SAVED,Saved.,保存しました。
+SETTINGS_LANG,Language,言語
+SETTINGS_CHAT,Chat with your cat,相棒とのチャット
+SETTINGS_CHAT_REMEMBER,Remember,覚えてOK
+SETTINGS_CHAT_HINT,Remember: your cat uses what you share to find better jobs. Just between us: it remembers nothing and sends nothing.,覚えてOK：話したことを、合う仕事さがしに使います。ふたりだけのひみつ：何も覚えず、どこにも送りません。
+SETTINGS_PRIVACY,Privacy,プライバシー
+SETTINGS_PRIVACY_CHAT,Chat,チャット
+SETTINGS_PRIVACY_USAGE,Usage data,利用データ
+PRIVACY_CHAT,"Your cat remembers what you share to find jobs that fit you. Shops never see your words — only anonymous totals when 5+ workers say the same, or things you choose to tell them.",相棒は、あなたに合う仕事をさがすために、話してくれたことを覚えておきます。お店にあなたの言葉が見えることはありません。見えるのは、同じ声が5人以上そろったときの名前のない合計か、あなたが伝えると決めたことだけです。
+SETTINGS_RESET,Start over,はじめからやり直す
+SETTINGS_RESET_Q,Start over?,はじめからにする？
+SETTINGS_RESET_BODY,"Erases your partner, island, obake, shifts and chats on this device. Your language and usage-data choice stay.",この端末の相棒・島・おばけ・シフト・チャットを消します。言語と利用データの設定は残ります。
+SETTINGS_RESET_YES,Erase and start over,消してやり直す
+SETTINGS_CANCEL,Cancel,やめる
 DEMO3_CONFIRM_TITLE,Start the 3-minute demo?,3分デモをはじめる？
 DEMO3_CONFIRM_BODY,Your garden and Book will be replaced by the demo's.,いまの庭と図鑑は、デモのものに置きかわります
