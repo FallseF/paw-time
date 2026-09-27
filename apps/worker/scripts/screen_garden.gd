@@ -1015,6 +1015,7 @@ func _build_next_stake(L: int) -> void:
 	l.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	l.no_depth_test = false
 	l.position = Vector3(0, 0.85, 0.03)
+	Kit.fit_label3d(l, 0.9, 0.54) # 板は 1.0 x 0.62
 	g.add_child(l)
 
 
@@ -1043,8 +1044,9 @@ func _build_house() -> void:
 	for b in bars:
 		(b.material_override as StandardMaterial3D).next_pass = null
 	# 休憩室の看板
-	var sign := Kit.label3d("休憩室", 40, Color("fff6e8"))
+	var sign := Kit.label3d(tr("休憩室"), 40, Color("fff6e8"))
 	sign.position = Vector3(1.6, 1.15, 0.0)
+	Kit.fit_label3d(sign, 1.5)
 	sign.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	sign.no_depth_test = false
 	h.add_child(sign)
@@ -1986,7 +1988,15 @@ func hub() -> ChatHub:
 ## すくうのタブ：夜は川べり（満月の夜は月見）へ。昼は「夕方 5 時から」、すくい終えた夜は「おしまい」と知らせる
 func go_scoop() -> void:
 	if GameState.phase != "evening":
-		_toast("川べりは、夕方 5 時から", "光る玉は、朝にかえる")
+		if not GameState.ANYTIME:
+			_toast("川べりは、夕方 5 時から", "光る玉は、朝にかえる")
+			return
+		GameState.phase = "evening"
+		GameState.save()
+	if GameState.scooped_tonight and GameState.ANYTIME:
+		# すくい終えた夜：朝を待たずに夜を明けて、次の夜へ（玉があればかえる）
+		GameState.end_night()
+		main.go("hatch" if not GameState.hatched.is_empty() else "garden")
 		return
 	if GameState.scooped_tonight:
 		_toast("今夜のすくいは、おしまい", "玉は、朝になったらかえる")
@@ -3380,7 +3390,7 @@ func _dock_list(list: VBoxContainer) -> void:
 		info.add_child(Kit.text(Vehicles.name_of(id), 14, Color("2a2233"), true))
 		if vd.get("premium", false):
 			# 「見本のストア（本当の支払いはありません）」は長いので折り返す（折り返さないと、行が画面の右へはみ出して × と「買う」が隠れる）
-			info.add_child(Kit.wrap(Kit.text("¥%d · %s" % [int(vd.yen), tr("KIT_UI_MOCK")], 10, Color("8a5bd6"))))
+			info.add_child(Kit.wrap(Kit.text("%s · %s" % [Money.store_price(int(vd.yen)), tr("KIT_UI_MOCK")], 10, Color("8a5bd6"))))
 			h.add_child(Kit.button(tr("KIT_UI_BUY"), Color("e9e2ff"), func(): _toast(Vehicles.name_of(id), tr("KIT_UI_MOCK")), Color("6a5bd6"), 34, 13))
 		elif Vehicles.owned().has(id):
 			var riding := Vehicles.current() == id
@@ -3445,7 +3455,7 @@ func _catalog_row(it: Dictionary, stage: int) -> Control:
 	info.add_child(Kit.text(IslandKit.name_of(id), 14, Color("2a2233"), true))
 	var locked := not IslandKit.unlocked(id, stage)
 	if it.get("premium", false):
-		info.add_child(Kit.text("¥%d" % int(it.yen), 12, Color("8a5bd6"), true))
+		info.add_child(Kit.text(Money.store_price(int(it.yen)), 12, Color("8a5bd6"), true))
 		h.add_child(Kit.button(tr("KIT_UI_BUY"), Color("e9e2ff"), func(): _toast(IslandKit.name_of(id), tr("KIT_UI_SOON")), Color("6a5bd6"), 34, 13))
 		return row
 	# 値段と材料：足りない物は赤

@@ -1414,8 +1414,18 @@ func _finish() -> void:
 	v.add_child(row)
 	# はじめての夜は、朝を待たずに、ここからそのまま玉をあける（夜の場面は挟まない。Onboarding.next_after）
 	var first := Onboarding.at("scoop")
-	v.add_child(_text(tr("ONB_NIGHT_OPEN_NOW") if first else ("玉は、朝になったらかえる" if caught_count > 0 else "今夜は、水の音だけ"), 13, Color(1, 1, 1, 0.7)))
-	var b := Kit.button(tr("ONB_NIGHT_OPEN") if first else "島へもどる", Color("8b7bff"), func(): main.go(Onboarding.next_after("catch", "garden")), Color.WHITE, 46, 16)
+	# ANYTIME（審査・試遊）：朝を待たずに、その場で玉をあける
+	var open_now := first or (GameState.ANYTIME and caught_count > 0)
+	v.add_child(_text(tr("ONB_NIGHT_OPEN_NOW") if open_now else ("玉は、朝になったらかえる" if caught_count > 0 else "今夜は、水の音だけ"), 13, Color(1, 1, 1, 0.7)))
+	var go_next := func():
+		if first:
+			main.go(Onboarding.next_after("catch", "garden"))
+		elif open_now:
+			GameState.end_night()
+			main.go("hatch" if not GameState.hatched.is_empty() else "garden")
+		else:
+			main.go("garden")
+	var b := Kit.button(tr("ONB_NIGHT_OPEN") if open_now else "島へもどる", Color("8b7bff"), go_next, Color.WHITE, 46, 16)
 	v.add_child(b)
 	p.pivot_offset = Vector2(140, 100)
 	p.scale = Vector2(0.8, 0.8)
