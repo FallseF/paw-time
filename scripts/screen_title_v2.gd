@@ -1,0 +1,554 @@
+extends "res://scripts/screen_title.gd"
+## タイトル（夕方の港）。ゲームの 3D の部品（猫おばけ・島の置き物・乗り物）だけで組んだ一枚の絵に、
+## ロゴと 2 つのボタン、言語の切りかえを重ねる。ボタンの行き先は前のタイトル（screen_title.gd）と同じ関数。
+## 絵の置き場所は縦 1080x1920 の設計の割合（横 fx・縦 fy）で決め、3D の位置はカメラの光線から逆算する。
+## 縦長の端末では画面いっぱい、横長（PC）では縦の枠を真ん中に置き、空と海だけを左右へのばす。
+
+const SKY := preload("res://assets/title/sky.png")
+const LOGO := preload("res://assets/title/logo.png")
+const BTN_PRIMARY := preload("res://assets/title/btn_primary.png")
+const BTN_PRIMARY_PRESSED := preload("res://assets/title/btn_primary_pressed.png")
+const BTN_SECONDARY := preload("res://assets/title/btn_secondary.png")
+const PILL := preload("res://assets/title/pill_small.png")
+const SEA_SHADER := preload("res://shaders/title_sea.gdshader")
+
+const HORIZON := 0.58 # 空の絵の水平線（上からの割合）
+const FOV := 46.0 # 縦の画角
+const CAM_H := 1.0 # 島の地面（y=0）からのカメラの高さ
+const SEA_Y := -0.14 # 島の画面と同じ海面の高さ
+const CREAM := Color("fff6e6")
+const NAVY := Color("23285a")
+
+## タイトルの間だけ、縦横比を「のばす」にする（ほかの画面は 360x640 の枠のまま）
+static var _open := 0
+static var _prev_aspect := Window.CONTENT_SCALE_ASPECT_KEEP
+
+var box: SubViewportContainer
+var world: Node3D
+var cam: Camera3D
+var sky_rects: Array[TextureRect] = []
+var cat: MyObake3D
+var cat_mat: ShaderMaterial
+var island: Node3D
+var pier: Node3D
+var raft: Node3D
+var heli: Node3D
+var far_isles: Array[Node3D] = []
+var spinners: Array = []
+var logo: TextureRect
+var start_btn: Button
+var visit_btn: Button
+var lang_btn: Button
+var frame := Rect2(0, 0, 360, 640)
+var pitch := 0.0
+var logo_y := 0.0
+var heli_fx := 0.8
+var heli_depth := 30.0
+var raft_y := 0.0
+var _blink_in := 2.5
+var _blink := 0.0
+var _twitch_in := 3.0
+var _twitch := -1.0
+var _twitch_side := 1
+var _twitch_hold := false
+
+
+func _enter_tree() -> void:
+	var win := get_tree().root
+	if _open == 0:
+		_prev_aspect = win.content_scale_aspect
+	_open += 1
+	win.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+
+
+func _exit_tree() -> void:
+	if resized.is_connected(_layout):
+		resized.disconnect(_layout) # 縦横比を戻すと大きさが変わる。出ていく画面は組み直さない
+	_open -= 1
+	if _open == 0:
+		get_tree().root.content_scale_aspect = _prev_aspect
+
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for i in 5:
+		var r := TextureRect.new()
+		r.texture = SKY
+		r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		r.stretch_mode = TextureRect.STRETCH_SCALE
+		r.flip_h = i % 2 == 1 # 真ん中から交互に鏡に映して、雲を切れ目なくつなぐ
+		r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(r)
+		sky_rects.append(r)
+	_build_world()
+	_build_ui()
+	resized.connect(_layout)
+	_layout()
+
+
+# ---------------------------------------------------------------- 3D
+
+func _build_world() -> void:
+	box = SubViewportContainer.new()
+	box.stretch = false
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 透明の背景に描いた 3D は、色に透明度が掛かった状態（premultiplied）。そのまま重ねると縁が黒ずむ
+	var pm := CanvasItemMaterial.new()
+	pm.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
+	box.material = pm
+	add_child(box)
+	vp = SubViewport.new()
+	vp.own_world_3d = true
+	vp.transparent_bg = true # 空は下の絵（sky.png）
+	vp.msaa_3d = Viewport.MSAA_4X
+	box.add_child(vp)
+	world = Node3D.new()
+	vp.add_child(world)
+	Look.apply(world, "title_golden", Color(0, 0, 0, 0), true, false)
+	cam = Camera3D.new()
+	cam.keep_aspect = Camera3D.KEEP_HEIGHT
+	cam.fov = FOV
+	cam.near = 0.1
+	cam.far = 3000.0
+	world.add_child(cam)
+	# 浅瀬の底（半透明の海の下。島の岸の外側も同じ色）
+	var bed := MeshInstance3D.new()
+	var bp := PlaneMesh.new()
+	bp.size = Vector2(160, 160)
+	bed.mesh = bp
+	var bm := StandardMaterial3D.new()
+	bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bm.albedo_color = Color("2a6d86")
+	bed.material_override = bm
+	bed.position.y = -0.56
+	world.add_child(bed)
+	var sea := MeshInstance3D.new()
+	var sp := PlaneMesh.new()
+	sp.size = Vector2(3000, 3000)
+	sea.mesh = sp
+	sea.material_override = ShaderMaterial.new()
+	(sea.material_override as ShaderMaterial).shader = SEA_SHADER
+	sea.position.y = SEA_Y
+	sea.name = "Sea"
+	world.add_child(sea)
+	# 手前の自分の島（左下を切り取る）と桟橋
+	island = Node3D.new()
+	world.add_child(island)
+	var land := MeshInstance3D.new()
+	land.mesh = IslandProps.land_lobe(6.0, 3) # 大きな半径で作って縮める（砂浜の帯を細く）
+	land.material_override = _ground_mat()
+	island.add_child(land)
+	pier = IslandProps.build("pier")
+	world.add_child(pier)
+	raft = VehicleProps.build_vehicle("raft")
+	world.add_child(raft)
+	# 自分の猫（診断の子。まだなら生成りの子）に、カフェのエプロン
+	cat = _make_cat()
+	world.add_child(cat)
+	# 遠くの 2 つの島：カフェ（赤い瓦としま模様の日よけ）と、角のお店（緑の屋根）
+	far_isles.append(_far_isle(Color("e0674f"), Color("fff1dc"), "tree_round"))
+	far_isles.append(_far_isle(Color("6fae6a"), Color("fff6e6"), "tree_palm"))
+	heli = VehicleProps.build_vehicle("helicopter")
+	world.add_child(heli)
+	for v in [raft, heli]:
+		for n in (v as Node3D).find_children("*", "Node3D", true, false):
+			if n.has_meta("spin"):
+				spinners.append(n)
+
+
+## 地形と同じ塗り（頂点色の芝・砂・ぬれた砂）
+func _ground_mat() -> ShaderMaterial:
+	var m := Obake3D.skin(Color.WHITE, 0.0, null, 0.06, 0.0, false, 0.02).duplicate() as ShaderMaterial
+	m.set_shader_parameter("vertex_albedo", 1.0)
+	m.set_shader_parameter("top_light", 0.12)
+	m.set_shader_parameter("ground_mottle", 0.06)
+	m.set_shader_parameter("base_color", Color("f4ead8")) # 夕方の芝（少し落ち着いた黄緑へ）
+	return m
+
+
+func _make_cat() -> MyObake3D:
+	var look: Dictionary = GameState.my_obake.get("look", {})
+	if look.is_empty():
+		look = QuizResult.load_result().get("look", {})
+	if look.is_empty():
+		look = {"color": "fff3df", "accessory": "", "accent": "e0674f", "motion": "bob"}
+	var c := MyObake3D.new().setup_look(look)
+	# エプロンは体の場所。体の持ち物（名札など）とは重ねない
+	Outfit.dress(c, {"body": "-"})
+	var root := c.body.get_node("Outfit") as Node3D
+	var apron := Outfit.build(c, {"shape": "apron", "c": "d9774f", "c2": "fff1dc"})
+	apron.name = "body"
+	root.add_child(apron)
+	var acc := c.body.get_node_or_null("Accessory") as Node3D
+	if acc and Outfit.ACC_SLOT.get(look.get("accessory", ""), "") == "body":
+		acc.visible = false
+	# 耳を動かすために、この子の体だけ材質を分ける（ほかの子と共有しない）
+	var b := c.body.find_child("Body", true, false) as MeshInstance3D
+	if b and b.material_override is ShaderMaterial:
+		cat_mat = b.material_override.duplicate() as ShaderMaterial
+		if cat_mat.next_pass:
+			cat_mat.next_pass = cat_mat.next_pass.duplicate()
+		b.material_override = cat_mat
+	c.bob = false
+	c.set_process(false) # 息・まばたき・耳はここで動かす（しぐさで体がゆれないように）
+	c.rotation.y = 0.6 # 右（遠くの島）を向いた 3/4
+	return c
+
+
+func _far_isle(sign_c: Color, accent: Color, tree_id: String) -> Node3D:
+	var n := Node3D.new()
+	var land := MeshInstance3D.new()
+	land.mesh = IslandProps.land_lobe(1.7, 7)
+	land.material_override = _ground_mat()
+	n.add_child(land)
+	var shop := ShopLandmarks.build_shop(sign_c, accent)
+	shop.scale = Vector3.ONE * 0.8
+	shop.position = Vector3(0, 0, -0.2)
+	n.add_child(shop)
+	var tree := IslandProps.build(tree_id)
+	tree.position = Vector3(1.35, 0, -0.5)
+	tree.scale = Vector3.ONE * 0.9
+	n.add_child(tree)
+	# 小さな灯り（窓の明かりと、店先の灯）
+	for p in [Vector3(-0.44, 0.62, 0.52), Vector3(0.95, 0.5, 0.9)]:
+		var g := MeshInstance3D.new()
+		g.mesh = IslandProps.new().sph(0.07)
+		g.material_override = Kit.glow(Color("ffd98a"), 1.6)
+		g.position = p
+		n.add_child(g)
+	world.add_child(n)
+	return n
+
+
+# ---------------------------------------------------------------- 置き場所
+
+## 画面の割合（枠の中の fx, fy）から、カメラの光線の向き（ゆれの前）
+func _ray(fx: float, fy: float) -> Vector3:
+	var vs := size
+	var px := frame.position.x + fx * frame.size.x
+	var py := frame.position.y + fy * frame.size.y
+	var tv := tan(deg_to_rad(FOV * 0.5))
+	var th := tv * vs.x / vs.y
+	var d := Vector3((px / vs.x * 2.0 - 1.0) * th, (1.0 - py / vs.y * 2.0) * tv, -1.0)
+	return Basis(Vector3.RIGHT, pitch) * d.normalized()
+
+
+## その割合の光線が、高さ y の平らな面に当たる場所
+func _on_plane(fx: float, fy: float, y: float) -> Vector3:
+	var d := _ray(fx, fy)
+	var o := Vector3(0, CAM_H, 0)
+	return o + d * ((y - o.y) / minf(d.y, -0.0001))
+
+
+## 場所 p で、枠の幅の frac ぶんに見える長さ（世界の単位）
+func _world_w(p: Vector3, frac: float) -> float:
+	var d := (Basis(Vector3.RIGHT, pitch).inverse() * (p - Vector3(0, CAM_H, 0))).z * -1.0
+	return frac * frame.size.x * 2.0 * d * tan(deg_to_rad(FOV * 0.5)) / frame.size.y
+
+
+func _on_plane_px(p: Vector2, y: float) -> Vector3:
+	return _on_plane((p.x - frame.position.x) / frame.size.x, (p.y - frame.position.y) / frame.size.y, y)
+
+
+## 猫の見た目（耳の先から、手前の裾まで）が縦 top_fy〜bottom_fy、真ん中が横 fx に来るよう、
+## 置き場所と縮尺を映した位置から詰める。返り値は足元
+func _fit_cat(fx: float, top_fy: float, bottom_fy: float) -> Vector3:
+	var box := AABB()
+	var first := true
+	cat.scale = Vector3.ONE
+	cat.position = Vector3.ZERO
+	for m in cat.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.name == "ContactShadow" or mi.mesh == null:
+			continue
+		var b := (cat.global_transform.affine_inverse() * mi.global_transform) * mi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var c := box.get_center()
+	# 耳の先（上）・手前の裾（下）・左右のふち。箱の角は丸い体より外なので使わない
+	var probes := [Vector3(c.x, box.end.y, c.z), Vector3(c.x, box.position.y, box.end.z),
+		Vector3(box.position.x, c.y, c.z), Vector3(box.end.x, c.y, c.z)]
+	var want_top := frame.position.y + top_fy * frame.size.y
+	var want_bottom := frame.position.y + bottom_fy * frame.size.y
+	var want_x := frame.position.x + fx * frame.size.x
+	var foot := _on_plane(fx, bottom_fy, 0.0)
+	var s := _fit_height(foot, fx, top_fy, box.end.y)
+	var k := float(vp.size.y) / size.y
+	for i in 6:
+		cat.position = foot
+		cat.scale = Vector3.ONE * s
+		var pts: Array[Vector2] = []
+		for p in probes:
+			pts.append(cam.unproject_position(cat.to_global(p)) / k)
+		var top := pts[0].y
+		var bottom := pts[1].y
+		var mid := (pts[2].x + pts[3].x) * 0.5
+		s *= (want_bottom - want_top) / maxf(bottom - top, 1.0)
+		var fp := cam.unproject_position(foot) / k
+		foot = _on_plane_px(fp + Vector2(want_x - mid, want_bottom - bottom), 0.0)
+	cat.position = foot
+	cat.scale = Vector3.ONE * s
+	return foot
+
+
+## 足元 foot に立つ高さ h の物の頭が、縦の割合 top_fy に来る縮尺
+func _fit_height(foot: Vector3, fx: float, top_fy: float, h: float) -> float:
+	var d := _ray(fx, top_fy)
+	var o := Vector3(0, CAM_H, 0)
+	var t := Vector2(foot.x - o.x, foot.z - o.z).length() / maxf(Vector2(d.x, d.z).length(), 0.0001)
+	return maxf((o.y + d.y * t - foot.y) / h, 0.01)
+
+
+func _layout() -> void:
+	var vs := size
+	if vs.x < 2.0 or vs.y < 2.0:
+		return
+	var fw := minf(vs.x, vs.y * 9.0 / 16.0)
+	frame = Rect2((vs.x - fw) * 0.5, 0, fw, vs.y)
+	# 空：高さに合わせて縦横比を保ち、真ん中に。左右は鏡でのばす（水平線はいつも 58%）
+	var sw := vs.y * 9.0 / 16.0
+	var sx := (vs.x - sw) * 0.5
+	for i in 5:
+		sky_rects[i].position = Vector2(sx + (i - 2) * sw, 0)
+		sky_rects[i].size = Vector2(sw, vs.y)
+	# 3D は画面の実際の画素で描く（キャンバスの拡大でぼやけないように）
+	var k := clampf(get_viewport().get_final_transform().x.x, 1.0, 2.0 if OS.has_feature("web") else 3.0)
+	vp.size = Vector2i(ceili(vs.x * k), ceili(vs.y * k))
+	box.size = Vector2(vp.size)
+	box.scale = Vector2.ONE / k
+	# 水平線が 58% に来るよう、カメラを少し上へ向ける
+	var tv := tan(deg_to_rad(FOV * 0.5))
+	pitch = atan((HORIZON - 0.5) * 2.0 * tv)
+	cam.position = Vector3(0, CAM_H, 0)
+	cam.rotation = Vector3(pitch, 0, 0)
+	_place_world()
+	_layout_ui()
+
+
+func _place_world() -> void:
+	# 猫：体の真ん中 (32%, 66%)、高さは画面の 34%（足元 83% ・ 耳の先 49%）
+	var foot := _fit_cat(0.32, 0.49, 0.83)
+	var s := cat.scale.x
+	# 島：中心は画面の左の外。右の岸が猫のすぐ右（47%）を通り、手前と左は画面の外へ切れる
+	# 右の岸は、ほぼまっすぐ手前から (52%, 86%) を通って桟橋の根元 (40%, 76%) へ、奥は左の 70% へ回りこむ
+	var a := _on_plane(0.52, 0.86, 0.0)
+	var q := absf(a.x - _on_plane(0.0, 0.86, 0.0).x) / 1.03 # 横の見え方（9:16 で 1）
+	island.position = Vector3(a.x - 3.05 * q, 0.0, a.z)
+	island.scale = Vector3(3.05 * q, 6.16, 5.5) / 6.16 # 波打ちぎわは land_lobe の半径 r+0.16
+	# 桟橋：猫の右うしろの岸から、右奥へ。いかだはその手前に横づけ (55%, 80%)
+	var shore := _on_plane(0.4, 0.76, 0.0)
+	var tip := _on_plane(0.9, 0.695, SEA_Y)
+	var dir := Vector3(tip.x - shore.x, 0, tip.z - shore.z)
+	var ws := _world_w(shore, 0.1) / 0.8
+	pier.scale = Vector3(ws, ws, dir.length() / 2.2)
+	pier.rotation.y = atan2(dir.x, dir.z)
+	pier.position = (shore + tip) * 0.5
+	pier.position.y = 0.03 - 0.14 * ws
+	var rp := _on_plane(0.55, 0.80, SEA_Y)
+	raft_y = SEA_Y + 0.01
+	raft.position = Vector3(rp.x, raft_y, rp.z)
+	raft.scale = Vector3.ONE * _world_w(rp, 0.24) / 1.3
+	raft.rotation.y = pier.rotation.y - PI * 0.5
+	# 遠くの島：水平線のすぐ手前（68〜88%）。屋根の上が 50% くらい
+	var spots := [[0.735, 0.525], [0.855, 0.535]]
+	for i in far_isles.size():
+		var fp := _on_plane(spots[i][0], 0.587, SEA_Y)
+		var isle := far_isles[i]
+		isle.position = Vector3(fp.x, SEA_Y + 0.1, fp.z)
+		isle.scale = Vector3.ONE * _fit_height(isle.position, spots[i][0], spots[i][1], 2.1)
+		isle.rotation.y = atan2(-fp.x, -fp.z) + (0.25 if i == 0 else -0.3)
+	var sm := (world.get_node("Sea") as MeshInstance3D).material_override as ShaderMaterial
+	sm.set_shader_parameter("sun_dir", _ray(0.8, 0.55))
+	# ヘリ：右上 (80%, 28%) から左へゆっくり
+	heli_depth = 34.0
+	var hw := 0.11 * frame.size.x * 2.0 * heli_depth * tan(deg_to_rad(FOV * 0.5)) / frame.size.y
+	heli.scale = Vector3.ONE * hw / 2.6
+	_place_heli(0.0)
+
+
+func _place_heli(t: float) -> void:
+	heli.position = Vector3(0, CAM_H, 0) + _ray(heli_fx, 0.28 + sin(t * 0.9) * 0.004) * heli_depth
+	heli.rotation = Vector3(0, PI - 0.35, 0.05) # 左（-X）へ進む。少しこちらへ振って形を読ませる
+
+
+# ---------------------------------------------------------------- UI
+
+func _build_ui() -> void:
+	logo = TextureRect.new()
+	logo.texture = LOGO
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(logo)
+	# つづきがあれば、つづきから。なければ前のタイトルの「はじめる」と同じ流れ
+	start_btn = _skin_button("はじめる", BTN_PRIMARY, BTN_PRIMARY_PRESSED, Vector4(160, 160, 149, 149), CREAM, 21, 3.0)
+	start_btn.pressed.connect(func():
+		if GameState.has_save():
+			_continue()
+		else:
+			_new("data"))
+	visit_btn = _skin_button("島へおでかけ", BTN_SECONDARY, null, Vector4(140, 140, 129, 129), NAVY, 17, 1.5)
+	visit_btn.pressed.connect(func():
+		_ask_code()
+		_center_dialog())
+	lang_btn = _skin_button("日本語" if Kit.is_en() else "English", PILL, null, Vector4(80, 80, 69, 69), NAVY, 13, 0.8)
+	lang_btn.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	lang_btn.pressed.connect(func():
+		Kit.save_lang("ja" if Kit.is_en() else "en")
+		main.go("title", true))
+
+
+## 絵の皮（9 分割）を敷いたボタン。皮は元の画素の大きさで持ち、縮めて描く（角の丸みを保つ）
+func _skin_button(t: String, tex: Texture2D, pressed_tex: Texture2D, margins: Vector4, fg: Color, font_size: int, lip: float) -> Button:
+	var b := Button.new()
+	b.text = t
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", Kit.bold())
+	b.add_theme_font_size_override("font_size", font_size)
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(k, fg)
+	for k in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+		var e := StyleBoxEmpty.new()
+		# 下の縁（厚み）のぶん、文字を少し上へ。押すと縁が薄くなるので、文字も下がる
+		var down: bool = k in ["pressed", "hover_pressed"]
+		e.content_margin_bottom = 0.0 if down and pressed_tex else lip
+		e.content_margin_top = lip if down and pressed_tex else 0.0
+		b.add_theme_stylebox_override(k, e)
+	var skin := Control.new()
+	skin.show_behind_parent = true
+	skin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	skin.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	skin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	b.add_child(skin)
+	var sb := StyleBoxTexture.new()
+	sb.texture = tex
+	sb.texture_margin_left = margins.x
+	sb.texture_margin_right = margins.y
+	sb.texture_margin_top = margins.z
+	sb.texture_margin_bottom = margins.w
+	var sbp: StyleBoxTexture
+	if pressed_tex:
+		sbp = sb.duplicate()
+		sbp.texture = pressed_tex
+	skin.draw.connect(func():
+		var k := float(tex.get_height()) / maxf(b.size.y, 1.0)
+		var down := b.is_pressed() or (b.button_pressed and b.toggle_mode)
+		skin.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE / k)
+		skin.draw_style_box(sbp if down and sbp else sb, Rect2(Vector2.ZERO, b.size * k)))
+	b.button_down.connect(func():
+		if sbp == null:
+			skin.modulate = Color(0.93, 0.9, 0.86)
+		skin.queue_redraw())
+	b.button_up.connect(func():
+		skin.modulate = Color.WHITE
+		skin.queue_redraw())
+	add_child(b)
+	return b
+
+
+## 端末の切り欠き（上・下）。キャンバスの長さで
+func _safe_insets() -> Vector2:
+	if not OS.has_feature("mobile"):
+		return Vector2.ZERO
+	var safe := DisplayServer.get_display_safe_area()
+	var win := DisplayServer.window_get_size()
+	if safe.size.x <= 0 or safe.size.y <= 0:
+		return Vector2.ZERO
+	var k := maxf(get_viewport().get_final_transform().x.x, 0.01)
+	return Vector2(maxf(safe.position.y, 0) / k, maxf(win.y - safe.end.y, 0) / k)
+
+
+func _layout_ui() -> void:
+	var f := frame
+	var inset := _safe_insets()
+	var lw := f.size.x * 0.78
+	logo.size = Vector2(lw, lw * float(LOGO.get_height()) / LOGO.get_width())
+	logo_y = maxf(f.size.y * 0.07, inset.x + 44.0)
+	logo.position = Vector2(f.position.x + (f.size.x - lw) * 0.5, logo_y)
+	var bw := f.size.x * 0.76
+	var bottom := minf(f.size.y * 0.94, f.size.y - inset.y - 10.0)
+	visit_btn.size = Vector2(bw, 46)
+	visit_btn.position = Vector2(f.position.x + (f.size.x - bw) * 0.5, bottom - 46)
+	start_btn.size = Vector2(bw, 54)
+	start_btn.position = Vector2(visit_btn.position.x, visit_btn.position.y - 14 - 54)
+	var font := Kit.bold()
+	var pw := font.get_string_size(lang_btn.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 34.0
+	lang_btn.size = Vector2(maxf(pw, 72.0), 30)
+	lang_btn.position = Vector2(f.end.x - 16.0 - lang_btn.size.x, 16.0 + inset.x)
+	for b in [start_btn, visit_btn, lang_btn]:
+		(b as Button).get_child(0).queue_redraw()
+
+
+## 前のタイトルの入力の小窓は 360x640 の位置で組んである。縦の枠の真ん中へ寄せる
+func _center_dialog() -> void:
+	if confirm == null:
+		return
+	for c in confirm.get_children():
+		if c is PanelContainer:
+			(c as Control).position += Vector2(frame.position.x + (frame.size.x - 360.0) * 0.5, (frame.size.y - 640.0) * 0.4)
+
+
+# ---------------------------------------------------------------- うごき
+
+func _process(delta: float) -> void:
+	_t += delta
+	# カメラ：12 秒で ±1.5° ゆっくり左右に
+	cam.rotation = Vector3(pitch, deg_to_rad(1.5) * sin(_t * TAU / 12.0), 0)
+	logo.position.y = logo_y + sin(_t * TAU / 5.0) * 4.0
+	raft.position.y = raft_y + sin(_t * 1.1) * 0.025 * cat.scale.x
+	raft.rotation.z = sin(_t * 0.8 + 0.6) * 0.03
+	raft.rotation.x = sin(_t * 0.95) * 0.025
+	# ヘリ：80% から左へ（20 秒で画面の外）、右から戻ってくる
+	heli_fx -= minf(delta, 0.1) * 0.044 # 読み込みで止まった間に飛んでいかないよう
+	if heli_fx < -0.14:
+		heli_fx = 1.14
+	_place_heli(_t)
+	for n in spinners:
+		(n as Node3D).rotate_object_local(n.get_meta("spin_axis"), float(n.get_meta("spin")) * delta)
+	_animate_cat(delta)
+
+
+## 息（ゆっくりふくらむ）、まばたき、6 秒ほどごとに耳がぴくっ
+func _animate_cat(delta: float) -> void:
+	var br := sin(_t * TAU / 3.8)
+	cat.body.scale = Vector3(1.0 - br * 0.006, 1.0 + br * 0.014, 1.0 - br * 0.006)
+	cat.body.position.y = br * 0.004
+	_blink_in -= delta
+	if _blink_in <= 0.0:
+		_blink = Obake3D.BLINK_TIME
+		_blink_in = randf_range(2.6, 5.0)
+	var k := 0.0
+	if _blink > 0.0:
+		_blink -= delta
+		k = sin((1.0 - maxf(_blink, 0.0) / Obake3D.BLINK_TIME) * PI)
+	for e in cat.eyes:
+		e.scale.y = lerpf(Obake3D.EYE_SCALE.y, 0.1, k)
+	if cat_mat == null:
+		return
+	_twitch_in -= delta
+	if _twitch_in <= 0.0:
+		_twitch = 0.0
+		_twitch_in = randf_range(5.2, 6.8)
+		_twitch_side = -_twitch_side
+	var a := 0.0
+	if _twitch >= 0.0:
+		_twitch += delta
+		# ぴくっ、ぴく（2 回、だんだん小さく）
+		var p := _twitch / 0.42
+		if p >= 1.0:
+			_twitch = -1.0
+		else:
+			a = sin(p * TAU) * (1.0 - p) * 0.32
+	if _twitch_hold:
+		a = 0.32
+	var tw := Vector2(a, 0.0) if _twitch_side < 0 else Vector2(0.0, a)
+	cat_mat.set_shader_parameter("ear_twitch", tw)
+	if cat_mat.next_pass:
+		(cat_mat.next_pass as ShaderMaterial).set_shader_parameter("ear_twitch", tw)
+
+
+## 確認用：耳がぴくっとした瞬間で止める（OBAKE_SHOT=wait2,call:demo_twitch）
+func demo_twitch() -> void:
+	_twitch_hold = true

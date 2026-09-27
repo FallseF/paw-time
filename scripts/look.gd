@@ -59,6 +59,14 @@ const PRESETS := {
 		"rim": [Vector3(-20, 170, 0), Color("dfe6ff"), 0.8],
 		"exposure": 1.05, "contrast": 1.05, "saturation": 1.05,
 	},
+	# タイトル（夕方）：遠くの島のうしろ、右奥の低い太陽。左からラベンダーのフィル、猫の縁を読ませるリム
+	"title_golden": {
+		"ambient": Color("d9c2d0"), "ambient_energy": 0.5,
+		"key": [Vector3(-16, 115, 0), Color("ffd0a2"), 1.0],
+		"fill": [Vector3(-17, -62, 0), Color("b3a6ff"), 0.32],
+		"rim": [Vector3(-20, 160, 0), Color("ffd3a0"), 0.95],
+		"exposure": 1.02, "contrast": 1.03, "saturation": 0.93,
+	},
 	# 島：昼（高い太陽、白っぽい暖かいキー、空色のフィル）
 	"island_day": {
 		"ambient": Color("dfe9f2"), "ambient_energy": 0.42,
