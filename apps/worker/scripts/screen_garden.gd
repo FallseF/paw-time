@@ -1364,7 +1364,7 @@ func _apply_time(n: float) -> void:
 	night = n
 	if crickets == null:
 		crickets = AudioStreamPlayer.new()
-		var loop: AudioStreamWAV = load("res://assets/sfx/crickets.wav")
+		var loop: AudioStreamWAV = load("res://assets/sfx/night_amb.wav")
 		loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		loop.loop_end = loop.data.size() / 2
 		crickets.stream = loop
