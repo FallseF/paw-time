@@ -2654,7 +2654,7 @@ func _reveal_stage(level: int, st: Dictionary) -> void:
 	_build_dressing(level)
 	_grow_land(level)
 	_apply_time(night)
-	Kit.play(self, "grow")
+	Sfx.level_up(self)
 	Kit.shake(cam, 0.05, 0.3)
 	_toast(tr("庭が育った：%s") % tr(st.name), tr(st.desc))
 	await get_tree().create_timer(2.0).timeout
@@ -2994,7 +2994,7 @@ func _drop() -> void:
 	if sel == "":
 		return
 	_save_item(sel)
-	Kit.play(self, "pop", 1.0)
+	Sfx.place(self)
 	var g: Node3D = items[sel]
 	burst.position = g.position + Vector3(0, 0.3, 0)
 	burst.amount = 16
@@ -3278,7 +3278,7 @@ func _place_from_stock(id: String) -> void:
 		burst.position = g.position + Vector3(0, 0.3, 0)
 		burst.restart()
 		burst.emitting = true
-		Kit.play(self, "pop", 1.1)
+		Sfx.place(self)
 		_select("kit:%d" % int(pl.u))
 
 

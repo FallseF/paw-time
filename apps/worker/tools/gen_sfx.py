@@ -387,6 +387,162 @@ def s_dream(rng):
     return finish(room(out, rng, 0.22, 1.0, lp=2500), -22)
 
 
+# ---------------------------------------------------------------- ごほうびの音（重ねて・高さを変えて鳴らす。scripts/sfx.gd の Sfx.catch など）
+# 鳴らす側で音の高さを上げる（連続ですくう・コインの粒）ものは、上げても 7 kHz を超えないよう先に低めで切っておく
+
+def s_catch(rng):
+    """すくえた：泡がぽこっ＋カリンバを 1 オクターブで 2 つ（F5 F6）。
+    連続ですくうと F のペンタトニック（F G A C D F）で 2 倍まで上がる。オクターブの 2 音なので、どの高さでも曲とにごらない。
+    2 倍にしても 7 kHz を超えないよう 3.5 kHz で切る"""
+    out = np.zeros(int(SR * 0.7))
+    at(out, bubble(380, 900, 0.07, 0.022, 0.002), 0.0, 0.8)
+    at(out, kalimba(nt(77), 0.5, 0.16, 0.5, rng, 0.12), 0.02, 1.0)
+    at(out, kalimba(nt(89), 0.55, 0.2, 0.3, rng, 0.0), 0.07, 0.6)
+    return finish(room(out, rng, 0.14, 0.4), -19, lp=3500)
+
+
+def s_coin_tick(rng):
+    """コインの粒：小さく高いカリンバ＋少しだけ金物っぽい倍音（C6）。粒ごとに C D F G A と 5/3 倍まで上がるので 4.5 kHz で切る"""
+    out = np.zeros(int(SR * 0.22))
+    at(out, mallet(nt(84), 0.2, 0.05, [(1.0, 1.0, 1.0), (2.76, 0.18, 0.4), (5.4, 0.05, 0.2)], 0.0015, rng, 0.08), 0.0)
+    return finish(room(out, rng, 0.08, 0.18), -25, lp=4500)
+
+
+def s_riser(rng):
+    """ためる（玉が震えてから割れるまで）：カリンバの粒がだんだん速く・高く＋ふくらむ風。いちばん大きいところで終わる。
+    鳴らす側は「割れるまでの秒数」だけ後ろを切り出して鳴らす（Sfx.hatch_build）ので、どこから鳴らしても割れる瞬間が頂点"""
+    dur = 1.2
+    out = np.zeros(int(SR * dur))
+    notes = [65, 67, 69, 72, 74, 77, 79, 81, 84, 86, 89] # F4 から F6 までのペンタトニック
+    t0, gap = 0.0, 0.15
+    k = 0
+    while t0 < dur - 0.03:
+        m = notes[min(k, len(notes) - 1)]
+        amp = 0.25 + 0.75 * (t0 / dur) ** 1.5
+        at(out, kalimba(nt(m), 0.25, 0.06, 0.4, rng, 0.05), t0, amp)
+        t0 += gap
+        gap = max(0.032, gap * 0.84)
+        k += 1
+    t = tt(dur)
+    swell = (t / dur) ** 2.2
+    lo = band_noise(rng, dur, 250, 900) * swell
+    hi = band_noise(rng, dur, 900, 2600) * swell ** 2.0
+    tone = bubble(260, 620, dur, 10.0, 0.4) * swell * (0.75 + 0.25 * np.sin(2 * np.pi * 11 * t))
+    at(out, 0.5 * lo / max(lo.std(), 1e-9) * 0.12, 0.0)
+    at(out, 0.4 * hi / max(hi.std(), 1e-9) * 0.12, 0.0)
+    at(out, 0.18 * tone, 0.0)
+    return finish(room(out, rng, 0.12, 0.35), -21, lp=5500)
+
+
+def s_crack(rng):
+    """割れる：殻がぱきっ（木の音 3 つを速く）＋泡がはじけて上へ＋高いカリンバがきらっ"""
+    out = np.zeros(int(SR * 0.6))
+    for k in range(3):
+        at(out, mallet(rng.uniform(700, 1100), 0.05, 0.01, [(1.0, 1.0, 1.0), (2.4, 0.4, 0.5)], 0.001, rng, 0.6), 0.022 * k, 0.6 + 0.2 * k)
+    at(out, bubble(500, 1400, 0.09, 0.03, 0.002), 0.05, 0.7)
+    at(out, kalimba(nt(93), 0.4, 0.12, 0.4, rng, 0.0), 0.07, 0.45) # A6
+    at(out, kalimba(nt(89), 0.45, 0.15, 0.4, rng, 0.0), 0.07, 0.35) # F6
+    return finish(room(out, rng, 0.16, 0.45), -18, lp=6000)
+
+
+def s_crack_big(rng):
+    """大きく割れる（レア）：やわらかい低いどん＋ぱきっ＋きらめきの粒がぱっと広がる＋鐘"""
+    out = np.zeros(int(SR * 1.6))
+    t = tt(0.5)
+    thump = np.sin(2 * np.pi * np.cumsum(110 * (0.5 ** np.clip(t / 0.25, 0, 1))) / SR) * env(t, 0.004, 0.12)
+    at(out, thump, 0.0, 0.9)
+    for k in range(4):
+        at(out, mallet(rng.uniform(650, 1050), 0.05, 0.01, [(1.0, 1.0, 1.0), (2.4, 0.4, 0.5)], 0.001, rng, 0.6), 0.018 * k, 0.5 + 0.15 * k)
+    at(out, bubble(450, 1500, 0.1, 0.035, 0.002), 0.04, 0.6)
+    for k, m in enumerate([84, 89, 91, 93, 96, 93]): # C6 F6 G6 A6 C7 A6
+        at(out, kalimba(nt(m), 0.5, 0.12, 0.3, rng, 0.0), 0.06 + 0.035 * k + rng.uniform(0, 0.01), 0.4)
+    at(out, bell_fm(nt(77), 1.2, 0.45, 0.6, 3.5), 0.05, 0.35) # F5
+    return finish(room(out, rng, 0.2, 0.8), -17, lp=6000, hp=50)
+
+
+def s_boom(rng):
+    """いちばんの見せ場の下に敷く：ふわっとふくらむ低い音（どーん、ではなく、ふぉーん）"""
+    dur = 1.6
+    t = tt(dur)
+    e = env(t, 0.03, 0.45)
+    x = (np.sin(2 * np.pi * 87.3 * t) + 0.5 * np.sin(2 * np.pi * 174.6 * t) + 0.2 * np.sin(2 * np.pi * 261.6 * t)) * e # F2 の和音
+    air = band_noise(rng, dur, 150, 700) * env(t, 0.05, 0.3)
+    x = x + 0.25 * air / max(air.std(), 1e-9) * 0.3
+    return finish(room(x, rng, 0.2, 0.9, lp=1500), -20, lp=2500, hp=40)
+
+
+def s_reveal(rng):
+    """出てきた（いつもの子・島の材料）：木琴 2 つで「たたっ」→ カリンバの和音「たーん」＋きらめき 3 つ"""
+    out = np.zeros(int(SR * 1.5))
+    at(out, marimba(nt(72), 0.2, 0.05, 0.7, rng), 0.0, 0.6) # C5
+    at(out, marimba(nt(77), 0.2, 0.05, 0.7, rng), 0.07, 0.7) # F5
+    for k, m in enumerate([77, 81, 84]): # F5 A5 C6
+        at(out, kalimba(nt(m), 1.0, 0.32, 0.6, rng, 0.06), 0.16 + 0.012 * k, 0.7)
+    at(out, bell_fm(nt(89), 0.9, 0.3, 0.5, 3.5), 0.16, 0.2) # F6
+    for k, m in enumerate([89, 93, 96]):
+        at(out, kalimba(nt(m), 0.35, 0.08, 0.25, rng, 0.0), 0.32 + 0.06 * k, 0.28)
+    return finish(room(out, rng, 0.18, 0.7), -19, lp=6500)
+
+
+def s_reveal_rare(rng):
+    """レアが出てきた：3 連の呼び込み → 低い音から F の大きな和音＋鐘 → きらめきが上へのぼる"""
+    out = np.zeros(int(SR * 2.4))
+    for k, m in enumerate([72, 74, 77]): # C5 D5 F5
+        at(out, marimba(nt(m), 0.2, 0.05, 0.7, rng), 0.065 * k, 0.55 + 0.1 * k)
+    at(out, felt(nt(53), 1.2, 0.5, rng), 0.21, 0.7) # F3
+    for k, m in enumerate([65, 77, 81, 84, 89]): # F4 F5 A5 C6 F6
+        at(out, kalimba(nt(m), 1.6, 0.5, 0.6, rng, 0.06), 0.21 + 0.01 * k, 0.6)
+    at(out, bell_fm(nt(81), 1.6, 0.55, 0.6, 3.5), 0.21, 0.3)
+    for k, m in enumerate([84, 86, 89, 91, 93, 96, 98, 101]): # C6 から F7 へのぼる
+        at(out, kalimba(nt(m), 0.4, 0.09, 0.2, rng, 0.0), 0.42 + 0.055 * k, 0.22 + 0.02 * k)
+    return finish(room(out, rng, 0.22, 1.0), -17, lp=6000, hp=60)
+
+
+def s_levelup(rng):
+    """島が広がる・育った：木琴が速く 8 つかけのぼる → 低い根音と和音で着地 → 鐘ときらめき"""
+    out = np.zeros(int(SR * 2.3))
+    run = [65, 67, 69, 72, 74, 77, 79, 81] # F4 G4 A4 C5 D5 F5 G5 A5
+    for k, m in enumerate(run):
+        at(out, marimba(nt(m), 0.3, 0.07, 0.7, rng, 0.15), 0.045 * k, 0.55 + 0.04 * k)
+    land = 0.045 * len(run) + 0.03
+    at(out, felt(nt(53), 1.2, 0.5, rng), land, 0.7) # F3
+    for k, m in enumerate([77, 81, 84, 89]): # F5 A5 C6 F6
+        at(out, kalimba(nt(m), 1.5, 0.45, 0.6, rng, 0.06), land + 0.012 * k, 0.65)
+    at(out, bell_fm(nt(89), 1.3, 0.45, 0.5, 3.5), land, 0.22)
+    for k in range(5):
+        at(out, kalimba(nt([91, 93, 96, 93, 98][k]), 0.35, 0.08, 0.2, rng, 0.0), land + 0.2 + 0.07 * k + rng.uniform(0, 0.015), 0.22)
+    return finish(room(out, rng, 0.2, 0.9), -17, lp=6000, hp=60)
+
+
+def s_place(rng):
+    """島に置く：フェルトの低い「とん」＋土にふれる小さな音＋泡がぽこ"""
+    out = np.zeros(int(SR * 0.35))
+    at(out, felt(nt(60), 0.28, 0.06, rng), 0.0, 1.0) # C4
+    t = tt(0.1)
+    thud = band_noise(rng, 0.1, 80, 500) * env(t, 0.002, 0.02)
+    at(out, 0.35 * thud / max(thud.std(), 1e-9) * 0.3, 0.0)
+    at(out, bubble(600, 950, 0.06, 0.02, 0.002), 0.035, 0.3)
+    return finish(room(out, rng, 0.1, 0.25), -22, lp=5000, hp=60)
+
+
+def s_equip(rng):
+    """着がえ：布がふわっ＋カリンバ 2 つ（A5 → D6）＋きらっ"""
+    out = np.zeros(int(SR * 0.8))
+    t = tt(0.2)
+    swish = band_noise(rng, 0.2, 500, 3000) * np.sin(np.pi * t / 0.2) ** 2
+    at(out, 0.5 * swish / max(swish.std(), 1e-9) * 0.15, 0.0)
+    at(out, kalimba(nt(81), 0.5, 0.14, 0.5, rng, 0.08), 0.1, 0.8)
+    at(out, kalimba(nt(86), 0.55, 0.18, 0.5, rng, 0.05), 0.17, 0.85)
+    at(out, kalimba(nt(93), 0.3, 0.07, 0.2, rng, 0.0), 0.25, 0.25)
+    return finish(room(out, rng, 0.14, 0.4), -21, lp=6000)
+
+
+def s_press(rng):
+    """ボタンを押しこむ（離したときの音の前に、ごく小さく）：フェルトの G4 を短く"""
+    x = mallet(nt(67), 0.08, 0.014, [(1.0, 1.0, 1.0), (2.3, 0.2, 0.5)], 0.0015, rng, 0.3)
+    return finish(x, -30, lp=4000)
+
+
 # ---------------------------------------------------------------- ループ（端がつながるように、輪の上で作る）
 
 def loop_noise(rng, n, sr, shape):
@@ -477,6 +633,9 @@ SOUNDS = {
     "open": s_open, "close": s_close, "error": s_error, "coin": s_coin, "toast": s_toast, "pop": s_pop,
     "chime": s_chime, "bell": s_bell, "sparkle": s_sparkle, "splash": s_splash, "hatch": s_hatch,
     "lift": s_lift, "tear": s_tear, "grow": s_grow, "night": s_night, "dream": s_dream,
+    "catch": s_catch, "coin_tick": s_coin_tick, "riser": s_riser, "crack": s_crack, "crack_big": s_crack_big,
+    "boom": s_boom, "reveal": s_reveal, "reveal_rare": s_reveal_rare, "levelup": s_levelup, "place": s_place,
+    "equip": s_equip, "press": s_press,
 }
 LOOPS = {"river_loop": s_river_loop, "night_amb": s_night_amb}
 
@@ -496,14 +655,14 @@ def build():
 
 
 def report():
-    print(f"{'name':12s} {'sec':>5s} {'kHz':>4s} {'LUFS':>6s} {'peak':>6s} {'>8k dB':>7s} {'>5k dB':>7s}  kB")
+    print(f"{'name':12s} {'sec':>5s} {'kHz':>4s} {'LUFS':>6s} {'peak':>6s} {'>8k dB':>7s} {'>6k dB':>7s} {'>5k dB':>7s}  kB")
     for name in list(SOUNDS) + list(LOOPS):
         p = OUT / f"{name}.wav"
         with wave.open(str(p)) as w:
             sr = w.getframerate()
             x = np.frombuffer(w.readframes(w.getnframes()), "<i2").astype(float) / 32768
         lu = lufs_i(x, sr) if name in LOOPS else lufs_m_max(x, sr)
-        print(f"{name:12s} {len(x) / sr:5.2f} {sr / 1000:4.1f} {lu:6.1f} {true_peak_db(x):6.1f} {above_db(x, sr, 8000):7.1f} {above_db(x, sr, 5000):7.1f}  {p.stat().st_size // 1024}")
+        print(f"{name:12s} {len(x) / sr:5.2f} {sr / 1000:4.1f} {lu:6.1f} {true_peak_db(x):6.1f} {above_db(x, sr, 8000):7.1f} {above_db(x, sr, 6000):7.1f} {above_db(x, sr, 5000):7.1f}  {p.stat().st_size // 1024}")
 
 
 if __name__ == "__main__":
