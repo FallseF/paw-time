@@ -29,7 +29,7 @@ func _draw() -> void:
 		_icon(c + Vector2(0, -r * 0.08), r * 0.42, Color(0.6, 0.56, 0.62, 0.7))
 		return
 	# 影・金の縁・仕事の色・内側の光
-	draw_circle(c + Vector2(0, r * 0.06), r - 1, Color(0, 0, 0, 0.16))
+	draw_circle(c + Vector2(0, r * 0.06), r - 1, Color(Tokens.SHADOW, 0.16))
 	draw_circle(c, r - 2, Color("f2b233"))
 	draw_circle(c, r * 0.84, col.darkened(0.12))
 	draw_circle(c, r * 0.76, col)

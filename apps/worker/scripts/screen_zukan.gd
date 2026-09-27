@@ -99,7 +99,7 @@ func _pill(bg: Color, radius := 16) -> StyleBoxFlat:
 	s.content_margin_right = 12
 	s.content_margin_top = 6
 	s.content_margin_bottom = 6
-	s.shadow_color = Color(0, 0, 0, 0.08)
+	s.shadow_color = Color(Tokens.SHADOW, 0.08)
 	s.shadow_size = 6
 	s.shadow_offset = Vector2(0, 2)
 	return s

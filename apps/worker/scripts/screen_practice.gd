@@ -423,7 +423,7 @@ func tile(t: String, bg: Color, cb: Callable, sub := "", w := 152) -> Button:
 		sb.border_width_left = 1
 		sb.border_width_right = 1
 		sb.border_width_top = 1
-		sb.shadow_color = Color(0, 0, 0, 0.08)
+		sb.shadow_color = Color(Tokens.SHADOW, 0.08)
 		sb.shadow_size = 4
 		b.add_theme_stylebox_override(k, sb)
 	b.pressed.connect(func():
@@ -501,7 +501,7 @@ func _dots() -> void:
 		var sb := StyleBoxFlat.new()
 		sb.set_corner_radius_all(7)
 		sb.bg_color = GameState.TYPE_COLOR.get(role, ORANGE) if i < done_steps else Color(1, 1, 1, 0.75)
-		sb.border_color = Color(0, 0, 0, 0.18)
+		sb.border_color = Color(Tokens.SHADOW, 0.18)
 		sb.set_border_width_all(2)
 		d.add_theme_stylebox_override("panel", sb)
 		dots.add_child(d)

@@ -41,18 +41,22 @@ static func black() -> FontFile:
 	return _black
 
 
+## 札の地。角丸は 8 / 16 / まる にそろえ（Tokens.radius）、影は墨色の e1（shadow ≤ 0.14）か e2（それより濃い指定）
 static func pill(bg: Color, radius := 20, shadow := 0.14, pad := Vector2(14, 8)) -> StyleBoxFlat:
+	return _box(bg, Tokens.radius(radius), shadow, pad)
+
+
+static func _box(bg: Color, radius: int, shadow := 0.14, pad := Vector2(14, 8)) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
 	s.set_corner_radius_all(radius)
+	s.anti_aliasing_size = 0.8
 	s.content_margin_left = pad.x
 	s.content_margin_right = pad.x
 	s.content_margin_top = pad.y
 	s.content_margin_bottom = pad.y
 	if shadow > 0:
-		s.shadow_color = Color(0, 0, 0, shadow)
-		s.shadow_size = 8
-		s.shadow_offset = Vector2(0, 3)
+		Tokens.shadow(s, 1 if shadow <= 0.14 else 2)
 	return s
 
 
@@ -90,10 +94,23 @@ static func button(t: String, bg: Color, cb: Callable, fg := Color.WHITE, h := 5
 	b.custom_minimum_size = Vector2(0, h)
 	b.add_theme_font_override("font", black())
 	b.add_theme_font_size_override("font_size", size)
+	# 主なボタンは 1 色（Tokens.PRIMARY）。前のオレンジ・青・紫で白い字のボタンは、ここで主なボタンの形に
+	var primary: bool = fg == Color.WHITE and Tokens.LEGACY_PRIMARY.has(Color(bg, 1.0))
 	for k in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(k, pill(bg if k != "pressed" else bg.darkened(0.12), h / 2))
-	var dis := pill(bg.lerp(Color(0.6, 0.6, 0.6), 0.6), h / 2)
+		var st: StyleBoxFlat
+		if primary:
+			st = Tokens.primary_box(h, k == "pressed")
+			st.content_margin_left = 14
+			st.content_margin_right = 14
+			st.content_margin_top = 8
+			st.content_margin_bottom = 8
+		else:
+			st = _box(bg if k != "pressed" else bg.darkened(0.12), Tokens.R_FULL)
+		b.add_theme_stylebox_override(k, st)
+	# 押せないとき：同じ色を 40% に（灰色を混ぜると濁るので）
+	var dis := _box(Color(Tokens.PRIMARY if primary else bg, (Tokens.PRIMARY if primary else bg).a * 0.4), Tokens.R_FULL, 0.0)
 	b.add_theme_stylebox_override("disabled", dis)
+	b.add_theme_color_override("font_disabled_color", Color(fg, 0.75) if primary else Color(fg, fg.a * 0.5))
 	b.add_theme_color_override("font_color", fg)
 	b.add_theme_color_override("font_hover_color", fg)
 	b.add_theme_color_override("font_pressed_color", fg)
@@ -115,7 +132,7 @@ static func nudge(c: Control) -> void:
 	tw.tween_property(c, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_SINE)
 
 
-static func bar(value: float, color: Color, w := 120, h := 10, back := Color(0, 0, 0, 0.12)) -> ProgressBar:
+static func bar(value: float, color: Color, w := 120, h := 10, back := Color(Tokens.SHADOW, 0.12)) -> ProgressBar:
 	var p := ProgressBar.new()
 	p.custom_minimum_size = Vector2(w, h)
 	p.show_percentage = false
