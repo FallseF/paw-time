@@ -27,7 +27,7 @@ static func allowed_during_shift(thread_id: String, now := -1.0) -> bool:
 
 func _ready() -> void:
 	position = Vector2.ZERO
-	size = Vector2(360, 640)
+	size = get_parent().size if get_parent() is Control else Vector2(360, 640)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	garden = get_parent() as Control
 

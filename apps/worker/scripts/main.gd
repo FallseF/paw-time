@@ -30,6 +30,7 @@ const SCREENS := {
 }
 
 var root: Control
+var bars: Array[TextureRect] = [] # 縦に長い画面の上下（360x640 で組んだ画面のとき）。画面のふちの色をのばして塗る
 var current: Control
 var current_name := "" # いまの画面の名前（マイページで言語を変えたあと、同じ画面を作り直すため）
 var fade: ColorRect
@@ -45,10 +46,20 @@ func _ready() -> void:
 	if win != "":
 		var wh := win.split("x")
 		DisplayServer.window_set_size(Vector2i(int(wh[0]), int(wh[1])))
+	for i in 2:
+		var b := TextureRect.new()
+		b.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		b.stretch_mode = TextureRect.STRETCH_SCALE
+		b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.visible = false
+		add_child(b)
+		bars.append(b)
 	root = Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.theme = UI.make_theme()
 	add_child(root)
+	get_viewport().size_changed.connect(_fit_root)
 	fade = ColorRect.new()
 	fade.color = Color("0b1026")
 	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -89,7 +100,7 @@ func _ready() -> void:
 		GameState.hatched = [{"id": rv, "is_new": GameState.add_obake(rv), "level": 1, "rare": true, "special": OS.get_environment("OBAKE_REVEAL_TUTORIAL") != ""}]
 		start = "hatch"
 	go(start if SCREENS.has(start) else "title", true)
-	root.add_child(fade)
+	add_child(fade) # 暗転は画面ぜんたい（上下の帯も）
 	_music()
 	GameState.goal_completed.connect(_on_goal)
 	# デモの見せ場の切りかえ（OBAKE_DEMO=1 か、Web の ?demo=1）
@@ -264,6 +275,7 @@ func go(screen_name: String, instant := false) -> void:
 	current.set_anchors_preset(Control.PRESET_FULL_RECT)
 	current.set("main", self)
 	current.set("screen_name", screen_name) # 1つの画面スクリプトで2場面を持つとき用（screen_onboard.gd）
+	_fit_root()
 	root.add_child(current)
 	root.move_child(current, 0)
 	if not instant:
@@ -272,8 +284,68 @@ func go(screen_name: String, instant := false) -> void:
 		await tw2.finished
 		fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	busy = false
+	_sample_bars()
 	if screen_name == "garden" and not GameState.pending_toasts.is_empty():
 		_flush_goals()
+
+
+## 縦に長い画面（スマホの 390x844 など。stretch の aspect は keep_width：幅は 360 のまま、縦にのびる）：
+## 島（TALL）は画面いっぱいに組む。ほかの画面は 360x640 のまま上下のまんなかに置き、上下のすき間は、その画面のふちの 1 行をのばして塗る
+const TALL := ["garden", "morning", "room", "evening"]
+
+
+func _fit_root() -> void:
+	var h := get_viewport().get_visible_rect().size.y
+	var off := maxf(0.0, (h - 640.0) / 2.0)
+	if current_name in TALL or off < 1.0:
+		root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		off = 0.0
+	else:
+		root.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		root.position = Vector2(0, off)
+		root.size = Vector2(360, 640)
+	bars[0].position = Vector2.ZERO
+	bars[0].size = Vector2(360, off)
+	bars[1].position = Vector2(0, off + 640.0)
+	bars[1].size = Vector2(360, off)
+	for b in bars:
+		b.visible = off > 0.0 and b.texture != null
+
+
+## 上下の帯：画面のいちばん上と下の 1 行でいちばん多い色で塗る（ボタンの影などが縞にならないように）。出てから 2 回：組み立て直後と、少しあと
+func _sample_bars() -> void:
+	for wait in [0.3, 1.6]:
+		await get_tree().create_timer(wait).timeout
+		var off := root.position.y
+		if off < 1.0 or busy or fade.modulate.a > 0.01:
+			continue
+		var tex := get_viewport().get_texture()
+		var img: Image = tex.get_image() if tex else null
+		if img == null or img.is_empty():
+			continue
+		var k := img.get_height() / get_viewport().get_visible_rect().size.y
+		for i in 2:
+			var y := int((off + 1.0) * k) if i == 0 else int((off + 639.0) * k)
+			bars[i].texture = ImageTexture.create_from_image(Image.create_from_data(1, 1, false, Image.FORMAT_RGB8, _row_mode(img, clampi(y, 0, img.get_height() - 1))))
+		_fit_root()
+
+
+## 1 行の中で、いちばん多い色（16 段に丸めて数え、その段の平均）
+func _row_mode(img: Image, y: int) -> PackedByteArray:
+	var count := {}
+	var sum := {}
+	var step := maxi(1, img.get_width() / 120)
+	for x in range(0, img.get_width(), step):
+		var c := img.get_pixel(x, y)
+		var k := Vector3i(int(c.r * 15.0), int(c.g * 15.0), int(c.b * 15.0))
+		count[k] = count.get(k, 0) + 1
+		sum[k] = sum.get(k, Vector3.ZERO) + Vector3(c.r, c.g, c.b)
+	var best: Vector3i = count.keys()[0]
+	for k in count:
+		if count[k] > count[best]:
+			best = k
+	var avg: Vector3 = sum[best] / float(count[best])
+	return PackedByteArray([int(avg.x * 255.0), int(avg.y * 255.0), int(avg.z * 255.0)])
 
 
 func _flush_goals() -> void:

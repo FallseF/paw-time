@@ -32,9 +32,10 @@ var onboard_end := false # はじめての流れの最後（見つけた仕事�
 
 
 func _ready() -> void:
-	# 画面は 360x640 固定の座標で組む（庭の画面と同じ作法。アンカー任せだと大きさ 0 になることがある）
+	# 画面は 360 幅の固定座標で組む（庭の画面と同じ作法。アンカー任せだと大きさ 0 になることがある）。
+	# 高さは島の高さ（縦に長い端末では 640 より大きい）。シートは下に、求人カードは上下のまんなかに
 	position = Vector2.ZERO
-	size = Vector2(360, 640)
+	size = Vector2(360, _h())
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	garden = get_parent() as Control
 	_start.call_deferred()
@@ -80,6 +81,15 @@ func _garden_card(show: bool) -> void:
 
 
 # ---------------------------------------------------------------- 今日の求人（保存）
+
+## 島の高さ（縦に長い端末では 640 より大きい）と、シートの下端
+func _h() -> float:
+	return maxf(640.0, garden.size.y) if garden else 640.0
+
+
+func _bottom() -> float:
+	return _h() - 14.0
+
 
 static func today_key() -> String:
 	# 町（言語）が変われば、その町の求人に作り直す
@@ -178,7 +188,7 @@ func _sheet(who: String, title: String, body: String, btn: String, cb: Callable,
 		sheet.queue_free()
 	sheet = PanelContainer.new()
 	sheet.add_theme_stylebox_override("panel", Kit.pill(PAPER, 24, 0.18, Vector2(16, 14)))
-	sheet.position = Vector2(14, 660) # 画面の下から。高さが決まったら _sheet_fit で下にそろえる
+	sheet.position = Vector2(14, _h() + 20.0) # 画面の下から。高さが決まったら _sheet_fit で下にそろえる
 	sheet.size = Vector2(332, 0)
 	add_child(sheet)
 	# 画面より高くならないように（長い文でも、ボタンが画面の外へ出ない。はみ出す分はスクロール）
@@ -221,14 +231,14 @@ const SHEET_MAX_H := 600.0
 var sheet_tw: Tween
 
 
-## シートを中身の高さに縮めて、下（626）にそろえる。中身の高さが変わるたびに呼ばれる（Kit.keep_fit）
+## シートを中身の高さに縮めて、下（_bottom）にそろえる。中身の高さが変わるたびに呼ばれる（Kit.keep_fit）
 func _sheet_fit(s: PanelContainer, sc: ScrollContainer, v: Control) -> void:
 	if s != sheet or s.is_queued_for_deletion():
 		return
 	var pad := s.get_theme_stylebox("panel").get_minimum_size().y
 	sc.custom_minimum_size.y = minf(v.get_combined_minimum_size().y, SHEET_MAX_H - pad)
 	s.size = Vector2(332, 0)
-	var y := 626.0 - s.size.y
+	var y := _bottom() - s.size.y
 	if is_equal_approx(s.position.y, y):
 		return
 	if sheet_tw:
@@ -330,6 +340,8 @@ func _sync_note_count() -> void:
 
 ## 待っている知らせを、1 枚ずつ（島の上に何も開いていないとき）。何か開いている間（シート・チャット・くわしく・めあて・島づくり）は、出ている知らせも隠す
 func _process(_delta: float) -> void:
+	if size.y != _h(): # 島の高さに合わせる（縦に長い端末。島の大きさは、この係が入ったあとで決まることがある）
+		size = Vector2(360, _h())
 	var covered: bool = overlay_open() or garden.overlay_open() or garden.get("editing") or garden.get("cam_hold") \
 		or (garden.get("meters") != null and garden.meters.visible) or garden.get("goals_panel") != null
 	for n in notes:
@@ -407,7 +419,7 @@ func _speech(title: String, body: String, btn: String, cb: Callable) -> void:
 		speech.queue_free()
 	var at := _partner_screen_pos()
 	speech = Control.new()
-	speech.size = Vector2(360, 640)
+	speech.size = Vector2(360, _h())
 	speech.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(speech)
 	var p := PanelContainer.new()
@@ -438,7 +450,7 @@ func _speech(title: String, body: String, btn: String, cb: Callable) -> void:
 			var ty := p.position.y + p.size.y - 2.0
 			tail.polygon = PackedVector2Array([Vector2(tx - 12, ty), Vector2(tx + 12, ty), Vector2(tx, ty + 18.0)])
 		else:
-			p.position.y = minf(at.y + 60.0, 626.0 - p.size.y)
+			p.position.y = minf(at.y + 60.0, _bottom() - p.size.y)
 			var ty := p.position.y + 2.0
 			tail.polygon = PackedVector2Array([Vector2(tx - 12, ty), Vector2(tx + 12, ty), Vector2(tx, ty - 18.0)]))
 	p.pivot_offset = Vector2(156, 80)
@@ -693,6 +705,7 @@ func _build_viewer() -> void:
 	if sheet and is_instance_valid(sheet):
 		sheet.queue_free()
 	_garden_card(false)
+	size = Vector2(360, _h())
 	viewer = Control.new()
 	viewer.size = Vector2(360, 640)
 	viewer.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -701,6 +714,7 @@ func _build_viewer() -> void:
 	dim.color = Color(0.12, 0.1, 0.2, 0.62)
 	dim.size = Vector2(360, 640)
 	viewer.add_child(dim)
+	Kit.center_tall(viewer, dim) # 縦に長い島では、カードは上下のまんなか・暗幕は画面いっぱい
 	stage = PartnerStage.new(Vector2(170, 150))
 	stage.position = Vector2(95, 18)
 	viewer.add_child(stage)

@@ -1927,12 +1927,17 @@ func _build_ui() -> void:
 
 ## カードの下端（下のタブの帯の上。HUD が無いおでかけ中は画面の下）
 func _card_bottom() -> float:
-	return hud.card_bottom() if hud else 626.0
+	return hud.card_bottom() if hud else size.y - 14.0
 
 
 ## カードの幅（右下に ✎ がある日は、その左まで）
 func _card_w() -> float:
 	return 284.0 if hud and hud._fab_wanted() else 336.0
+
+
+## 縦に長い画面で、640 の高さで組んだ箱（カタログ・いかだ・お知らせ）を上下のまんなかへ置くためのずれ
+func _off() -> float:
+	return maxf(0.0, (size.y - 640.0) / 2.0)
 
 
 func _place_card() -> void:
@@ -2815,7 +2820,7 @@ func _build_edit_ui() -> void:
 	add_child(edit_ui)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.96), 22, 0.18, Vector2(14, 12)))
-	p.position = Vector2(14, 470)
+	p.position = Vector2(14, size.y - 170.0)
 	p.size = Vector2(332, 0)
 	edit_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -2872,7 +2877,7 @@ func _build_edit_ui() -> void:
 	v.add_child(_link("島をシェアする", _share))
 	Kit.keep_fit(p, func():
 		p.size.y = 0
-		p.position.y = 628 - p.size.y)
+		p.position.y = size.y - 12.0 - p.size.y)
 
 
 func _edit_input(event: InputEvent) -> void:
@@ -2880,7 +2885,7 @@ func _edit_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		pos = event.position
 		if event.pressed:
-			if pos.y > 460 or pos.y < 60:
+			if pos.y > size.y - 180.0 or pos.y < 60:
 				return
 			# 岸の「＋」（島を広げる）
 			for mk in exp_markers:
@@ -3138,7 +3143,7 @@ func _open_raft() -> void:
 	raft_ui.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(16, 14)))
-	p.position = Vector2(18, 90)
+	p.position = Vector2(18, 90 + _off())
 	p.size = Vector2(324, 0)
 	raft_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -3278,7 +3283,7 @@ func _open_catalog(tab := "items") -> void:
 	catalog_ui.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(12, 12)))
-	p.position = Vector2(10, 40)
+	p.position = Vector2(10, 40 + _off())
 	p.size = Vector2(340, 590)
 	catalog_ui.add_child(p)
 	var v := VBoxContainer.new()
@@ -3511,7 +3516,7 @@ func _popup(title: String, body: String, code: String) -> VBoxContainer:
 	share_ui.add_child(dim)
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.25, Vector2(18, 16)))
-	p.position = Vector2(24, 170)
+	p.position = Vector2(24, 170 + _off())
 	p.size = Vector2(312, 0)
 	share_ui.add_child(p)
 	var v := VBoxContainer.new()

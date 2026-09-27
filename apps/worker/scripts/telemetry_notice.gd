@@ -18,7 +18,7 @@ func _ready() -> void:
 	layer = 70
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 0.99, 0.97, 0.98), 18, 0.25, Vector2(14, 12)))
-	p.position = Vector2(12, 640)
+	p.position = Vector2(12, Kit.screen_h(self))
 	p.size = Vector2(336, 0)
 	add_child(p)
 	var v := VBoxContainer.new()
@@ -38,7 +38,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	p.size.y = 0
 	var tw := create_tween()
-	tw.tween_property(p, "position:y", 640.0 - p.size.y - 12.0, 0.35).set_delay(1.0).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(p, "position:y", Kit.screen_h(self) - p.size.y - 12.0, 0.35).set_delay(1.0).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _close() -> void:

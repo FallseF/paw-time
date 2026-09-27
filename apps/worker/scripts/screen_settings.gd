@@ -76,7 +76,7 @@ func _build() -> void:
 
 	scroll = ScrollContainer.new()
 	scroll.position = Vector2(0, 66)
-	scroll.size = Vector2(360, 574)
+	scroll.size = Vector2(360, maxf(574.0, size.y - 66.0))
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	TouchScroll.enable(scroll)
 	add_child(scroll)
@@ -376,7 +376,7 @@ func ask_reset() -> void:
 		confirm = null, SUB))
 	Kit.keep_fit(p, func():
 		p.size.y = 0
-		p.position.y = (640.0 - p.size.y) / 2.0)
+		p.position.y = (size.y - p.size.y) / 2.0)
 
 
 ## この端末のゲームの記録を消して、はじめから（診断から）。利用データの ID・送る設定・言語は残す

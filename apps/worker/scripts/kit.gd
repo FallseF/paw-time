@@ -60,6 +60,26 @@ static func _box(bg: Color, radius: int, shadow := 0.14, pad := Vector2(14, 8)) 
 	return s
 
 
+## 360x640 の固定座標で組んだ重ね画面を、縦に長い親（島は画面いっぱい）の上下まんなかへ置く。
+## bg（暗幕・地の色）は、上下のすき間まで伸ばす。親が 640 なら何も変わらない
+static func center_tall(c: Control, bg: Control = null) -> float:
+	var p := c.get_parent() as Control
+	var h := p.size.y if p else 640.0
+	var off := maxf(0.0, (h - 640.0) / 2.0)
+	c.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	c.position = Vector2(0, off)
+	c.size = Vector2(360, 640)
+	if bg:
+		bg.position = Vector2(0, -off)
+		bg.size = Vector2(360, maxf(h, 640.0))
+	return off
+
+
+## 画面（CanvasLayer から見た）の高さ。stretch の aspect が keep_width なので、縦に長い端末では 640 より大きい
+static func screen_h(n: Node) -> float:
+	return n.get_viewport().get_visible_rect().size.y if n.is_inside_tree() else 640.0
+
+
 static func text(t: String, size: int, color := Color("2a2233"), heavy := false, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	var l := Label.new()
 	l.text = t
