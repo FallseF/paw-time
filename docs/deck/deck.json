@@ -1,0 +1,56 @@
+{
+ "v": 4,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-09-27T10:00:08Z"
+ },
+ "title": "Paw Time Pitch",
+ "cover": "cover",
+ "order": [
+  "cover",
+  "problem",
+  "insight",
+  "solution",
+  "wins",
+  "impact",
+  "different",
+  "technical",
+  "roadmap",
+  "data",
+  "view",
+  "day",
+  "tired",
+  "cats",
+  "island",
+  "shops"
+ ],
+ "sections": {
+  "s1": {
+   "description": "Submission: the eight required sections",
+   "start": "cover"
+  },
+  "s2": {
+   "description": "Appendix: the data, the Recruit view and the game",
+   "start": "data"
+  }
+ },
+ "faces": {
+  "fredoka": {
+   "family": "Fredoka",
+   "href": "https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&display=swap"
+  },
+  "dm-sans": {
+   "family": "DM Sans",
+   "href": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
+  },
+  "inter": {
+   "family": "Inter",
+   "href": "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
+  },
+  "roboto-mono": {
+   "family": "Roboto Mono",
+   "href": "https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap"
+  }
+ },
+ "designSystems": []
+}
