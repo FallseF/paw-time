@@ -4,8 +4,8 @@ extends Control
 
 var main
 
-const GROUPS := ["睡眠", "はじめて", "時間帯", "天気", "つながり", "リズム"]
-const NORMAL := ["receipt", "bubble", "tray", "pan", "box"]
+const GROUPS := ["休み", "はじめて", "時間帯", "天気", "つながり", "リズム"]
+const NORMAL := ["receipt", "bubble", "tray", "pan", "box", "lantern"]
 
 var font_bold: FontFile
 var font_black: FontFile
@@ -34,7 +34,7 @@ func _ready() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
-	head.add_child(_text("レア %d / %d" % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
+	head.add_child(_text(tr("レア %d / %d") % [rare_have, Rares.LIST.size()], 15, Color("8a5bd6")))
 	var back := Button.new()
 	back.text = "もどる"
 	back.add_theme_font_override("font", font_bold)
@@ -43,7 +43,7 @@ func _ready() -> void:
 		back.add_theme_stylebox_override(k, _pill(Color.WHITE, 18))
 	back.add_theme_color_override("font_color", Color("2a2233"))
 	back.add_theme_color_override("font_hover_color", Color("2a2233"))
-	back.pressed.connect(func(): main.go("room"))
+	back.pressed.connect(func(): main.go("garden"))
 	head.add_child(back)
 
 	var scroll := ScrollContainer.new()
@@ -58,8 +58,13 @@ func _ready() -> void:
 
 	col.add_child(_section("ふつうのおばけ"))
 	col.add_child(_shelf())
+	var hint_n := _text("チョウチンは満月の夜に来る", 11, Color("9a8e98"))
+	hint_n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(hint_n)
+	col.add_child(_section("庭の育ち"))
+	col.add_child(_garden_list())
 	for g in GROUPS:
-		col.add_child(_section("レア ・ " + g))
+		col.add_child(_section(tr("レア ・ ") + tr(g)))
 		var grid := GridContainer.new()
 		grid.columns = 3
 		grid.add_theme_constant_override("h_separation", 8)
@@ -72,6 +77,14 @@ func _ready() -> void:
 		for r in Rares.LIST:
 			if r.group == g:
 				grid.add_child(_card(r))
+	var tm := MarginContainer.new()
+	tm.add_theme_constant_override("margin_left", 90)
+	tm.add_theme_constant_override("margin_right", 90)
+	tm.add_theme_constant_override("margin_top", 10)
+	tm.add_child(Kit.button("タイトルへ（保存ずみ）", Color(1, 1, 1, 0.9), func():
+		GameState.save()
+		main.go("title"), Color("8a7a88"), 36, 12))
+	col.add_child(tm)
 	var pad := Control.new()
 	pad.custom_minimum_size = Vector2(0, 30)
 	col.add_child(pad)
@@ -119,21 +132,21 @@ func _shelf() -> Control:
 	vp.transparent_bg = true
 	vp.msaa_3d = Viewport.MSAA_4X
 	box.add_child(vp)
+	View3D.fit(box, vp)
 	var w := Node3D.new()
 	vp.add_child(w)
 	Look.apply(w, "studio", Color(0, 0, 0, 0), true)
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 0.8, 5.0)
 	cam.fov = 30
 	w.add_child(cam)
-	cam.look_at(Vector3(0, 0.45, 0))
+	cam.look_at_from_position(Vector3(0, 0.9, 5.8), Vector3(0, 0.62, 0))
 	for i in NORMAL.size():
 		var id: String = NORMAL[i]
-		var pos := Vector3((i - 2) * 1.05, 0, 0)
+		var pos := Vector3((i - 3) * 1.0, 0, 0)
 		if GameState.seen.has(id):
 			var o := Obake3D.new().setup(id)
 			o.position = pos
-			o.scale = Vector3.ONE * 0.8
+			o.scale = Vector3.ONE * 0.7
 			w.add_child(o)
 		else:
 			var q := MeshInstance3D.new()
@@ -152,12 +165,60 @@ func _shelf() -> Control:
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.add_theme_constant_override("separation", 0)
 	for id in NORMAL:
-		var l := _text(GameState.info(id).name if GameState.seen.has(id) else "？？？", 12, Color("6a5f70"))
+		var nm: String = tr(GameState.info(id).name) if GameState.seen.has(id) else "？？？"
+		for o in GameState.owned:
+			if o.id == id:
+				nm += "\nLv%d" % o.level
+		var l := _text(nm, 10, Color("6a5f70"))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.custom_minimum_size = Vector2(66, 18)
+		l.custom_minimum_size = Vector2(49, 30)
 		names.add_child(l)
 	v.add_child(names)
 	return v
+
+
+## 庭の段と、仕事の飾り
+func _garden_list() -> Control:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", 12)
+	m.add_theme_constant_override("margin_right", 12)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _pill(Color.WHITE, 16))
+	m.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 3)
+	p.add_child(v)
+	var L: int = GameState.garden_level
+	for i in GameState.GARDEN.size():
+		var st: Dictionary = GameState.GARDEN[i]
+		var done := i <= L
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		row.add_child(_text("●" if done else "○", 12, Color("7fbf6a") if done else Color("c9bfc6")))
+		var name_l := _text(tr(st.name) if done else (tr("？？？（めぐみ %d）") % st.need if i == L + 1 else "？？？"), 13, Color("2a2233") if done else Color("9a8e98"), font_black if done else null)
+		row.add_child(name_l)
+		v.add_child(row)
+	v.add_child(_text(tr("めぐみ %d ・ 満月の夜 %d 回 ・ 星見草 %d 輪") % [GameState.growth, GameState.moon_nights, GameState.dream_flowers], 12, Color("6a5f70")))
+	v.add_child(_text("仕事の飾り", 13, Color("8a7a88")))
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 4)
+	for r in ["register", "hall", "dish", "kitchen", "stock"]:
+		var lv: int = GameState.deco_level(r)
+		var chip := PanelContainer.new()
+		chip.add_theme_stylebox_override("panel", _pill(Color("f3ecff") if lv > 0 else Color("f1ebe4"), 12))
+		var t: String = tr(GameState.DECOS[r].name) if lv > 0 else "？？？（%s）" % tr(GameState.ROLE_LABEL[r])
+		if lv == 2:
+			t += " ★"
+		chip.add_child(_text(t, 11, Color("4a3f52") if lv > 0 else Color("a89ea6")))
+		flow.add_child(chip)
+	if GameState.decos.get("mask", 0) > 0:
+		var chip2 := PanelContainer.new()
+		chip2.add_theme_stylebox_override("panel", _pill(Color("fff0e0"), 12))
+		chip2.add_child(_text("夜店のお面屋", 11, Color("b0643a")))
+		flow.add_child(chip2)
+	v.add_child(flow)
+	return m
 
 
 ## カードの絵。3D で撮った assets/gen/rares3d/<id>.png を優先する（無ければ古い平たい絵）
@@ -187,13 +248,12 @@ func _card(r: Dictionary) -> Control:
 	if tex:
 		var tr := TextureRect.new()
 		tr.texture = tex
-		# 512px の絵を小さく出すので、ミップマップでなめらかに縮める（既定はドット絵向けの最近傍）
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(78, 78)
 		if not found:
-			tr.modulate = Color(0.15, 0.12, 0.2, 0.35)
+			tr.modulate = Color(0.1, 0.08, 0.14, 0.55)
 		art = tr
 	else:
 		var dot := Panel.new()
@@ -215,7 +275,7 @@ func _card(r: Dictionary) -> Control:
 	v.add_child(name_l)
 	var hint := _text(r.desc if found else r.hint, 10, Color("7a6f7c"))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size = Vector2(84, 0)
 	v.add_child(hint)
 	p.gui_input.connect(func(e):
@@ -225,6 +285,9 @@ func _card(r: Dictionary) -> Control:
 
 
 func _show_detail(r: Dictionary) -> void:
+	Kit.play(self, "tap", 1.1)
+	if not GameState.seen.has(r.id):
+		GameState.goal("zukan")
 	if detail:
 		detail.queue_free()
 	var found: bool = GameState.seen.has(r.id)
@@ -255,21 +318,30 @@ func _show_detail(r: Dictionary) -> void:
 	if tex:
 		var tr := TextureRect.new()
 		tr.texture = tex
-		# 512px の絵を小さく出すので、ミップマップでなめらかに縮める（既定はドット絵向けの最近傍）
 		tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.custom_minimum_size = Vector2(220, 220)
 		if not found:
-			tr.modulate = Color(0.15, 0.12, 0.2, 0.35)
+			tr.modulate = Color(0.1, 0.08, 0.14, 0.55)
 		v.add_child(tr)
 	var n := _text(r.name if found else "？？？", 26, Color("2a2233"), font_black)
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(n)
-	var g := _text("レア ・ " + r.group, 13, Color(r.look.c2).darkened(0.2))
+	var g := _text(tr("レア ・ ") + tr(r.group), 13, Color(r.look.c2).darkened(0.2))
 	g.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(g)
-	var d := _text(r.desc if found else "ヒント：" + r.hint, 15, Color("4a3f52"))
+	var d := _text(tr(r.desc) if found else tr("ヒント：") + tr(r.hint), 15, Color("4a3f52"))
 	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	d.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(d)
+
+
+func demo_detail() -> void:
+	_show_detail(Rares.LIST[3])
+
+
+func demo_bottom() -> void:
+	for c in get_children():
+		if c is ScrollContainer:
+			c.scroll_vertical = 99999

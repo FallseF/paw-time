@@ -14,7 +14,7 @@ void vertex() {
 	float d = max(-vp.z, 0.1);
 	float wdt = width * clamp(d / 3.0, 0.8, 2.2);
 	vp.xyz += vn * wdt;
-	vp.z -= wdt * 0.6;
+	vp.z -= wdt * 5.0;  // 奥へ逃がして、くぼみ（耳の内側など）から殻が顔を出さないように
 	POSITION = PROJECTION_MATRIX * vp;
 }
 

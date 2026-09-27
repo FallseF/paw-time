@@ -6,8 +6,8 @@
 Team Dry Grape（大山慶悟・青木悠登・小柳璃紗）／Recruit Innovation Cup 2026。
 
 - English README: [README.en.md](README.en.md)
-- ローンチページ（英語／日本語）: https://obake-breakroom-launch.vercel.app （日本語は `/ja/`）
-- 本線の試遊版（ブラウザ）: https://obake-breakroom-b-sleep.vercel.app
+- ローンチページ（英語／日本語）: https://paw-time-launch.vercel.app （日本語は `/ja/`）
+- 試遊版（ブラウザ）: https://paw-time-play.vercel.app
 
 > この文書の状態の見方: **[済]** 本線で動く／**[統合中]** 別ブランチで完成、本線へ合流中／**[制作中]** 担当が作っている／**[案]** 決まっているが未着手
 
@@ -166,19 +166,15 @@ Team Dry Grape（大山慶悟・青木悠登・小柳璃紗）／Recruit Innovat
 
 ## 6. ブランチ
 
+**ゲームの正本は `main` の `apps/worker/`**（2026-09-26 に `feature/variant-b` 3255d0a を取り込み。履歴もつながっている）。新しい作業は `main` から `yuto/…` などのブランチを切る。
+
 | ブランチ | 中身 | 状態 |
 |---|---|---|
-| `main` | 共通の土台（本ファイル、ローンチページ `apps/marketing/`） | — |
-| `feature/variant-b` | **本線**：全機能入りのゲーム（`apps/worker` への移し替えは今後） | 本線 |
-| `feature/onboarding-jobs` | はじめの流れと求人 | 本線に取り込み済み |
-| `feature/work-together` | 一緒に働く・財布・シフト | 本線に取り込み済み |
-| `feature/wardrobe` | キセカエ | 本線に取り込み済み |
-| `feature/shop-island` | お店の島・前の晩の声かけ・誘い | 本線へ統合中 |
-| `feature/skills` | おさらい・スキルの記録 | 本線へ統合中 |
-| `yuto/insights` | 行動データの送信とリクルート向け画面（モノレポ内） | 制作中 |
-| `feature/island-kit` | 島の飾り・拡張・乗り物 | 本線に取り込み済み |
-| `feature/aaa-look` / `my-obake-quiz` / `paw-cat` / `rare-3d` | 見た目・診断・猫の部品・レア3D | 本線に取り込み済み |
-| `feature/variant-a` / `variant-c` | 試作A（すくい）・C（店を回す） | 停止 |
+| `main` | モノレポ（`apps/worker` ゲーム、`apps/employer`、`apps/api`、`apps/insights`、`apps/marketing`） | 正本 |
+| `feature/title-aaa` | AAA 版タイトル（立体ロゴ・演出） | 制作中（まだ `main` に入っていない） |
+| `feature/variant-b` | 取り込み前の本線 | 役目を終えた（記録） |
+| `feature/onboarding-jobs` / `work-together` / `wardrobe` / `island-kit` / `shop-island` / `skills` / `cat-chat` / `orb-aaa` / `rare-cat-ears` / `look-pass` | 各機能の作業ブランチ | 取り込み済み（記録） |
+| `feature/variant-a` / `variant-c` | 試作A・C | 停止 |
 
 ---
 

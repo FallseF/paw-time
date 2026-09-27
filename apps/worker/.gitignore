@@ -1,0 +1,10 @@
+.godot/
+*.import.bak
+art_preview.png
+_archive/
+promo/raw.avi
+promo/*.wav
+promo/frames/
+promo/marks.txt
+override.cfg
+build/

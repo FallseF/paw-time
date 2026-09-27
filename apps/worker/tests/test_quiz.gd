@@ -2,7 +2,8 @@ extends SceneTree
 ## マイおばけ猫 診断の決まりごとを確かめる（画面は要らない）。
 ##   godot --headless --path . -s tests/test_quiz.gd
 ## 1. 16 タイプ全部に、たどり着く答えがある  2. 各タイプの中身がそろっている（相性の相手は相互）
-## 3. 見た目の持ち物・しぐさが MyObake3D にある  4. 画面に出す文字が Zen Maru Gothic に全部ある
+## 3. 見た目の持ち物・しぐさが MyObake3D にある
+## 4. i18n/strings.csv の QUIZ_… キーが en・ja の両方にあり、その文字が Zen Maru Gothic に全部ある（日本語は 1 行 20 字以内）
 ## 5. QuizResult の保存 → 読み込みで戻る
 
 var fails := 0
@@ -19,6 +20,7 @@ func _check(ok: bool, msg: String) -> void:
 
 
 func _run() -> void:
+	TranslationServer.set_locale("en")
 	# 1. 答え → タイプ（全 4096 通りを回し、16 タイプが全部出るか）
 	var seen := {}
 	for bits in 4096:
@@ -36,11 +38,10 @@ func _run() -> void:
 	var accs := {}
 	for id in QuizData.TYPES:
 		var t: Dictionary = QuizData.TYPES[id]
-		for k in ["name", "line", "en_name", "en_line", "job", "match", "look"]:
+		for k in ["job", "match", "look"]:
 			_check(t.has(k), "%s missing %s" % [id, k])
 		_check(QuizData.JOBS.has(t.job), "%s job %s" % [id, t.job])
 		_check(QuizData.TYPES.has(t.match) and QuizData.TYPES[t.match].match == id, "%s match not mutual" % id)
-		_check(t.line.length() <= 20, "%s line too long (%d)" % [id, t.line.length()])
 		# 3. 見た目
 		_check(MyObake3D.ACCESSORIES.has(t.look.accessory), "%s accessory %s" % [id, t.look.accessory])
 		_check(MyObake3D.MOTIONS.has(t.look.motion), "%s motion %s" % [id, t.look.motion])
@@ -49,34 +50,49 @@ func _run() -> void:
 		_check(ob.acc.get_child_count() > 0, "%s accessory built nothing" % id)
 		ob.free()
 	_check(accs.size() == 16, "accessories should be unique per type (%d)" % accs.size())
-	for q in QuizData.QUESTIONS:
-		for k in ["q", "a", "b"]:
-			_check(q[k].length() <= 20, "question too long: %s" % q[k])
 
-	# 4. 文字（画面とカードで使う文字列を全部集めて、フォントに字があるか）
-	var texts: Array = ["Paw Time", "マイおばけ猫 診断", "あなたのおばけ猫を\nさがそう", "12の質問で、相棒の猫おばけが決まる。", "バイトと休みの、ゆるい質問だよ。",
-		"はじめる", "1分くらい ・ 答えはあとで変えられる", "ひとつ戻る", "Q0123456789", "あなたのマイおばけ猫は", "わたしのマイおばけ猫は",
-		"向いてる仕事：", "相性のいいタイプ：", "この子と はじめる", "結果をシェア", "画像を保存", "シェア文をコピー", "カードを作っています…",
-		"画像を保存して、SNSに貼ってね", "シェア文をコピーしました", "画像をダウンロードしました", "保存しました：", "保存できませんでした", "とじる", "%AB",
-		QuizData.SITE_URL]
-	for q in QuizData.QUESTIONS:
-		texts.append_array([q.q, q.a, q.b])
-	for ax in QuizData.AXES:
-		texts.append_array([ax.a, ax.b, ax.a_en, ax.b_en])
-	for j in QuizData.JOBS.values():
-		texts.append_array([j.ja, j.en])
+	# 4. 文字：コードが使うキーを全部集め、両方の言語で訳があるか・フォントに字があるかを見る
+	var keys: Array = ["QUIZ_UI_KICKER", "QUIZ_UI_TITLE", "QUIZ_UI_SUB", "QUIZ_UI_START", "QUIZ_UI_NOTE", "QUIZ_UI_QNUM",
+		"QUIZ_UI_BACK", "QUIZ_UI_YOURS", "QUIZ_UI_JOB", "QUIZ_UI_MATCH", "QUIZ_UI_BEGIN", "QUIZ_UI_SHARE", "QUIZ_UI_SHARE_TITLE",
+		"QUIZ_UI_SAVE", "QUIZ_UI_COPY", "QUIZ_UI_MAKING", "QUIZ_UI_READY", "QUIZ_UI_COPIED", "QUIZ_UI_DOWNLOADED",
+		"QUIZ_UI_SAVED", "QUIZ_UI_SAVE_FAILED", "QUIZ_UI_CLOSE", "QUIZ_CARD_KICKER", "QUIZ_CARD_JOB", "QUIZ_CARD_MINE", "QUIZ_SHARE_TEXT"]
+	var short_ja: Array = [] # 画面に 1 行で出す日本語（20 字以内）
+	for i in QuizData.QUESTIONS.size():
+		for part in ["", "_A", "_B"]:
+			keys.append("QUIZ_Q%d%s" % [i + 1, part])
+			short_ja.append("QUIZ_Q%d%s" % [i + 1, part])
+	for i in QuizData.AXES.size():
+		keys.append_array(["QUIZ_AX%d_A" % i, "QUIZ_AX%d_B" % i])
+	for j in QuizData.JOBS:
+		keys.append("QUIZ_JOB_" + j.to_upper())
 	for id in QuizData.TYPES:
-		var t: Dictionary = QuizData.TYPES[id]
-		texts.append_array([t.name, t.line, t.en_name, t.en_line, QuizData.share_text(id)])
-	for f in ["Bold", "Black"]:
-		var font: FontFile = load("res://assets/fonts/ZenMaruGothic-%s.ttf" % f)
-		var missing := {}
-		for s: String in texts:
-			for i in s.length():
-				var c := s.unicode_at(i)
-				if c > 32 and not font.has_char(c):
-					missing[s[i]] = true
-		_check(missing.is_empty(), "ZenMaru %s lacks: %s" % [f, "".join(missing.keys())])
+		keys.append_array(["QUIZ_T_%s_NAME" % id, "QUIZ_T_%s_LINE" % id])
+		short_ja.append("QUIZ_T_%s_LINE" % id)
+	var fonts: Array[FontFile] = [load("res://assets/fonts/ZenMaruGothic-Bold.ttf"), load("res://assets/fonts/ZenMaruGothic-Black.ttf")]
+	for loc in QuizData.LOCALES:
+		TranslationServer.set_locale(loc)
+		var texts: Array = ["Paw Time", "0123456789%", QuizData.SITE_URL]
+		for k in keys:
+			var v := QuizData.t(k)
+			_check(v != k and v != "", "[%s] no translation for %s" % [loc, k])
+			texts.append(v)
+			if loc == "ja" and k in short_ja:
+				_check(v.length() <= 20, "[ja] too long %s (%d)" % [k, v.length()])
+		for id in QuizData.TYPES:
+			texts.append(QuizData.share_text(id))
+		for font in fonts:
+			var missing := {}
+			for s: String in texts:
+				for i in s.length():
+					var c := s.unicode_at(i)
+					if c > 32 and not font.has_char(c):
+						missing[s[i]] = true
+			_check(missing.is_empty(), "[%s] %s lacks: %s" % [loc, font.resource_path.get_file(), "".join(missing.keys())])
+	# 既定は英語
+	_check(ProjectSettings.get_setting("internationalization/locale/fallback") == "en", "fallback locale should be en")
+	TranslationServer.set_locale("en")
+	_check(QuizData.share_text("OPHK").begins_with("My obake cat is") or OS.get_environment("OBAKE_LANG") != "", "share text in English")
+	_check(QuizData.share_text("OPHK").contains(QuizData.SITE_URL), "share text has the URL")
 
 	# 5. 保存と読み込み（本物の結果には触れない）
 	QuizResult.path = "user://my_obake_test.json"
