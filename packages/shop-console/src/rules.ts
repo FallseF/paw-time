@@ -47,6 +47,7 @@ export const REGIONS: Record<Region, RegionInfo> = {
     minimumWage: [
       { from: "2024-10-01", amount: 1163 },
       { from: "2025-10-03", amount: 1226 },
+      { from: "2026-10-01", amount: 1280 },
     ],
   },
 };
