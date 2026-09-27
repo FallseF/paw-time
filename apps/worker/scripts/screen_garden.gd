@@ -110,12 +110,15 @@ func _build_world() -> void:
 	cam.fov = 52
 	cam.v_offset = -1.6
 	world.add_child(cam)
-	# 小島・広げた陸まで入るよう、寄り先をずらして引く
-	var fit := _land_fit()
+	# 段の島（段 2 の小島も）が入るよう、寄り先をずらして引く。広げた陸は、なぞって見に行く
+	var fit := _land_fit(true)
 	cam.position = cam.position * float(fit.scale) + fit.shift
 	cam.look_at(Vector3(0, 0.0, -0.4) + fit.shift)
 	cam_home = cam.transform
 	cam_look = Vector3(0, 0.0, -0.4) + fit.shift
+	view_base = cam_home
+	view_look = cam_look
+	_update_pan_bounds()
 
 	var L: int = _L()
 	var t: int = _T()
@@ -697,14 +700,17 @@ func _build_expansion(id: String, animate: bool) -> void:
 	world.add_child(g)
 	exp_nodes[id] = g
 	var land := MeshInstance3D.new()
-	land.mesh = IslandProps.land_lobe(sh.r, IslandKit.EXPANSIONS.find(IslandKit.expansion(id)))
+	var idx := IslandKit.EXPANSIONS.find(IslandKit.expansion(id))
+	land.mesh = IslandProps.land_lobe(sh.r, idx)
 	land.material_override = terrain.material_override
-	land.position = Vector3(sh.center.x, -0.004, sh.center.z)
+	# 重なった陸どうしがちらつかないよう、場所ごとにほんの少し高さをずらす
+	land.position = Vector3(sh.center.x, -0.004 - 0.0006 * idx, sh.center.z)
+	land.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF # 平らな陸は影を落とさない（陸が増えても、影の描き足しを増やさない）
 	g.add_child(land)
 	if sh.has("bridge_from"):
 		var from: Vector3 = sh.bridge_from
 		var to: Vector3 = sh.bridge_to
-		var br := IslandProps.build("bridge_islet")
+		var br := _bridge()
 		br.position = (from + to) * 0.5
 		br.rotation.y = -atan2(to.z - from.z, to.x - from.x)
 		br.scale = Vector3(from.distance_to(to) / 2.4, 1, 1)
@@ -716,9 +722,10 @@ func _build_expansion(id: String, animate: bool) -> void:
 		var a := r2.randf() * TAU
 		var rk := MeshInstance3D.new()
 		rk.mesh = IslandProps.glb("rock")
-		rk.material_override = Obake3D.prop(Color("b9b3ad").darkened(r2.randf() * 0.15))
+		rk.material_override = _rock_mat(r2.randi() % 3)
 		rk.position = Vector3(sh.center.x + cos(a) * (sh.r + 0.1), -0.1, sh.center.z + sin(a) * (sh.r + 0.1))
 		rk.scale = Vector3.ONE * r2.randf_range(0.2, 0.32)
+		rk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		g.add_child(rk)
 	if not animate:
 		return
@@ -750,14 +757,66 @@ func _build_expansion(id: String, animate: bool) -> void:
 		t3.tween_callback(l.queue_free)
 
 
-## 島全体（地形の段・小島・広げた陸）が入るよう、カメラの寄り先と引き具合を決める {shift, scale}
-func _land_fit() -> Dictionary:
+var _rock_mats: Array = []
+static var _bridge_mesh: ArrayMesh
+
+
+## 小島の橋。板・杭・綱の部品（24 個）を、材質ごとにまとめた 1 つのメッシュにして使いまわす（描く回数を減らす）
+func _bridge() -> MeshInstance3D:
+	if _bridge_mesh == null:
+		var src := IslandProps.build("bridge_islet")
+		var by_mat := {}
+		for n in src.find_children("*", "MeshInstance3D", true, false):
+			var mi := n as MeshInstance3D
+			var xf := src.global_transform.affine_inverse() * mi.global_transform if mi.is_inside_tree() else _local_xf(src, mi)
+			for si in mi.mesh.get_surface_count():
+				var mat: Material = mi.material_override if mi.material_override else mi.get_active_material(si)
+				if not by_mat.has(mat):
+					var st := SurfaceTool.new()
+					st.begin(Mesh.PRIMITIVE_TRIANGLES)
+					by_mat[mat] = st
+				(by_mat[mat] as SurfaceTool).append_from(mi.mesh, si, xf)
+		_bridge_mesh = ArrayMesh.new()
+		for mat in by_mat:
+			var st: SurfaceTool = by_mat[mat]
+			st.set_material(mat)
+			_bridge_mesh = st.commit(_bridge_mesh)
+		src.free()
+	var br := MeshInstance3D.new()
+	br.mesh = _bridge_mesh
+	return br
+
+
+## 木の中にない部品の、親から見た置き場所
+func _local_xf(root: Node3D, n: Node3D) -> Transform3D:
+	var t := Transform3D.IDENTITY
+	var c: Node = n
+	while c != null and c != root:
+		if c is Node3D:
+			t = (c as Node3D).transform * t
+		c = c.get_parent()
+	return t
+
+
+## 広げた陸のふちの岩の材質（3 つの濃さを使いまわす。陸が増えても材質が増えないように）
+func _rock_mat(k: int) -> Material:
+	if _rock_mats.is_empty():
+		for i in 3:
+			_rock_mats.append(Obake3D.prop(Color("b9b3ad").darkened(i * 0.07)))
+	return _rock_mats[k]
+
+
+## 島が入るよう、カメラの寄り先と引き具合を決める {shift, scale}。ふだんの眺め（home）は段の島と小島だけ、
+## 島づくりの眺めは内側の 7 か所の広げた陸まで。外の輪は入れない（島が大きくなっても、家とあるじが小さくならないよう、
+## 広げた陸は、なぞって見に行く）
+func _land_fit(home := false) -> Dictionary:
 	if not ResourceLoader.exists(IslandProps.GLB % "terrain_s0"):
 		return {"shift": Vector3.ZERO, "scale": 1.0}
 	var st := IslandKit.stage_for(_L())
 	var mn := Vector2(1e9, 1e9)
 	var mx := Vector2(-1e9, -1e9)
-	for c in IslandKit.land_circles(st, _expansion_list()):
+	var inner: Array = [] if home else _expansion_list().filter(func(id): return String(IslandKit.expansion(id).get("needs", "")) == "")
+	for c in IslandKit.land_circles(st, inner):
 		mn = Vector2(minf(mn.x, c.x - c.z), minf(mn.y, c.y - c.z))
 		mx = Vector2(maxf(mx.x, c.x + c.z), maxf(mx.y, c.y + c.z))
 	var w := mx.x - mn.x
@@ -1336,7 +1395,8 @@ func _process(delta: float) -> void:
 	_t += delta
 	_sync_expand()
 	_sync_hud()
-	_sync_zoom(delta)
+	_sync_cam(delta)
+	_sync_recenter()
 	# 実際の時計：夕方になった・朝が来た（30 秒ごと。自分の島、はじめての流れのあと）
 	_clock_t += delta
 	if _clock_t > 30.0:
@@ -1449,13 +1509,12 @@ func _center_count() -> int:
 	return n
 
 
-## 庭のおばけをタップすると、跳ねてひとこと
 var orbit := 0.0
 var cam_v := -1.6
-var cam_look := Vector3(0, 0, -0.4) # よこになぞる・拡大の中心
+var cam_look := Vector3(0, 0, -0.4) # 拡大の中心（島の眺めのとき）
 ## 島の拡大・縮小（つまむ・ホイール・トラックパッド）。1 = ふだん、小さいほど寄る
 const ZOOM_MIN := 0.5
-const ZOOM_MAX := 1.3
+const ZOOM_MAX := 1.4
 var zoom := 1.0
 var zoom_to := 1.0
 var touches := {} # 指の番号 → 位置（2 本でつまむ）
@@ -1463,29 +1522,203 @@ var pinch_d0 := 0.0
 var pinch_z0 := 1.0
 var cam_hold := false # 話すときの寄り（そのあいだは、拡大・なぞりでカメラを動かさない）
 
+## 島をなぞって動かす（一本の指・マウスで押したままなぞる）。pan は、眺めの中心から横へずらした量（地面の x, z）
+## 指を離しても少しすべり（慣性）、島の外へ出すぎると、やわらかく押しもどす。二本の指では、つまみながら動かせる
+const TAP_SLOP := 10.0 # これより動いたら、タップではなくなぞり（画面の 360 基準の px）
+const PAN_FRICTION := 4.5 # 慣性の減り方（1 秒あたり）
+const PAN_MARGIN := 0.9 # 島のはし（陸の円）より外へ、これだけは見に行ける
+const RECENTER_AT := 1.3 # これより離れたら「もどる」の札を出す
+var view_base := Transform3D() # なぞる前の眺め（ふだんは cam_home、島づくりでは真上寄りの眺め）
+var view_look := Vector3.ZERO
+var pan := Vector2.ZERO
+var pan_v := Vector2.ZERO
+var pan_raw := Vector2.ZERO
+var pan_to = null # もどる・広げた場所へ寄るとき、なめらかに向かう先（Vector2）。無ければ null
+var pan_circles: Array = [] # 眺めが動ける陸の円 [Vector3(x, z, r)]
+var pan_off := Vector2.ZERO # pan = 0 のとき、画面のまんなかに写る地面（x, z）
+var press_on := false # 押している（まだタップかなぞりか決まっていない）
+var drag_on := false # なぞっている
+var press_pos := Vector2.ZERO
+var drag_last := Vector2.ZERO
+var drag_us := 0 # 最後に動いた時刻（慣性の速さを測る）
+var recenter_btn: Button
 
-## よこになぞった向きと拡大をあわせた、カメラの置き場所
+
+## なぞった量と拡大をあわせた、カメラの置き場所
 func _view_transform() -> Transform3D:
-	var t := cam_home
-	t.origin = cam_look + Basis(Vector3.UP, orbit) * (cam_home.origin - cam_look) * zoom
-	return t.looking_at(cam_look, Vector3.UP)
+	var t := view_base
+	var p := Vector3(pan.x, 0, pan.y)
+	t.origin = view_look + p + Basis(Vector3.UP, orbit) * (view_base.origin - view_look) * zoom
+	return t.looking_at(view_look + p, Vector3.UP)
 
 
 func _zoom_by(k: float) -> void:
 	zoom_to = clampf(zoom_to * k, ZOOM_MIN, ZOOM_MAX)
 
 
-## 拡大をなめらかに（毎フレーム）。見せ場の寄り（_focus）・島づくり・話すときは動かさない
-func _sync_zoom(delta: float) -> void:
-	if is_equal_approx(zoom, zoom_to) or busy or editing or cam_hold:
-		return
-	zoom = lerpf(zoom, zoom_to, 1.0 - exp(-12.0 * delta))
-	if absf(zoom - zoom_to) < 0.002:
-		zoom = zoom_to
+## 画面の点の真下の地面（y = 0）。今のカメラで写す
+func _ground_at(pos: Vector2) -> Vector3:
+	var vpos := View3D.to_vp(cam, pos)
+	var from := cam.project_ray_origin(vpos)
+	var dir := cam.project_ray_normal(vpos)
+	if absf(dir.y) < 1e-4:
+		return from
+	return from + dir * (-from.y / dir.y)
+
+
+## 眺めが動ける範囲：画面のまんなかに写る地面が、陸の円（段の島・小島・広げた陸）のどれか（＋少しの余白）から出ないように。
+## 四角でかこむと、丸い島の角の海ばかり見えてしまうので、円ごとに見る
+func _update_pan_bounds() -> void:
+	pan_circles = IslandKit.land_circles(IslandKit.stage_for(_L()), _expansion_list())
+	_sync_pan_off()
+
+
+## 画面のまんなか（カードの上の、島が見えている所）に写る地面と、眺めの中心とのずれ（寄る・カードをしまうと変わる）
+func _sync_pan_off() -> void:
+	var keep := cam.transform
+	cam.transform = _view_transform()
+	var g := _ground_at(Vector2(180, 300))
+	cam.transform = keep
+	var o := Vector2(g.x - view_look.x - pan.x, g.z - view_look.z - pan.y)
+	if o.length() > 30.0:
+		o = Vector2.ZERO
+	pan_off = Vector2(view_look.x, view_look.z) + o
+
+
+## 範囲の中にもどした pan（外なら、いちばん近い陸の円のふちへ）
+func _pan_clamped(p: Vector2) -> Vector2:
+	var w := pan_off + p
+	var best := w
+	var bd := INF
+	for c in pan_circles + [Vector3(pan_off.x, pan_off.y, 0.5)]: # 家の前（pan = 0）も、いつも範囲の中
+		var cc := Vector2(c.x, c.y)
+		var rr: float = c.z + PAN_MARGIN
+		var d := w.distance_to(cc)
+		if d <= rr:
+			return p
+		if d - rr < bd:
+			bd = d - rr
+			best = cc + (w - cc) / d * rr
+	return p + (best - w)
+
+
+## なぞる：前の点と今の点の真下の地面の差だけ、眺めをずらす（指の下の地面がついてくる）。
+## 範囲の外へは、ゴムのように重く（はみ出した分の 0.35 倍しか動かない）。pan_raw は、重さをかける前の量
+func _pan_drag(from_pos: Vector2, to_pos: Vector2) -> void:
+	var a := _ground_at(from_pos)
+	var b := _ground_at(to_pos)
+	pan_raw += Vector2(a.x - b.x, a.z - b.z)
+	var c := _pan_clamped(pan_raw)
+	var nxt := c + (pan_raw - c) * 0.35
+	var now := Time.get_ticks_usec()
+	var dt := clampf((now - drag_us) / 1e6, 0.004, 0.1)
+	pan_v = pan_v.lerp((nxt - pan) / dt, 0.45)
+	drag_us = now
+	pan = nxt
+	pan_to = null
 	cam.transform = _view_transform()
 
 
-## ホイール・トラックパッド（つまむ・二本指のスクロール）・二本の指でつまむ。受けたら true
+## なぞり始め：今の pan（範囲の外にいれば、重さをかける前の量にもどす）から続ける
+func _pan_start() -> void:
+	var c := _pan_clamped(pan)
+	pan_raw = c + (pan - c) / 0.35
+
+
+func _press(pos: Vector2) -> void:
+	press_on = true
+	drag_on = false
+	press_pos = pos
+	drag_last = pos
+	drag_us = Time.get_ticks_usec()
+	pan_v = Vector2.ZERO
+	pan_to = null
+
+
+## 押したまま動いた：少し動くまではタップのまま。こえたら、なぞり
+func _press_move(pos: Vector2) -> void:
+	if not press_on:
+		return
+	if not drag_on:
+		if pos.distance_to(press_pos) < TAP_SLOP:
+			return
+		drag_on = true
+		_pan_start()
+	_pan_drag(drag_last, pos)
+	drag_last = pos
+
+
+## 離した：なぞっていたら慣性へ（止まってから離したら、すべらせない）。なぞっていなければタップ（true を返す）
+func _release() -> bool:
+	var was_tap := press_on and not drag_on
+	if drag_on and Time.get_ticks_usec() - drag_us > 90000:
+		pan_v = Vector2.ZERO
+	pan_v = pan_v.limit_length(18.0)
+	press_on = false
+	drag_on = false
+	return was_tap
+
+
+## 眺めの動き（毎フレーム）：拡大をなめらかに、なぞったあとの慣性、範囲の外からのやわらかい押しもどし、もどる。
+## 見せ場の寄り（_focus）・話すときは動かさない
+func _sync_cam(delta: float) -> void:
+	if busy or cam_hold:
+		return
+	var moved := false
+	if not is_equal_approx(zoom, zoom_to):
+		zoom = lerpf(zoom, zoom_to, 1.0 - exp(-12.0 * delta))
+		if absf(zoom - zoom_to) < 0.002:
+			zoom = zoom_to
+		moved = true
+	_sync_pan_off() # 寄る・カードをしまうと、画面のまんなかに写る地面が変わる
+	if not drag_on and touches.size() < 2:
+		if pan_to != null:
+			pan = pan.lerp(pan_to, 1.0 - exp(-7.0 * delta))
+			if pan.distance_to(pan_to) < 0.01:
+				pan = pan_to
+				pan_to = null
+			moved = true
+		elif pan_v.length_squared() > 1e-4:
+			pan += pan_v * delta
+			pan_v *= exp(-PAN_FRICTION * delta)
+			moved = true
+		var c := _pan_clamped(pan)
+		if c != pan:
+			pan = pan.lerp(c, 1.0 - exp(-9.0 * delta))
+			if pan.distance_to(c) < 0.005:
+				pan = c
+			# 外へ向かう速さは止める
+			if (c - pan).dot(pan_v) < 0.0:
+				pan_v *= exp(-12.0 * delta)
+			moved = true
+	if moved:
+		cam.transform = _view_transform()
+
+
+## 「もどる」の札：島のまんなか（家とあるじ）から離れたら出す。押すと、なめらかにもどる
+func _sync_recenter() -> void:
+	var want := not editing and not busy and not cam_hold and pan.length() > RECENTER_AT and not overlay_open()
+	if recenter_btn == null:
+		if not want:
+			return
+		recenter_btn = Kit.button(tr("ISLAND_RECENTER"), Color(1, 1, 1, 0.94), recenter, Color("3f6d8a"), 32, 12)
+		add_child(recenter_btn)
+	if want:
+		recenter_btn.size = Vector2(0, 32)
+		var y := 590.0 if card_hidden or not card.visible else card.position.y - 54.0
+		recenter_btn.position = Vector2(346.0 - recenter_btn.size.x, y)
+	if recenter_btn.visible != want:
+		recenter_btn.visible = want
+
+
+func recenter() -> void:
+	Kit.play(self, "tap", 1.1)
+	pan_v = Vector2.ZERO
+	pan_to = Vector2.ZERO
+	zoom_to = 1.0
+
+
+## ホイール・トラックパッド（つまむ・二本指のスクロール）・二本の指でつまむ（つまみながら動かせる）。受けたら true
 func _zoom_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 		var f: float = event.factor if event.factor > 0.0 else 1.0
@@ -1506,36 +1739,65 @@ func _zoom_input(event: InputEvent) -> bool:
 			var p: Array = touches.values()
 			pinch_d0 = maxf((p[0] as Vector2).distance_to(p[1]), 1.0)
 			pinch_z0 = zoom_to
+			# 二本めの指が来たら、一本でのなぞり・タップは終わり
+			press_on = false
+			drag_on = false
+			pan_v = Vector2.ZERO
 		return touches.size() >= 2
 	if event is InputEventScreenDrag and touches.has(event.index):
-		touches[event.index] = event.position
 		if touches.size() >= 2:
+			var p0: Array = touches.values()
+			var mid0: Vector2 = ((p0[0] as Vector2) + (p0[1] as Vector2)) * 0.5
+			touches[event.index] = event.position
 			var p: Array = touches.values()
+			var mid: Vector2 = ((p[0] as Vector2) + (p[1] as Vector2)) * 0.5
 			var d := maxf((p[0] as Vector2).distance_to(p[1]), 1.0)
 			zoom_to = clampf(pinch_z0 * pinch_d0 / d, ZOOM_MIN, ZOOM_MAX)
+			if mid0.distance_to(mid) > 0.01:
+				drag_us = Time.get_ticks_usec()
+				_pan_start()
+				_pan_drag(mid0, mid)
+				pan_v = Vector2.ZERO
 			return true
+		touches[event.index] = event.position
 	return false
 
 
-## 庭をよこになぞると、ぐるっと少し回して見られる
+## 庭をなぞると、島を見てまわれる。タップ（ほとんど動かさずに離す）は、おばけ・いかだ
 func _gui_input(event: InputEvent) -> void:
 	if editing:
+		if not busy and _zoom_input(event):
+			accept_event()
+			return
 		_edit_input(event)
 		return
-	if not busy and not cam_hold and _zoom_input(event):
+	if busy or cam_hold:
+		return
+	if _zoom_input(event):
 		accept_event()
 		return
-	if (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) or event is InputEventScreenDrag:
-		if busy or cam_hold or touches.size() >= 2: # 二本の指でつまんでいる間は、回さない
-			return
-		orbit = clampf(orbit - event.relative.x * 0.006, -0.6, 0.6)
-		cam.transform = _view_transform()
+	# 一本の指は、マウスとして届く（emulate_mouse_from_touch）。指そのもののなぞりは、二本のときだけ使う
+	if event is InputEventScreenDrag or event is InputEventScreenTouch:
 		return
-	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+	if event is InputEventMouseMotion:
+		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) and touches.size() < 2:
+			_press_move(event.position)
+		return
+	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var pos: Vector2 = event.position
-	if pos.y < 110 or (card and card.is_visible_in_tree() and card.get_global_rect().has_point(pos)):
+	if event.pressed:
+		if pos.y < 110 or (card and card.is_visible_in_tree() and card.get_global_rect().has_point(pos)):
+			return
+		_press(pos)
 		return
+	if not _release():
+		return
+	_tap(pos)
+
+
+## 庭のおばけをタップすると、跳ねてひとこと
+func _tap(pos: Vector2) -> void:
 	var best = null
 	var bd := 42.0
 	for w in walkers:
@@ -1566,7 +1828,6 @@ func _gui_input(event: InputEvent) -> void:
 	tw2.tween_interval(1.6)
 	tw2.tween_property(l, "modulate:a", 0.0, 0.4)
 	tw2.tween_callback(l.queue_free)
-
 
 const LINES_DAY := ["花がのびた", "朝の空気がすき", "庭がきらきらしてる", "今日は、なにもしなくていい気がする", "花が下を見ている。こっちも見ている", "お茶にしよう"]
 const LINES_OWN := {
@@ -2251,6 +2512,9 @@ func _focus(at: Vector3, mode: int) -> void:
 	orbit = 0.0
 	zoom = 1.0
 	zoom_to = 1.0
+	pan = Vector2.ZERO
+	pan_v = Vector2.ZERO
+	pan_to = null
 	var to := cam_home
 	if mode == 1:
 		to.origin = at + Vector3(0, 2.4, 4.4)
@@ -2397,10 +2661,26 @@ func demo_morning() -> void:
 
 
 func demo_orbit() -> void:
-	var m := InputEventMouseMotion.new()
-	m.button_mask = MOUSE_BUTTON_MASK_LEFT
-	m.relative = Vector2(-80, 0)
-	_gui_input(m)
+	demo_pan(Vector2(-80, 0))
+
+
+## 確認用：本物の入力と同じ道筋で、島をなぞる（押す → 動かす → 離す）
+func demo_pan(by: Vector2, at := Vector2(180, 300)) -> void:
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = at
+	_gui_input(ev)
+	for i in 8:
+		var m := InputEventMouseMotion.new()
+		m.button_mask = MOUSE_BUTTON_MASK_LEFT
+		m.position = at + by * (i + 1) / 8.0
+		m.relative = by / 8.0
+		_gui_input(m)
+	var up := InputEventMouseButton.new()
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.position = at + by
+	_gui_input(up)
 
 
 ## 話す（ChatHub）：カメラを相棒へ寄せて、相棒を画面いっぱいに大きく。ひとことの吹き出しつき
@@ -2532,6 +2812,15 @@ func _enter_edit() -> void:
 	var fit := _land_fit()
 	to.origin = Vector3(0, 10.5, 5.2) * float(fit.scale) + fit.shift
 	to = to.looking_at(Vector3(0, 0, 0.1) + fit.shift, Vector3.UP)
+	# 島づくりの眺め（真上寄り）。ここからも、なぞって外の陸を見に行ける
+	view_base = to
+	view_look = Vector3(0, 0, 0.1) + fit.shift
+	pan = Vector2.ZERO
+	pan_v = Vector2.ZERO
+	pan_to = null
+	zoom = 1.0
+	zoom_to = 1.0
+	_update_pan_bounds()
 	var tw := create_tween().set_parallel()
 	tw.tween_property(cam, "transform", to, 0.6).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(cam, "v_offset", -0.6, 0.6)
@@ -2637,10 +2926,15 @@ func _edit_input(event: InputEvent) -> void:
 			if best != "":
 				_select(best)
 				dragging = true
+			else:
+				_press(pos) # 物の無い所：島をなぞって動かす
 		else:
 			if dragging:
 				dragging = false
 				_drop()
+			_release()
+	elif event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT) and press_on and not dragging and touches.size() < 2:
+		_press_move(event.position)
 	elif (event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_LEFT)) and dragging and sel != "":
 		var from := cam.project_ray_origin(View3D.to_vp(cam, event.position))
 		var dir := cam.project_ray_normal(View3D.to_vp(cam, event.position))
@@ -2815,13 +3109,11 @@ func _do_expand(id: String) -> void:
 	_build_expansion(id, true)
 	_build_exp_markers()
 	_toast(tr("KIT_UI_EXPAND"), tr("KIT_UI_EXPAND_DONE"))
-	# 広がった島が入るよう、カメラを引きなおす
-	await get_tree().create_timer(1.2).timeout
-	var fit := _land_fit()
-	var to := cam.transform
-	to.origin = Vector3(0, 10.5, 5.2) * float(fit.scale) + fit.shift
-	to = to.looking_at(Vector3(0, 0, 0.1) + fit.shift, Vector3.UP)
-	create_tween().tween_property(cam, "transform", to, 0.8).set_trans(Tween.TRANS_SINE)
+	# 島の動ける範囲を広げ、せり上がった陸へ、なめらかに眺めを寄せる
+	_update_pan_bounds()
+	var sh := IslandKit.expansion_shape(id, IslandKit.STAGES[IslandKit.stage_for(_L())].radius)
+	pan_v = Vector2.ZERO
+	pan_to = _pan_clamped(Vector2(sh.center.x - view_look.x, sh.center.z - view_look.z) * 0.8)
 
 
 # ---------- 桟橋にとめた乗り物 ----------

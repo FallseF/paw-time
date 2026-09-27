@@ -1731,6 +1731,7 @@ JOB_MAP,Map,地図
 ぜんぶひらく,Open all,ぜんぶひらく
 スキップ ›,Skip ›,スキップ ›
 EXPAND_PILL,+ Expand,＋ ひろげる
+ISLAND_RECENTER,◎ Home,◎ もどる
 R2_WT_HOURS,%dh %02dm together,%d時間%02d分、いっしょに
 R2_WT_COINS,+%d Paw Coins,肉球コイン +%d
 R2_WT_POI,+%d poi,ポイ +%d
