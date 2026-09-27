@@ -82,7 +82,12 @@ func _ready() -> void:
 	root.add_child(fade)
 	_music()
 	GameState.goal_completed.connect(_on_goal)
-	if OS.get_environment("OBAKE_DEMO") != "":
+	# デモの見せ場の切りかえ（OBAKE_DEMO=1 か、Web の ?demo=1）
+	if DemoSwitch.enabled():
+		var ds := DemoSwitch.new()
+		ds.main = self
+		add_child(ds)
+	if OS.get_environment("OBAKE_DEMO") in ["play", "promo"]:
 		demo = load("res://scripts/demo.gd").new()
 		demo.main = self
 		add_child(demo)

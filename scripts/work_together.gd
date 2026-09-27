@@ -29,6 +29,7 @@ static var _days := {} # "YYYY-MM-DD" -> {earned, hours, overtime_min}
 static var _mood := {} # "YYYY-MM-DD" -> multiplier for that day (overtime penalty)
 static var _ended: Array = [] # finished sessions waiting for the quick review
 static var _time_base := -1.0
+static var _virt_base := -1.0
 static var _speed := 1.0
 
 
@@ -39,9 +40,18 @@ static func now() -> float:
 	var real := Time.get_unix_time_from_system()
 	if _time_base < 0.0:
 		_time_base = real
+		_virt_base = real
 		var sp := OS.get_environment("OBAKE_WORK_SPEED")
 		_speed = float(sp) if sp != "" else 1.0
-	return _time_base + (real - _time_base) * _speed
+	return _virt_base + (real - _time_base) * _speed
+
+
+## デモの早送り：これからの時間の進み方を speed 倍に（いまの時刻は続きのまま）。reset なら実際の時刻にもどす
+static func set_speed(speed: float, reset := false) -> void:
+	var real := Time.get_unix_time_from_system()
+	_virt_base = real if reset or _time_base < 0.0 else now()
+	_time_base = real
+	_speed = speed
 
 
 static func day_key(t: float) -> String:

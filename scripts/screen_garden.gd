@@ -2047,7 +2047,7 @@ func _do_shift() -> void:
 	await get_tree().create_timer(0.6).timeout
 	GameState.new_decos.erase(GameState.today().role)
 	# 夕方になっていれば夜へ。まだ昼なら、働き終えた昼のカード
-	if GameState.real_phase() == "evening" or OS.get_environment("OBAKE_START") != "" or OS.get_environment("OBAKE_DEMO") != "":
+	if GameState.real_phase() == "evening" or OS.get_environment("OBAKE_START") != "" or OS.get_environment("OBAKE_DEMO") in ["play", "promo"]:
 		await _to_evening()
 	else:
 		card.modulate.a = 0.0
