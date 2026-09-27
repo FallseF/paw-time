@@ -333,13 +333,61 @@ func _found_jobs() -> void:
 	if list.is_empty():
 		_sheet(pet, tr("FOUND_NONE_TITLE"), tr("FOUND_NONE_BODY"), tr("FOUND_EDIT"), func(): _go("prefs"))
 		return
-	for i in mini(3, list.size()):
-		var j: Dictionary = list[i]
-		_notify(i, tr("NOTE_MATCH") % j.title, "%s · %s" % [JobListings.wage_text(j), j.store], role_color(j.role), _open_viewer)
-	await get_tree().create_timer(0.35 * mini(3, list.size()) + 0.4).timeout
-	if viewer:
-		return
-	_sheet(pet, tr("FOUND_TITLE") % [pet, list.size()], tr("FOUND_BODY"), tr("FOUND_SEE"), _open_viewer)
+	# 見つけた知らせは一か所だけ：相棒の吹き出し（上の知らせの列と下のシートを、両方は出さない）
+	_speech(tr("FOUND_TITLE") % [pet, list.size()], tr("FOUND_BODY"), tr("FOUND_SEE"), _open_viewer)
+
+
+var speech: Control
+
+
+## 相棒の吹き出し（相棒の頭の上。しっぽは相棒のほうへ）。主ボタンはひとつ
+func _speech(title: String, body: String, btn: String, cb: Callable) -> void:
+	if speech and is_instance_valid(speech):
+		speech.queue_free()
+	var at := _partner_screen_pos()
+	speech = Control.new()
+	speech.size = Vector2(360, 640)
+	speech.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(speech)
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", Kit.pill(Color("fffaf2"), 22, 0.2, Vector2(16, 12)))
+	p.position = Vector2(24, 130)
+	p.size = Vector2(312, 0)
+	speech.add_child(p)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	v.custom_minimum_size = Vector2(280, 0)
+	p.add_child(v)
+	v.add_child(I18n.wrap(_text(title, 19, INK, true, HORIZONTAL_ALIGNMENT_CENTER)))
+	v.add_child(I18n.wrap(_text(body, 14, SUB, false, HORIZONTAL_ALIGNMENT_CENTER)))
+	var b := Kit.button(btn, ORANGE, func():
+		if speech and is_instance_valid(speech):
+			speech.queue_free()
+		cb.call())
+	v.add_child(b)
+	var tail := Polygon2D.new()
+	tail.color = Color("fffaf2")
+	speech.add_child(tail)
+	# 吹き出しは相棒の頭の上。上に入らなければ足もとの下に（しっぽは相棒のほうへ。画面からはみ出さない）
+	Kit.keep_fit(p, func():
+		p.size.y = 0
+		var tx := clampf(at.x, 60.0, 300.0)
+		if at.y - 50.0 - p.size.y >= 110.0:
+			p.position.y = at.y - 50.0 - p.size.y
+			var ty := p.position.y + p.size.y - 2.0
+			tail.polygon = PackedVector2Array([Vector2(tx - 12, ty), Vector2(tx + 12, ty), Vector2(tx, ty + 18.0)])
+		else:
+			p.position.y = minf(at.y + 60.0, 626.0 - p.size.y)
+			var ty := p.position.y + 2.0
+			tail.polygon = PackedVector2Array([Vector2(tx - 12, ty), Vector2(tx + 12, ty), Vector2(tx, ty - 18.0)]))
+	p.pivot_offset = Vector2(156, 80)
+	p.scale = Vector2(0.85, 0.85)
+	p.modulate.a = 0.0
+	var tw := create_tween().set_parallel()
+	tw.tween_property(p, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(p, "modulate:a", 1.0, 0.18)
+	Kit.play(self, "pop", 1.0)
+	Kit.nudge.call_deferred(b)
 
 
 # ---------------------------------------------------------------- 毎日
@@ -470,6 +518,8 @@ func open_shift_form() -> void:
 
 func _build_viewer() -> void:
 	_clear_notes()
+	if speech and is_instance_valid(speech):
+		speech.queue_free()
 	if sheet and is_instance_valid(sheet):
 		sheet.queue_free()
 	_garden_card(false)
