@@ -3,6 +3,7 @@ extends Node
 ##   - 船着き場のカタログが 360 の画面からはみ出さない
 ##   - 「＋ ひろげる」札は、しごとのシート・求人カードなどが開いている間は出ない
 ##   - 島の段のくわしく（庭 Lv / ポイ）と、左右の札（キセカエ・マイスキル・しごと・話す）が重ならない
+##   - 「話す」札：いつも見えて、押すとカメラが相棒に寄ってからチャット。閉じたら眺めに戻る
 ##   - 島の拡大・縮小（ホイール・二本の指でつまむ）。範囲の中に収まり、拡大してもおばけのタップが当たる
 ## OBAKE_NOSAVE=1 godot --headless --path . res://tests/test_island_ui.tscn
 
@@ -92,7 +93,9 @@ func _run() -> void:
 	for b in _hud_buttons(g):
 		_check(not mr.intersects(b.get_global_rect()), "island details panel covers the '%s' pill" % b.text)
 	g._toggle_meters()
+	await _frames(3)
 
+	await _talk(g)
 	await _zoom(g)
 
 	print("ISLAND UI TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
@@ -177,3 +180,30 @@ func _zoom(g) -> void:
 		hit = ob.get_child_count() > n0
 		break
 	_check(hit, "tap on an obake still works while zoomed in")
+
+
+func _talk(g) -> void:
+	var hub: ChatHub = null
+	for c in g.get_children():
+		if c is ChatHub:
+			hub = c
+	_check(hub != null and hub.talk_pill != null and hub.talk_pill.is_visible_in_tree(), "Talk pill is on the island HUD")
+	if hub == null or hub.talk_pill == null:
+		return
+	var far: float = g.cam.global_position.distance_to(g.host_node.global_position)
+	hub.talk_pill.pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	var near: float = g.cam.global_position.distance_to(g.host_node.global_position)
+	_check(near < far * 0.6, "camera zooms toward the cat (%.2f -> %.2f)" % [far, near])
+	await get_tree().create_timer(1.0).timeout
+	var chat: Node = null
+	for c in g.get_children():
+		if c is ScreenChat:
+			chat = c
+	_check(chat != null and chat.thread == "me", "the private chat opens after the zoom")
+	_check(not g.expand_btn.visible, "expand pill hidden during the chat")
+	if chat:
+		chat.queue_free()
+	await get_tree().create_timer(0.9).timeout
+	_check(not g.cam_hold and g.cam.global_position.distance_to(g._view_transform().origin) < 0.05, "camera back to the island view after the chat")
+	_check(g.expand_btn.visible, "expand pill back after the chat")

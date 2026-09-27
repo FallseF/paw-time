@@ -600,6 +600,10 @@ func _build_host(id: String) -> void:
 	l.outline_render_priority = 19
 	l.position = Vector3(0, 1.9 if not Rares.is_rare(id) else 2.5, 0)
 	host_node.add_child(l)
+	host_tag = l
+
+
+var host_tag: Label3D # あるじの札（話すときに寄ると大きすぎるので、そのあいだはしまう）
 
 
 ## 島の大きさ（段が上がるほど、岸がひろがる）
@@ -1870,7 +1874,7 @@ func _sync_expand() -> void:
 	if expand_btn == null:
 		return
 	var want: bool = not _vis() and not editing and GameState.day >= 1 and IslandKit.expansions().size() < IslandKit.MAX_EXPANSIONS
-	var on := want and not overlay_open()
+	var on := want and not overlay_open() and not cam_hold
 	if expand_btn.visible != on:
 		expand_btn.visible = on
 
@@ -2374,6 +2378,65 @@ func demo_orbit() -> void:
 	m.button_mask = MOUSE_BUTTON_MASK_LEFT
 	m.relative = Vector2(-80, 0)
 	_gui_input(m)
+
+
+## 話す（ChatHub）：カメラを相棒へ寄せて、相棒を画面いっぱいに大きく。ひとことの吹き出しつき
+func zoom_to_cat(hi := "") -> void:
+	if host_node == null or not is_instance_valid(host_node):
+		return
+	cam_hold = true
+	_talk_ui(false)
+	var at := host_node.global_position
+	var to := Transform3D(Basis(), at + Vector3(0.0, 1.25, 2.4)).looking_at(at + Vector3(0, 0.62, 0), Vector3.UP)
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "transform", to, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(cam, "v_offset", 0.0, 0.55).set_trans(Tween.TRANS_SINE)
+	Kit.play(self, "pop", 1.15, -4)
+	await tw.finished
+	if hi != "" and is_instance_valid(host_node):
+		var l := Kit.label3d(hi, 30, Color("fff6e8"))
+		l.position = Vector3(0, 1.55 if not Rares.is_rare(GameState.host()) else 2.2, 0)
+		l.no_depth_test = true
+		l.render_priority = 20
+		host_node.add_child(l)
+		var t2 := l.create_tween()
+		t2.tween_interval(1.6)
+		t2.tween_callback(l.queue_free)
+		var hop := create_tween()
+		hop.tween_property(host_node, "position:y", 0.25, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		hop.tween_property(host_node, "position:y", 0.0, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	await get_tree().create_timer(0.45).timeout
+
+
+## 話し終えたら、島の眺め（なぞった向き・拡大もそのまま）へ戻す
+func zoom_back() -> void:
+	var tw := create_tween().set_parallel()
+	tw.tween_property(cam, "transform", _view_transform(), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(cam, "v_offset", -0.7 if card_hidden else cam_v, 0.5).set_trans(Tween.TRANS_SINE)
+	await tw.finished
+	cam_hold = false
+	_talk_ui(true)
+
+
+var talk_hidden: Array = []
+
+
+## 話すあいだは、相棒の前にかかる物（今日のカード・知らせの列・札）をしまう。戻すときは、しまった物だけ
+func _talk_ui(show: bool) -> void:
+	if show:
+		for c in talk_hidden:
+			if is_instance_valid(c):
+				c.visible = true
+		talk_hidden.clear()
+		return
+	var list: Array = [card, handle, expand_btn, host_tag]
+	for c in get_children():
+		if c is JobDesk:
+			list.append_array(c.notes)
+	for c in list:
+		if c and is_instance_valid(c) and c.visible:
+			c.visible = false
+			talk_hidden.append(c)
 
 
 ## 確認用：島を寄せる（ホイールで 5 回ぶん）
