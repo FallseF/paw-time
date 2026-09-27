@@ -640,47 +640,60 @@ func _b_yukimi() -> void:
 
 # ---------------------------------------------------------------- 天気
 
-## カミナリ：おばけの頭に、ずんぐりした龍の体。角と、稲妻と、小さな雷雲
-func _b_kaminari() -> void:
-	var skin := _skin(c1)
-	var belly := _mat(c1.lightened(0.45), 0.2)
-	var dark := _mat(c2)
-	var trunk := _add(_cap(0.3, 1.0), skin, Vector3(-0.12, 0.36, -0.12))
-	_point(trunk, Vector3(1.0, 0.25, 0.45))
-	_add(_sphere(0.26), skin, Vector3(0.12, 0.52, 0.02))
-	_head(c1, 0.4, Vector3(0.24, 0.78, 0.1))
-	body.add_child(face(Vector3(0.24, 0.78, 0.1), 0.8))
-	_add(_sphere(0.22), belly, Vector3(0.08, 0.36, 0.2), null, Vector3.ZERO, Vector3(1, 1, 0.6))
-	for p in [Vector3(0.1, 0.1, 0.18), Vector3(0.18, 0.1, -0.12), Vector3(-0.42, 0.1, -0.06), Vector3(-0.3, 0.1, -0.36)]:
-		_add(_cap(0.1, 0.24), skin, p)
-	_cat_ears(skin, Vector3(0.24, 0.78, 0.1), 0.8)
-	for x in [-0.06, 0.06]:
-		_add(_cyl(0.0, 0.05, 0.15, 10), dark, Vector3(0.24 + x, 1.16, -0.02), null, Vector3(-0.35, 0, -x * 3.0))
+## カザグルマ：ミント色のおばけの頭から、紙のかざぐるま。風を受けてくるくる回り、紙のしっぽ飾りがなびく
+func _b_kazaguruma() -> void:
+	var cat := _mini(c1, 0.85, Vector3.ZERO)
+	_p.cat = cat
+	# 頭のてっぺん（耳のあいだ）から、細い竹の軸
+	var stick := _node(Vector3(0.04, 0.9, -0.02), cat, Vector3(0, 0, -0.12))
+	_add(_cyl(0.016, 0.02, 0.4, 8), _mat(Color("c9a46a")), Vector3(0, 0.2, 0), stick)
+	var hub := Vector3(0, 0.4, 0.03)
+	# 羽根は四枚。正面 +Z を向いて、軸のまわりを回る
+	var wheel := _node(hub, stick, Vector3(0, 0.25, 0))
+	_p.wheel = wheel
+	var cols := [c2, Color("ffd36b"), Color("7fc8ff"), PAPER]
 	for i in 4:
-		_add(_cyl(0.0, 0.06, 0.13, 8), dark, Vector3(-0.08 - i * 0.14, 0.66 - i * 0.05, -0.2 - i * 0.07), null, Vector3(0, 0, 0.4))
-	var tail := _node(Vector3(-0.55, 0.26, -0.36))
-	_p.tail = tail
-	# 竜の尻尾：胴から先へ細くなる一本の管
-	var pts := PackedVector3Array()
-	var rad := PackedFloat32Array()
-	var r := 0.16
-	var p2 := Vector3.ZERO
-	pts.append(Vector3(0.22, -0.06, 0.12))
-	rad.append(0.2)
-	for i in 4:
-		pts.append(p2)
-		rad.append(r)
-		p2 += Vector3(-0.14, 0.08 + i * 0.03, -0.02)
-		r *= 0.8
-	_add(tube("kaminari_tail", pts, rad, 24), skin, Vector3.ZERO, tail)
-	_add(_cyl(0.0, 0.07, 0.16, 8), dark, p2 + Vector3(0.02, 0.04, 0), tail, Vector3(0, 0, 0.3))
-	var bolt := _node(Vector3(-0.3, 1.0, 0.0), null, Vector3(0, 0, -0.2))
-	bolt.scale = Vector3.ONE * 1.6
-	_p.bolt = bolt
-	var bm := _mat(Color("ffe14d"), 0.3, 0.9, 0.6)
-	_add(_box(Vector3(0.07, 0.2, 0.04)), bm, Vector3(-0.03, 0.08, 0), bolt, Vector3(0, 0, -0.5))
-	_add(_box(Vector3(0.16, 0.05, 0.04)), bm, Vector3(0.0, -0.01, 0), bolt, Vector3(0, 0, 0.2))
-	_add(_box(Vector3(0.07, 0.22, 0.04)), bm, Vector3(0.04, -0.1, 0), bolt, Vector3(0, 0, -0.5))
+		var bl := _node(Vector3.ZERO, wheel, Vector3(0, 0, -TAU * i / 4.0))
+		_add(_blade(0.3), _mat(cols[i], 0.3), Vector3.ZERO, bl)
+	_add(_sphere(0.045), _mat(RED, 0.3), Vector3(0, 0, 0.05), wheel)
+	# 羽根のうしろから、紙のしっぽ飾りが二本、風下（左）へなびく
+	for i in 2:
+		var st := _node(hub + Vector3(0, 0, -0.04), stick, Vector3(0, 0, -1.2 - i * 0.4))
+		_p["streamer%d" % i] = st
+		var pts := PackedVector3Array([Vector3.ZERO, Vector3(0.02, -0.12, 0), Vector3(-0.02, -0.24, 0), Vector3(0.01, -0.34 + i * 0.06, 0)])
+		var rad := PackedFloat32Array([0.022, 0.024, 0.02, 0.012])
+		_add(tube("kazaguruma_streamer/%d" % i, pts, rad, 10), _mat(c2 if i == 0 else Color("7fc8ff"), 0.3), Vector3.ZERO, st, Vector3.ZERO, Vector3(1, 1, 0.35))
+
+
+## かざぐるまの羽根一枚（厚みのある三角。中心から +Y へのび、外の角が手前へ反る）
+func _blade(r: float) -> ArrayMesh:
+	var key := "kazaguruma_blade/%s" % r
+	if _shared.has(key):
+		return _shared[key]
+	var th := 0.008
+	var front := [Vector3(0, 0, th), Vector3(0, r, th), Vector3(r * 0.62, r * 0.5, th + r * 0.3)]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var back: Array = []
+	for v in front:
+		back.append(v - Vector3(0, 0, th * 2.0))
+	# 表（+Z から見て時計回り）と裏
+	for v in [front[0], front[1], front[2]]:
+		st.add_vertex(v)
+	for v in [back[0], back[2], back[1]]:
+		st.add_vertex(v)
+	# ふち
+	for k in 3:
+		var a: Vector3 = front[k]
+		var b: Vector3 = front[(k + 1) % 3]
+		var c: Vector3 = back[(k + 1) % 3]
+		var d: Vector3 = back[k]
+		for v in [a, d, b, b, d, c]:
+			st.add_vertex(v)
+	st.generate_normals()
+	var m := st.commit()
+	_shared[key] = m
+	return m
 
 
 ## サクラ：おばけの頭が満開の桜の木。花びらがひらひら
@@ -996,9 +1009,12 @@ func _idle(t: float) -> void:
 			_wiggle("top", Vector3.ZERO, Vector3(0, 0, sin(t * 1.5) * 0.06))
 			for i in 4:
 				_wiggle("flake%d" % i, Vector3(sin(t + i) * 0.04, -fmod(t * 0.15 + i * 0.25, 1.0) * 0.3, 0), Vector3(0, 0, t * 0.8))
-		"kaminari":
-			_wiggle("tail", Vector3.ZERO, Vector3(0, sin(t * 3.0) * 0.3, sin(t * 3.0) * 0.08))
-			_wiggle("bolt", Vector3.ZERO, Vector3.ZERO, 1.0 + (0.12 if fmod(t, 1.7) < 0.12 else 0.0))
+		"kazaguruma":
+			# 風は強まったり弱まったり。かざぐるまはそれに合わせて速さを変え、体はゆらゆら
+			_wiggle("cat", Vector3.ZERO, Vector3(0, 0, sin(t * 1.2) * 0.05))
+			_wiggle("wheel", Vector3.ZERO, Vector3(0, 0, -(t * 4.0 + sin(t * 0.7) * 2.0)))
+			for i in 2:
+				_wiggle("streamer%d" % i, Vector3.ZERO, Vector3(sin(t * 5.0 + i) * 0.12, 0, sin(t * 6.0 + i * 1.7) * 0.22))
 		"sakura":
 			_wiggle("crown", Vector3.ZERO, Vector3(0, 0, sin(t * 1.1) * 0.04))
 			for i in 4:

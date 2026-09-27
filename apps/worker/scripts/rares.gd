@@ -5,9 +5,14 @@ class_name Rares
 ##
 ## look は 3D の特別製モデルの設計図（RareObake3D が読む）:
 ##   skin: pearl / starry / flame / water / paper / crystal / cloud / leaf / aurora / ink / gold / moon
-##   prop: crown / lantern / umbrella / nightcap / sakura / snowflake / bolt / leaf_hat / scarf / halo / star_wand / book / bell / ribbon / none
+##   prop: crown / lantern / umbrella / nightcap / sakura / snowflake / pinwheel / leaf_hat / scarf / halo / star_wand / book / bell / ribbon / none
 ##   fx:   stars / motes / bubbles / petals / snow / sparks / rain / fireflies / none
 ##   c1, c2: 主色と副色
+
+## 風の強い日（いまの天気のうち、嵐の「雷」。「風」を足したらここにも入る）
+const WINDY := ["雷", "風"]
+## やめたレアの id → 代わりの子（古いセーブ・保存した選びを読むときに置きかえる）
+const RENAMED := {"kaminari": "kazaguruma"}
 
 const LIST := [
 	# ---- 休みとおでかけ ----
@@ -53,8 +58,8 @@ const LIST := [
 		"desc": "雨の日のシフトで生まれる。傘の下で歌う", "look": {"skin": "water", "prop": "umbrella", "fx": "rain", "c1": "7fb8ff", "c2": "ff8fb1"}},
 	{"id": "yukimi", "name": "ユキミ", "group": "天気", "hint": "白い日に、外で働いた",
 		"desc": "雪の日のシフトで生まれる。ひんやりしている", "look": {"skin": "crystal", "prop": "snowflake", "fx": "snow", "c1": "e8f6ff", "c2": "9fd4ff"}},
-	{"id": "kaminari", "name": "カミナリ", "group": "天気", "hint": "空が光った日に",
-		"desc": "雷の日のシフトで生まれる。ちょっとせっかち", "look": {"skin": "gold", "prop": "bolt", "fx": "sparks", "c1": "ffe14d", "c2": "6b5bd6"}},
+	{"id": "kazaguruma", "name": "カザグルマ", "group": "天気", "hint": "風の強い日に働いたら",
+		"desc": "風の強い嵐の日のシフトで生まれる。頭のかざぐるまが止まらない", "look": {"skin": "cloud", "prop": "pinwheel", "fx": "none", "c1": "a8ecd8", "c2": "ff8fb1"}},
 	{"id": "sakura", "name": "サクラ", "group": "天気", "hint": "花が咲くころに",
 		"desc": "春のシフトで生まれる。花びらをまとう", "look": {"skin": "pearl", "prop": "sakura", "fx": "petals", "c1": "ffd1e0", "c2": "ff8fb1"}},
 
@@ -91,6 +96,13 @@ static func by_id(id: String) -> Dictionary:
 	return {}
 
 
+## セーブの文字列の中の、やめたレアの id を代わりの子へ（id は必ず "…" で囲まれた文字列として入っている）
+static func migrate_text(t: String) -> String:
+	for old in RENAMED:
+		t = t.replace('"%s"' % old, '"%s"' % RENAMED[old])
+	return t
+
+
 static func is_rare(id: String) -> bool:
 	return not by_id(id).is_empty()
 
@@ -120,7 +132,7 @@ static func check(ctx: Dictionary, have: Dictionary) -> Array:
 		"shinya": worked and s.get("band", "") == "深夜" and s.get("role", "") == "stock",
 		"amagasa": worked and s.get("weather", "") == "雨",
 		"yukimi": worked and s.get("weather", "") == "雪",
-		"kaminari": worked and s.get("weather", "") == "雷",
+		"kazaguruma": worked and s.get("weather", "") in WINDY,
 		"sakura": worked and s.get("season", "") == "春",
 		"nakayoshi": ctx.same_coworker_max >= 3,
 		"okurimono": ctx.gifted,
