@@ -202,9 +202,13 @@ export function niceScale(max: number): { ceiling: number; ticks: number[] } {
 
 // ---------------------------------------------------------------- CSV
 
-/** Quotes a CSV cell when it needs quoting. */
+/**
+ * Quotes a CSV cell when it needs quoting. Text that a spreadsheet would run as a formula
+ * (starting with =, +, -, @, tab or CR) gets a leading ' so names, job titles and correction
+ * reasons stay plain text. Numbers are left as numbers.
+ */
 export function csvCell(value: string | number): string {
-  const text = String(value);
+  const text = typeof value === "string" && /^[=+\-@\t\r]/.test(value) ? `'${value}` : String(value);
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
