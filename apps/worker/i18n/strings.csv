@@ -1851,3 +1851,4 @@ R3_SHIFT_NOW,Working now,いま勤務中
 R3_SHIFT_MANUAL,A shift you added yourself,自分で入れたシフト
 R3_SHIFT_CANCEL,Cancel this shift,このシフトを取り消す
 R3_SHIFT_CANCEL_SURE,Tap again to cancel it,もう一度押すと取り消します
+R3_TAGLINE,Let's work together,いっしょにはたらこう
