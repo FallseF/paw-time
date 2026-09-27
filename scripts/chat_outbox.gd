@@ -15,7 +15,8 @@ static func tell_shop(shop_id: String, tag: String) -> bool:
 	if shop_id == "" or not tag in TAGS:
 		return false
 	ChatShops._b().queue_anonymous("shop", {"shop_id": shop_id, "tag": tag})
-	# TELEMETRY:anon_issue_sent {tag: ISSUE_TOPIC[tag], shop_id}
+	if not JobListings.entry(shop_id).is_empty():
+		Telemetry.track("anon_issue_sent", {"tag": ISSUE_TOPIC[tag], "shop_id": shop_id})
 	return true
 
 

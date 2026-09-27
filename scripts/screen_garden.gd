@@ -2580,6 +2580,7 @@ func _expand_card(id: String) -> void:
 func _do_expand(id: String) -> void:
 	if not IslandKit.expand(id):
 		return
+	Telemetry.track("island_expand")
 	if share_ui and is_instance_valid(share_ui):
 		share_ui.queue_free()
 	_build_expansion(id, true)
@@ -2857,6 +2858,7 @@ func _share() -> void:
 	if GameState.nickname == "":
 		_ask_name()
 		return
+	Telemetry.track("island_share")
 	var code := GameState.island_code(_movable_keys())
 	var url: String = GameState.SHARE_URL + code
 	DisplayServer.clipboard_set(url)

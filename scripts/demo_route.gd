@@ -39,6 +39,7 @@ static func begin(m) -> void:
 ## 見本の状態を作って、島（求人カード）から
 func _setup() -> void:
 	_t0 = Time.get_ticks_msec() / 1000.0
+	Telemetry.set_demo_session(true) # デモの間のイベントには demo_session が付く（Recruit の見え方の「デモだけ」）
 	GameState.reset("solo")
 	GameState.set_my_obake(SpecialObake.apply(QuizData.score(QuizData.answers_for(PRESET_TYPE))))
 	Onboarding.advance("done")
@@ -172,13 +173,13 @@ func _start_shift(s: Dictionary) -> void:
 	var now := Time.get_unix_time_from_system()
 	Shifts.remove(shift_id)
 	s.start = now
-	s.end = now + SHIFT_H * 3600.0 / FAST # 実時間での終わり（早送りの時計では 7.5 時間後）
+	s.end = now + (SHIFT_H * 3600.0 + 60.0) / FAST # 実時間での終わり（早送りの時計では 7.5 時間後）
 	Shifts.add(s)
 	WorkTogether.set_speed(FAST)
 	WorkTogether.sync()
 	# 早送りの時計でシフトの終わりを 7.5 時間後に（Shifts は実時間、WorkTogether は早送りの時計）
 	var sess := WorkTogether._session
-	sess.end_at = WorkTogether.now() + SHIFT_H * 3600.0
+	sess.end_at = WorkTogether.now() + SHIFT_H * 3600.0 + 60.0 # へとへとの 1 分あと（残業にはならない）
 	sess.start = WorkTogether.now()
 	WorkTogether._save()
 	_wait = 1.8 # 「受けた」のカードを少し見せてから
@@ -194,6 +195,7 @@ func _go_scoop() -> void:
 
 ## 最後のカード：Recruit の見え方へ
 func _final_card() -> void:
+	Telemetry.flush_now() # Live の欄にすぐ出るように
 	var dim := ColorRect.new()
 	dim.name = "Final"
 	dim.color = Color(0.05, 0.04, 0.1, 0.55)
@@ -227,4 +229,5 @@ func _end() -> void:
 	active = false
 	stage = ""
 	node = null
+	Telemetry.set_demo_session(false)
 	queue_free()

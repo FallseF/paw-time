@@ -100,7 +100,7 @@ static func record(topics: Array, shop_id := "") -> void:
 		var props := {"topic": tp, "private_mode": false}
 		if shop_id != "" and (tp in ISSUES or tp.begins_with("liked_")) and not JobListings.entry(shop_id).is_empty():
 			props["shop_id"] = shop_id
-		# TELEMETRY:chat_signal
+		Telemetry.track("chat_signal", props)
 	_save()
 
 

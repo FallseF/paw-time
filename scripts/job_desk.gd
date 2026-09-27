@@ -574,6 +574,7 @@ func _open_viewer() -> void:
 		Onboarding.advance("done")
 		onboard_end = true
 	jobs = ([] if DemoRoute.active else Invites.pending()) + undecided() # 3 分デモは求人 1 枚だけ
+	Telemetry.track("job_cards_shown", {"n": mini(jobs.size(), 50)})
 	index = 0
 	accepted = 0
 	done_ids = {}
@@ -680,6 +681,7 @@ func _show_job() -> void:
 		_show_list()
 		return
 	var j: Dictionary = jobs[index]
+	Telemetry.track("job_card_open", JobListings.telemetry_shop(j.get("listing"), {"invited": Invites.is_invite(j)}))
 	_say(tr("INVITE_SAY") % j.store if Invites.is_invite(j) else j.line)
 	stage.talk()
 	var top := HBoxContainer.new()
@@ -778,11 +780,16 @@ func _accept() -> void:
 	# 一緒に働く係と共有する約束：Shifts の 1 件の形
 	var s := {"id": j.id, "title": j.title, "place": j.place, "store": j.store, "role": j.role, "start": j.start, "end": j.end,
 		"wage": j.wage, "pay": j.pay, "listing": j.listing, "sample": true}
-	if Invites.is_invite(j):
+	var invited := Invites.is_invite(j)
+	if invited:
 		s = Invites.accept(j)
 	else:
 		Shifts.add(s)
 		decide(j.id, "accept")
+	var acc := {"role": j.role, "invited": invited}
+	if String(j.get("pay", "")) in JobPrefs.PAYS:
+		acc["pay_style"] = j.pay
+	Telemetry.track("job_accept", JobListings.telemetry_shop(j.get("listing"), acc))
 	accepted += 1
 	done_ids[j.id] = true
 	stage.joy()
@@ -794,10 +801,14 @@ func _accept() -> void:
 	card_box.add_child(I18n.wrap(_text("%s · %s" % [j.title, j.store], 14, INK, true)))
 	card_box.add_child(_text(JobListings.when_text(j), 14, SUB))
 	card_box.add_child(_small_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(j)), Color("3b5ba5")))
-	var cal := Kit.button(tr("CAL_GOOGLE"), Color("eef3ff"), func(): CalendarLink.open_google(s), Color("3b5ba5"), 44, 15)
+	var cal := Kit.button(tr("CAL_GOOGLE"), Color("eef3ff"), func():
+		Telemetry.track("calendar_add", {"kind": "google"})
+		CalendarLink.open_google(s), Color("3b5ba5"), 44, 15)
 	card_box.add_child(cal)
 	var status := I18n.wrap(_text("", 11, SUB, false, HORIZONTAL_ALIGNMENT_CENTER))
-	card_box.add_child(_link(tr("CAL_ICS"), func(): status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
+	card_box.add_child(_link(tr("CAL_ICS"), func():
+		Telemetry.track("calendar_add", {"kind": "ics"})
+		status.text = CalendarLink.save_ics(s), Color("3b5ba5")))
 	card_box.add_child(status)
 	card_box.add_child(_link(tr("CHAT_ASK_SHOP"), func(): ChatHub.open(self, ChatShops.thread_id_for(s)), Color("6a5bd6"))) # お店の猫に聞く（feature/cat-chat）
 	var more := jobs.any(func(x): return not done_ids.has(x.id))
@@ -811,6 +822,7 @@ func _pass() -> void:
 		return
 	busy = true
 	var j: Dictionary = jobs[index]
+	Telemetry.track("job_pass", JobListings.telemetry_shop(j.get("listing"), {"role": j.role, "invited": Invites.is_invite(j)}))
 	if Invites.is_invite(j):
 		Invites.decline(j)
 	else:
@@ -942,6 +954,7 @@ func _send_review(s: Dictionary) -> void:
 		if rv_tags[tg]:
 			tags.append(tg)
 	Reviews.add(s, rv_stars, tags)
+	Telemetry.track("review_submitted", JobListings.telemetry_shop(s.get("listing"), {"tag_count": tags.size(), "tags": tags, "stars": rv_stars}))
 	Invites.after_review(s, rv_stars) # よい評価なら、そのお店から「また来てほしいな」のおさそい
 	# ごほうびはポイ（すくいの網）。働いた時間とは関係なく、1 回 1 本
 	GameState.nets["plain"] = GameState.nets.get("plain", 0) + Reviews.BONUS_POI

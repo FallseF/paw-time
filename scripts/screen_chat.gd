@@ -49,7 +49,7 @@ func _ready() -> void:
 ## A chat with your cat or a shop was opened (the list is not counted)
 func _opened() -> void:
 	if thread == "me" or thread.begins_with("shop:"):
-		pass # TELEMETRY:chat_open {kind: me|shop}
+		Telemetry.track("chat_open", {"kind": "me" if thread == "me" else "shop"})
 
 
 ## Sample shifts for demos and screenshots (only when there are none): tomorrow at a café, yesterday at an izakaya

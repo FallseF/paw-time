@@ -152,6 +152,7 @@ static func start(role: String, place := "", t := -1.0) -> bool:
 	t = now() if t < 0.0 else t
 	_session = {"start": t, "role": role if role in ROLES else "hall", "place": place, "source": "manual", "shift_id": "", "end_at": -1.0, "mult": day_mult(t)}
 	_save()
+	Telemetry.track("shift_start", {"role": _session.role})
 	return true
 
 
@@ -174,6 +175,7 @@ static func sync(t := -1.0) -> Dictionary:
 		var r := String(s.get("role", ""))
 		_session = {"start": float(s.start), "role": r if r in ROLES else "hall", "place": s.get("place", ""), "source": "shift", "shift_id": s.get("id", ""), "end_at": float(s.end), "mult": day_mult(float(s.start))}
 		_save()
+		Telemetry.track("shift_start", JobListings.telemetry_shop(s.get("listing"), {"role": _session.role}))
 	return {}
 
 
@@ -281,6 +283,15 @@ static func stop(t := -1.0) -> Dictionary:
 	_ended.append(summary)
 	_session = {}
 	_save()
+	# テレメトリー：終わったシフト（登録したシフトなら、そのお店）と、猫がへとへとで止めたか
+	var listing = null
+	for sh in Shifts.all():
+		if String(sh.get("id", "")) == String(summary.shift_id) and summary.shift_id != "":
+			listing = sh.get("listing")
+	var hb := Telemetry.hours_bucket(float(summary.hours))
+	Telemetry.track("shift_end", JobListings.telemetry_shop(listing, {"role": summary.role, "hours_bucket": hb}))
+	if summary.exhausted:
+		Telemetry.track("cat_tired_stop", {"hours_bucket": hb})
 	# スキルの記録：シフト 1 回＝経験 1（何時間でも同じ）
 	Skills.record_shift(String(summary.role), String(summary.shift_id) if String(summary.shift_id) != "" else "wt:%d" % int(summary.start))
 	_notify(summary)

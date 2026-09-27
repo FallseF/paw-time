@@ -30,6 +30,15 @@ func _until(cond: Callable, sec: float, what: String) -> bool:
 	return false
 
 
+func _on_sent(_r: int, st: int, _h: PackedStringArray, body: PackedByteArray, resp: Dictionary) -> void:
+	var d = JSON.parse_string(body.get_string_from_utf8())
+	resp.n += 1
+	print("telemetry response: ", st, " ", body.get_string_from_utf8())
+	if d is Dictionary:
+		resp.accepted += int(d.get("accepted", 0))
+		resp.rejected.append_array(d.get("rejected", []))
+
+
 func _screen() -> String:
 	return main.current.get_script().resource_path.get_file() if main.current else ""
 
@@ -37,7 +46,11 @@ func _screen() -> String:
 func _run() -> void:
 	await get_tree().create_timer(1.0).timeout
 	var t0 := Time.get_ticks_msec()
+	var resp := {"accepted": 0, "rejected": [], "n": 0}
 	DemoRoute.begin(main)
+	if OS.get_environment("TELEMETRY_LIVE") != "":
+		await _until(func(): return get_tree().root.get_node_or_null("Telemetry") != null, 5.0, "telemetry host")
+		get_tree().root.get_node("Telemetry")._http.request_completed.connect(_on_sent.bind(resp))
 	var pick := SpecialReveal.pick()
 	_check(GameState.my_obake.get("special", "") != "", "the preset cat is a special cat")
 	# 1 求人カード
@@ -87,5 +100,15 @@ func _run() -> void:
 	# 6 最後のカード
 	await _until(func(): return DemoRoute.node != null and DemoRoute.node.layer.get_node_or_null("Final") != null, 8.0, "the final card")
 	print("demo route (automated) took %.1f s" % ((Time.get_ticks_msec() - t0) / 1000.0))
+	# テレメトリーを本当に送るとき（OBAKE_NOSAVE なし・TELEMETRY_LIVE=1）：デモの間のイベントが、API に受け付けられるか
+	if OS.get_environment("TELEMETRY_LIVE") != "":
+		var sent: Array = Telemetry._queue.duplicate()
+		print("telemetry still queued: ", sent.map(func(e): return e.type))
+		_check(sent.all(func(e): return e.props.get("demo_session", false) or e.type == "app_open"), "demo events carry demo_session")
+		Telemetry.flush_now()
+		# 最後のカードで送った分の返事まで待つ（約 20 秒ごとの分と合わせて）
+		await _until(func(): return get_tree().root.get_node("Telemetry")._in_flight.is_empty() and Telemetry._queue.is_empty(), 20.0, "the API answers")
+		print("telemetry accepted total ", resp.accepted, " rejected ", resp.rejected)
+		_check(resp.accepted >= 10 and resp.rejected.is_empty(), "every event accepted")
 	print("DEMO ROUTE TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	get_tree().quit(0 if fails == 0 else 1)

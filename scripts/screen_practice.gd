@@ -567,6 +567,7 @@ func _start() -> void:
 ## 全部おわった：スキルの記録に書いて、バッジを見せる
 func finish() -> void:
 	var r := Skills.record_practice(role, level)
+	Telemetry.track("practice_done", {"role": role, "level": clampi(level, 0, 20)})
 	await get_tree().create_timer(0.6).timeout
 	_show_result(r)
 

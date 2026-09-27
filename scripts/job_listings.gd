@@ -93,6 +93,14 @@ static func count() -> int:
 	return LIST.size()
 
 
+## テレメトリーの props に足す shop_id（見本の店の id だけ。自分で入れた場所などは付けない）
+static func telemetry_shop(listing_id, props := {}) -> Dictionary:
+	var p: Dictionary = props.duplicate()
+	if typeof(listing_id) == TYPE_STRING and not entry(listing_id).is_empty():
+		p["shop_id"] = listing_id
+	return p
+
+
 static func entry(listing_id: String) -> Array:
 	for e in LIST:
 		if e[0] == listing_id:

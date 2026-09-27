@@ -466,6 +466,7 @@ func _save() -> void:
 			dropped += 1
 	Wardrobe.set_outfit(id, draft)
 	Wardrobe.save()
+	Telemetry.track("outfit_change")
 	Kit.play(self, "chime")
 	_rebuild_obake()
 	_fill_grid()

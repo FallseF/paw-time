@@ -1749,3 +1749,11 @@ DEMO3_FINAL_TITLE,That's a day with Paw Time,これが Paw Time の一日
 DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.","仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。"
 DEMO3_RECRUIT,See the Recruit view,Recruit の見え方を見る
 DEMO3_KEEP,Keep playing,このまま遊ぶ
+TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in Work conditions.","Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。「働く条件」でいつでもオフにできます。"
+TELEMETRY_NOTICE_OK,OK,OK
+TELEMETRY_NOTICE_MORE,Privacy notice,プライバシーについて
+TELEMETRY_TOGGLE,Share anonymous usage,匿名の利用データを送る
+TELEMETRY_TOGGLE_HINT,Helps us improve Paw Time. No names or location.,Paw Time の改善に使います。名前や位置は送りません。
+TELEMETRY_ID,Your usage ID: %s,利用データのID: %s
+TELEMETRY_DELETE,Delete my usage data,利用データを削除
+TELEMETRY_DELETED,Deleted. A new ID was created.,削除しました。新しいIDを作りました。

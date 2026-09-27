@@ -342,6 +342,7 @@ func _next() -> void:
 		current_obake = null
 	var orb: Orb3D = orbs[index]
 	var h: Dictionary = GameState.hatched[index]
+	_track_hatch(h)
 	# 玉が前に出て、震える
 	var tw := create_tween()
 	tw.tween_property(orb, "position", Vector3(0, 0.75, 0.6), 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -437,6 +438,7 @@ func _open_batch() -> void:
 	var n_items := 0
 	for i in rest.size():
 		var h: Dictionary = GameState.hatched[index + i]
+		_track_hatch(h)
 		counts[h.id] = counts.get(h.id, 0) + (int(h.content.get("n", 1)) if h.has("kind") else 1) # 材料は 1 玉で何こか
 		levels[h.id] = h.level
 		if h.has("kind"):
@@ -547,6 +549,14 @@ func _cat_says(line: String) -> void:
 	bubble.queue_free()
 	if me:
 		me.queue_free()
+
+
+## テレメトリー：ひらいた玉 1 つにつき 1 件（猫・材料・服）
+func _track_hatch(h: Dictionary) -> void:
+	var kind := "cat"
+	if h.has("kind"):
+		kind = "clothes" if h.content.get("kind", "") == "cloth" else "material"
+	Telemetry.track("hatch", {"kind": kind})
 
 
 func demo_open() -> void:

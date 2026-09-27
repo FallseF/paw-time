@@ -98,7 +98,26 @@ func _ready() -> void:
 		demo = load("res://scripts/demo.gd").new()
 		demo.main = self
 		add_child(demo)
+	_app_open()
+	TelemetryNotice.show_once(self)
 	_maybe_autoshot()
+
+
+## テレメトリー：起動 1 回につき 1 件。今日が仕事の日か・シフトの予定だけある日か・無い日か、最後のシフトからの時間
+func _app_open() -> void:
+	var now := Time.get_unix_time_from_system()
+	var today := Time.get_date_string_from_system()
+	var day_type := "no_shift"
+	var last_end := -1.0
+	for s in Shifts.all():
+		if Time.get_date_string_from_unix_time(int(float(s.start) + WorkTogether._tz_offset())) == today:
+			day_type = "work"
+		elif day_type != "work" and float(s.start) > now:
+			day_type = "off" # 予定はあるけれど、今日ではない
+		if float(s.end) <= now:
+			last_end = maxf(last_end, float(s.end))
+	var since := now - last_end if last_end > 0.0 else -1.0
+	Telemetry.track("app_open", {"day_type": day_type, "hours_since_last_shift_end": Telemetry.since_shift_bucket(since)})
 
 
 var music: AudioStreamPlayer

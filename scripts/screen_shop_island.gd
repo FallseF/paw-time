@@ -46,6 +46,7 @@ var _t := 0.0
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	shop_id = String(GameState.visit.get("shop", Invites.SAMPLE_LISTING))
+	Telemetry.track("shop_island_visit", JobListings.telemetry_shop(shop_id))
 	prof = ShopCulture.profile(shop_id)
 	totals = Reviews.totals(shop_id)
 	lms = ShopCulture.landmarks_from(totals)

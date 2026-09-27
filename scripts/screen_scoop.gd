@@ -1027,6 +1027,7 @@ func _finish() -> void:
 	if GameState.scooped_tonight or busy:
 		return
 	GameState.scooped_tonight = true
+	Telemetry.track("scoop_night", {"orbs": mini(caught_count, 500)})
 	if coach:
 		coach.visible = false
 	if GameState.total_scooped > 0:
