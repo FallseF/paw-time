@@ -745,7 +745,7 @@ END_SAY_NONE,Rest is good too!,休むのも、だいじ！
 END_BACK,Back to the island,島にもどる
 END_EDIT,Change work conditions,働く条件を変える
 FOUND_TITLE,%s found %d jobs!,%s が %d 件みつけた！
-FOUND_BODY,"They match your area, days, time and wage. Take a look?",場所・曜日・時間・時給に合う仕事だよ。見てみる？
+FOUND_BODY,"They match your area, schedule and wage. Take a look?",場所・日程・時給に合う仕事だよ。見てみる？
 FOUND_SEE,See jobs,見てみる
 FOUND_NONE_TITLE,No matches yet,まだ見つからない
 FOUND_NONE_BODY,Try a lower minimum wage or more days.,最低時給を下げるか、曜日を増やしてみて。
@@ -977,7 +977,7 @@ SHIFT_FORM_DEMO_PLACE,Station-front café,駅前のカフェ
 WORK_PILL,Work,しごと
 WORK_MENU_TITLE,Your shifts,あなたのシフト
 WORK_MENU_BODY,"Coming up: %d. After each shift, a 10-second review gives you 1 poi.",これからのシフト：%d 件。働いたあとの10秒のひとこと評価で、ポイが1本。
-WORK_MENU_PREFS,Work conditions & job suggestions,働く条件・求人の知らせ
+WORK_MENU_PREFS,Work conditions,働く条件
 WORK_MENU_CLOSE,Close,とじる
 SHIFT_ADDED_TITLE,Shift added!,シフトを入れた！
 SHIFT_ADDED_BODY,"""%s"" is in. %s will ask how it went afterward.",「%s」を入れました。終わったら、%sが様子を聞きにきます。
