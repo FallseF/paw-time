@@ -27,7 +27,7 @@ static func enabled() -> bool:
 func _ready() -> void:
 	layer = 60
 	var chip := Button.new()
-	chip.text = "Demo"
+	chip.text = tr("R3_DEMO_CHIP")
 	chip.focus_mode = Control.FOCUS_NONE
 	chip.position = Vector2(302, 612) # 右下（左下は島の「広げる」）
 	chip.size = Vector2(52, 24)
@@ -53,7 +53,7 @@ func _toggle() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
 	p.add_child(v)
-	v.add_child(Kit.text("Demo", 12, Color("8a7a88"), true))
+	v.add_child(Kit.text(tr("R3_DEMO_CHIP"), 12, Color("8a7a88"), true))
 	for it in [["Before shift (in 1 h)", _before], ["On shift (fast-forward)", _on_shift], ["Just finished shift", _finished], ["Next morning", _next_morning]]:
 		var cb: Callable = it[1]
 		var b := Kit.button(it[0], Color("f3ecff"), func():

@@ -1855,3 +1855,8 @@ R3_TAGLINE,Let's work together,いっしょにはたらこう
 SHOP_JOBS_BTN,Open jobs here (%d) ›,いまの募集（%d 件）›
 SHOP_JOBS_TITLE,Open jobs here,このお店のいまの募集
 SHOP_JOBS_NOTE,Tap one to see it and take it. Sample listings.,押すと、くわしく見て受けられます。見本の求人です。
+R3_NEW,NEW,あたらしい
+R3_NEW_TAG,NEW %s,新入り %s
+R3_DEMO_CHIP,Demo,デモ
+R3_MUSIC,Music,音楽
+R3_SEP, · ,・

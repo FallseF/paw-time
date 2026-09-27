@@ -239,7 +239,7 @@ func set_lang(lang: String) -> void:
 ## 音楽：鳴らす／消す と音量（scripts/music.gd。settings.cfg の [audio] に残る）
 func _music_section() -> void:
 	Music.load_prefs()
-	var v := _section("Music" if Kit.is_en() else "音楽")
+	var v := _section(tr("R3_MUSIC"))
 	v.add_child(_row([
 		_chip("music:true", tr("PREFS_SUGGEST_ON"), func(): set_music_on(true)),
 		_chip("music:false", tr("PREFS_SUGGEST_OFF"), func(): set_music_on(false)),

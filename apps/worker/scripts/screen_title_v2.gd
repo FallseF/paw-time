@@ -649,7 +649,7 @@ func _build_ui() -> void:
 	row.add_child(visit_btn)
 	# 審査員用の3分デモ（前のタイトルにあった入口を、この行に残す）
 	for i in 2:
-		var dot := Kit.text("・", 13, Color(CREAM, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
+		var dot := Kit.text(tr("R3_SEP").strip_edges(), 13, Color(CREAM, 0.6), false, HORIZONTAL_ALIGNMENT_CENTER)
 		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(dot)
 		if i == 0:

@@ -30,6 +30,7 @@ func _run() -> void:
 	_areas()
 	_naming()
 	_openings()
+	_lang()
 	print("REVIEW3 TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -214,3 +215,33 @@ func _openings() -> void:
 		_check(a[0].start <= a[1].start and a[1].start <= a[2].start, "%s: sorted by start" % lang)
 	TranslationServer.set_locale("en")
 	_check(JobListings.shop_openings("nope", 3, 1, base).is_empty(), "unknown shop has no openings")
+
+
+# ---------------------------------------------------------------- 6. 言語：画面の字は strings.csv を通す。英語の見本（SF）の名前が日本語の画面に残らない
+
+## 英語と日本語が同じでよい行（記号・数字の形・ブランドなど）
+const SAME_OK := ["JOB_COUNT", "QUIZ_UI_QNUM", "SHIFT_FORM_DATE", "OK", "PR_REWARD_POI", "CHAT_CONSENT_OK", "R2_DAY", "TELEMETRY_NOTICE_OK"]
+
+
+func _lang() -> void:
+	var jp := RegEx.create_from_string("[\\x{3040}-\\x{30ff}\\x{4e00}-\\x{9fff}]")
+	var latin := RegEx.create_from_string("[A-Za-z]{3,}")
+	for r in csv_rows():
+		_check(String(r[1]).strip_edges() != "" and String(r[2]).strip_edges() != "", "empty en or ja: %s" % r[0])
+		_check(r[1] != r[2] or r[0] in SAME_OK, "ja is the same as en (not translated?): %s = %s" % [r[0].left(30), r[1].left(40)])
+		# 日本語の欄には、かな・漢字が入っている（英語のままになっていない）
+		if latin.search(r[2]) and not r[0] in SAME_OK:
+			_check(jp.search(r[2]) != null, "ja looks English: %s = %s" % [r[0].left(30), r[2].left(40)])
+	# 英語で受けた見本のシフトは、日本語の画面では日本語の名前で出る（保存はそのまま）
+	TranslationServer.set_locale("en")
+	Shifts.reset()
+	var st := 1790000000.0
+	var j := JobListings.localize(JobListings.demo_pay({"id": "lang1", "listing": "cafe_komorebi", "role": "hall", "area": "soma", "start": st, "end": st + 3600, "pay": "weekly", "line_n": 1}, "sf"))
+	Shifts.add(JobListings.as_shift(j))
+	_check(Shifts.all()[0].store == "Sunlit Pages Bookstore Café", "en store name")
+	TranslationServer.set_locale("ja")
+	var sj: Dictionary = Shifts.all()[0]
+	_check(sj.store == I18n.t("JOB_STORE_CAFE_KOMOREBI") and jp.search(sj.store) != null and jp.search(sj.title) != null, "ja shows the shift in Japanese: %s / %s" % [sj.store, sj.title])
+	_check(Shifts.current(st + 60).store == sj.store and Shifts.upcoming(st - 60)[0].store == sj.store, "current/upcoming are localized too")
+	TranslationServer.set_locale("en")
+	Shifts.reset()

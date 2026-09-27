@@ -491,7 +491,9 @@ func open_work_menu(at := -1.0) -> void:
 	_garden_card(false)
 	var pet := SpecialObake.pet_name()
 	var now := Time.get_unix_time_from_system()
-	var mine: Array = Shifts.all().filter(func(x): return float(x.end) > now)
+	# 今の言語の町のシフトだけ（英語＝SF・日本語＝日本の見本がまざらないように）
+	var tz := JobListings.tz_of_region()
+	var mine: Array = Shifts.all().filter(func(x): return float(x.end) > now and JobListings.tz_of(x) == tz)
 	var days := VBoxContainer.new()
 	days.add_theme_constant_override("separation", 6)
 	var groups := day_groups(mine, day0_of(now), 7)

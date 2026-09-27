@@ -262,7 +262,7 @@ func _build_world() -> void:
 			ob.position = Vector3(randf_range(-1.0, 0.6), 0.3, -2.9)
 			w.target = Vector3(randf_range(-2.2, 2.0), 0, randf_range(-2.4, -1.9)) # 縁側の前に並ぶ
 			w.wait = 0.8 + GameState.newcomers.find(o.id) * 0.6
-			var tag := Kit.label3d("NEW " + tr(GameState.info(o.id).name), 30, Color("ffe27a"))
+			var tag := Kit.label3d(tr("R3_NEW_TAG") % tr(GameState.info(o.id).name), 30, Color("ffe27a"))
 			tag.position = Vector3(0, 1.9, 0)
 			ob.add_child(tag)
 			var tw := tag.create_tween()
@@ -1912,7 +1912,7 @@ func _build_ui() -> void:
 	top.add_child(sp)
 	# キセカエ（2日目から、または新しい服が届いたら）。上の3つとは別に、左下の小さな札
 	if (GameState.day >= 1 or not Wardrobe.fresh.is_empty()) and not _vis():
-		var wd := Kit.button(tr("Wardrobe") + ("  NEW" if not Wardrobe.fresh.is_empty() else ""), Color(1, 1, 1, 0.92), func(): main.go("wardrobe"), Color("ff8a5b"), 32, 13)
+		var wd := Kit.button(tr("Wardrobe") + ("  " + tr("R3_NEW") if not Wardrobe.fresh.is_empty() else ""), Color(1, 1, 1, 0.92), func(): main.go("wardrobe"), Color("ff8a5b"), 32, 13)
 		wd.position = Vector2(12, 58)
 		wd.size = Vector2(0, 32)
 		add_child(wd)
@@ -2245,7 +2245,7 @@ func _show_card() -> void:
 		if not reg.is_empty():
 			# 今日の登録シフト（まだ始まっていない）：時刻と場所と地図。行ったら「仕事に行ってくる」
 			card_box.add_child(Kit.text("今日のシフト", 18, Color("2a2233"), true))
-			card_box.add_child(Kit.wrap(Kit.text("%s–%s ・ %s" % [Reminders.clock(reg.start), Reminders.clock(reg.end), String(reg.get("place", reg.get("store", "")))], 14, Color("6a5f70"), true)))
+			card_box.add_child(Kit.wrap(Kit.text(("%s–%s" + tr("R3_SEP") + "%s") % [Reminders.clock(reg.start), Reminders.clock(reg.end), String(reg.get("place", reg.get("store", "")))], 14, Color("6a5f70"), true)))
 			card_box.add_child(_link(tr("JOB_MAP") + " ›", func(): OS.shell_open(JobListings.maps_url(reg))))
 			card_box.add_child(Kit.button(tr("I'm going to work"), Color("ff8a5b"), func(): main.go("work")))
 			card_box.add_child(_link("今日は休む", _rest))
@@ -2559,7 +2559,7 @@ func _show_morning() -> void:
 		why.append(tr("川べりの夜"))
 	var gl := tr("庭のめぐみ +%d") % int(ln.get("growth_gain", 0))
 	if not why.is_empty():
-		gl += "（%s）" % "・".join(why)
+		gl += " (%s)" % ", ".join(why) if Kit.is_en() else "（%s）" % "・".join(why)
 	card_box.add_child(Kit.text(gl, 14, Color("3f7d4f"), true))
 	if WorkTogether.still_tired():
 		card_box.add_child(Kit.text("きのうの残業で、猫はまだ少し疲れている", 13, Color("b0643a")))

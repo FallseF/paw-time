@@ -471,7 +471,7 @@ static func wage_text(job: Dictionary) -> String:
 
 ## 見本のシフトを Shifts の形に（通貨と町の時刻も持たせる）
 static func as_shift(j: Dictionary) -> Dictionary:
-	return {"id": j.id, "title": j.get("title", ""), "place": j.get("place", ""), "store": j.get("store", ""), "role": j.get("role", "hall"),
+	return {"id": j.id, "title": j.get("title", ""), "place": j.get("place", ""), "store": j.get("store", ""), "role": j.get("role", "hall"), "area": j.get("area", ""),
 		"start": j.start, "end": j.end, "wage": j.get("wage", 0), "pay": j.get("pay", "weekly"), "listing": j.get("listing", ""),
 		"sample": true, "currency": Money.of(j), "tz": tz_of(j)}
 
