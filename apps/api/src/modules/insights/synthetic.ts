@@ -43,21 +43,25 @@ function mulberry32(seed: number) {
 type Band = (typeof BANDS)[number];
 // 10 pilot shops in 3 areas. "culture" (0..1) is the hidden variable the after-shift
 // signals should surface: how people feel after working there. drift moves it over the
-// 12 weeks (cvs_hoshi gets a new manager and slides; izk_kemuri improves).
+// 12 weeks (cvs_hoshi gets a new manager and slides; izk_kemuri improves). "wage" (0..1) is the
+// shop's pay level; a locale skin turns it into dollars or yen. It feeds no other number, so
+// every locale shows the same metrics.
 const SHOPS = {
-  cafe_komorebi: { culture: 0.85, drift: 0, overtime: 0.6, bands: ["morning", "day"] },
-  izk_torimaru: { culture: 0.35, drift: 0, overtime: 1.8, bands: ["evening", "night"] },
-  cvs_machikado: { culture: 0.6, drift: 0, overtime: 1.0, bands: ["morning", "day", "evening", "night"] },
-  bk_komugi: { culture: 0.75, drift: 0, overtime: 0.8, bands: ["morning", "day"] },
-  cafe_sunnyside: { culture: 0.7, drift: 0, overtime: 0.7, bands: ["morning", "day", "evening"] },
-  izk_chochin: { culture: 0.5, drift: 0, overtime: 1.4, bands: ["evening", "night"] },
-  cvs_hoshi: { culture: 0.72, drift: -0.42, overtime: 1.2, bands: ["morning", "day", "evening", "night"] },
-  rs_nikoniko: { culture: 0.8, drift: 0, overtime: 0.9, bands: ["day", "evening"] },
-  sm_maruya: { culture: 0.62, drift: 0, overtime: 0.8, bands: ["day", "evening"] },
-  izk_kemuri: { culture: 0.42, drift: 0.3, overtime: 1.5, bands: ["evening", "night"] },
-} as const satisfies Record<string, { culture: number; drift: number; overtime: number; bands: readonly Band[] }>;
+  cafe_komorebi: { culture: 0.85, drift: 0, overtime: 0.6, wage: 0.5, bands: ["morning", "day"] },
+  izk_torimaru: { culture: 0.35, drift: 0, overtime: 1.8, wage: 0.35, bands: ["evening", "night"] },
+  cvs_machikado: { culture: 0.6, drift: 0, overtime: 1.0, wage: 0.25, bands: ["morning", "day", "evening", "night"] },
+  bk_komugi: { culture: 0.75, drift: 0, overtime: 0.8, wage: 0.45, bands: ["morning", "day"] },
+  cafe_sunnyside: { culture: 0.7, drift: 0, overtime: 0.7, wage: 0.15, bands: ["morning", "day", "evening"] },
+  izk_chochin: { culture: 0.5, drift: 0, overtime: 1.4, wage: 0.6, bands: ["evening", "night"] },
+  cvs_hoshi: { culture: 0.72, drift: -0.42, overtime: 1.2, wage: 0.2, bands: ["morning", "day", "evening", "night"] },
+  rs_nikoniko: { culture: 0.8, drift: 0, overtime: 0.9, wage: 0.55, bands: ["day", "evening"] },
+  sm_maruya: { culture: 0.62, drift: 0, overtime: 0.8, wage: 0.7, bands: ["day", "evening"] },
+  izk_kemuri: { culture: 0.42, drift: 0.3, overtime: 1.5, wage: 0.65, bands: ["evening", "night"] },
+} as const satisfies Record<string, { culture: number; drift: number; overtime: number; wage: number; bands: readonly Band[] }>;
 type Shop = keyof typeof SHOPS & (typeof SHOP_IDS)[number];
 const shops = Object.keys(SHOPS) as Shop[];
+/** Pay level (0..1) and posted time bands per simulated shop, for the locale skin's wages. */
+export const SIM_SHOP_PAY: { shop: string; level: number; bands: readonly string[] }[] = shops.map((shop) => ({ shop, level: SHOPS[shop].wage, bands: SHOPS[shop].bands }));
 const cultureAt = (shop: Shop, d: number) => Math.min(0.95, Math.max(0.05, SHOPS[shop].culture + SHOPS[shop].drift * (d / SIM_DAYS)));
 
 // What tends to go wrong at each shop: the same hidden culture, plus its own flavour.

@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./areas": "./src/areas.ts"
+    "./areas": "./src/areas.ts",
+    "./skins": "./src/skins.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

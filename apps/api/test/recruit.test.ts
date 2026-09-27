@@ -1,4 +1,4 @@
-import { InsightsMetricsResponseSchema } from "@paw-time/api-contracts";
+import { INSIGHTS_SKINS, InsightsMetricsResponseSchema } from "@paw-time/api-contracts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { beforeEach, test } from "node:test";
@@ -169,4 +169,48 @@ test("simulated pilot: answers are consistent with the hidden model", async () =
   assert.ok(bins[3]! > bins[0]!, bins.join(","));
   assert.ok((r.fit.behavior.repeat_rate ?? 0) > (r.fit.self_report.repeat_rate ?? 1));
   assert.equal(r.kpis.active_shops.now, 10);
+});
+
+// ---- Locale skins -------------------------------------------------------------------
+
+test("simulated pilot skins: en = San Francisco / USD (default), ja = Japan / JPY, same model underneath", async () => {
+  const get = async (q: string) => InsightsMetricsResponseSchema.parse(await (await app.request(`/v1/insights/metrics?mode=simulated${q}`)).json());
+  const [def, en, ja, bad] = [await get(""), await get("&lang=en"), await get("&lang=ja"), await get("&lang=fr")];
+  assert.deepEqual(def, en, "no lang = en (backward compatible)");
+  assert.deepEqual(bad.skin, en.skin, "unknown lang falls back to en");
+  assert.deepEqual(en.skin, { locale: "en", place: "San Francisco", currency: "USD", time_zone: "America/Los_Angeles" });
+  assert.equal(ja.skin?.currency, "JPY");
+  assert.equal(ja.skin?.time_zone, "Asia/Tokyo");
+
+  // Every metric and risk score is identical; only the pay section's currency and amounts differ.
+  const strip = (m: typeof en) => ({ ...m.data, recruit: { ...m.data.recruit!, pay: undefined } });
+  assert.deepEqual(strip(en), strip(ja));
+  assert.deepEqual(en.data.recruit!.at_risk.rows.map((x) => x.shop), ja.data.recruit!.at_risk.rows.map((x) => x.shop), "same risk ordering");
+  const enPay = en.data.recruit!.pay!;
+  const jaPay = ja.data.recruit!.pay!;
+  assert.equal(enPay.currency, "USD");
+  assert.equal(jaPay.currency, "JPY");
+  assert.equal(enPay.shops.length, 10);
+  assert.deepEqual(enPay.shops.map((s) => s.pay_styles), jaPay.shops.map((s) => s.pay_styles), "pay-style mix comes from the same events");
+  assert.ok(enPay.shops.every((s) => s.pay_styles.every((p) => p.share == null || (p.share > 0 && p.share < 1))));
+
+  // Wages: realistic SF entry-level range above the local minimum; yen above Tokyo's minimum.
+  const usd = enPay.listings.map((x) => x.hourly_wage);
+  assert.ok(usd.every((w) => w >= INSIGHTS_SKINS.en.min_wage && w >= 20 && w <= 28 && Math.abs(w * 4 - Math.round(w * 4)) < 1e-9), usd.join(","));
+  const jpy = jaPay.listings.map((x) => x.hourly_wage);
+  assert.ok(jpy.every((w) => w >= INSIGHTS_SKINS.ja.min_wage && Number.isInteger(w) && w % 10 === 0), jpy.join(","));
+  // The shop that pays more pays more in both currencies; night pays at least the day rate.
+  const order = (p: typeof enPay) => [...p.shops].sort((a, b) => a.hourly_wage - b.hourly_wage || a.shop.localeCompare(b.shop)).map((s) => s.shop);
+  assert.deepEqual(order(enPay), order(jaPay));
+  for (const p of [enPay, jaPay]) {
+    for (const l of p.listings) assert.ok(l.hourly_wage >= p.shops.find((s) => s.shop === l.shop)!.hourly_wage);
+  }
+  // Every listing in the fill table has a wage.
+  for (const f of en.data.recruit!.fill.rows) assert.ok(enPay.listings.some((l) => l.shop === f.shop && l.band === f.band), `${f.shop}:${f.band}`);
+});
+
+test("live metrics carry no skin or synthetic pay", async () => {
+  const m = InsightsMetricsResponseSchema.parse(await (await app.request("/v1/insights/metrics?mode=live&lang=ja")).json());
+  assert.equal(m.skin, undefined);
+  assert.equal(m.data.recruit?.pay, undefined);
 });

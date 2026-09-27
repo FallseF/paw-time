@@ -8,8 +8,8 @@ export interface CalcInput {
   shiftsPerWeek: number; // posted shifts per shop per week
   currentFill: number; // 0..1
   noShowRate: number; // 0..1, of filled shifts
-  fillFee: number; // ¥ per additional filled shift
-  noShowCost: number; // ¥ per no-show (manager time, lost sales, urgent re-posting)
+  fillFee: number; // per additional filled shift, in the dashboard's currency
+  noShowCost: number; // per no-show (manager time, lost sales, urgent re-posting), same currency
   fillUplift: number; // percentage points as 0..1 (0.03 = +3 pt)
   noShowReduction: number; // relative, 0..1 (0.2 = 20% fewer)
 }
@@ -25,7 +25,7 @@ export interface CalcOutput {
   annual: number;
 }
 
-/** Defaults are deliberately conservative. None is a measured result. */
+/** Defaults are deliberately conservative. None is a measured result. Yen (Japanese dashboard). */
 export const CALC_DEFAULTS: CalcInput = {
   shops: 5,
   workers: 60,
@@ -36,6 +36,16 @@ export const CALC_DEFAULTS: CalcInput = {
   noShowCost: 5000,
   fillUplift: 0.03,
   noShowReduction: 0.2,
+};
+
+/**
+ * Defaults per currency. USD is the San Francisco setting: the money inputs are plausible
+ * SF values, not conversions (an extra filled shift ≈ a placement fee of $12; a no-show ≈
+ * $45 of manager time, lost sales and urgent re-posting). Still assumptions.
+ */
+export const CALC_DEFAULTS_BY_CURRENCY: Record<"USD" | "JPY", CalcInput> = {
+  JPY: CALC_DEFAULTS,
+  USD: { ...CALC_DEFAULTS, fillFee: 12, noShowCost: 45 },
 };
 
 const nonneg = (x: number) => (Number.isFinite(x) && x > 0 ? x : 0);
