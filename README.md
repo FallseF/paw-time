@@ -1,61 +1,76 @@
-# Paw Time
+# Paw Time — Let's work together
 
-短期・スキマバイトで働くワーカーと採用企業をつなぎ、双方の体験にゲーミフィケーションを組み込むモノレポです。
+**AI now floods job applications, so an application no longer tells anyone who will fit. Only outcome data does — and job apps can't collect it, because people open them only to search.**
+Paw Time is a cozy cat-obake game that spot workers open every day. Your cat brings shifts that fit, works your real shift with you, and gets tired so you stop overworking. Because it is opened daily, it sees what job apps never see: interest before applying, and whether the job fit after the shift.
 
-**はじめての人は [docs/onboarding.md](docs/onboarding.md) から。** 公開中のURL、触り方、手元での動かし方、作業のルールを1ページにまとめています。
+Team Dry Grape · Recruit Holdings Innovation Cup 2026 · [日本語の README](README.ja.md)
 
-## アプリケーション
+## For judges: start here
 
-| パス | 対象 | 役割 |
+| What | Link |
+|---|---|
+| **Play the game** (phone or desktop, no login) | https://paw-time-play.vercel.app |
+| **3-minute guided demo** | On the title screen, tap **“3-minute demo”** (about 95 seconds, ends in the Recruit view) |
+| Presentation deck (PDF) | [docs/deck/PawTime_TeamDryGrape.pdf](docs/deck/PawTime_TeamDryGrape.pdf) |
+| Recruit view (behavior data as a database, synthetic data) | https://paw-time-insights.vercel.app |
+| Shop console (jobs, applicants, shifts, chat, reviews & island, labor cost; sample data) | https://paw-time-employer.vercel.app |
+| Launch page | https://paw-time-launch.vercel.app |
+
+- The first load takes about 20–30 seconds (a 3D game running in the browser).
+- The English build is set in San Francisco with USD; the **日本語** link on the title switches to Japan and yen.
+- All job listings, shops and numbers are **samples**. No real workers or payments.
+- Judging build: scooping and hatching work at any hour, so every feature can be tried right away. In the real product the river opens at 5 PM and orbs hatch in the morning.
+
+## The problem
+- Applications per recruiter are up 412%; about 254 people apply to each job, and $20 buys AI mass-applying (Greenhouse data, *Fortune*, Jul 2026).
+- 4.52 million people do spot work in Japan, and 65% of them hit problems on the job (Persol Research Institute, 2024 survey).
+- Job apps see one of four moments — the application. Before it, during the shift and after it, the worker is invisible.
+
+## The solution
+1. **Pick** — your obaneko brings 3–4 shifts that fit your area, hours and wage.
+2. **Work** — during your real shift your cat works too; past 7.5 hours it gets tired: “let’s both head home.” Working longer never earns more.
+3. **Night** — scoop glowing orbs; **Morning** — they hatch into materials, outfits and, rarely, a new cat (six special cats have reveal clips).
+4. **Island** — build your island, dress your cat, visit friends’ and shops’ islands. A shop’s island grows **only** from positive reviews.
+5. **Recruit view** — fit and return signals, shown only as aggregates of 5+ people.
+
+Everyone wins: workers get shifts that fit and a cat that tells them to rest; shops get people who show up and come back; Recruit gets fit-and-stay data after the hire.
+
+## How it is built
+
+```mermaid
+flowchart LR
+  P["Worker's phone<br/>Godot web game<br/>consent card"] -->|allow-listed events only| A["Paw Time API<br/>Hono + zod<br/>free text rejected"]
+  A --> S["Event store<br/>aggregates of 5+"]
+  S --> R["Recruit view<br/>fit · return · at-risk shops"]
+  S --> C["Shop console<br/>results + groups of 5+"]
+  C -->|shops post shifts| P
+```
+
+| Part | Path | Stack |
 |---|---|---|
-| `apps/worker` | ワーカー | 求人、応募、シフト、レビュー、おばネコと島のゲーム体験（Godot） |
-| `apps/employer` | 採用企業 | 求人掲載、応募者選考、勤怠、評価、企業の家（Next.js） |
-| `apps/api` | 両方 | 求人・応募・シフト・勤怠・評価・報酬の共通API |
-| `apps/marketing` | 一般公開 | プロダクト紹介ページ |
-| `apps/insights` | 提携先・審査員 | 利用データの集計ダッシュボード（Recruit view）とプライバシー告知。詳細は `docs/architecture/insights.md` |
+| Game (worker app) | `apps/worker` | Godot 4.7 (GL Compatibility / WebGL2), GDScript, custom toon + outline shaders, Blender-built 3D, EN/JA via `tr()` |
+| API | `apps/api` | TypeScript, Hono + zod, OpenAPI contracts (`packages/api-contracts`), Vercel |
+| Shop console | `apps/employer` | Next.js 15, React 19, rules in `packages/shop-console` (minimum wage by slot date, 5+ aggregation, CSV export) |
+| Recruit view | `apps/insights` | TypeScript, Chart.js |
+| Launch page | `apps/marketing` | Static HTML |
+| Deck & media | `docs/deck` | Slide sources, story script (`docs/pitch.md`), gameplay GIFs/MP4s |
 
-共通仕様は `packages/api-contracts`、ゲームコンテンツ定義は `packages/game-catalog`、データベース変更は `infra/database/migrations` で管理します。
+**Trust by design:** shops never get a score on an individual worker; anything under 5 people is shown as “fewer than 5”; the cat never passes a worker’s words to the shop (chat stays on device, only fixed tags); coins are never cash and never touch wages; the only purchases are cosmetics.
 
-## 開発
+**AI tools used:** Claude Code and OpenAI Codex for development; Codex for UI parts and icons; MiniMax Hailuo 3 for the rare-cat reveal clips; Google Lyria 3 for music. The team reviewed and is responsible for all content.
 
-### ワーカーアプリ
-
-```sh
-godot --path apps/worker
-```
-
-Web書き出し:
+## Run it locally
 
 ```sh
-godot --headless --path apps/worker --export-release "Web" build/web/index.html
-```
+# Game (Godot 4.7.x)
+godot --path apps/worker                      # open / run
+godot --headless --path apps/worker --import  # first time
+OBAKE_NOSAVE=1 godot --headless --path apps/worker -s tests/test_review3.gd   # a test
 
-### 採用企業アプリとAPI
-
-```sh
+# API, shop console, Recruit view
 pnpm install
-pnpm dev
+pnpm dev        # shop console http://localhost:3000, API http://localhost:8787
+pnpm test && pnpm typecheck && pnpm build
 ```
 
-- 採用企業アプリ: `http://localhost:3000`
-- API: `http://localhost:8787`
-
-個別に起動する場合:
-
-```sh
-pnpm dev:employer
-pnpm dev:api
-```
-
-現在のAPIは画面と契約を結合して確認するためのインメモリ実装です。再起動するとデータは初期化されます。本番保存用の初期スキーマは `infra/database/migrations` にあり、次の段階でPostgreSQLアダプターと認証を接続します。
-
-## 設計上の境界
-
-- UIはワーカー向けと採用企業向けで分離する。
-- 求人、応募、採用、勤怠、評価、報酬イベントはAPIを正本とする。
-- ゲーム報酬はクライアントの自己申告ではなく、APIが業務イベントから付与する。
-- 企業データは必ず `organization_id` で分離する。
-- 勤怠の修正と採用・評価の変更は監査ログへ残す。
-- GodotとTypeScriptの実装コードを無理に共有せず、API契約と宣言的なゲーム定義を共有する。
-
-詳しい構成は [アーキテクチャ](docs/architecture/monorepo.md)、既存ワーカーアプリの仕様は [ワーカーアプリREADME](apps/worker/README.md) を参照してください。3分ピッチの背景・課題に使う調査結果と出典は [ピッチ用の調査メモ](docs/pitch-evidence.md) にまとめています。
+More: [docs/onboarding.md](docs/onboarding.md) (Japanese), [docs/architecture/monorepo.md](docs/architecture/monorepo.md), game spec [apps/worker/README.en.md](apps/worker/README.en.md).
