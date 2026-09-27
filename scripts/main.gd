@@ -78,6 +78,13 @@ func _ready() -> void:
 			GameState.visit = d
 			# 自分の乗り物で海を渡ってから（OBAKE_NOTRAVEL=1 で、すぐ島へ）
 			start = "garden" if OS.get_environment("OBAKE_NOTRAVEL") != "" else "travel"
+	# 確認用：特別なレアの動画（OBAKE_REVEAL=<id>）。その子が玉からかえる朝から
+	var rv := OS.get_environment("OBAKE_REVEAL")
+	if SpecialReveal.is_special(rv):
+		if start == "quiz" or start == "":
+			GameState.reset("solo")
+		GameState.hatched = [{"id": rv, "is_new": GameState.add_obake(rv), "level": 1, "rare": true, "special": OS.get_environment("OBAKE_REVEAL_TUTORIAL") != ""}]
+		start = "hatch"
 	go(start if SCREENS.has(start) else "title", true)
 	root.add_child(fade)
 	_music()

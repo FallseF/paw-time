@@ -376,6 +376,11 @@ func _next() -> void:
 	if h.has("kind"):
 		await _reveal_item(h)
 		return
+	# 特別なレア 6 匹は、はじめて会ったときだけ動画で（はじめての夜の子は、猫がひとこと言ってから）
+	if SpecialReveal.has_clip(h.id) and (h.is_new or OS.get_environment("OBAKE_REVEAL") == h.id):
+		if h.get("special", false):
+			await _cat_says(tr("Whoa… a rare one!"))
+		await SpecialReveal.play(self, h.id)
 	current_obake = Obake3D.make(h.id)
 	current_obake.position = Vector3(0, 0.55, 0.3)
 	current_obake.scale = Vector3.ONE * 0.05
@@ -511,6 +516,36 @@ func _flash(a: float) -> void:
 	flash.color = Color("fffcf5")
 	flash.modulate.a = a * 0.6
 	create_tween().tween_property(flash, "modulate:a", 0.0, 0.35)
+
+
+## 自分の猫が、ひとこと（はじめての夜のレア）。猫は右下からのぞいて、吹き出しで話す
+func _cat_says(line: String) -> void:
+	var me := MyObake3D.from_saved()
+	if me:
+		me.position = Vector3(0.95, 0.2, 0.9)
+		me.scale = Vector3.ONE * 0.05
+		me.rotation.y = -0.5
+		world.add_child(me)
+		create_tween().tween_property(me, "scale", Vector3.ONE * 0.32, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var bubble := PanelContainer.new()
+	bubble.add_theme_stylebox_override("panel", _pill(Color(1, 0.98, 0.95, 0.97), 20))
+	bubble.add_child(_text(line, 18, Color("2a2233"), font_black))
+	bubble.position = Vector2(40, 440)
+	bubble.size = Vector2(280, 0)
+	bubble.modulate.a = 0.0
+	add_child(bubble)
+	var tw := create_tween()
+	tw.tween_property(bubble, "modulate:a", 1.0, 0.2)
+	sfx["sparkle"].play()
+	await get_tree().create_timer(1.4).timeout
+	var tw2 := create_tween()
+	tw2.tween_property(bubble, "modulate:a", 0.0, 0.2)
+	if me:
+		tw2.parallel().tween_property(me, "scale", Vector3.ONE * 0.01, 0.2)
+	await tw2.finished
+	bubble.queue_free()
+	if me:
+		me.queue_free()
 
 
 func demo_open() -> void:

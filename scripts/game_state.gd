@@ -758,6 +758,11 @@ func _hatch_orbs() -> void:
 			var nw := Drops.grant(c)
 			hatched.append({"id": c.id, "kind": c.kind, "content": c, "is_new": nw, "level": 1, "rare": false})
 			continue
+		# はじめての夜の玉（と 3 分デモの玉）は、決まった特別なレア（SpecialReveal.pick）
+		var sp_id := String(c.get("special", ""))
+		if SpecialReveal.is_special(sp_id):
+			hatched.append({"id": sp_id, "is_new": add_obake(sp_id), "level": 1, "rare": true, "special": true})
+			continue
 		var sid: String = species_for_type(orb.type) if orb.type != "rare" else ["receipt", "bubble", "tray", "pan", "box"].pick_random()
 		var is_new := add_obake(sid)
 		var lv := 1

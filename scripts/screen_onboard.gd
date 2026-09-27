@@ -421,7 +421,7 @@ func _to_morning() -> void:
 	GameState.end_night()
 	# はじめての朝は「すくった玉から、新しい子」だけを見せる。条件を満たしたレアは、次の夜まで待ってもらう
 	for h in GameState.hatched.duplicate():
-		if h.get("rare", false):
+		if h.get("rare", false) and not h.get("special", false):
 			GameState.hatched.erase(h)
 			GameState.seen.erase(h.id)
 			GameState.owned = GameState.owned.filter(func(o): return o.id != h.id)
