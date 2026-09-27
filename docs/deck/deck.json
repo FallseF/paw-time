@@ -8,7 +8,9 @@
  "cover": "cover",
  "order": [
   "cover",
-  "problem",
+  "story",
+  "flood",
+  "ceo",
   "insight",
   "solution",
   "wins",
@@ -26,11 +28,15 @@
  ],
  "sections": {
   "s1": {
-   "description": "Submission: the eight required sections",
+   "description": "Our story: from a missing reply to the missing data",
    "start": "cover"
   },
   "s2": {
-   "description": "Appendix: the data, the Recruit view and the game",
+   "description": "Paw Time: the daily game that collects it",
+   "start": "solution"
+  },
+  "s3": {
+   "description": "Appendix",
    "start": "data"
   }
  },
@@ -47,9 +53,9 @@
    "family": "Inter",
    "href": "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
   },
-  "roboto-mono": {
-   "family": "Roboto Mono",
-   "href": "https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap"
+  "zen-maru-gothic": {
+   "family": "Zen Maru Gothic",
+   "href": "https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap"
   }
  },
  "designSystems": []
