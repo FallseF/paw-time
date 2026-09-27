@@ -8,7 +8,7 @@ extends Control
 
 signal done
 
-const IDS := ["sakura", "yomise", "amagasa", "kaminari", "mangetsu", "hyakki"]
+const IDS := ["sakura", "yomise", "amagasa", "kazaguruma", "mangetsu", "hyakki"]
 const FRAMES := 62
 const FPS := 12.0
 const PATH := "user://special_reveal.json"
@@ -53,8 +53,11 @@ static func _ensure() -> void:
 	if _nosave() or not FileAccess.file_exists(PATH):
 		return
 	var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-	if d is Dictionary and String(d.get("pick", "")) in IDS:
-		_pick = String(d.pick)
+	if d is Dictionary:
+		var p := String(d.get("pick", ""))
+		p = Rares.RENAMED.get(p, p)
+		if p in IDS:
+			_pick = p
 
 
 ## はじめての夜の玉からかえる子（このインストールで一度だけ決めて、覚えておく）
