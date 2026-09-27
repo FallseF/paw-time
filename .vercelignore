@@ -4,3 +4,4 @@ apps/worker/
 **/dist
 **/.next
 **/.turbo
+**/ui_review
