@@ -14,13 +14,13 @@ const SEA_SHADER := preload("res://shaders/title_sea.gdshader")
 const FRAME_FADE := preload("res://shaders/title_frame_fade.gdshader")
 
 const HORIZON := 0.38 # 画面の水平線（上からの割合）
-const SKY_HORIZON := 0.58 # 空の絵の中の水平線（ここを HORIZON に合わせ、下の暖かい色を水平線のすぐ上に）
+const SKY_HORIZON := 0.72 # 空の絵のこの高さを HORIZON に合わせる（絵の水平線 58% より下の桃色まで使い、ラベンダーを減らす）
 const FOV := 46.0 # 縦の画角
 const CAM_H := 2.4 # 海面近くからのカメラの高さ（手前の島の上の芝と岸の縁が見える、見下ろし 12〜15°）
 const SEA_Y := -0.14 # 島の画面と同じ海面の高さ
 const GROUND_Y := 0.32 # 手前の岬の芝の高さ（崖の段が海から立ち上がって見える）
 const TERRAIN_SEA := 0.8 # 岬（terrain_title.glb）の芝から海面までの高さ（tools/blender/build_island_kit.py の TITLE_SEA）
-const FAR_SWAY := 0.3 # 遠くの島は、カメラのゆれの 3 割だけ動かす（枠の 55〜92% から出ないように）
+const FAR_SWAY := 0.1 # 遠くの島は、カメラのゆれの 1 割だけ動かす（枠の 52〜92% から出ないように）
 const SIDE_LAYER := 1 << 9 # 横長の画面で、縦の枠の外にも描くもの（海・海の底・ヘリ）
 const CREAM := Color("fff6e6")
 const NAVY := Color("23285a")
@@ -36,6 +36,7 @@ var world: Node3D
 var cam: Camera3D
 var cam_wide: Camera3D
 var sky_rects: Array[TextureRect] = []
+var sky_warm: TextureRect
 var cat: MyObake3D
 var cat_mat: ShaderMaterial
 var island: Node3D
@@ -93,6 +94,24 @@ func _ready() -> void:
 		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(r)
 		sky_rects.append(r)
+	# 上の空を、暖かい桃色へ少し寄せる（光らせない、ただの薄い色の重ね）
+	var g := Gradient.new()
+	g.set_color(0, Color(0.98, 0.8, 0.66, 0.42))
+	g.set_color(1, Color(0.98, 0.8, 0.66, 0.0))
+	g.add_point(0.6, Color(0.98, 0.8, 0.66, 0.16))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill_from = Vector2(0, 0)
+	gt.fill_to = Vector2(0, 1)
+	gt.width = 4
+	gt.height = 128
+	sky_warm = TextureRect.new()
+	sky_warm.texture = gt
+	sky_warm.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sky_warm.stretch_mode = TextureRect.STRETCH_SCALE
+	sky_warm.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sky_warm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(sky_warm)
 	_build_world()
 	_build_ui()
 	resized.connect(_layout)
@@ -193,7 +212,7 @@ func _build_world() -> void:
 	far_root = Node3D.new()
 	world.add_child(far_root)
 	far_isles.append(_far_isle(Color("e0674f"), Color("fff1dc"), "tree_round", "cup"))
-	far_isles.append(_far_isle(Color("6fae6a"), Color("fff6e6"), "tree_palm", "apple"))
+	far_isles.append(_far_isle(Color("6fae6a"), Color("fff6e6"), "tree_round", "apple"))
 	heli = VehicleProps.build_vehicle("helicopter")
 	world.add_child(heli)
 	# 横長の画面では、ヘリと手前の岬（小物ごと）も枠の外へ続ける（枠のふちで切れないように）
@@ -252,7 +271,7 @@ func _make_cat() -> MyObake3D:
 func _far_isle(sign_c: Color, accent: Color, tree_id: String, icon: String) -> Node3D:
 	var n := Node3D.new()
 	var land := MeshInstance3D.new()
-	land.mesh = IslandProps.land_lobe(1.7, 7)
+	land.mesh = IslandProps.land_lobe(1.35, 7)
 	land.name = "Land" # 水の下まで広がる板なので、横の広がりを測るときは数えない
 	land.material_override = _ground_mat()
 	n.add_child(land)
@@ -262,12 +281,12 @@ func _far_isle(sign_c: Color, accent: Color, tree_id: String, icon: String) -> N
 	n.add_child(shop)
 	_sign_icon(shop, icon)
 	var tree := IslandProps.build(tree_id)
-	tree.position = Vector3(1.35, 0, -0.5)
-	tree.scale = Vector3.ONE * 0.9
+	tree.position = Vector3(0.75, 0, -0.85) # お店のうしろ寄り（横にはみ出さない）
+	tree.scale = Vector3.ONE * 0.85
 	n.add_child(tree)
 	var pr := IslandProps.build("pier")
-	pr.scale = Vector3(0.7, 0.7, 0.5)
-	pr.position = Vector3(-1.0, -0.1, 1.9)
+	pr.scale = Vector3(0.6, 0.6, 0.35)
+	pr.position = Vector3(-0.6, -0.1, 1.7)
 	pr.rotation.y = -0.35
 	n.add_child(pr)
 	# 小さな灯り（窓の明かりと、店先の灯）
@@ -435,6 +454,8 @@ func _layout() -> void:
 	for i in 5:
 		sky_rects[i].position = Vector2(sx + (i - 2) * sw, (HORIZON - SKY_HORIZON) * vs.y)
 		sky_rects[i].size = Vector2(sw, vs.y)
+	sky_warm.position = Vector2.ZERO
+	sky_warm.size = Vector2(vs.x, HORIZON * vs.y)
 	# 3D は画面の実際の画素で描く（キャンバスの拡大でぼやけないように）
 	var k := clampf(get_viewport().get_final_transform().x.x, 1.0, 2.0 if OS.has_feature("web") else 3.0)
 	frame_vp.size = Vector2i(ceili(frame.size.x * k), ceili(frame.size.y * k))
@@ -468,8 +489,9 @@ func _place_world() -> void:
 	var a := _on_plane(0.47, 0.72, GROUND_Y)
 	var q := absf(a.x - _on_plane(0.0, 0.72, GROUND_Y).x) / 1.876 # 横の見え方（9:16 で 1）
 	var ts := (GROUND_Y - SEA_Y) / TERRAIN_SEA
-	island.position = Vector3(a.x - 2.45 * q, GROUND_Y, a.z - 0.82)
-	island.scale = Vector3(ts * q, ts, ts)
+	# 手前は奥へ詰めて、ボタンの左はしの裏に崖がかからないように（前後だけ 0.8 倍、中心を奥へ）
+	island.position = Vector3(a.x - 2.45 * q, GROUND_Y, a.z - 1.3)
+	island.scale = Vector3(ts * q, ts, ts * 0.8)
 	# 小物：猫の左うしろ（猫にはかぶせない）。茂みは左のふち
 	var cs := cat.scale.x
 	var spots := {"JobBoard": [0.07, 0.64, 0.7, 0.3], "Clothesline": [0.1, 0.72, 0.5, 0.2],
@@ -504,12 +526,12 @@ func _place_world() -> void:
 	raft.scale = Vector3.ONE * _world_w(rp, 0.2) / 1.3
 	raft.rotation.y = pier.rotation.y - PI * 0.5
 	# 遠くの島：カフェ（左）と角のお店（右）。水平線に乗り、屋根の上が 30% くらい。
-	# ふたつ合わせた横の広がりを 58〜89% に詰める（ゆれを足しても 55〜92% に収まる）
+	# ふたつ合わせた横の広がりを 53〜91% に収める（ゆれを足しても 52〜92%）
 	far_root.position = Vector3(0, CAM_H, 0)
 	far_root.rotation = Vector3.ZERO
-	var fx := [0.63, 0.845]
-	var tops := [0.325, 0.34]
-	var bases := [0.447, 0.442]
+	var fx := [0.66, 0.79] # 角のお店はカフェの右うしろに半分ほど重ねる（2 回目の大きさのまま 52〜92% に収める）
+	var tops := [0.326, 0.323] # 2 回目の大きさ（屋根・日よけ・看板の印が読める）。角のお店は少し奥で、カフェのうしろに重ねる
+	var bases := [0.447, 0.437]
 	for it in 4:
 		for i in far_isles.size():
 			var fp := _on_plane(fx[i], bases[i], SEA_Y)
@@ -529,11 +551,10 @@ func _place_world() -> void:
 					var px := (_proj(bb.get_endpoint(c)).x - frame.position.x) / frame.size.x
 					lo = minf(lo, px)
 					hi = maxf(hi, px)
-		var k := 0.31 / maxf(hi - lo, 0.01)
+		# 大きさはそのまま、真ん中を 73.5% に寄せる（左の砂浜の端まで 52% の内に）
 		var mid := (lo + hi) * 0.5
 		for i in 2:
-			fx[i] = 0.735 + (fx[i] - mid) * k
-			tops[i] = bases[i] - (bases[i] - tops[i]) * k
+			fx[i] += 0.735 - mid
 	var sm := (world.get_node("Sea") as MeshInstance3D).material_override as ShaderMaterial
 	sm.set_shader_parameter("sun_dir", _ray(0.76, 0.35))
 	# ヘリ：右上 (86%, 22%) から左へゆっくり
