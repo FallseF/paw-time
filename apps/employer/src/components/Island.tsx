@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useLayoutEffect, useRef } from "react";
 import type { IslandView, LandmarkId, LandmarkView, PositiveTag } from "@paw-time/shop-console";
 import renders from "../../public/island/island.json";
 
@@ -93,6 +94,50 @@ export function LandmarkGlyph({ id, dim }: { id: LandmarkId; dim?: boolean | und
 type Render = { levels: Record<string, string>; pins: Record<string, [number, number]>; stage: number };
 const RENDERS = renders as unknown as Record<string, Render>;
 
+type Box = { l: number; t: number; r: number; b: number };
+const GAP = 3;
+const hits = (a: Box, b: Box) => a.l < b.r + GAP && b.l < a.r + GAP && a.t < b.b + GAP && b.t < a.b + GAP;
+/** Offsets to try for a pin, nearest first; moving up (a longer stem) is cheaper than moving sideways. */
+const NUDGES: Array<[number, number]> = [];
+for (let dy = 0; dy <= 96; dy += 4) {
+  for (let dx = -72; dx <= 72; dx += 6) NUDGES.push([dx, -dy]);
+}
+NUDGES.sort((a, b) => Math.abs(a[0]) * 1.6 + Math.abs(a[1]) - (Math.abs(b[0]) * 1.6 + Math.abs(b[1])));
+
+/**
+ * Name tags are placed over the landmarks, but at some widths two tags land on top of each other.
+ * After layout, keep the lowest tag (nearest to the viewer) in place and nudge each tag above it
+ * to the nearest free spot inside the picture, stretching its stem so it still points at its landmark.
+ */
+function useUnoverlap(ref: React.RefObject<HTMLElement | null>, deps: string) {
+  useLayoutEffect(() => {
+    const fig = ref.current;
+    if (!fig) return;
+    const place = () => {
+      const pins = [...fig.querySelectorAll<HTMLElement>(".island-pin")];
+      pins.forEach((p) => { p.style.setProperty("--dx", "0px"); p.style.setProperty("--dy", "0px"); });
+      const f = fig.getBoundingClientRect();
+      const sign = fig.querySelector<HTMLElement>(".island-sign")?.getBoundingClientRect();
+      const placed: Box[] = sign ? [{ l: sign.left, t: sign.top, r: sign.right, b: sign.bottom }] : [];
+      for (const p of pins.reverse()) {
+        const r = p.getBoundingClientRect();
+        if (r.width === 0) continue;
+        const at = NUDGES.find(([dx, dy]) => {
+          const b = { l: r.left + dx, t: r.top + dy, r: r.right + dx, b: r.bottom + dy };
+          return b.l >= f.left + 2 && b.r <= f.right - 2 && b.t >= f.top + 2 && !placed.some((q) => hits(b, q));
+        }) ?? [0, 0];
+        p.style.setProperty("--dx", `${at[0]}px`);
+        p.style.setProperty("--dy", `${at[1]}px`);
+        placed.push({ l: r.left + at[0], t: r.top + at[1], r: r.right + at[0], b: r.bottom + at[1] });
+      }
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(fig);
+    return () => ro.disconnect();
+  }, [ref, deps]);
+}
+
 function levelKey(lm: LandmarkView): string {
   return lm.sprout ? "s" : String(lm.level);
 }
@@ -119,8 +164,10 @@ export function IslandArt({ island, shopName, signColor, compact, labels, tags, 
   const pinned = island.landmarks
     .filter((lm) => lm.level > 0 && render.pins[lm.id])
     .sort((a, b) => render.pins[a.id]![1] - render.pins[b.id]![1]);
+  const figRef = useRef<HTMLElement>(null);
+  useUnoverlap(figRef, `${key}|${pinned.map((l) => labels[l.id]).join("|")}|${tags ? "t" : ""}|${shopName}`);
   return (
-    <figure className={`island-v2${compact ? " compact" : ""}`} role="img" aria-label={`${shopName}: ${titleText}`}>
+    <figure ref={figRef} className={`island-v2${compact ? " compact" : ""}`} role="img" aria-label={`${shopName}: ${titleText}`}>
       <Image
         src={`/island/island-${key}-1600.webp`}
         alt=""
