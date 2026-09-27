@@ -662,8 +662,6 @@ ONB_SHIFT_EARNED,+2 poi,ポイ +2
 ONB_SHIFT_POI_WHY,"Poi are scoop nets. Work gives you poi — tonight, use them at the river to scoop glowing orbs.",ポイは、すくいの網。働くともらえるよ。今夜、川べりで光る玉をすくおう。
 ONB_SHIFT_TO_RIVER,Go to the river tonight,夜の川べりへ
 ONB_SCOOP_COACH,"Orbs can hold a new obake, island materials or clothes! Hold on the water, slide under the orb, and let go.",玉の中には、新しいおばけ・島の材料・服のどれかが入ってる！ 水を押したまま玉の下へ、そして離す。
-ONB_NIGHT_TITLE,Night by the river,川べりの夜
-ONB_NIGHT_BODY,Orbs hatch in the morning. %s will keep watch.,玉は、朝になったらかえる。%s が見てるね。
 ONB_NIGHT_SLEEP,Until morning,朝まで待つ
 TOUR_1_TITLE,This is your island!,ここが、きみの島！
 TOUR_1_BODY,%s is the host. Obake you hatch come to live here too.,あるじは %s。かえったおばけも、ここに住むよ。

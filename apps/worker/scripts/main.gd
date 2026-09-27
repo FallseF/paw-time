@@ -15,7 +15,6 @@ const SCREENS := {
 	"quiz": preload("res://scripts/screen_quiz.gd"),
 	# はじめての流れと仕事さがし（feature/onboarding-jobs）。流れの順番は scripts/onboarding.gd
 	"onboard": preload("res://scripts/screen_onboard.gd"),
-	"onboard_night": preload("res://scripts/screen_onboard.gd"),
 	"prefs": preload("res://scripts/screen_job_prefs.gd"),
 	"work": preload("res://scripts/screen_work.gd"),
 	"wardrobe": preload("res://scripts/screen_wardrobe.gd"),

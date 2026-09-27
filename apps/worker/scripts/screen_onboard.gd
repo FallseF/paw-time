@@ -2,7 +2,6 @@ extends Control
 ## はじめての流れの、専用の2場面。
 ##   "onboard"       … 体験バイト（見本）：30 秒で 17:00→21:00 を早送り。カフェで相棒が応援し、お客さんに「出す」を押す。
 ##                     終わるとポイ（すくいの網）がもらえて、はじめての夜のすくいへ。
-##   "onboard_night" … すくいのあと、夜のひと場面。「朝まで待つ」で玉がかえる朝へ（孵化の画面）。
 ## ひとつの画面に、主ボタンはひとつ。説明はひとつずつ。
 
 var main
@@ -49,10 +48,7 @@ const CUSTOMERS := ["receipt", "tray", "pan", "box", "nemuri"]
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_world()
-	if screen_name == "onboard_night":
-		_build_night()
-	else:
-		_build_shift()
+	_build_shift()
 
 
 # ---------------------------------------------------------------- 3D
@@ -70,9 +66,8 @@ func _build_world() -> void:
 	View3D.fit(box, vp)
 	world = Node3D.new()
 	vp.add_child(world)
-	# 光と空気は他の画面と同じ Look（体験バイトは休憩室の夕方、夜はタイトルと同じ夜）
-	var night := screen_name == "onboard_night"
-	rig = Look.apply(world, "title" if night else "room", Color("141a3a") if night else Color("f6d9b8"), false, false)
+	# 光と空気は他の画面と同じ Look（体験バイトは休憩室の夕方）
+	rig = Look.apply(world, "room", Color("f6d9b8"), false, false)
 	env = rig.env
 	cam = Camera3D.new()
 	cam.fov = 40
@@ -210,9 +205,6 @@ func _build_shift() -> void:
 
 
 func _on_main() -> void:
-	if screen_name == "onboard_night":
-		_to_morning()
-		return
 	if sheet:
 		return
 	if not running:
@@ -228,7 +220,7 @@ func _on_main() -> void:
 
 
 func _process(delta: float) -> void:
-	if not running or screen_name != "onboard":
+	if not running:
 		return
 	t += delta
 	var k := clampf(t / SHIFT_SEC, 0.0, 1.0)
@@ -351,88 +343,6 @@ func _to_river() -> void:
 	GameState.phase = "evening"
 	GameState.save()
 	main.go("catch")
-
-
-# ---------------------------------------------------------------- 夜
-
-func _build_night() -> void:
-	var ground := MeshInstance3D.new()
-	var gm := CylinderMesh.new()
-	gm.top_radius = 2.4
-	gm.bottom_radius = 2.4
-	gm.height = 0.1
-	ground.mesh = gm
-	ground.material_override = Obake3D.toon(Color("3f6a4a"), 0.1)
-	ground.position = Vector3(0, -0.05, 0)
-	world.add_child(ground)
-	var moon := MeshInstance3D.new()
-	var mm := SphereMesh.new()
-	mm.radius = 0.45
-	mm.height = 0.9
-	moon.mesh = mm
-	moon.material_override = Kit.glow(Color("fff1c8"), 2.0)
-	moon.position = Vector3(1.4, 2.6, -3)
-	moon.name = "Moon"
-	world.add_child(moon)
-	partner.motion = "doze"
-	partner.position = Vector3(0, 0, 0.3)
-	partner.scale = Vector3.ONE * 0.8
-	world.add_child(partner)
-	# 朝にかえる玉（今夜すくった分）
-	for i in GameState.orbs.size():
-		var o := Orb3D.new().setup(GameState.orbs[i])
-		o.caught = true
-		o.position = Vector3(0.75 + i * 0.3, 0.1, 0.6)
-		world.add_child(o)
-	var z := _text("z z z", 26, Color("c9bdf5"), true)
-	z.position = Vector2(196, 170)
-	z.size = Vector2(120, 40)
-	add_child(z)
-	var zt := create_tween().set_loops()
-	zt.tween_property(z, "modulate:a", 0.3, 1.0)
-	zt.tween_property(z, "modulate:a", 1.0, 1.0)
-	var v := VBoxContainer.new()
-	v.position = Vector2(16, 420)
-	v.size = Vector2(328, 0)
-	v.add_theme_constant_override("separation", 8)
-	add_child(v)
-	v.add_child(_text(tr("ONB_NIGHT_TITLE"), 24, Color("fff6e8"), true))
-	var l := I18n.wrap(_text(tr("ONB_NIGHT_BODY") % SpecialObake.pet_name(), 14, Color("c9bdf5")))
-	v.add_child(l)
-	main_btn = Kit.button(tr("ONB_NIGHT_SLEEP"), Color("8b7bff"), _on_main)
-	main_btn.position = Vector2(40, 552)
-	main_btn.size = Vector2(280, 56)
-	add_child(main_btn)
-	Kit.nudge.call_deferred(main_btn)
-
-
-func _to_morning() -> void:
-	if busy:
-		return
-	busy = true
-	main_btn.disabled = true
-	Kit.play(self, "chime", 0.8)
-	var moon: Node3D = world.get_node("Moon")
-	var tw := create_tween().set_parallel()
-	tw.tween_property(env, "background_color", Color("ffd9b0"), 1.4)
-	tw.tween_property(env, "ambient_light_color", Color("fff0e0"), 1.4)
-	tw.tween_property(moon, "position:y", -1.0, 1.4)
-	await tw.finished
-	# 夜が明ける。玉は GameState.end_night() の中でかえる
-	GameState.end_night()
-	# はじめての朝は「すくった玉から、新しい子」だけを見せる。条件を満たしたレアは、次の夜まで待ってもらう
-	for h in GameState.hatched.duplicate():
-		if h.get("rare", false) and not h.get("special", false):
-			GameState.hatched.erase(h)
-			GameState.seen.erase(h.id)
-			GameState.owned = GameState.owned.filter(func(o): return o.id != h.id)
-			GameState.rare_pending.push_front(h.id)
-	# 朝の庭の演出（きのうのまとめ）は2日目から。今朝は孵化 → 島の説明へ
-	GameState.phase = "day"
-	GameState.garden_seen_level = GameState.garden_level
-	GameState.save()
-	Onboarding.advance("island")
-	main.go("hatch")
 
 
 # ---------------------------------------------------------------- 確認用
