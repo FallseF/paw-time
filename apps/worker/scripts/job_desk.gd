@@ -356,7 +356,7 @@ func _found_jobs() -> void:
 		_sheet(pet, tr("FOUND_NONE_TITLE"), tr("FOUND_NONE_BODY"), tr("FOUND_EDIT"), func(): _go("prefs"))
 		return
 	# 見つけた知らせは一か所だけ：相棒の吹き出し（上の知らせの列と下のシートを、両方は出さない）
-	_speech(tr("FOUND_TITLE") % [pet, list.size()], tr("FOUND_BODY"), tr("FOUND_SEE"), _open_viewer)
+	_speech((tr("R3_FOUND_TITLE_1") % pet) if list.size() == 1 else tr("FOUND_TITLE") % [pet, list.size()], tr("FOUND_BODY"), tr("FOUND_SEE"), _open_viewer)
 
 
 var speech: Control
@@ -442,7 +442,7 @@ func _daily() -> void:
 	var left := undecided()
 	if left.is_empty():
 		return
-	_notify(slot, tr("NOTE_DAILY") % [SpecialObake.pet_name(), left.size()], tr("NOTE_DAILY_SUB") % JobListings.wage_text(left[0]), role_color(left[0].role), _open_viewer)
+	_notify(slot, (tr("R3_NOTE_DAILY_1") % SpecialObake.pet_name()) if left.size() == 1 else tr("NOTE_DAILY") % [SpecialObake.pet_name(), left.size()], tr("NOTE_DAILY_SUB") % JobListings.wage_text(left[0]), role_color(left[0].role), _open_viewer)
 
 
 ## 前の晩（島の夜）と当日の朝（島の朝・昼）の、相棒のひとこと。出したら次の段の番号を返す
@@ -765,7 +765,7 @@ func _show_list() -> void:
 		return
 	_say(tr("JOB_LIST_SAY"))
 	stage.talk()
-	card_box.add_child(_text(tr("JOB_LIST_TITLE") % left.size(), 17, INK, true))
+	card_box.add_child(_text(tr("R3_JOB_LIST_TITLE_1") if left.size() == 1 else tr("JOB_LIST_TITLE") % left.size(), 17, INK, true))
 	var groups := day_groups(left, day0_of(Time.get_unix_time_from_system()) + 86400, 7)
 	# はじめて開いたときは、仕事のある最初の日から。受けた・見送ったあとは、同じ日に戻る
 	if job_day < 0 or job_day >= groups.size() or groups[job_day].items.is_empty():
@@ -1208,7 +1208,7 @@ static func shift_label(sh: Dictionary) -> String:
 	var nm := String(sh.get("store", ""))
 	if nm == "":
 		nm = String(sh.get("title", sh.get("place", "")))
-	return "%s %s (%s)" % [day_label(day0_of(float(sh.start))), clock_range(sh), nm] if nm != "" else "%s %s" % [day_label(day0_of(float(sh.start))), clock_range(sh)]
+	return I18n.t("R3_SHIFT_LABEL") % [day_label(day0_of(float(sh.start))), clock_range(sh), nm] if nm != "" else "%s %s" % [day_label(day0_of(float(sh.start))), clock_range(sh)]
 
 
 ## 求人のカードを閉じて、マイシフト（しごとのシート）のその日へ

@@ -1865,3 +1865,7 @@ R3_NEW_TAG,NEW %s,新入り %s
 R3_DEMO_CHIP,Demo,デモ
 R3_MUSIC,Music,音楽
 R3_SEP, · ,・
+R3_FOUND_TITLE_1,%s found a job!,%s が 1 件みつけた！
+R3_NOTE_DAILY_1,%s brought a job today,%s が今日の仕事を 1 件もってきた
+R3_JOB_LIST_TITLE_1,1 job — tap it to see more,1 件。タップでくわしく
+R3_SHIFT_LABEL,%s %s (%s),%s %s（%s）
