@@ -577,14 +577,7 @@ func _build_host(id: String) -> void:
 			host_node.queue_free()
 			host_node = Outfit.make("my")
 		else:
-			var vo: Dictionary = V.get("outfits", {}).get("my", {})
-			var t := WardrobeData.tint(vo.get("tint", ""))
-			if t.c != "" and QuizData.TYPES.has(tid):
-				var lk: Dictionary = QuizData.TYPES[tid].look.duplicate()
-				lk["color"] = t.c
-				host_node.queue_free()
-				host_node = Obake3D.make_custom(lk)
-			Outfit.dress(host_node, vo)
+			Outfit.dress(host_node, V.get("outfits", {}).get("my", {}))
 	else:
 		host_node = Outfit.make(id, _vis_outfit(id))
 	host_node.scale = Vector3.ONE * (0.6 if Rares.is_rare(id) else 0.82)

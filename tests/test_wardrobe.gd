@@ -68,6 +68,13 @@ func _initialize() -> void:
 	check(not Wardrobe.outfit_of(gs.host()).has("back"), "持っていない物は着ない")
 	var p := Wardrobe.pack(gs.host())
 	check(Wardrobe.unpack(p) == Wardrobe.outfit_of(gs.host()), "7 バイトの往復")
+	# 体の色は変えない：前の版の色は着せても残らず、コードの 7 バイト目（色）は読み飛ばす
+	Wardrobe.set_outfit(gs.host(), {"head": "top_hat", "neck": "red_scarf", "tint": "mint"})
+	check(not Wardrobe.outfit_of(gs.host()).has("tint"), "色は保存しない")
+	var p_old := Wardrobe.pack(gs.host())
+	check(p_old.size() == 7 and p_old[6] == 0, "コードの形は 7 バイトのまま（色の欄は 0）")
+	p_old[6] = 2 # 前の版で「ミント」を着ていたコード
+	check(not Wardrobe.unpack(p_old).has("tint") and Wardrobe.unpack(p_old).get("head", "") == "top_hat", "前の版のコードも読める（色なし）")
 	gs.orbs = [{"type": "hall", "rare": false}]
 	gs.end_night()
 	var code: String = gs.island_code(["flowerbed"])

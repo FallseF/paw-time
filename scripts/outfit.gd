@@ -20,9 +20,6 @@ static func make(obake_id: String, outfit = null) -> Obake3D:
 	if obake_id == "my":
 		var gs = Engine.get_main_loop().root.get_node_or_null("GameState")
 		var look: Dictionary = gs.my_obake.get("look", {}).duplicate() if gs else {}
-		var t := WardrobeData.tint(o.get("tint", ""))
-		if t.c != "":
-			look["color"] = t.c
 		ob = Obake3D.make_custom(look) if not look.is_empty() else Obake3D.make("receipt")
 	else:
 		ob = Obake3D.make(obake_id)

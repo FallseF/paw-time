@@ -5,8 +5,9 @@ class_name Wardrobe
 ##   Wardrobe.grant(item_id) -> bool          手に入れる（はじめてなら true、NEW 印がつく）
 ##   Wardrobe.random_drop(rarity) -> String   光る玉の中身として 1 つ選ぶ（"common" / "rare"）。持っていない物を優先。
 ##                                            選ぶだけで、渡すのは grant()。空文字なら、もう全部ある
-##   Wardrobe.check_unlocks() -> Array        仕事・眠り・図鑑の条件で届いた物（朝や画面を開いたときに呼ぶ）
-##   Wardrobe.outfit_of(obake_id) -> Dictionary   {slot: item_id, "tint": id}
+##   Wardrobe.check_unlocks() -> Array        仕事・休み・おでかけ・図鑑の条件で届いた物（朝や画面を開いたときに呼ぶ）
+##   Wardrobe.outfit_of(obake_id) -> Dictionary   {slot: item_id}
+## 体の色は変えない（猫はそれぞれの色のまま。変わるのは服だけ）。古い保存・古いシェアのコードの「色」は読み飛ばす。
 ##   Outfit.make(obake_id) -> Obake3D         着せた姿で作る（庭・島・店で Obake3D.make の代わりに）
 ##   OutfitReveal.open(parent, item_id)       「新しい服！」の演出
 ##
@@ -17,8 +18,7 @@ const PATH := "user://wardrobe.json"
 static var _loaded := false
 static var owned := {} # item_id → true
 static var fresh := {} # まだ見ていない（NEW 印）
-static var tints := {"": true, "cream": true, "mint": true}
-static var outfits := {} # obake_id → {slot: item_id, "tint": id}
+static var outfits := {} # obake_id → {slot: item_id}
 
 
 static func _ensure() -> void:
@@ -41,11 +41,12 @@ static func _ensure() -> void:
 			owned[id] = true
 	for id in d.get("fresh", []):
 		fresh[id] = true
-	for id in d.get("tints", []):
-		tints[id] = true
 	var o = d.get("outfits", {})
 	if o is Dictionary:
 		outfits = o
+		for k in outfits:
+			if outfits[k] is Dictionary:
+				outfits[k].erase("tint") # 前の版の体の色は使わない
 
 
 static func save() -> void:
@@ -53,7 +54,7 @@ static func save() -> void:
 		return
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify({"owned": owned.keys(), "fresh": fresh.keys(), "tints": tints.keys(), "outfits": outfits}))
+		f.store_string(JSON.stringify({"owned": owned.keys(), "fresh": fresh.keys(), "outfits": outfits}))
 
 
 static func has(id: String) -> bool:
@@ -98,19 +99,6 @@ static func buy(id: String) -> bool:
 	return true
 
 
-static func buy_tint(tid: String) -> bool:
-	_ensure()
-	var t := WardrobeData.tint(tid)
-	var p: PackedStringArray = String(t.src).split(":")
-	if tints.has(tid) or p[0] != "shop":
-		return false
-	if not Wallet.spend(int(p[1]), "tint:" + tid):
-		return false
-	tints[tid] = true
-	save()
-	return true
-
-
 static func outfit_of(obake_id: String) -> Dictionary:
 	_ensure()
 	return outfits.get(obake_id, {})
@@ -123,8 +111,6 @@ static func set_outfit(obake_id: String, o: Dictionary) -> void:
 		var id: String = o.get(slot, "")
 		if id != "" and owned.has(id):
 			clean[slot] = id
-	if o.get("tint", "") != "" and tints.has(o.tint):
-		clean["tint"] = o.tint
 	if clean.is_empty():
 		outfits.erase(obake_id)
 	else:
@@ -183,17 +169,13 @@ static func check_unlocks() -> Array:
 	return got
 
 
-## ---- シェアのコード用：着ている物を 7 バイトに（6 か所＋色）。0 はなし ----
+## ---- シェアのコード用：着ている物を 7 バイトに（6 か所＋もとは色の欄。色はもう使わないので、いつも 0）。0 はなし ----
 static func pack(obake_id: String) -> PackedByteArray:
 	var o := outfit_of(obake_id)
 	var b := PackedByteArray()
 	for slot in WardrobeData.SLOTS:
 		b.append(WardrobeData.index_of(o.get(slot, "")) + 1)
-	var ti := 0
-	for i in WardrobeData.TINTS.size():
-		if WardrobeData.TINTS[i].id == o.get("tint", ""):
-			ti = i
-	b.append(ti)
+	b.append(0) # 7 バイト目（前の版の色）。コードの形を変えないため
 	return b
 
 
@@ -203,9 +185,7 @@ static func unpack(b: PackedByteArray) -> Dictionary:
 		var k: int = b[i] - 1
 		if k >= 0 and k < WardrobeData.ITEMS.size():
 			o[WardrobeData.SLOTS[i]] = WardrobeData.ITEMS[k].id
-	if b.size() >= 7 and b[6] > 0 and b[6] < WardrobeData.TINTS.size():
-		o["tint"] = WardrobeData.TINTS[b[6]].id
-	return o
+	return o # 7 バイト目（前の版の色）は読み飛ばす
 
 
 ## 撮影用：いくつかの子に服を着せておく
@@ -230,7 +210,6 @@ static func reset() -> void:
 	_loaded = true
 	owned = {}
 	fresh = {}
-	tints = {"": true, "cream": true, "mint": true}
 	outfits = {}
 	for it in WardrobeData.ITEMS:
 		if WardrobeData.kind(it) == "free":

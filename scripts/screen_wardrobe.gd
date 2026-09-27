@@ -13,7 +13,7 @@ const GOLD := Color("e8a317")
 
 var who_list: Array = []
 var who_i := 0
-var draft := {} # いま試している姿 {slot: id, "tint": id}
+var draft := {} # いま試している姿 {slot: id}（体の色は変えない：猫はそれぞれの色のまま）
 var slot := "head"
 var selected := ""
 
@@ -246,14 +246,9 @@ func _build_tabs() -> void:
 	for c in tabs.get_children():
 		c.queue_free()
 	var list: Array = WardrobeData.SLOTS.duplicate()
-	if who_list[who_i] == "my":
-		list.append("tint")
-	else:
-		if slot == "tint":
-			slot = "head"
 	for s in list:
 		var on: bool = s == slot
-		var name: String = tr("Color") if s == "tint" else tr(WardrobeData.SLOT_NAME[s])
+		var name: String = tr(WardrobeData.SLOT_NAME[s])
 		var b := Kit.button(name, ACCENT if on else Color.WHITE, func():
 			slot = s
 			selected = ""
@@ -275,11 +270,6 @@ func _fill_grid() -> void:
 		c.queue_free()
 	cards.clear()
 	coin_label.text = tr("%d Paw Coins") % Wallet.balance()
-	if slot == "tint":
-		for t in WardrobeData.TINTS:
-			grid.add_child(_tint_card(t))
-		_update_action()
-		return
 	grid.add_child(_none_card())
 	var items: Array = WardrobeData.in_slot(slot)
 	# 持っている → お店 → まだ → 特別な棚 の順
@@ -397,48 +387,6 @@ func _name_row(l: Label) -> void:
 	l.offset_bottom = 74
 
 
-func _tint_card(t: Dictionary) -> Control:
-	var have: bool = Wardrobe.tints.has(t.id)
-	var on: bool = draft.get("tint", "") == t.id
-	var b := Button.new()
-	b.custom_minimum_size = Vector2(81, 88)
-	for k in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(k, _card_style(on, Color(0, 0, 0, 0)))
-	var dot := Panel.new()
-	var ds := StyleBoxFlat.new()
-	var gs = _gs()
-	var base: String = gs.my_obake.get("look", {}).get("color", "ffffff") if gs else "ffffff"
-	ds.bg_color = Color(t.c if t.c != "" else base)
-	ds.set_corner_radius_all(24)
-	ds.border_color = Color(0, 0, 0, 0.15)
-	ds.set_border_width_all(2)
-	dot.add_theme_stylebox_override("panel", ds)
-	dot.position = Vector2(16, 8)
-	dot.size = Vector2(48, 48)
-	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(dot)
-	var nl := Kit.text(tr(t.name), 10, INK, true, HORIZONTAL_ALIGNMENT_CENTER)
-	_name_row(nl)
-	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(nl)
-	var p: PackedStringArray = String(t.src).split(":")
-	var sl := Kit.text(tr("Owned") if have else p[1], 9, SUB if have else GOLD, true, HORIZONTAL_ALIGNMENT_CENTER)
-	sl.position = Vector2(0, 73)
-	sl.size = Vector2(81, 12)
-	sl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(sl)
-	b.pressed.connect(func():
-		Kit.play(self, "tap")
-		selected = "tint:" + t.id
-		if t.id == "":
-			draft.erase("tint")
-		else:
-			draft["tint"] = t.id
-		_rebuild_obake()
-		_fill_grid())
-	return b
-
-
 func _pick(it: Dictionary) -> void:
 	Kit.play(self, "tap")
 	selected = it.id
@@ -452,16 +400,6 @@ func _pick(it: Dictionary) -> void:
 func _update_action() -> void:
 	action_btn.disabled = false
 	info_label.text = ""
-	if selected.begins_with("tint:"):
-		var t := WardrobeData.tint(selected.substr(5))
-		if Wardrobe.tints.has(t.id):
-			action_btn.text = tr("Trying it on")
-			action_btn.disabled = true
-			info_label.text = tr("Tap Save to keep this look")
-		else:
-			action_btn.text = tr("Buy · %s") % String(t.src).split(":")[1]
-			action_btn.disabled = Wallet.balance() < int(String(t.src).split(":")[1])
-		return
 	if selected == "":
 		action_btn.text = tr("Pick something to try")
 		action_btn.disabled = true
@@ -486,11 +424,6 @@ func _update_action() -> void:
 
 
 func _on_action() -> void:
-	if selected.begins_with("tint:"):
-		if Wardrobe.buy_tint(selected.substr(5)):
-			Kit.play(self, "chime")
-			_fill_grid()
-		return
 	var it := WardrobeData.item(selected)
 	if it.is_empty():
 		return
@@ -516,8 +449,6 @@ func _randomize() -> void:
 				mine.append(it.id)
 		if not mine.is_empty() and randf() < 0.7:
 			rng_draft[s] = mine.pick_random()
-	if draft.has("tint"):
-		rng_draft["tint"] = draft.tint
 	draft = rng_draft
 	selected = ""
 	Kit.play(self, "tap")
@@ -532,9 +463,6 @@ func _save() -> void:
 		if draft.has(s) and not Wardrobe.has(draft[s]):
 			draft.erase(s)
 			dropped += 1
-	if draft.has("tint") and not Wardrobe.tints.has(draft.tint):
-		draft.erase("tint")
-		dropped += 1
 	Wardrobe.set_outfit(id, draft)
 	Wardrobe.save()
 	Kit.play(self, "chime")
@@ -670,18 +598,6 @@ func demo_pick(id: String = "crown") -> void:
 func demo_premium() -> void:
 	demo_pick("astro_helmet")
 	_on_action()
-
-
-func demo_tint() -> void:
-	slot = "tint"
-	_build_tabs()
-	_fill_grid()
-	selected = "tint:mint"
-	draft["tint"] = "mint"
-	draft["back"] = "angel_wings"
-	draft["hand"] = "balloon"
-	_rebuild_obake()
-	_fill_grid()
 
 
 func demo_reveal() -> void:

@@ -84,15 +84,6 @@ const ITEMS := [
 	{"id": "dragon_tail", "slot": "back", "name": "Dragon wings", "src": "premium:2.99:450", "c": "7fd18a", "c2": "ffd23f", "shape": "dragon_wings"},
 ]
 
-## マイおばけ猫の体の色（はじめ 3 色は無料、ほかはお店）
-const TINTS := [
-	{"id": "", "name": "Original", "c": "", "src": "free"},
-	{"id": "cream", "name": "Cream", "c": "fff1d6", "src": "free"},
-	{"id": "mint", "name": "Mint", "c": "9fe3c8", "src": "free"},
-	{"id": "peach", "name": "Peach", "c": "ffb3a0", "src": "shop:50"},
-	{"id": "lilac", "name": "Lilac", "c": "c9b8ff", "src": "shop:50"},
-	{"id": "night", "name": "Midnight", "c": "4a4f8f", "src": "shop:80"},
-]
 
 static var _by_id := {}
 
@@ -126,13 +117,6 @@ static func kind(it: Dictionary) -> String:
 static func price(it: Dictionary) -> int:
 	var p: PackedStringArray = String(it.src).split(":")
 	return int(p[1]) if p[0] == "shop" else -1
-
-
-static func tint(id: String) -> Dictionary:
-	for t in TINTS:
-		if t.id == id:
-			return t
-	return TINTS[0]
 
 
 const JOB_NAME := {"register": "Register", "dish": "Dishwashing", "hall": "Hall", "kitchen": "Kitchen", "stock": "Stocking"}
