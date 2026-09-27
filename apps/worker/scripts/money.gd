@@ -46,3 +46,11 @@ static func commas(n: int) -> String:
 		out = "," + s.right(3) + out
 		s = s.left(s.length() - 3)
 	return s + out
+
+
+## 見た目の買い切りの値段（見本のストア）。日本語は円のまま、英語はドルの「.99」価格（¥240 → $1.99、¥360 → $2.99、¥480 → $3.99）
+static func store_price(yen: int, currency := "") -> String:
+	var c := currency if currency != "" else current()
+	if c == "USD":
+		return fmt(maxf(1.0, roundf(yen / 120.0)) - 0.01, "USD")
+	return fmt(yen, "JPY")

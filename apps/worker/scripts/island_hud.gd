@@ -452,7 +452,7 @@ func refresh() -> void:
 	if shown:
 		_sync_round()
 		fab.visible = _fab_wanted()
-	var eve := GameState.phase == "evening"
+	var eve := GameState.phase == "evening" or GameState.ANYTIME
 	var open_now := eve and not GameState.scooped_tonight
 	(icons.scoop as TextureRect).modulate.a = 1.0 if eve else 0.6
 	scoop_chip.visible = not eve

@@ -657,7 +657,9 @@ func goals_done() -> int:
 # ---------- 実際の時計 ----------
 
 const DAY_START_H := 5 # この時刻で日付が変わる（深夜は前の日の夜）
-const EVENING_H := 17 # 川べりは夕方 5 時から
+const EVENING_H := 17 # 川べりは夕方 5 時から（ANYTIME のときは時刻を問わない）
+## 審査・試遊用：すくい・孵化を時刻に関係なくいつでも試せる（夕方 5 時まで待たない、朝まで待たない）
+const ANYTIME := true
 
 
 ## いまの時刻（確認用に OBAKE_NOW=unix 秒。デモの切りかえは set_clock_offset）

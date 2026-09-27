@@ -192,6 +192,21 @@ static func glow(c: Color, e: float) -> StandardMaterial3D:
 	return m
 
 
+## 看板などの Label3D を、横幅 max_w（メートル）に収まるよう縮める（英語で長くなってもはみ出さない）
+static func fit_label3d(l: Label3D, max_w: float, max_h := 0.0) -> void:
+	if l.font == null or l.text == "":
+		return
+	var sz := l.font.get_multiline_string_size(l.text, HORIZONTAL_ALIGNMENT_CENTER, -1, l.font_size)
+	var w := sz.x * l.pixel_size
+	var h := sz.y * l.pixel_size
+	var k := 1.0
+	if w > max_w:
+		k = max_w / w
+	if max_h > 0.0 and h * k > max_h:
+		k = max_h / h
+	l.pixel_size *= k
+
+
 static func label3d(t: String, size := 48, color := Color.WHITE) -> Label3D:
 	var l := Label3D.new()
 	l.text = t
