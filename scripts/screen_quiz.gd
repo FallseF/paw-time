@@ -277,6 +277,19 @@ func _build_intro() -> void:
 		if main:
 			main.go("quiz", true))
 	layer_intro.add_child(lb)
+	# はじめて開いた人（タイトルを通らない）にも、審査員向けの 3 分デモ（DemoRoute）
+	var db := Button.new()
+	db.flat = true
+	db.text = tr("DEMO3_BUTTON") + " ›"
+	db.add_theme_font_override("font", Kit.bold())
+	db.add_theme_font_size_override("font_size", 13)
+	db.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
+	db.position = Vector2(10, 10)
+	db.size = Vector2(150, 32)
+	db.pressed.connect(func():
+		if main:
+			DemoRoute.begin(main))
+	layer_intro.add_child(db)
 	var v := VBoxContainer.new()
 	v.position = Vector2(16, 352)
 	v.size = Vector2(328, 0)

@@ -222,6 +222,8 @@ func go(screen_name: String, instant := false) -> void:
 	if busy:
 		return
 	busy = true
+	# 3 分デモの間は、デモの段に合わせた行き先（DemoRoute）
+	screen_name = DemoRoute.route(screen_name)
 	# 働いている間は、猫の仕事場だけ（すくい・島づくり・キセカエ・おさらい・求人は、シフトが終わってから）
 	if not WorkTogether.screen_allowed(screen_name) and OS.get_environment("OBAKE_START") == "":
 		screen_name = "work"

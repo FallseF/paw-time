@@ -115,6 +115,8 @@ func _ready() -> void:
 			v.add_child(Kit.text(peek, 12, Color(1, 1, 1, 0.75), false, HORIZONTAL_ALIGNMENT_CENTER))
 	# はじめる（ひとつだけ）。シフトは自分で入れる・求人で受ける（見本の記録の自動のシフトは、確認用の OBAKE_START だけ）
 	v.add_child(Kit.button("はじめる", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("solo"), Color.WHITE, 46, 15))
+	# 審査員向けの 3 分デモ（DemoRoute）
+	v.add_child(Kit.button(tr("DEMO3_BUTTON"), Color(1, 1, 1, 0.92), func(): DemoRoute.begin(main), Color("6a5bd6"), 42, 15))
 	var vb := Button.new()
 	vb.flat = true
 	vb.text = "島のコードで、おでかけ"

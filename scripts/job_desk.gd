@@ -573,7 +573,7 @@ func _open_viewer() -> void:
 	if Onboarding.at("found"):
 		Onboarding.advance("done")
 		onboard_end = true
-	jobs = Invites.pending() + undecided()
+	jobs = ([] if DemoRoute.active else Invites.pending()) + undecided() # 3 分デモは求人 1 枚だけ
 	index = 0
 	accepted = 0
 	done_ids = {}

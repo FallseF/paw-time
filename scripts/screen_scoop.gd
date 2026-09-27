@@ -63,6 +63,8 @@ func _ready() -> void:
 		GameState.grant_rest_net()
 	# はじめての夜（Onboarding）は、ゆっくりで逃げない玉がひとつだけ
 	var list := Onboarding.tutorial_orbs() if Onboarding.at("scoop") else GameState.tonight_orbs()
+	if DemoRoute.active:
+		list = DemoRoute.scoop_orbs() # 3 分デモ：おばネコの玉がひとつ（中身は特別なレア）
 	total_tonight = list.size()
 	for d in list:
 		_spawn_orb(d)
@@ -993,7 +995,7 @@ func _keep_visible(o: Orb3D) -> void:
 
 ## 水面の玉が少なくなったら、今夜の玉を足す（空の水面を待たせない。ポイがある間）
 func _top_up() -> void:
-	if Onboarding.at("scoop") or poi_type == "":
+	if Onboarding.at("scoop") or poi_type == "" or DemoRoute.active:
 		return
 	while orbs.size() < MIN_ON_SCREEN:
 		var more: Array = GameState.tonight_orbs()

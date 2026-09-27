@@ -1743,3 +1743,9 @@ EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろっ�
 Your cat is at work too. See you after your shift!,Your cat is at work too. See you after your shift!,猫もいっしょに働いてるよ。シフトのあとでね！
 Message the shop,Message the shop,お店に連絡
 Whoa… a rare one!,Whoa… a rare one!,わっ…レアな子だ！
+DEMO3_BUTTON,3-minute demo,3分デモ
+DEMO3_CHIP,3-min demo · %d/%d · %ds,3分デモ · %d/%d · %d秒
+DEMO3_FINAL_TITLE,That's a day with Paw Time,これが Paw Time の一日
+DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.","仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。"
+DEMO3_RECRUIT,See the Recruit view,Recruit の見え方を見る
+DEMO3_KEEP,Keep playing,このまま遊ぶ
