@@ -153,9 +153,9 @@ keys,en,ja
 ねぶくろ,Bedroll,ねぶくろ
 ななし,No Name,ななし
 めあて達成　めぐみ +3,Goal met · bloom +3,めあて達成　めぐみ +3
-マイおばけ猫 診断,My Cat-Obake Quiz,マイおばけ猫 診断
+マイおばけ猫 診断,My Obaneko Quiz,マイおばねこ診断
 向いてる仕事  ,Best job  ,向いてる仕事  
-わたしのマイおばけ猫は,My cat-obake is,わたしのマイおばけ猫は
+わたしのマイおばけ猫は,My Obaneko is,わたしのおばねこは
 画像をダウンロードしました,Image downloaded.,画像をダウンロードしました
 保存できませんでした（%s）,Couldn't save (%s),保存できませんでした（%s）
 保存しました：,Saved: ,保存しました：
@@ -235,12 +235,12 @@ keys,en,ja
 "わたしのマイおばけ猫は「%s」！
 %s
 #PawTime #マイおばけ猫
-%s","My cat-obake is %s!
+%s","My Obaneko is %s!
 %s
-#PawTime #MyCatObake
-%s","わたしのマイおばけ猫は「%s」！
+#PawTime #MyObaneko
+%s","わたしのおばねこは「%s」！
 %s
-#PawTime #マイおばけ猫
+#PawTime #マイおばねこ
 %s"
 QuizResult: 保存できない %s (%s),QuizResult: Cannot save %s (%s),QuizResult: 保存できない %s (%s)
 QuizResult: 読めない結果を無視した %s,QuizResult: Ignored unreadable result %s,QuizResult: 読めない結果を無視した %s
@@ -482,16 +482,16 @@ Lv%d ・ %s,Lv%d · %s,Lv%d ・ %s
 満月の朝には、めずらしいおばけが来るかもしれない,Full-moon morning may bring rare obake.,満月の朝には、めずらしいおばけが来るかもしれない
 "あなたのおばけ猫を
 さがそう","Find your
-cat-obake","あなたのおばけ猫を
+Obaneko","あなたのおばねこを
 さがそう"
 "12の質問で、相棒の猫おばけが決まる。
-バイトと休みの、ゆるい質問だよ。","12 questions to find your cat-obake.
-Easy questions about work and days off.","12の質問で、相棒の猫おばけが決まる。
+バイトと休みの、ゆるい質問だよ。","12 questions to find your Obaneko.
+Easy questions about work and days off.","12の質問で、パートナーのおばねこが決まる。
 バイトと休みの、ゆるい質問だよ。"
 はじめる,Start,はじめる
 1分くらい ・ 答えはあとで変えられる,About 1 min · Change answers later,1分くらい ・ 答えはあとで変えられる
 ひとつ戻る,Go back one,ひとつ戻る
-あなたのマイおばけ猫は,Your cat-obake is,あなたのマイおばけ猫は
+あなたのマイおばけ猫は,Your Obaneko is,あなたのおばねこは
 この子と はじめる,Start with this one,この子と はじめる
 結果をシェア,Share result,結果をシェア
 向いてる仕事：%s,Best job: %s,向いてる仕事：%s
@@ -570,7 +570,7 @@ A curious glow...","すくった！
 お面屋ごと、庭についてきた。全部、真顔,The mask stall moved in. All deadpan.,お面屋ごと、庭についてきた。全部、真顔
 わたあめの中に、光る玉が入っていた,A glowing orb inside the cotton candy,わたあめの中に、光る玉が入っていた
 。虹色だ,. Rainbow-colored.,。虹色だ
-ねこおばけと、夜の庭,Cat-obake in a night garden,ねこおばけと、夜の庭
+ねこおばけと、夜の庭,Obaneko in a night garden,おばねこと、夜の庭
 つづきから,Continue,つづきから
 はじめる（見本の記録つき）,Start with sample logs,はじめる（見本の記録つき）
 記録なしで、はじめる,Start without logs,記録なしで、はじめる
@@ -627,7 +627,7 @@ WEEKDAY_5,Sat,土
 JOB_WD_5,Sat,土
 WEEKDAY_6,Sun,日
 JOB_WD_6,Sun,日
-ONB_PARTNER,Your partner,あいぼう
+ONB_PARTNER,Your partner,パートナー
 SPECIAL_MOON_NAME,Moon Halo,月の輪
 SPECIAL_MOON_PET,Luna,ルナ
 SPECIAL_SUN_NAME,Sun Crown,太陽の冠
@@ -636,13 +636,13 @@ SPECIAL_STAR_NAME,Star Orbit,星めぐり
 SPECIAL_STAR_PET,Stella,ステラ
 SPECIAL_BLOSSOM_NAME,Blossom Crown,花の冠
 SPECIAL_BLOSSOM_PET,Sakura,さくら
-ONB_SPECIAL_KICKER,A SPECIAL obake cat appeared!,とくべつなおばけ猫が あらわれた！
+ONB_SPECIAL_KICKER,A SPECIAL Obaneko appeared!,とくべつなおばねこが あらわれた！
 ONB_SPECIAL_RIBBON,★ SPECIAL · %s ★,★ とくべつ・%s ★
 ONB_SPECIAL_PET,Nice to meet you!,はじめまして！
 ONB_SHIFT_PLACE,Practice shift,練習のシフト
 ONB_SHIFT_MOCK,Practice: 4 hours in 8 seconds,練習：4時間を8秒で早送り
 ONB_NAME_SAY,What will you call me?,ぼくの名前、どうする？
-ONB_NAME_TITLE,Name your partner,相棒の名前
+ONB_NAME_TITLE,Name your partner,パートナーの名前
 ONB_NAME_HINT,Up to %d letters. You can change it later in My page.,%d文字まで。あとでマイページから変えられるよ。
 ONB_NAME_OK,Use this name,この名前にする
 ONB_NAME_SKIP,Decide later,あとで決める
@@ -885,20 +885,20 @@ QUIZ_T_IFMK_NAME,The Prep Perfectionist,こだわりの仕込み番
 QUIZ_T_IFMK_LINE,Slices onions with total devotion.,玉ねぎの薄さに、命をかける。
 QUIZ_T_IFMY_NAME,Master of the Break,休み上手
 QUIZ_T_IFMY_LINE,Fully recharged in a 15-minute break.,休憩15分で、しっかり回復。
-QUIZ_UI_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
+QUIZ_UI_KICKER,My Obaneko Quiz,マイおばねこ診断
 QUIZ_UI_TITLE,"Find your
-obake cat","あなたのおばけ猫を
+Obaneko","あなたのおばねこを
 さがそう"
 QUIZ_UI_SUB,"12 quick questions pick your partner.
-All about part-time life and rest.","12の質問で、相棒の猫おばけが決まる。
+All about part-time life and rest.","12の質問で、パートナーのおばねこが決まる。
 バイトと休みの、ゆるい質問だよ。"
 QUIZ_UI_START,Start,はじめる
 QUIZ_UI_NOTE,About 1 min · You can retake it later,1分くらい ・ 答えはあとで変えられる
 QUIZ_UI_QNUM,Q%d,Q%d
 QUIZ_UI_BACK,Back,ひとつ戻る
-QUIZ_UI_YOURS,Your obake cat is…,あなたのマイおばけ猫は
+QUIZ_UI_YOURS,Your Obaneko is…,あなたのおばねこは
 QUIZ_UI_JOB,Best job: %s,向いてる仕事：%s
-QUIZ_UI_MATCH,Best buddy: %s,相性のいいタイプ：%s
+QUIZ_UI_MATCH,Best match: %s,相性のいいタイプ：%s
 QUIZ_UI_BEGIN,Start with this cat,この子と はじめる
 QUIZ_UI_SHARE,Share result,結果をシェア
 QUIZ_UI_SHARE_TITLE,Share your result,結果をシェア
@@ -911,15 +911,15 @@ QUIZ_UI_DOWNLOADED,Image downloaded!,画像をダウンロードしました
 QUIZ_UI_SAVED,Saved: %s,保存しました：%s
 QUIZ_UI_SAVE_FAILED,Couldn't save (%s),保存できませんでした（%s）
 QUIZ_UI_CLOSE,Close,とじる
-QUIZ_CARD_KICKER,My Obake Cat Quiz,マイおばけ猫 診断
+QUIZ_CARD_KICKER,My Obaneko Quiz,マイおばねこ診断
 QUIZ_CARD_JOB,Best job  %s,向いてる仕事  %s
-QUIZ_CARD_MINE,My obake cat is,わたしのマイおばけ猫は
-QUIZ_SHARE_TEXT,"My obake cat is ""%s""!
+QUIZ_CARD_MINE,My Obaneko is,わたしのおばねこは
+QUIZ_SHARE_TEXT,"My Obaneko is ""%s""!
 %s
-#PawTime #MyObakeCat
-%s","わたしのマイおばけ猫は「%s」！
+#PawTime #MyObaneko
+%s","わたしのおばねこは「%s」！
 %s
-#PawTime #マイおばけ猫
+#PawTime #マイおばねこ
 %s"
 JOB_STORE_CAFE_KOMOREBI,Sunlit Pages Bookstore Café,カフェ こもれび
 JOB_STORE_CAFE_SUNNYSIDE,Sunnyside Boba,サニーサイド珈琲
@@ -1040,7 +1040,7 @@ Back home,Back home,帰る
 Today's work,Today's work,今日の仕事
 Work together,Work together,いっしょに働く
 Earned today: %d Paw Coins,Earned today: %d Paw Coins,今日の肉球コイン：%d
-Your cat-obake earns Paw Coins while you work.,Your cat-obake earns Paw Coins while you work.,あなたが働くあいだ、おばネコも肉球コインをかせぐ
+Your cat-obake earns Paw Coins while you work.,Your Obaneko earns Paw Coins while you work.,あなたが働くあいだ、おばねこも肉球コインをかせぐ
 I'm going to work,I'm going to work,仕事に行ってくる
 Resting until tomorrow,Resting until tomorrow,明日まで、ひと休み
 Good work today! Let's go home.,Good work today! Let's go home.,今日もおつかれさま！帰ろう
@@ -1050,9 +1050,9 @@ Shift's over!,Shift's over!,おつかれさま！
 +%d %s nets,+%d %s nets,ポイ +%d（%s）
 "Your cat-obake got tired,
 so it stopped there.
-Extra time earns nothing.","Your cat-obake got tired,
+Extra time earns nothing.","Your Obaneko got tired,
 so it stopped there.
-Extra time earns nothing.","おばネコが疲れたので、
+Extra time earns nothing.","おばねこが疲れたので、
 そこでおしまい。
 それ以上はコインにならない"
 "A long day…
@@ -1061,7 +1061,7 @@ tomorrow it'll be a bit slower.","長い一日…
 明日は少しゆっくりめ"
 Back to the island,Back to the island,島へもどる
 Peek at work,Peek at work,仕事場をのぞく
-Your cat-obake worked too: +%d Paw Coins,Your cat-obake worked too: +%d Paw Coins,おばネコもいっしょに働いた：肉球コイン +%d
+Your cat-obake worked too: +%d Paw Coins,Your Obaneko worked too: +%d Paw Coins,おばねこもいっしょに働いた：肉球コイン +%d
 島の材料と服,Materials & clothes,島の材料と服
 島づくりと着がえに使える,For your island and outfits,島づくりと着がえに使える
 今朝の見つけもの,This morning's finds,今朝の見つけもの
@@ -1071,7 +1071,7 @@ Done,Done,もどる
 Wardrobe,Wardrobe,キセカエ
 Random,Random,おまかせ
 Save,Save,保存
-Your cat obake,Your cat obake,あなたの猫おばけ
+Your cat obake,Your Obaneko,あなたのおばねこ
 %d Paw Coins,%d Paw Coins,肉球コイン %d
 None,None,なし
 Owned,Owned,もっている
@@ -1563,7 +1563,7 @@ CHAT_DELETE_BODY,"It only lives on this device, so it can't be brought back.",�
 CHAT_DELETE_YES,Delete,消す
 CHAT_DELETE_NO,Cancel,やめる
 CHAT_LIST_TITLE,Chats,チャット
-CHAT_LIST_SUB,"Your cat, and the shops of your shifts",相棒と、シフトのお店
+CHAT_LIST_SUB,"Your partner, and the shops of your shifts",パートナーと、シフトのお店
 CHAT_LIST_SHIFTS,Your shifts,あなたのシフト
 CHAT_LIST_NONE,"No shifts yet. When you accept one, you can talk to that shop's cat here.",まだシフトがありません。仕事を受けると、ここでお店の猫と話せます。
 CHAT_LIST_NOTE,Shops can only talk to you about shifts you accepted.,お店と話せるのは、あなたが受けたシフトのことだけ。
@@ -1673,17 +1673,17 @@ CM_CRISIS_CARD,Talking to someone can help. Here's a place you can reach out to.
 CM_CRISIS_STAY,I'm staying right here. Let's breathe together: in… and out.,ずっとここにいるよ。いっしょに息をしよう。すって…はいて。
 CM_CRISIS_OK,Anytime. I'm always on your side.,いつでもね。ずっとあなたの味方だよ。
 CHAT_AUTO_CAT,Auto reply from the shop's cat,お店の猫の自動の返事
-CHAT_MODE_SHARED,"Your cat remembers, to find jobs that fit you",あなたに合う仕事さがしのために、相棒が覚えておくよ
-CHAT_MODE_PRIVATE,Just between us: your cat keeps nothing,ふたりだけのひみつ：相棒は何も覚えない
+CHAT_MODE_SHARED,"Your partner remembers, to find jobs that fit you",あなたに合う仕事さがしのために、パートナーが覚えておくよ
+CHAT_MODE_PRIVATE,Just between us: your partner keeps nothing,ふたりだけのひみつ：パートナーは何も覚えない
 CHAT_CONSENT_TITLE,Before we talk,話すまえに
-CHAT_CONSENT_BODY,Your cat remembers what you share to find better jobs. Your words never go to shops.,話したことは、合う仕事さがしのために相棒が覚えておくよ。あなたの言葉はお店に届きません。
+CHAT_CONSENT_BODY,Your partner remembers what you share to find better jobs. Your words never go to shops.,話したことは、合う仕事さがしのためにパートナーが覚えておくよ。あなたの言葉はお店に届きません。
 CHAT_CONSENT_OK,OK,OK
 CHAT_CONSENT_PRIVATE,Just between us,ふたりだけのひみつにする
 CHAT_CONSENT_DETAILS,Details,くわしく
 CHAT_MENU_PRIVATE_OFF,Just between us: Off,ふたりだけのひみつ：オフ
 CHAT_MENU_PRIVATE_ON,Just between us: On,ふたりだけのひみつ：オン
-シフトの日は、猫もいっしょに働いた,Worked a shift? Your cat worked too.,シフトの日は、猫もいっしょに働いた
-猫が疲れるから、がんばりすぎなくていい,"Your cat gets tired, so you don't have to push.",猫が疲れるから、がんばりすぎなくていい
+シフトの日は、猫もいっしょに働いた,Worked a shift? Your Obaneko worked too.,シフトの日は、おばねこもいっしょに働いた
+猫が疲れるから、がんばりすぎなくていい,"Your Obaneko gets tired, so you don't have to push.",おばねこが疲れるから、がんばりすぎなくていい
 夜がふけていく,The night deepens,夜がふけていく
 今夜の玉 %d 個。朝になったら、かえる,%d orbs tonight. They hatch in the morning.,今夜の玉 %d 個。朝になったら、かえる
 今夜はすくわなかった。朝はすぐ来る,No scooping tonight. Morning comes soon.,今夜はすくわなかった。朝はすぐ来る
@@ -1696,7 +1696,7 @@ CHAT_MENU_PRIVATE_ON,Just between us: On,ふたりだけのひみつ：オン
 働いた日,worked today,働いた日
 川べりの夜,a night at the river,川べりの夜
 おはよう,Good morning,おはよう
-きのうの残業で、猫はまだ少し疲れている,"After yesterday's overtime, your cat is still a little tired.",きのうの残業で、猫はまだ少し疲れている
+きのうの残業で、猫はまだ少し疲れている,"After yesterday's overtime, your Obaneko is still a little tired.",きのうの残業で、おばねこはまだ少し疲れている
 働いた日も休んだ日も、庭は育つ,Work days and rest days both grow the garden.,働いた日も休んだ日も、庭は育つ
 島の段の札をタップで、くわしく,Tap the island level tag for details.,島の段の札をタップで、くわしく
 毎日の暮らしで、庭が育つ,Everyday life grows the garden.,毎日の暮らしで、庭が育つ
@@ -1806,16 +1806,16 @@ R2_HELP_BODY,Just for fun: the practice games from My skills. Clear one to earn 
 EXPAND_READY,"You have enough materials. Tap ""+ Expand"".",材料がそろった。「＋ ひろげる」から
 川べりは、夕方 5 時から,The river opens at 5 p.m.,川べりは、夕方 5 時から
 今日の仕事は、おしまい,Work's done for today,今日の仕事は、おしまい
-Your cat is at work too. See you after your shift!,Your cat is at work too. See you after your shift!,猫もいっしょに働いてるよ。シフトのあとでね！
+Your cat is at work too. See you after your shift!,Your Obaneko is at work too. See you after your shift!,おばねこもいっしょに働いてるよ。シフトのあとでね！
 Message the shop,Message the shop,お店に連絡
 Whoa… a rare one!,Whoa… a rare one!,わっ…レアな子だ！
 DEMO3_BUTTON,3-minute demo,3分デモ
 DEMO3_CHIP,3-min demo · %d/%d · %ds,3分デモ · %d/%d · %d秒
 DEMO3_FINAL_TITLE,That's a day with Paw Time,これが Paw Time の一日
-DEMO3_FINAL_BODY,"You took a job, your cat stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.",仕事を受けて、疲れたら猫がシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。
+DEMO3_FINAL_BODY,"You took a job, your Obaneko stopped the shift when it got tired, you left a quick review, and a rare cat hatched overnight (%d s). Every step also sent an anonymous event to the Recruit view.",仕事を受けて、疲れたらおばねこがシフトを止めて、ひとこと評価をして、夜のあいだにレアな猫がかえった（%d 秒）。どの場面も、匿名のイベントとして Recruit の画面に届いています。
 DEMO3_RECRUIT,See the Recruit view,Recruit の見え方を見る
 DEMO3_KEEP,Keep playing,このまま遊ぶ
-TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “the cat stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in My page.",Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「猫がシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。マイページでいつでもオフにできます。
+TELEMETRY_NOTICE,"Paw Time sends anonymous usage (like “job accepted” or “Obaneko stopped a shift”) to improve the game and show overall numbers. No names, no location, no messages. You can turn it off anytime in My page.",Paw Time は、ゲームの改善と全体の数字の表示のために、匿名の利用状況（「仕事を受けた」「おばねこがシフトを止めた」など）を送ります。名前・位置・メッセージは送りません。マイページでいつでもオフにできます。
 TELEMETRY_NOTICE_OK,OK,OK
 TELEMETRY_NOTICE_MORE,Privacy notice,プライバシーについて
 TELEMETRY_TOGGLE,Share anonymous usage,匿名の利用データを送る
@@ -1824,20 +1824,20 @@ TELEMETRY_ID,Your usage ID: %s,利用データのID: %s
 TELEMETRY_DELETE,Delete my usage data,利用データを削除
 TELEMETRY_DELETED,Deleted. A new ID was created.,削除しました。新しいIDを作りました。
 SETTINGS_TITLE,My page,マイページ
-SETTINGS_NAME,Your partner's name,相棒の名前
+SETTINGS_NAME,Your partner's name,パートナーの名前
 SETTINGS_NAME_SAVE,Save,保存
 SETTINGS_SAVED,Saved.,保存しました。
 SETTINGS_LANG,Language,言語
-SETTINGS_CHAT,Chat with your cat,相棒とのチャット
+SETTINGS_CHAT,Chat with your partner,パートナーとのチャット
 SETTINGS_CHAT_REMEMBER,Remember,覚えてOK
-SETTINGS_CHAT_HINT,Remember: your cat uses what you share to find better jobs. Just between us: it remembers nothing and sends nothing.,覚えてOK：話したことを、合う仕事さがしに使います。ふたりだけのひみつ：何も覚えず、どこにも送りません。
+SETTINGS_CHAT_HINT,Remember: your partner uses what you share to find better jobs. Just between us: it remembers nothing and sends nothing.,覚えてOK：話したことを、合う仕事さがしに使います。ふたりだけのひみつ：何も覚えず、どこにも送りません。
 SETTINGS_PRIVACY,Privacy,プライバシー
 SETTINGS_PRIVACY_CHAT,Chat,チャット
 SETTINGS_PRIVACY_USAGE,Usage data,利用データ
-PRIVACY_CHAT,"Your cat remembers what you share to find jobs that fit you. Shops never see your words — only anonymous totals when 5+ workers say the same, or things you choose to tell them.",相棒は、あなたに合う仕事をさがすために、話してくれたことを覚えておきます。お店にあなたの言葉が見えることはありません。見えるのは、同じ声が5人以上そろったときの名前のない合計か、あなたが伝えると決めたことだけです。
+PRIVACY_CHAT,"Your partner remembers what you share to find jobs that fit you. Shops never see your words — only anonymous totals when 5+ workers say the same, or things you choose to tell them.",パートナーは、あなたに合う仕事をさがすために、話してくれたことを覚えておきます。お店にあなたの言葉が見えることはありません。見えるのは、同じ声が5人以上そろったときの名前のない合計か、あなたが伝えると決めたことだけです。
 SETTINGS_RESET,Start over,はじめからやり直す
 SETTINGS_RESET_Q,Start over?,はじめからにする？
-SETTINGS_RESET_BODY,"Erases your partner, island, obake, shifts and chats on this device. Your language and usage-data choice stay.",この端末の相棒・島・おばけ・シフト・チャットを消します。言語と利用データの設定は残ります。
+SETTINGS_RESET_BODY,"Erases your partner, island, obake, shifts and chats on this device. Your language and usage-data choice stay.",この端末のパートナー・島・おばけ・シフト・チャットを消します。言語と利用データの設定は残ります。
 SETTINGS_RESET_YES,Erase and start over,消してやり直す
 SETTINGS_CANCEL,Cancel,やめる
 DEMO3_CONFIRM_TITLE,Start the 3-minute demo?,3分デモをはじめる？

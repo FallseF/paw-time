@@ -126,5 +126,36 @@ func _areas() -> void:
 
 # ---------------------------------------------------------------- 4. 呼び名
 
+## strings.csv の行（[key, en, ja]）
+static func csv_rows(path := "res://i18n/strings.csv") -> Array:
+	var f := FileAccess.open(path, FileAccess.READ)
+	var out: Array = []
+	if f == null:
+		return out
+	f.get_csv_line() # 見出し
+	while not f.eof_reached():
+		var r := f.get_csv_line()
+		if r.size() >= 3 and r[0] != "":
+			out.append(r)
+	return out
+
+
+const OLD_NAMES_EN := ["cat-obake", "obake cat", "cat obake", "my cat obake"]
+const OLD_NAMES_JA := ["おばけ猫", "猫おばけ", "ねこおばけ", "おばネコ", "相棒", "あいぼう"]
+
+
 func _naming() -> void:
-	pass
+	var rows := csv_rows()
+	_check(rows.size() > 1000, "strings.csv read (%d rows)" % rows.size())
+	for r in rows:
+		for w in OLD_NAMES_EN:
+			_check(not String(r[1]).to_lower().contains(w), "old name '%s' in en of %s: %s" % [w, r[0].left(30), r[1].left(60)])
+		for w in OLD_NAMES_JA:
+			_check(not String(r[2]).contains(w), "old name '%s' in ja of %s: %s" % [w, r[0].left(30), r[2].left(60)])
+	# 画面に出る呼び名
+	TranslationServer.set_locale("ja")
+	_check(tr("QUIZ_UI_YOURS").contains("おばねこ") and tr("ONB_NAME_TITLE").contains("パートナー"), "ja: おばねこ / パートナー")
+	_check(tr("ONB_SPECIAL_PET") == "はじめまして！", "ja: quiz result says はじめまして！")
+	TranslationServer.set_locale("en")
+	_check(tr("QUIZ_UI_YOURS").contains("Obaneko") and tr("ONB_NAME_TITLE").contains("partner"), "en: Obaneko / partner")
+	_check(tr("ONB_SPECIAL_PET") == "Nice to meet you!", "en: quiz result says Nice to meet you!")

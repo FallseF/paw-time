@@ -91,7 +91,7 @@ func _run() -> void:
 	# 既定は英語
 	_check(ProjectSettings.get_setting("internationalization/locale/fallback") == "en", "fallback locale should be en")
 	TranslationServer.set_locale("en")
-	_check(QuizData.share_text("OPHK").begins_with("My obake cat is") or OS.get_environment("OBAKE_LANG") != "", "share text in English")
+	_check(QuizData.share_text("OPHK").begins_with("My Obaneko is") or OS.get_environment("OBAKE_LANG") != "", "share text in English")
 	_check(QuizData.share_text("OPHK").contains(QuizData.SITE_URL), "share text has the URL")
 
 	# 5. 保存と読み込み（本物の結果には触れない）
