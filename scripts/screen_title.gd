@@ -103,7 +103,7 @@ func _ready() -> void:
 	add_child(t4)
 
 	var v := VBoxContainer.new()
-	v.position = Vector2(40, 430)
+	v.position = Vector2(40, 396)
 	v.size = Vector2(280, 0)
 	v.add_theme_constant_override("separation", 10)
 	add_child(v)
@@ -116,7 +116,7 @@ func _ready() -> void:
 	# はじめる（ひとつだけ）。シフトは自分で入れる・求人で受ける（見本の記録の自動のシフトは、確認用の OBAKE_START だけ）
 	v.add_child(Kit.button("はじめる", Color("8b7bff") if not GameState.has_save() else Color("6a5bd6"), func(): _new("solo"), Color.WHITE, 46, 15))
 	# 審査員向けの 3 分デモ（DemoRoute）
-	v.add_child(Kit.button(tr("DEMO3_BUTTON"), Color(1, 1, 1, 0.92), func(): DemoRoute.begin(main), Color("6a5bd6"), 42, 15))
+	v.add_child(Kit.button(tr("DEMO3_BUTTON"), Color(1, 1, 1, 0.92), _demo, Color("6a5bd6"), 42, 15))
 	var vb := Button.new()
 	vb.flat = true
 	vb.text = "島のコードで、おでかけ"
@@ -149,12 +149,20 @@ func _new(mode: String) -> void:
 	_begin()
 
 
+## 3 分デモ。いまの庭があれば、置きかわることを先に聞く
+func _demo() -> void:
+	if GameState.has_save() and confirm == null:
+		_confirm("solo", func(): DemoRoute.begin(main), tr("DEMO3_CONFIRM_TITLE"), tr("DEMO3_CONFIRM_BODY"), tr("DEMO3_BUTTON"))
+		return
+	DemoRoute.begin(main)
+
+
 ## はじめての人は、まずマイおばけ猫の診断から（終わると島へ）
 func _begin() -> void:
 	main.go("quiz" if GameState.my_obake.is_empty() else Onboarding.resume_screen())
 
 
-func _confirm(mode: String) -> void:
+func _confirm(mode: String, yes := Callable(), title := "はじめからにする？", body := "いまの庭と図鑑は消えます", yes_label := "はじめから") -> void:
 	confirm = Control.new()
 	confirm.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(confirm)
@@ -170,9 +178,14 @@ func _confirm(mode: String) -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 10)
 	p.add_child(v)
-	v.add_child(Kit.text("はじめからにする？", 18, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.wrap(Kit.text("いまの庭と図鑑は消えます", 13, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER)))
-	v.add_child(Kit.button("はじめから", Color("e85a4f"), func():
+	v.add_child(Kit.text(title, 18, Color("2a2233"), true, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.wrap(Kit.text(body, 13, Color("6a5f70"), false, HORIZONTAL_ALIGNMENT_CENTER)))
+	v.add_child(Kit.button(yes_label, Color("e85a4f"), func():
+		if yes.is_valid():
+			confirm.queue_free()
+			confirm = null
+			yes.call()
+			return
 		GameState.reset(mode)
 		GameState.save()
 		_begin()))

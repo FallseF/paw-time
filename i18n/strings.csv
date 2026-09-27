@@ -1757,3 +1757,5 @@ TELEMETRY_TOGGLE_HINT,Helps us improve Paw Time. No names or location.,Paw Time 
 TELEMETRY_ID,Your usage ID: %s,利用データのID: %s
 TELEMETRY_DELETE,Delete my usage data,利用データを削除
 TELEMETRY_DELETED,Deleted. A new ID was created.,削除しました。新しいIDを作りました。
+DEMO3_CONFIRM_TITLE,Start the 3-minute demo?,3分デモをはじめる？
+DEMO3_CONFIRM_BODY,Your garden and Book will be replaced by the demo's.,いまの庭と図鑑は、デモのものに置きかわります

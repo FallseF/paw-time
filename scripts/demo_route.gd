@@ -22,6 +22,7 @@ var chip: Label
 var layer: CanvasLayer
 var _wait := 0.0
 var _t0 := 0.0
+var _flush_t := 0.0
 
 
 ## タイトルのボタンから
@@ -113,6 +114,11 @@ func _process(delta: float) -> void:
 		return
 	var i := STEPS.find(stage)
 	chip.text = tr("DEMO3_CHIP") % [i + 1, STEPS.size(), int(Time.get_ticks_msec() / 1000.0 - _t0)]
+	# デモの間は 3 秒ごとに送る（Recruit の見え方の Live の欄に、10 秒ほどで出るように。ふだんは約 20 秒ごと）
+	_flush_t -= delta
+	if _flush_t <= 0.0:
+		_flush_t = 3.0
+		Telemetry.flush_now()
 	if _wait > 0.0:
 		_wait -= delta
 		return

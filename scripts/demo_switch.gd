@@ -1,11 +1,11 @@
 class_name DemoSwitch
 extends CanvasLayer
 ## デモの見せ場へ飛ぶ小さな切りかえ（審査・説明の場で使う）。ふだんは出ない。
-## 出すとき：OBAKE_DEMO=1、または Web の URL に ?demo=1。左下の小さな「Demo」の札 → 4 つの場面。
+## 出すとき：OBAKE_DEMO=1、または Web の URL に ?demo=1。右下の小さな「Demo」の札 → 4 つの場面。
 ## どれも本物の状態を作る（Shifts・WorkTogether・時計）ので、その先はいつもの流れのまま動く。
 ##   シフトの 1 時間前 … 1 時間後に始まる見本のシフトを入れて、昼の島へ（今日のシフトのカード・前の朝のひとこと）
 ##   シフト中（早送り）… 始まっているシフト。猫の仕事場で、時間が早く進む（1 秒＝6 分）。疲れて止まるところまで
-##   シフトが終わった … 終わる直前のシフト。仕事場でおつかれさまのカード → 島へ → ひとこと評価
+##   シフトが終わった … 猫がへとへとになる直前で終わるシフト。仕事場で疲れたおつかれさまのカード → 島へ → ひとこと評価
 ##   次の朝        … 時計を次の日付の朝 7 時へ。夜が明けて、玉がかえる
 
 const PREFIX := "demo_sw_"
@@ -29,7 +29,7 @@ func _ready() -> void:
 	var chip := Button.new()
 	chip.text = "Demo"
 	chip.focus_mode = Control.FOCUS_NONE
-	chip.position = Vector2(6, 612)
+	chip.position = Vector2(302, 612) # 右下（左下は島の「広げる」）
 	chip.size = Vector2(52, 24)
 	chip.add_theme_font_override("font", Kit.bold())
 	chip.add_theme_font_size_override("font_size", 11)
@@ -47,7 +47,7 @@ func _toggle() -> void:
 		return
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", Kit.pill(Color(1, 1, 1, 0.97), 16, 0.25, Vector2(10, 8)))
-	p.position = Vector2(6, 400)
+	p.position = Vector2(124, 400)
 	p.size = Vector2(230, 0)
 	add_child(p)
 	var v := VBoxContainer.new()
@@ -126,8 +126,8 @@ func _on_shift() -> void:
 func _finished() -> void:
 	_reset_work()
 	var now := Time.get_unix_time_from_system()
-	# あと 2 秒で終わるシフト：仕事場で終わるところ（おつかれさまのカード）を見せる
-	_put_shift(now - 5 * 3600.0, now + 2.0)
+	# あと 2 秒で終わるシフト：猫がへとへとになったところで終わる（疲れたおつかれさまのカード → 島でひとこと評価）
+	_put_shift(now - WorkTogether.EXHAUST_HOURS * 3600.0 - 58.0, now + 2.0)
 	main.go("work")
 
 

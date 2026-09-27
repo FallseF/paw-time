@@ -78,7 +78,7 @@ func _run() -> void:
 	await get_tree().create_timer(2.5).timeout
 	var e := WorkTogether.sync()
 	_check(not e.is_empty(), "finished: the shift ends by itself")
-	_check(WorkTogether.stage_for(float(e.get("hours", 0.0))) in ["tired", "sleepy", "exhausted"], "finished: the cat is tired (%s h)" % e.get("hours", 0.0))
+	_check(e.get("exhausted", false), "finished: the cat stopped tired (%s h)" % e.get("hours", 0.0))
 	_check(int(e.get("coins", 0)) > 0, "finished: coins paid")
 	var rv := Reviews.target_for_ended(WorkTogether.pop_ended())
 	_check(not rv.is_empty(), "finished: the quick review opens for that shift")
