@@ -1852,3 +1852,6 @@ R3_SHIFT_MANUAL,A shift you added yourself,自分で入れたシフト
 R3_SHIFT_CANCEL,Cancel this shift,このシフトを取り消す
 R3_SHIFT_CANCEL_SURE,Tap again to cancel it,もう一度押すと取り消します
 R3_TAGLINE,Let's work together,いっしょにはたらこう
+SHOP_JOBS_BTN,Open jobs here (%d) ›,いまの募集（%d 件）›
+SHOP_JOBS_TITLE,Open jobs here,このお店のいまの募集
+SHOP_JOBS_NOTE,Tap one to see it and take it. Sample listings.,押すと、くわしく見て受けられます。見本の求人です。

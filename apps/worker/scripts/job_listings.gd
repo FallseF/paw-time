@@ -334,6 +334,27 @@ static func generate(prefs_in: Dictionary, count_n: int, seed_n: int, base := -1
 	return out
 
 
+## そのお店の、いまの募集（お店の島で見せる。翌日から 7 日のうちの n 日、その日に 1 件）。
+## 働く人の条件では絞らない（お店の事実）。地域は日本なら自分の地域、SF ならその店の地区。seed で毎日の顔ぶれを変える
+static func shop_openings(listing_id: String, n: int, seed_n: int, base := -1.0, r := "") -> Array:
+	var e := entry(listing_id)
+	if e.is_empty():
+		return []
+	var reg := _reg(r)
+	var tz := tz_of_region(reg)
+	var mine := JobPrefs.load_prefs()
+	var prefs := JobPrefs.normalize({"areas": mine.areas, "slots": JobPrefs.grid(range(7), JobPrefs.WINDOW_ORDER), "min_wage": JobPrefs.WAGE_MIN, "min_wage_usd": JobPrefs.WAGE_MIN_USD, "pay": "any"})
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_n
+	var dates := _open_dates(base if base >= 0 else Time.get_unix_time_from_system(), [], tz)
+	var out: Array = []
+	while out.size() < n and not dates.is_empty():
+		var d0: int = dates.pop_at(rng.randi_range(0, dates.size() - 1))
+		out.append(_make_job(e, prefs, d0, rng, reg))
+	out.sort_custom(func(a, b): return a.start < b.start)
+	return out
+
+
 ## 翌日から 7 日のうち、選んだ曜日の日付（その町のその日の 0 時の unix 秒）
 static func _open_dates(now: float, days: Array, tz := "") -> Array:
 	var today0 := day0(now, tz)

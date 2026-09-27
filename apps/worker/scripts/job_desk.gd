@@ -50,6 +50,8 @@ func _start() -> void:
 			_found_jobs()
 		"done":
 			_daily()
+			if not focus_job.is_empty():
+				_open_focus()
 
 
 ## 島の上に、この係の何かが開いているか（シート・吹き出し・求人カード／評価・シフトの入力・チャット）。島の札を隠すのに使う
@@ -730,6 +732,25 @@ func _open_viewer() -> void:
 
 
 var done_ids := {} # この知らせの中で、受けた・見送った仕事
+
+## お店の島の「いまの募集」から選んだ仕事。島に戻ったら、そのくわしいカードを開く（受けるのはここから）
+static var focus_job := {}
+
+
+func _open_focus() -> void:
+	var j: Dictionary = focus_job
+	focus_job = {}
+	if viewer:
+		return
+	JobListings.localize(j)
+	Telemetry.track("job_cards_shown", {"n": 1})
+	jobs = [j]
+	index = 0
+	accepted = 0
+	done_ids = {}
+	job_day = -1
+	_build_viewer()
+	_show_job()
 
 
 ## 並べて比べる：残りの仕事を曜日のカードに（翌日から 1 週間。スワイプか ‹ › で日を送る）。

@@ -29,6 +29,7 @@ func _run() -> void:
 	_overlap()
 	_areas()
 	_naming()
+	_openings()
 	print("REVIEW3 TEST ", "OK" if fails == 0 else "FAIL (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -197,3 +198,19 @@ func _naming() -> void:
 	TranslationServer.set_locale("en")
 	_check(tr("QUIZ_UI_YOURS").contains("Obaneko") and tr("ONB_NAME_TITLE").contains("partner"), "en: Obaneko / partner")
 	_check(tr("ONB_SPECIAL_PET") == "Nice to meet you!", "en: quiz result says Nice to meet you!")
+
+
+# ---------------------------------------------------------------- 5. お店の島の、いまの募集
+
+func _openings() -> void:
+	var base := 1790000000.0
+	for lang in ["en", "ja"]:
+		TranslationServer.set_locale(lang)
+		var a := JobListings.shop_openings("cafe_komorebi", 3, 11, base)
+		var b := JobListings.shop_openings("cafe_komorebi", 3, 11, base)
+		_check(a.size() == 3 and a.map(func(j): return j.id) == b.map(func(j): return j.id), "%s: 3 openings, same seed same list" % lang)
+		for j in a:
+			_check(j.listing == "cafe_komorebi" and float(j.start) > base and j.currency == JobListings.currency_of_region(), "%s: opening is this shop, in the future, in the current town's money %s" % [lang, j])
+		_check(a[0].start <= a[1].start and a[1].start <= a[2].start, "%s: sorted by start" % lang)
+	TranslationServer.set_locale("en")
+	_check(JobListings.shop_openings("nope", 3, 1, base).is_empty(), "unknown shop has no openings")

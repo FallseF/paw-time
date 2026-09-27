@@ -126,6 +126,30 @@ func _run() -> void:
 		desk._close_sheet()
 	TranslationServer.set_locale("en")
 
+	# 5. お店の島：いまの募集 → 押すと島へ戻って、その仕事のくわしいカード（受けられる）
+	Shifts.reset()
+	GameState.visit = ShopCulture.visit_data("cafe_komorebi")
+	await main.go("shop_island", true)
+	await _frames(6)
+	var si = main.current
+	_check(si.openings.size() > 0 and si.jobs_btn != null, "shop island shows its open jobs (%d)" % si.openings.size())
+	si.open_jobs_card()
+	await _frames(4)
+	var st2 := _texts(si.card)
+	var first: Dictionary = si.openings[0]
+	_check(st2.contains(tr("SHOP_JOBS_TITLE")) and st2.contains(JobListings.wage_text(first)), "open jobs card lists the jobs")
+	si.see_job(first)
+	await get_tree().create_timer(2.0).timeout
+	var g2 = main.current
+	var desk2 := _desk(g2)
+	_check(desk2 != null and desk2.viewer != null and desk2.jobs.size() == 1 and desk2.jobs[0].id == first.id, "back on the island, the job's detail card is open")
+	if desk2 and desk2.viewer:
+		_check(_texts(desk2.card_box).contains(tr("JOB_ACCEPT")), "the detail card can accept")
+		desk2._accept()
+		await _frames()
+		_check(Shifts.all().any(func(x): return x.id == first.id), "accepting from the shop island adds the shift")
+	Shifts.reset()
+
 	await _finish()
 
 
